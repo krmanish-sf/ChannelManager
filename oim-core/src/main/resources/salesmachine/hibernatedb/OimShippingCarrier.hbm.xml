@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+"http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd">
+<hibernate-mapping>
+    <class name="salesmachine.hibernatedb.OimShippingCarrier" table="OIM_SHIPPING_CARRIER">
+        <id name="id" type="int">
+            <column name="ID" />
+            <generator class="assigned" />
+        </id>
+        <property name="name" type="java.lang.String">
+            <column name="CARRIER_NAME" />
+        </property>
+        <property name="createdOn" type="java.util.Date">
+            <column name="CREATED_TM" />
+        </property>
+        <property name="oimSupplier" type="salesmachine.hibernatedb.OimSuppliers">
+            <column name="SUPPLIER_ID" />
+        </property>
+    </class>
+</hibernate-mapping>

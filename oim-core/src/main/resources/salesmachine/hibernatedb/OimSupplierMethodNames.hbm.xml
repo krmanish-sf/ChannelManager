@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+"http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd">
+<!-- Generated 30 Mar, 2010 7:26:11 PM by Hibernate Tools 3.2.4.GA -->
+<hibernate-mapping>
+    <class name="salesmachine.hibernatedb.OimSupplierMethodNames" table="OIM_SUPPLIER_METHOD_NAMES" schema="KDYER">
+        <id name="methodNameId" type="java.lang.Integer">
+            <column name="METHOD_NAME_ID" precision="22" scale="0" />
+            <generator class="assigned" />
+        </id>
+        <property name="methodName" type="string">
+            <column name="METHOD_NAME" length="20" />
+        </property>
+        <set name="oimSupplierMethodses" inverse="true" lazy="true" table="OIM_SUPPLIER_METHODS" fetch="select">
+            <key>
+                <column name="METHOD_NAME_ID" precision="22" scale="0" />
+            </key>
+            <one-to-many class="salesmachine.hibernatedb.OimSupplierMethods" />
+        </set>
+    </class>
+</hibernate-mapping>

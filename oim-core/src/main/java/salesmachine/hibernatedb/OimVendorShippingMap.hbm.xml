@@ -1,0 +1,26 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+"http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<!-- Generated 30 Mar, 2010 7:26:11 PM by Hibernate Tools 3.2.4.GA -->
+<hibernate-mapping>
+    <class name="salesmachine.hibernatedb.OimVendorShippingMap" table="OIM_VENDOR_SHIPPING_MAP" schema="KDYER">
+        <id name="id" type="java.lang.Integer">
+            <column name="ID" precision="22" scale="0" />
+            <generator class="sequence">
+                <param name="sequence">oim_vendor_shipping_map_seq</param>
+            </generator>
+        </id>
+        <many-to-one name="vendors" class="salesmachine.hibernatedb.Vendors" fetch="select">
+            <column name="VENDOR_ID" precision="22" scale="0" />
+        </many-to-one>
+        <many-to-one name="oimSuppliers" class="salesmachine.hibernatedb.OimSuppliers" fetch="select">
+            <column name="SUPPLIER_ID" precision="22" scale="0" />
+        </many-to-one>
+        <property name="shippingText" type="string">
+            <column name="shipping_text" length="500" />
+        </property>
+        <many-to-one name="oimShippingMethod" class="salesmachine.hibernatedb.OimSupplierShippingMethods" fetch="select">
+            <column name="SHIPPING_METHOD_ID" precision="22" scale="0" />
+        </many-to-one>
+    </class>
+</hibernate-mapping>

@@ -1,0 +1,35 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+"http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<!-- Generated 30 Mar, 2010 7:26:11 PM by Hibernate Tools 3.2.4.GA -->
+<hibernate-mapping>
+    <class name="salesmachine.hibernatedb.OimSupplierMethods" table="OIM_SUPPLIER_METHODS" schema="KDYER">
+        <id name="supplierMethodId" type="java.lang.Integer">
+            <column name="SUPPLIER_METHOD_ID" precision="22" scale="0" />
+            <generator class="sequence">
+                <param name="sequence">OIM_SUPPLIER_METHODS_SEQ</param>
+            </generator>
+        </id>
+        <many-to-one name="oimSupplierMethodNames" class="salesmachine.hibernatedb.OimSupplierMethodNames" fetch="select">
+            <column name="METHOD_NAME_ID" precision="22" scale="0" />
+        </many-to-one>
+        <many-to-one name="oimSupplierMethodTypes" class="salesmachine.hibernatedb.OimSupplierMethodTypes" fetch="select">
+            <column name="METHOD_TYPE_ID" precision="22" scale="0" />
+        </many-to-one>
+        <many-to-one name="oimSuppliers" class="salesmachine.hibernatedb.OimSuppliers" fetch="select">
+            <column name="SUPPLIER_ID" precision="22" scale="0" />
+        </many-to-one>
+        <property name="insertionTm" type="date">
+            <column name="INSERTION_TM" length="7" />
+        </property>
+        <property name="deleteTm" type="date">
+            <column name="DELETE_TM" length="7" />
+        </property>
+        <set name="oimSupplierMethodattrValueses" inverse="true" lazy="true" table="OIM_SUPPLIER_METHODATTR_VALUES" fetch="select">
+            <key>
+                <column name="SUPPLIER_METHOD_ID" precision="22" scale="0" />
+            </key>
+            <one-to-many class="salesmachine.hibernatedb.OimSupplierMethodattrValues" />
+        </set>
+    </class>
+</hibernate-mapping>

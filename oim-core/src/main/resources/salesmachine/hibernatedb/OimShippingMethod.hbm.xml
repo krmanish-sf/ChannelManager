@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+"http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd">
+<hibernate-mapping>
+    <class name="salesmachine.hibernatedb.OimShippingMethod" table="OIM_SHIPPING_CARRIER_METHOD">
+        <id name="id" type="int">
+            <column name="ID" />
+            <generator class="assigned" />
+        </id>
+        <many-to-one name="oimShippingCarrier" class="salesmachine.hibernatedb.OimShippingCarrier" fetch="join">
+            <column name="CARRIER_ID" />
+        </many-to-one>
+        <property name="name" type="java.lang.String">
+            <column name="METHOD_NAME" />
+        </property>
+        <property name="createdOn" type="java.util.Date">
+            <column name="CREATED_TM" />
+        </property>
+        <property name="description" type="java.lang.String">
+            <column name="DESCRIPTION" />
+        </property>
+    </class>
+</hibernate-mapping>

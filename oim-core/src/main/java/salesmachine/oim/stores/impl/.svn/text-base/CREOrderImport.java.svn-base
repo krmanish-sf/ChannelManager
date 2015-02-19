@@ -1,0 +1,636 @@
+package salesmachine.oim.stores.impl;
+
+import java.io.ByteArrayOutputStream;
+import java.io.PrintWriter;
+import java.io.StringReader;
+import java.text.DecimalFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Hashtable;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import oracle.xml.parser.v2.DOMParser;
+import oracle.xml.parser.v2.XMLDocument;
+
+import org.hibernate.Query;
+import org.hibernate.Session;
+import org.hibernate.Transaction;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+
+import salesmachine.oim.stores.api.IOrderImport;
+import salesmachine.util.ExcHandle;
+import salesmachine.util.FormObject;
+import salesmachine.util.NumberFormat;
+import salesmachine.util.OimLogStream;
+import salesmachine.util.StringHandle;
+import HTTPClient.CookieModule;
+
+import com.stevesoft.pat.Regex;
+
+import salesmachine.hibernatedb.*;
+import salesmachine.hibernatehelper.*;
+import salesmachine.oim.api.*;
+
+public class CREOrderImport implements IOrderImport {
+	private String m_storeURL = ""; // Base store URL
+	private String m_filePath = ""; // Script path on top of the base URL
+	private Session m_dbSession;
+	private OimChannels m_channel;
+	private OimOrderProcessingRule m_orderProcessingRule;
+	private OimLogStream logStream;
+	
+	private static void print(String str) {
+		//System.out.println("<br>"+str+"<br>");
+		System.out.println(str);
+	}
+	
+	public boolean init(int channelID, Session dbSession, OimLogStream log) {
+		m_dbSession = dbSession;
+		
+		if (log != null) 
+			logStream = log;
+		else
+			logStream =  new OimLogStream();
+		
+		Transaction tx = m_dbSession.beginTransaction();
+		Query query = m_dbSession.createQuery("from salesmachine.hibernatedb.OimChannels as c where c.channelId=:channelID");
+		query.setInteger("channelID", channelID);
+		tx.commit();
+		if (! query.iterate().hasNext()) {
+			System.out.println("No channel found for channel id: "+channelID);
+			return false;
+		}
+		
+		m_channel = (OimChannels)query.iterate().next();
+		String scriptPath = PojoHelper.getChannelAccessDetailValue(m_channel,OimConstants.CHANNEL_ACCESSDETAIL_SCRIPT_PATH);
+		System.out.println("CHecking the script path");
+		if(scriptPath ==null||scriptPath.equalsIgnoreCase("")){
+			System.out.println("Channel is not yet setup for automation.");
+			return false;
+		}
+		
+		Regex scriptMatch = Regex.perlCode("/http:\\/\\/(.+?)\\/(.+)/i");
+		if (scriptMatch.search(scriptPath)) {
+			m_storeURL = scriptMatch.stringMatched(1);
+			m_filePath = "/" + scriptMatch.stringMatched(2);
+		} else {
+			System.out.println("FAILED TO PARSE SCRIPT LOCATION!");
+			System.out.println("FAILURE_PARSE_MARKETURL");
+			return false;
+		}
+				
+		return true;
+	}
+
+	public boolean getVendorOrders() {
+		boolean success = true;
+
+		try {
+			if (!pingTest()) {
+				logStream.println("Failed Ping Test!");
+				return false;
+			}
+
+			Set suppliers = m_channel.getOimChannelSupplierMaps();
+			Map supplierMap = new HashMap();
+			Iterator itr = suppliers.iterator();
+			while (itr.hasNext()) {
+				OimChannelSupplierMap map = (OimChannelSupplierMap)itr.next();
+				if (map.getDeleteTm() != null)
+					continue;
+				
+				String prefix = map.getSupplierPrefix();
+				OimSuppliers supplier = map.getOimSuppliers();
+				System.out.println("prefix :: " + prefix + "supplierID :: "
+						+ supplier.getSupplierId());
+				supplierMap.put(prefix, supplier);
+			}
+
+			OimOrderBatches batch = null;
+			long start = System.currentTimeMillis();
+			String response = sendGetOrdersRequest();
+			
+			if (!"".equals(response)) {
+				StringReader str = new StringReader(response);
+				batch = parseGetProdResponse(str, supplierMap);
+			} else {
+				System.out
+						.println("FAILURE_GETPRODUCT_NULL_RESPONSE FAILURE_GETPRODUCT_NULL_RESPONSE");
+				return false;
+			}
+
+			long time = (System.currentTimeMillis() - start);
+			System.out.println(" -- Finished GetProduct step in "
+					+ (time / 1000) + " seconds ("
+					+ NumberFormat.roundDouble((time / 1000 / 60))
+					+ " minutes)" + "\n");
+
+			if (batch.getOimOrderses().size() == 0) {
+				logStream.println("\n\nOrder Import Process Complete.\n\nNo new orders found on the store.");
+				return true;
+			}
+
+			if (m_orderProcessingRule.getUpdateStoreOrderStatus().intValue() > 0) {
+				// Update status
+				if(m_orderProcessingRule.getUpdateWithStatus() != null && m_orderProcessingRule.getUpdateWithStatus().trim().length()>0){
+					response = sendOrderStatusRequest(batch, m_orderProcessingRule.getUpdateWithStatus());
+				}
+			} else {
+				// Don't update status
+			}
+			
+			if (!"".equals(response)) {
+				StringReader str = new StringReader(response);
+				List updatedOrders = parseUpdateResponse(str);
+
+				Set orders = batch.getOimOrderses();
+				
+				Set confirmedOrders = new HashSet();
+				if(m_orderProcessingRule.getUpdateStoreOrderStatus().intValue() > 0){
+					for (Iterator it = orders.iterator(); it.hasNext();) {
+						OimOrders order = (OimOrders) it.next();
+						if (updatedOrders
+								.contains(order.getStoreOrderId())) {
+							confirmedOrders.add(order);
+						}
+					}
+					batch.setOimOrderses(confirmedOrders);
+				}
+				
+				// Save everything
+				Transaction tx = m_dbSession.beginTransaction();	
+				batch.setInsertionTm(new Date());
+				batch.setCreationTm(new Date());
+				m_dbSession.save(batch);
+				
+				System.out.println("Saved batch id: "+batch.getBatchId());
+				
+				//Get all the orders for the current channel
+				ArrayList currentOrders = getCurrentOrders();
+				boolean ordersSaved = false;
+				for (Iterator oit = batch.getOimOrderses().iterator();oit.hasNext();) {
+					OimOrders order = (OimOrders)oit.next();
+					
+					if(currentOrders.contains(order.getStoreOrderId())){
+						System.out.println("!!! Order skiiping as already exists. Store order id : "+order.getStoreOrderId());
+						continue;
+					}
+					
+					order.setOimOrderBatches(batch);
+					order.setOrderFetchTm(new Date());
+					order.setInsertionTm(new Date());
+					m_dbSession.save(order);
+					System.out.println("Saved order id: "+order.getOrderId());
+					
+					for (Iterator dit = order.getOimOrderDetailses().iterator(); dit.hasNext();) {
+						OimOrderDetails detail = (OimOrderDetails)dit.next();
+						detail.setOimOrders(order);
+						detail.setInsertionTm(new Date());
+						detail.setOimOrderStatuses(new OimOrderStatuses(OimConstants.ORDER_STATUS_UNPROCESSED));
+						
+						m_dbSession.save(detail);
+						System.out.println("Saved detail id: "+detail.getDetailId());
+						ordersSaved = true;
+					}
+				}		
+				if(ordersSaved){
+					tx.commit();
+					logStream.println("\n\nOrder Import Process Complete.\n\nNumber of Orders imported from the store: "+batch.getOimOrderses().size());
+				}else{
+					logStream.println("!! No order saved.");
+				}
+			} else {
+				System.out.println("FAILURE_GETPRODUCT_NULL_RESPONSE");
+			}
+		} catch (Exception e) {
+			System.out.println(e.getMessage());
+			ExcHandle.printStackTraceToErr(e);
+		}
+		return success;
+	}
+
+	
+	public ArrayList getCurrentOrders(){
+		ArrayList orders = new ArrayList();
+		
+		Query query = m_dbSession.createQuery("select o from salesmachine.hibernatedb.OimOrders o where o.oimOrderBatches.oimChannels=:chan");
+		query.setEntity("chan", m_channel);
+		Iterator iter = query.iterate();
+		while(iter.hasNext()){
+			OimOrders o = (OimOrders)iter.next();
+			orders.add(o.getStoreOrderId());
+		}
+		
+		return orders;
+	}
+	
+	public boolean pingTest() {
+		String ping_xml = "<xmlPopulate>"
+				+ "<header>"
+				+ "<requestType>Ping</requestType>"
+				+ "<passkey>"
+				+ PojoHelper.getChannelAccessDetailValue(m_channel,OimConstants.CHANNEL_ACCESSDETAIL_AUTH_KEY)
+				+ "</passkey>" + "</header>" + "</xmlPopulate>";
+		String ping_response = sendRequest(ping_xml);
+		ping_response = ping_response.trim();
+
+		StringReader str = new StringReader(ping_response);
+		if (!"".equals(ping_response)) {
+			if (!parsePingResponse(str, "xmlPopulateResponce")) {
+				// Try once more
+				ping_response = sendRequest(ping_xml);
+				str = new StringReader(ping_response);
+				if (!"".equals(ping_response)) {
+					return parsePingResponse(str, "xmlPopulateResponse");
+				}
+			} else
+				return true;
+		}
+		return false;
+	}
+
+	public String sendGetOrdersRequest() {
+		String getprod_xml = "<xmlPopulate>"
+				+ "<header>"
+				+ "<requestType>GetOrders</requestType>"
+				+ "<passkey>"
+				+ PojoHelper.getChannelAccessDetailValue(m_channel,OimConstants.CHANNEL_ACCESSDETAIL_AUTH_KEY)
+				+ "</passkey>" + "</header>" + "</xmlPopulate>";
+		String getprod_response = sendRequest(getprod_xml);
+		return getprod_response.trim();
+	}
+
+	private OimOrderBatches parseGetProdResponse(StringReader xml_toparse,Map supplierMap) {
+		try {
+			DecimalFormat df = new DecimalFormat("#.##");
+			OimOrderBatches batch = new OimOrderBatches();
+			batch.setOimChannels(m_channel);
+			batch.setOimOrderBatchesTypes(new OimOrderBatchesTypes(OimConstants.ORDERBATCH_TYPE_ID_AUTOMATED));
+			
+			ByteArrayOutputStream baos = new ByteArrayOutputStream(1000);
+			DOMParser parser = new DOMParser();
+			parser.setErrorStream(baos);
+			parser.parse(xml_toparse);
+			XMLDocument doc = parser.getDocument();
+			doc.getDocumentElement().normalize();
+			NodeList N_list = doc.getElementsByTagName("Order");
+			for (int s = 0; s < N_list.getLength(); s++) {
+				Node node = N_list.item(s);
+				if (node.getNodeType() == Node.ELEMENT_NODE) {
+					Element element = (Element) node;
+					OimOrders order = new OimOrders();					
+					NodeList details = element.getElementsByTagName("deliverydetails");
+					if (details != null && details.getLength() > 0) {
+						Element e = (Element) details.item(0);
+						order.setDeliveryName(getTagValue("name", e));
+						order.setDeliveryStreetAddress(getTagValue("streetaddress", e));
+						order.setDeliverySuburb(getTagValue("suburb", e));
+						order.setDeliveryCity(getTagValue("city", e));
+						order.setDeliveryState(getTagValue("state", e));
+						order.setDeliveryCountry(getTagValue("country", e));
+						order.setDeliveryZip(getTagValue("zip", e));
+						order.setDeliveryCompany(getTagValue("company", e));
+						order.setDeliveryPhone(getTagValue("phone", e));
+						order.setDeliveryEmail(getTagValue("email", e));						
+					}
+
+					details = element.getElementsByTagName("billingdetails");
+					if (details != null && details.getLength() > 0) {												
+						Element e = (Element) details.item(0);
+						order.setBillingName(getTagValue("name", e));
+						order.setBillingStreetAddress(getTagValue("streetaddress", e));
+						order.setBillingSuburb(getTagValue("suburb", e));
+						order.setBillingCity(getTagValue("city", e));
+						order.setBillingState(getTagValue("state", e));
+						order.setBillingCountry(getTagValue("country", e));
+						order.setBillingZip(getTagValue("zip", e));
+						order.setBillingCompany(getTagValue("company", e));
+						order.setBillingPhone(getTagValue("phone", e));
+						order.setBillingEmail(getTagValue("email", e));						
+					}
+
+					details = element.getElementsByTagName("customerdetails");
+					if (details != null && details.getLength() > 0) {
+						Element e = (Element) details.item(0);
+						order.setCustomerName(getTagValue("name", e));
+						order.setCustomerStreetAddress(getTagValue("streetaddress", e));
+						order.setCustomerSuburb(getTagValue("suburb", e));
+						order.setCustomerCity(getTagValue("city", e));
+						order.setCustomerState(getTagValue("state", e));
+						order.setCustomerCountry(getTagValue("country", e));
+						order.setCustomerZip(getTagValue("zip", e));
+						order.setCustomerCompany(getTagValue("company", e));
+						order.setCustomerPhone(getTagValue("phone", e));
+						order.setCustomerEmail(getTagValue("email", e));						
+					}
+					
+					order.setStoreOrderId(getTagValue("o_id",element));
+					order.setPayMethod(getTagValue("o_pay_method",element));
+					double billAmt = Double.parseDouble(getTagValue("p_bill_amount",element));
+					String billAmtFormatted = df.format(billAmt);
+					order.setOrderTotalAmount(new Double(billAmtFormatted));
+					
+					order.setShippingDetails(getTagValue("o_shipping",element));
+					
+					SimpleDateFormat sdf = new SimpleDateFormat("MM-dd-yyyy");
+					Date d1 = new Date();
+					try {
+						d1 = sdf.parse(getTagValue("o_time", element));
+					} catch (ParseException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+					order.setOrderTm(d1);
+					
+					details = ((Element) (element
+							.getElementsByTagName("products").item(0)))
+							.getElementsByTagName("product");
+					if (details != null && details.getLength() > 0) {
+						for (int i = 0; i < details.getLength(); i++) {
+							Element e = (Element) details.item(i);
+							String sku = getTagValue("p_model", e);
+							String qty = getTagValue("p_quantity", e);
+							String priceEach = getTagValue("p_price_each", e);
+							String productCost = "0";
+							try{
+								productCost = getTagValue("p_price_cost", e);
+							}catch(Exception ex){
+								productCost = "0";
+							}
+							if(sku.trim().length()==0){
+								continue;
+							}
+							System.out.println("!! SKU "+sku+" qty : "+qty+" price each : "+priceEach);
+							
+							
+							String prefix = "";
+							if(sku.length()>2){
+								prefix = sku.substring(0, 2);
+							}
+							OimSuppliers supplier = null;
+							if (supplierMap.containsKey(prefix)) {
+								supplier = (OimSuppliers)supplierMap.get(prefix);
+							}					
+							
+							double cost = 0;
+							try {
+								cost = Double.parseDouble(productCost);
+							} catch (Exception ex) {
+								ex.printStackTrace();
+							}
+							
+							double saleprice = 0;
+							int quantity = 1;
+							try {
+								saleprice = Double.parseDouble(priceEach);
+								quantity = Integer.parseInt(qty);
+							} catch (Exception ex) {
+								ex.printStackTrace();
+							}
+							
+							OimOrderDetails detail = new OimOrderDetails();
+							detail.setSalePrice(new Double(df.format(saleprice)));
+							detail.setQuantity(new Integer(quantity));
+							detail.setSku(sku);
+							detail.setOimSuppliers(supplier);
+							if(cost > 0)
+								detail.setCostPrice(cost);
+							
+							order.getOimOrderDetailses().add(detail);
+						}
+					}
+					
+					String o_note = getTagValue("o_note", element);
+					
+					System.out.println("Adding order in the batch with order id : "
+									+ order.getStoreOrderId());
+					batch.getOimOrderses().add(order);
+				}
+			}
+			return batch;
+		} catch (Exception e) {
+			System.out.println(e.getMessage());
+			ExcHandle.printStackTraceToErr(e);
+		}
+
+		return null;
+	}
+
+	public String sendRequest(String pingXML) {
+		System.out.println("Sending request to " + m_storeURL + m_filePath);
+
+		PrintWriter out = new PrintWriter(System.out);
+		FormObject formObj = new FormObject(m_storeURL, m_filePath, "", "",
+				false, false, false, out, "");
+		
+		
+		//Find which orders to pull from the store if the pingXML is for order pulling
+		Hashtable formData = new Hashtable();
+		formData.put("XML_INPUT_VALUE", pingXML);
+		
+		if(pingXML.indexOf("<requestType>GetOrders</requestType>")!=-1){
+			Query query = m_dbSession.createQuery("select opr from salesmachine.hibernatedb.OimOrderProcessingRule opr where opr.deleteTm is null and opr.oimChannels=:chan");
+			query.setEntity("chan", m_channel);
+			Iterator iter = query.iterate();
+			if(iter.hasNext()){
+				m_orderProcessingRule = (OimOrderProcessingRule)iter.next();
+				
+				if(m_orderProcessingRule.getProcessAll().intValue() == 0) {
+					String status = m_orderProcessingRule.getProcessWithStatus();
+					System.out.println("!!! status to pull :"+status);
+					
+					formData.put("orderpulltype", status);
+				}
+			}
+		}
+		
+		formObj.addData(formData);
+		formObj.handleRedirects();
+		formObj.setTimeOut(60 * 1000 * 30);
+		CookieModule.setCookiePolicyHandler(null);
+		try {
+			formObj.hitForm("Post", null);
+		} catch (Exception e) {
+			StringBuffer buffer = new StringBuffer(1024);
+			buffer
+					.append("Exception occurred during sending XML Request for VID '");
+			// buffer.append(market.vendor_id);
+			buffer.append("' & VMMID '");
+			// buffer.append(market.vendor_market_map_id);
+			buffer.append("'\nRequest: ----------> ");
+			buffer.append(pingXML);
+			buffer.append("\nException during hitting the FO ------------> ");
+			buffer.append(e.getMessage());
+			System.out.println(buffer.toString());
+			ExcHandle.printStackTraceToErr(e);
+		}
+
+		if (formObj.okay) {
+			return formObj.page;
+		} else {
+			System.out.println("Ping Failure. Page Contents:\n" + formObj.page);
+		}
+		return "";
+	}
+
+	private boolean parsePingResponse(StringReader xml_toparse, String tag_name) {
+		boolean ping_success = false;
+		String heartbeat = "";
+		DOMParser parser = new DOMParser();
+		XMLDocument doc;
+		Node node;
+		Element element;
+		try {
+			ByteArrayOutputStream baos = new ByteArrayOutputStream(1000);
+			parser.setErrorStream(baos);
+			parser.parse(xml_toparse);
+			doc = parser.getDocument();
+			doc.getDocumentElement().normalize();
+			NodeList N_list = doc.getElementsByTagName(tag_name);
+			for (int s = 0; s < N_list.getLength(); s++) {
+				node = N_list.item(s);
+				if (node.getNodeType() == Node.ELEMENT_NODE) {
+					element = (Element) node;
+					heartbeat = getTagValue("heartbeat", element);
+					System.out.println("HEARTBEAT :" + heartbeat);
+				}
+			}
+			if ("alive".equals(heartbeat.toLowerCase())) {
+				ping_success = true;
+			}
+		} catch (Exception e) {
+			System.out.println(e.getMessage());
+			ExcHandle.printStackTraceToErr(e);
+		}
+		return ping_success;
+	}
+
+	private static String getTagValue(String sTag, Element eElement) {
+		NodeList nlList = eElement.getElementsByTagName(sTag).item(0)
+				.getChildNodes();
+		Node nValue = (Node) nlList.item(0);
+		if (nValue != null) {
+			return nValue.getNodeValue();
+		} else {
+			return "";
+		}
+	}
+
+	public String sendOrderStatusRequest(OimOrderBatches batch, String status) {
+		StringBuffer xmlrequest = new StringBuffer("<xmlPopulate>\n"
+				+ "<header>\n"
+				+ "<requestType>updateorders</requestType>\n"
+				+ "<passkey>"
+				+ PojoHelper.getChannelAccessDetailValue(m_channel,OimConstants.CHANNEL_ACCESSDETAIL_AUTH_KEY)
+				+ "</passkey>\n" + "</header>\n");
+
+		Set orders = batch.getOimOrderses();
+		for (Iterator it = orders.iterator(); it.hasNext();) {
+			OimOrders order = (OimOrders) it.next();
+			xmlrequest.append("<xml_order>\n");
+			xmlrequest.append("<order_id>" + order.getStoreOrderId() + "</order_id>");
+			xmlrequest.append("<order_status>" + status + "</order_status>");
+			xmlrequest.append("</xml_order>\n");
+		}
+		xmlrequest.append("</xmlPopulate>");
+
+		String getprod_response = sendRequest(xmlrequest.toString());
+		return getprod_response.trim();
+	}
+
+	private List parseUpdateResponse(StringReader xmlToParse) {
+		List updatedOrders = new ArrayList();
+		try {
+			ByteArrayOutputStream baos = new ByteArrayOutputStream(1000);
+			DOMParser parser = new DOMParser();
+			parser.setErrorStream(baos);
+			parser.parse(xmlToParse);
+			XMLDocument doc = parser.getDocument();
+			doc.getDocumentElement().normalize();
+			NodeList N_list = doc.getElementsByTagName("UpdatedOrder");
+			for (int s = 0; s < N_list.getLength(); s++) {
+				Node node = N_list.item(s);
+				if (node.getNodeType() == Node.ELEMENT_NODE) {
+					Element element = (Element) node;
+					NodeList nlList = element.getChildNodes();
+					Node nValue = (Node) nlList.item(0);
+					if (nValue != null) {
+						System.out.println("Updated order: "
+								+ nValue.getNodeValue());
+						updatedOrders.add(nValue.getNodeValue());
+					}
+				}
+			}
+		} catch (Exception e) {
+			System.out.println(e.getMessage());
+			e.printStackTrace();
+		}
+
+		return updatedOrders;
+	}
+
+	public void updateProcessedOrders() {
+		Transaction tx = m_dbSession.beginTransaction();
+		Query query = m_dbSession.createQuery("select distinct o.storeOrderId from salesmachine.hibernatedb.OimOrders as o " +
+				"where not exists (from salesmachine.hibernatedb.OimOrderDetails as d where d.oimOrders=o and d.processingTm is null)" +
+				"and exists (from salesmachine.hibernatedb.OimOrderDetails as d1 where d1.oimOrders=o and d1.processingTm>trunc(sysdate-1))");
+		Iterator it = query.iterate();
+		if (! it.hasNext()) {
+			System.out.println("No orders to update");
+			return;			
+		}
+				
+		StringBuffer xmlrequest = new StringBuffer("<xmlPopulate>\n"
+				+ "<header>\n"
+				+ "<requestType>updateorders</requestType>\n"
+				+ "<passkey>"
+				+ PojoHelper.getChannelAccessDetailValue(m_channel,OimConstants.CHANNEL_ACCESSDETAIL_AUTH_KEY)
+				+ "</passkey>\n" + "</header>\n");
+		while(it.hasNext()) {
+			String storeOrderId = (String)it.next();
+			
+			System.out.println("Updating order: " + storeOrderId);
+			xmlrequest.append("<xml_order>\n");
+			xmlrequest.append("<order_id>" + storeOrderId + "</order_id>");
+			xmlrequest.append("<order_status>" + 3 + "</order_status>");
+			xmlrequest.append("</xml_order>\n");			
+		}
+
+		xmlrequest.append("</xmlPopulate>");
+		System.out.println(xmlrequest.toString());
+		String getprod_response = sendRequest(xmlrequest.toString());
+	}
+
+	public static void main(String args[]) {
+		Session session = SessionManager.currentSession();		
+		OimLogStream logStream = new OimLogStream();
+		CREOrderImport coi = new CREOrderImport();
+		int channelId = Integer.parseInt(args[1]);
+		if (! coi.init(channelId, session, logStream)) {
+			System.out.println("Failed initializing the channel.");
+			System.exit(0);
+		}
+		
+		if ("pull".equalsIgnoreCase(args[0])) {
+			System.out.println("Pulling orders for channel id: " + channelId);
+			coi.getVendorOrders();
+		} else if ("push".equalsIgnoreCase(args[0])) {
+			System.out.println("Pushing order statuses for channel id: "
+					+ channelId);
+			coi.updateProcessedOrders();
+		}
+		
+		SessionManager.closeSession();
+		System.exit(0);
+	}
+
+}

@@ -1,0 +1,32 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+"http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd">
+<!-- Generated 30 Mar, 2010 7:26:11 PM by Hibernate Tools 3.2.4.GA -->
+<hibernate-mapping>
+    <class name="salesmachine.hibernatedb.OimSupportedChannels" table="OIM_SUPPORTED_CHANNELS" schema="KDYER">
+        <id name="supportedChannelId" type="java.lang.Integer">
+            <column name="SUPPORTED_CHANNEL_ID" precision="22" scale="0" />
+            <generator class="sequence">
+                <param name="sequence">OIM_SUPPORTED_CHANNELS_SEQ</param>
+            </generator>
+        </id>
+        <property name="channelName" type="string">
+            <column name="CHANNEL_NAME" length="100" />
+        </property>
+        <property name="insertionTm" type="date">
+            <column name="INSERTION_TM" length="7" />
+        </property>
+        <property name="deleteTm" type="date">
+            <column name="DELETE_TM" length="7" />
+        </property>
+        <property name="orderFetchBean" type="string">
+            <column name="ORDER_FETCH_BEAN" length="100" />
+        </property>
+        <set name="oimChannelses" inverse="true" lazy="true" table="OIM_CHANNELS" fetch="select">
+            <key>
+                <column name="SUPPORTED_CHANNEL_ID" precision="22" scale="0" />
+            </key>
+            <one-to-many class="salesmachine.hibernatedb.OimChannels" />
+        </set>
+    </class>
+</hibernate-mapping>

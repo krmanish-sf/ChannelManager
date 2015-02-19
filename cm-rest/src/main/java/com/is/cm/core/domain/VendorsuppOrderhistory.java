@@ -1,0 +1,65 @@
+package com.is.cm.core.domain;
+
+import java.util.Date;
+
+public class VendorsuppOrderhistory extends DomainBase {
+	private static final long serialVersionUID = 1416831662017531127L;
+	private Integer vsoHistoryId;
+	private Vendor vendors;
+	private Supplier oimSuppliers;
+	private Date processingTm;
+	private Integer errorCode;
+	private String description;
+
+	public VendorsuppOrderhistory() {
+	}
+
+	public Integer getVsoHistoryId() {
+		return this.vsoHistoryId;
+	}
+
+	public void setVsoHistoryId(Integer vsoHistoryId) {
+		this.vsoHistoryId = vsoHistoryId;
+	}
+
+	public Vendor getVendors() {
+		return this.vendors;
+	}
+
+	public void setVendors(Vendor vendors) {
+		this.vendors = vendors;
+	}
+
+	public Supplier getOimSuppliers() {
+		return this.oimSuppliers;
+	}
+
+	public void setOimSuppliers(Supplier oimSuppliers) {
+		this.oimSuppliers = oimSuppliers;
+	}
+
+	public Date getProcessingTm() {
+		return this.processingTm;
+	}
+
+	public void setProcessingTm(Date processingTm) {
+		this.processingTm = processingTm;
+	}
+
+	public Integer getErrorCode() {
+		return this.errorCode;
+	}
+
+	public void setErrorCode(Integer errorCode) {
+		this.errorCode = errorCode;
+	}
+
+	public String getDescription() {
+		return this.description;
+	}
+
+	public void setDescription(String description) {
+		this.description = description;
+	}
+
+}

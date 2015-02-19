@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+"http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd">
+<hibernate-mapping>
+	<class name="salesmachine.hibernatedb.OimSupplierShippingOverride" table="oim_supplier_shipping_override">
+		<id name="id" type="int">
+			<column name="ID" />
+            <generator class="sequence">
+                <param name="sequence">oim_supp_shipp_override_seq</param>
+            </generator>
+		</id>
+		<property name="shippingMethod" type="java.lang.String">
+			<column name="SHIPPING_TEXT" />
+		</property>
+		<property name="oimSupplierShippingMethod" type="int">
+			<column name="SUPPLIER_SHIPPING_CARRIER_ID" />
+		</property>
+	</class>
+</hibernate-mapping>

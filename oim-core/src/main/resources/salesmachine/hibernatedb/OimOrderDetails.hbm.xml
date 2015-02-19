@@ -1,0 +1,56 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+"http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd">
+<!-- Generated 30 Mar, 2010 7:26:11 PM by Hibernate Tools 3.2.4.GA -->
+<hibernate-mapping>
+    <class name="salesmachine.hibernatedb.OimOrderDetails" table="OIM_ORDER_DETAILS" schema="KDYER">
+        <id name="detailId" type="java.lang.Integer">
+            <column name="DETAIL_ID" precision="22" scale="0" />
+            <generator class="sequence">
+                <param name="sequence">OIM_ORDER_DETAILS_SEQ</param>
+            </generator>
+        </id>
+        <many-to-one name="oimOrderStatuses" class="salesmachine.hibernatedb.OimOrderStatuses" fetch="select">
+            <column name="STATUS_ID" precision="22" scale="0" />
+        </many-to-one>
+        <many-to-one name="oimOrders" class="salesmachine.hibernatedb.OimOrders" fetch="select">
+            <column name="ORDER_ID" precision="22" scale="0" />
+        </many-to-one>
+        <many-to-one name="oimSuppliers" class="salesmachine.hibernatedb.OimSuppliers" fetch="select">
+            <column name="SUPPLIER_ID" precision="22" scale="0" />
+        </many-to-one>
+        <property name="sku" type="string">
+            <column name="SKU" length="20" />
+        </property>
+        <property name="costPrice" type="java.lang.Double">
+            <column name="COST_PRICE" precision="12" />
+        </property>
+        <property name="salePrice" type="java.lang.Double">
+            <column name="SALE_PRICE" precision="12" />
+        </property>
+        <property name="processingTm" type="date">
+            <column name="PROCESSING_TM" length="7" />
+        </property>
+        <property name="insertionTm" type="date">
+            <column name="INSERTION_TM" length="7" />
+        </property>
+        <property name="deleteTm" type="date">
+            <column name="DELETE_TM" length="7" />
+        </property>
+        <property name="quantity" type="java.lang.Integer">
+            <column name="QUANTITY" precision="22" scale="0" />
+        </property>
+        <property name="productName" type="string">
+            <column name="PRODUCT_NAME" length="100" />
+        </property>
+        <property name="productDesc" type="string">
+            <column name="PRODUCT_DESC" length="500" />
+        </property>
+         <property name="supplierOrderStatus" type="string">
+            <column name="SUPPLIER_ORDER_STATUS" length="50" />
+        </property>
+         <property name="supplierOrderNumber" type="string">
+            <column name="SUPPLIER_ORDER_NUMBER" length="50" />
+        </property>
+    </class>
+</hibernate-mapping>

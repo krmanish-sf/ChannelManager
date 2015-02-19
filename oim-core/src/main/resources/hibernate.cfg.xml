@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-configuration PUBLIC
+		"-//Hibernate/Hibernate Configuration DTD 3.0//EN"
+		"http://www.hibernate.org/dtd/hibernate-configuration-3.0.dtd">
+<hibernate-configuration>
+	<session-factory>
+		<property name="hibernate.connection.driver_class">oracle.jdbc.driver.OracleDriver</property>
+		<property name="hibernate.connection.password">callmeice</property>
+		<property name="hibernate.connection.url">jdbc:oracle:thin:@162.218.136.229:1521:kdyer</property>
+		<property name="hibernate.connection.username">kdyer</property>
+		<property name="hibernate.dialect">org.hibernate.dialect.Oracle9iDialect</property>
+		<!-- <property name="hibernate.cache.use_query_cache">true</property> -->
+		<!-- Connection Pooling -->
+		<property name="connection.provider_class">org.hibernate.connection.C3P0ConnectionProvider</property>
+		<property name="hibernate.c3p0.max_size">20</property>
+		<property name="hibernate.c3p0.min_size">1</property>
+		<property name="hibernate.c3p0.idleConnectionTestPeriod">30</property>
+		<property name="hibernate.c3p0.automaticTestTable">con_test</property>
+		<property name="hibernate.c3p0.maxConnectionAge">300</property>
+
+		<mapping resource="salesmachine/hibernatedb/Reps.hbm.xml" />
+		<mapping resource="salesmachine/hibernatedb/Vendors.hbm.xml" />
+		<mapping resource="salesmachine/hibernatedb/OimChannelAccessDetails.hbm.xml" />
+		<mapping resource="salesmachine/hibernatedb/OimOrderProcessingRule.hbm.xml" />
+		<mapping resource="salesmachine/hibernatedb/OimChannelAccessFields.hbm.xml" />
+		<mapping resource="salesmachine/hibernatedb/OimOrders.hbm.xml" />
+		<mapping resource="salesmachine/hibernatedb/OimChannelFiles.hbm.xml" />
+		<mapping resource="salesmachine/hibernatedb/OimOrderStatuses.hbm.xml" />
+		<mapping resource="salesmachine/hibernatedb/OimChannels.hbm.xml" />
+		<mapping resource="salesmachine/hibernatedb/OimSupplierMethodattrNames.hbm.xml" />
+		<mapping resource="salesmachine/hibernatedb/OimChannelSupplierMap.hbm.xml" />
+		<mapping
+			resource="salesmachine/hibernatedb/OimSupplierMethodattrValues.hbm.xml" />
+		<mapping resource="salesmachine/hibernatedb/OimFields.hbm.xml" />
+		<mapping resource="salesmachine/hibernatedb/OimSupplierMethodNames.hbm.xml" />
+		<mapping resource="salesmachine/hibernatedb/OimFileFieldMap.hbm.xml" />
+		<mapping resource="salesmachine/hibernatedb/OimSupplierMethods.hbm.xml" />
+		<mapping resource="salesmachine/hibernatedb/OimFileformatParams.hbm.xml" />
+		<mapping resource="salesmachine/hibernatedb/OimSupplierMethodTypes.hbm.xml" />
+		<mapping resource="salesmachine/hibernatedb/OimFileformats.hbm.xml" />
+		<mapping resource="salesmachine/hibernatedb/OimSuppliers.hbm.xml" />
+		<mapping resource="salesmachine/hibernatedb/OimFiletypes.hbm.xml" />
+		<mapping resource="salesmachine/hibernatedb/OimSupportedChannels.hbm.xml" />
+		<mapping resource="salesmachine/hibernatedb/OimOrderBatches.hbm.xml" />
+		<mapping resource="salesmachine/hibernatedb/OimUploadedFiles.hbm.xml" />
+		<mapping resource="salesmachine/hibernatedb/OimOrderBatchesTypes.hbm.xml" />
+		<mapping resource="salesmachine/hibernatedb/OimVendorSuppliers.hbm.xml" />
+		<mapping resource="salesmachine/hibernatedb/OimOrderDetails.hbm.xml" />
+		<mapping resource="salesmachine/hibernatedb/OimVendorsuppOrderhistory.hbm.xml" />
+		<mapping resource="salesmachine/hibernatedb/Product.hbm.xml" />
+		<mapping resource="salesmachine/hibernatedb/OimSupplierShippingMethods.hbm.xml" />
+		<mapping resource="salesmachine/hibernatedb/OimVendorShippingMap.hbm.xml" />
+		<mapping resource="salesmachine/hibernatedb/OimShippingCarrier.hbm.xml" />
+		<mapping resource="salesmachine/hibernatedb/OimShippingMethod.hbm.xml" />
+		<mapping resource="salesmachine/hibernatedb/OimSupplierShippingMethod.hbm.xml" />
+		<mapping resource="salesmachine/hibernatedb/OimChannelShippingMap.hbm.xml" />
+		<mapping resource="salesmachine/hibernatedb/OimSupplierShippingOverride.hbm.xml" />
+	</session-factory>
+</hibernate-configuration>

@@ -1,0 +1,50 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+"http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<!-- Generated 30 Mar, 2010 7:26:11 PM by Hibernate Tools 3.2.4.GA -->
+<hibernate-mapping>
+    <class name="salesmachine.hibernatedb.OimFiletypes" table="OIM_FILETYPES" schema="KDYER">
+        <id name="fileTypeId" type="java.lang.Integer">
+            <column name="FILE_TYPE_ID" precision="22" scale="0" />
+            <generator class="sequence">
+                <param name="sequence">OIM_FILETYPES_SEQ</param>
+            </generator>
+        </id>
+        <many-to-one name="oimFileformats" class="salesmachine.hibernatedb.OimFileformats" fetch="select">
+            <column name="FILE_FORMAT_ID" precision="22" scale="0" />
+        </many-to-one>
+        <property name="fileTypeName" type="string">
+            <column name="FILE_TYPE_NAME" length="100" />
+        </property>
+        <property name="insertionTm" type="date">
+            <column name="INSERTION_TM" length="7" />
+        </property>
+        <property name="deleteTm" type="date">
+            <column name="DELETE_TM" length="7" />
+        </property>
+        <set name="oimUploadedFileses" inverse="true" lazy="true" table="OIM_UPLOADED_FILES" fetch="select">
+            <key>
+                <column name="FILE_TYPE_ID" precision="22" scale="0" />
+            </key>
+            <one-to-many class="salesmachine.hibernatedb.OimUploadedFiles" />
+        </set>
+        <set name="oimFileformatParamses" inverse="true" lazy="true" table="OIM_FILEFORMAT_PARAMS" fetch="select">
+            <key>
+                <column name="FILE_TYPE_ID" precision="22" scale="0" />
+            </key>
+            <one-to-many class="salesmachine.hibernatedb.OimFileformatParams" />
+        </set>
+        <set name="oimFileFieldMaps" inverse="true" lazy="true" table="OIM_FILE_FIELD_MAP" fetch="select">
+            <key>
+                <column name="FILE_TYPE_ID" precision="22" scale="0" />
+            </key>
+            <one-to-many class="salesmachine.hibernatedb.OimFileFieldMap" />
+        </set>
+        <set name="oimChannelFileses" inverse="true" lazy="true" table="OIM_CHANNEL_FILES" fetch="select">
+            <key>
+                <column name="FILE_TYPE_ID" precision="22" scale="0" />
+            </key>
+            <one-to-many class="salesmachine.hibernatedb.OimChannelFiles" />
+        </set>
+    </class>
+</hibernate-mapping>

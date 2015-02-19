@@ -1,0 +1,35 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+"http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd">
+<!-- Generated 30 Mar, 2010 7:26:11 PM by Hibernate Tools 3.2.4.GA -->
+<hibernate-mapping>
+    <class name="salesmachine.hibernatedb.OimFileFieldMap" table="OIM_FILE_FIELD_MAP" schema="KDYER">
+        <id name="fieldMapId" type="java.lang.Integer">
+            <column name="FIELD_MAP_ID" precision="22" scale="0" />
+            <generator class="sequence">
+                <param name="sequence">OIM_FILE_FIELD_MAP_SEQ</param>
+            </generator>
+        </id>
+        <many-to-one name="oimFiletypes" class="salesmachine.hibernatedb.OimFiletypes" fetch="select">
+            <column name="FILE_TYPE_ID" precision="22" scale="0" />
+        </many-to-one>
+        <many-to-one name="oimFields" class="salesmachine.hibernatedb.OimFields" fetch="select">
+            <column name="FIELD_ID" precision="22" scale="0" />
+        </many-to-one>
+        <property name="mappedFieldName" type="string">
+            <column name="MAPPED_FIELD_NAME" length="20" />
+        </property>
+        <property name="insertionTm" type="date">
+            <column name="INSERTION_TM" length="7" />
+        </property>
+        <property name="deleteTm" type="date">
+            <column name="DELETE_TM" length="7" />
+        </property>
+        <property name="mappedFieldModifierRuleRd" type="string">
+            <column name="MAPPED_FIELD_MODIFIER_RULE_RD" length="500" />
+        </property>
+        <property name="mappedFieldModifierRuleWr" type="string">
+            <column name="MAPPED_FIELD_MODIFIER_RULE_WR" length="500" />
+        </property>
+    </class>
+</hibernate-mapping>

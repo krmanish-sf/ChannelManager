@@ -1,0 +1,35 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+"http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd">
+<!-- Generated 30 Mar, 2010 7:26:11 PM by Hibernate Tools 3.2.4.GA -->
+<hibernate-mapping>
+    <class name="salesmachine.hibernatedb.OimUploadedFiles" table="OIM_UPLOADED_FILES" schema="KDYER">
+        <id name="fileId" type="java.lang.Integer">
+            <column name="FILE_ID" precision="22" scale="0" />
+            <generator class="sequence">
+                <param name="sequence">OIM_UPLOADED_FILES_SEQ</param>
+            </generator>
+        </id>
+        <many-to-one name="oimFiletypes" class="salesmachine.hibernatedb.OimFiletypes" fetch="select">
+            <column name="FILE_TYPE_ID" precision="22" scale="0" />
+        </many-to-one>
+        <many-to-one name="oimChannels" class="salesmachine.hibernatedb.OimChannels" fetch="select">
+            <column name="CHANNEL_ID" precision="22" scale="0" />
+        </many-to-one>
+        <many-to-one name="oimOrderBatches" class="salesmachine.hibernatedb.OimOrderBatches" fetch="select">
+            <column name="BATCH_ID" precision="22" scale="0" />
+        </many-to-one>
+        <property name="fileName" type="string">
+            <column name="FILE_NAME" length="100" />
+        </property>
+        <property name="fileSz" type="java.lang.Double">
+            <column name="FILE_SZ" precision="12" />
+        </property>
+        <property name="insertionTm" type="date">
+            <column name="INSERTION_TM" length="7" />
+        </property>
+        <property name="deleteTm" type="date">
+            <column name="DELETE_TM" length="7" />
+        </property>
+    </class>
+</hibernate-mapping>

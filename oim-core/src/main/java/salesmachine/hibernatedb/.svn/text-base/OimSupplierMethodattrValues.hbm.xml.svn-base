@@ -1,0 +1,29 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+"http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<!-- Generated 30 Mar, 2010 7:26:11 PM by Hibernate Tools 3.2.4.GA -->
+<hibernate-mapping>
+    <class name="salesmachine.hibernatedb.OimSupplierMethodattrValues" table="OIM_SUPPLIER_METHODATTR_VALUES" schema="KDYER">
+        <id name="attrvalueId" type="java.lang.Integer">
+            <column name="ATTRVALUE_ID" precision="22" scale="0" />
+            <generator class="sequence">
+                <param name="sequence">OIM_SUPPLIER_METHOD_ATTR_SEQ</param>
+            </generator>
+        </id>
+        <many-to-one name="oimSupplierMethods" class="salesmachine.hibernatedb.OimSupplierMethods" fetch="select">
+            <column name="SUPPLIER_METHOD_ID" precision="22" scale="0" />
+        </many-to-one>
+        <many-to-one name="oimSupplierMethodattrNames" class="salesmachine.hibernatedb.OimSupplierMethodattrNames" fetch="select">
+            <column name="ATTRIBUTE_ID" precision="22" scale="0" />
+        </many-to-one>
+        <property name="attributeValue" type="string">
+            <column name="ATTRIBUTE_VALUE" length="100" />
+        </property>
+        <property name="insertionTm" type="date">
+            <column name="INSERTION_TM" length="7" />
+        </property>
+        <property name="deleteTm" type="date">
+            <column name="DELETE_TM" length="7" />
+        </property>
+    </class>
+</hibernate-mapping>

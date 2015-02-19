@@ -1,0 +1,35 @@
+K 25
+svn:wc:ra_dav:version-url
+V 73
+/svn/InventorySource/!svn/ver/360/oim/oim-core/src/salesmachine/orderfile
+END
+DefaultCsvFile.java
+K 25
+svn:wc:ra_dav:version-url
+V 93
+/svn/InventorySource/!svn/ver/290/oim/oim-core/src/salesmachine/orderfile/DefaultCsvFile.java
+END
+DatabaseFile.java
+K 25
+svn:wc:ra_dav:version-url
+V 91
+/svn/InventorySource/!svn/ver/290/oim/oim-core/src/salesmachine/orderfile/DatabaseFile.java
+END
+TesscoXlsFile.java
+K 25
+svn:wc:ra_dav:version-url
+V 92
+/svn/InventorySource/!svn/ver/328/oim/oim-core/src/salesmachine/orderfile/TesscoXlsFile.java
+END
+OrderFile.java
+K 25
+svn:wc:ra_dav:version-url
+V 88
+/svn/InventorySource/!svn/ver/354/oim/oim-core/src/salesmachine/orderfile/OrderFile.java
+END
+DefaultXlsFile.java
+K 25
+svn:wc:ra_dav:version-url
+V 93
+/svn/InventorySource/!svn/ver/360/oim/oim-core/src/salesmachine/orderfile/DefaultXlsFile.java
+END

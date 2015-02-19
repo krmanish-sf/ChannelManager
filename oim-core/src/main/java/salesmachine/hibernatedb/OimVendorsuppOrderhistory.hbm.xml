@@ -1,0 +1,29 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+"http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<!-- Generated 30 Mar, 2010 7:26:11 PM by Hibernate Tools 3.2.4.GA -->
+<hibernate-mapping>
+    <class name="salesmachine.hibernatedb.OimVendorsuppOrderhistory" table="OIM_VENDORSUPP_ORDERHISTORY" schema="KDYER">
+        <id name="vsoHistoryId" type="java.lang.Integer">
+            <column name="VSO_HISTORY_ID" precision="22" scale="0" />
+            <generator class="sequence">
+                <param name="sequence">OIM_VENDORSUPP_ORDERHIST_SEQ</param>
+            </generator>
+        </id>
+        <many-to-one name="vendors" class="salesmachine.hibernatedb.Vendors" fetch="select">
+            <column name="VENDOR_ID" precision="22" scale="0" />
+        </many-to-one>
+        <many-to-one name="oimSuppliers" class="salesmachine.hibernatedb.OimSuppliers" fetch="select">
+            <column name="SUPPLIER_ID" precision="22" scale="0" />
+        </many-to-one>
+        <property name="processingTm" type="date">
+            <column name="PROCESSING_TM" length="7" />
+        </property>
+        <property name="errorCode" type="java.lang.Integer">
+            <column name="ERROR_CODE" precision="22" scale="0" />
+        </property>
+        <property name="description" type="string">
+            <column name="DESCRIPTION" length="500" />
+        </property>
+    </class>
+</hibernate-mapping>

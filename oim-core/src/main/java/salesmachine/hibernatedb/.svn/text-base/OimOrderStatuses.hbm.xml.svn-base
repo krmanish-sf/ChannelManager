@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+"http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<!-- Generated 30 Mar, 2010 7:26:11 PM by Hibernate Tools 3.2.4.GA -->
+<hibernate-mapping>
+    <class name="salesmachine.hibernatedb.OimOrderStatuses" table="OIM_ORDER_STATUSES" schema="KDYER">
+        <id name="statusId" type="java.lang.Integer">
+            <column name="STATUS_ID" precision="22" scale="0" />
+            <generator class="assigned" />
+        </id>
+        <property name="statusValue" type="string">
+            <column name="STATUS_VALUE" length="20" />
+        </property>
+        <set name="oimOrderDetailses" inverse="true" lazy="true" table="OIM_ORDER_DETAILS" fetch="select">
+            <key>
+                <column name="STATUS_ID" precision="22" scale="0" />
+            </key>
+            <one-to-many class="salesmachine.hibernatedb.OimOrderDetails" />
+        </set>
+    </class>
+</hibernate-mapping>

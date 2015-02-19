@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+"http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd">
+<hibernate-mapping>
+	<class name="salesmachine.hibernatedb.OimChannelShippingMap"
+		table="oim_channel_shipping_method">
+		<id name="id" type="int">
+			<column name="ID" />
+			<generator class="assigned" />
+		</id>
+		<many-to-one name="oimSupportedChannel"
+			class="salesmachine.hibernatedb.OimSupportedChannels" fetch="join">
+			<column name="SUPPORTED_CHANNEL_ID" />
+		</many-to-one>
+		<property name="shippingRegEx" type="java.lang.String">
+			<column name="SHIPPING_REGEX" />
+		</property>
+		<many-to-one name="oimShippingCarrier"
+			class="salesmachine.hibernatedb.OimShippingCarrier" fetch="join"
+			lazy="false">
+			<column name="CARRIER_ID" />
+		</many-to-one>
+		<many-to-one name="oimShippingMethod"
+			class="salesmachine.hibernatedb.OimShippingMethod" fetch="join" lazy="false">
+			<column name="CARRIER_METHOD_ID" />
+		</many-to-one>
+	</class>
+</hibernate-mapping>

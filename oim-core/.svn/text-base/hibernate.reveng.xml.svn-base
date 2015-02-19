@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-reverse-engineering PUBLIC "-//Hibernate/Hibernate Reverse Engineering DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-reverse-engineering-3.0.dtd" >
+
+<hibernate-reverse-engineering>
+	<schema-selection match-schema="KDYER"/>
+	
+	<type-mapping>
+		<sql-type jdbc-type="NUMERIC" hibernate-type="java.lang.Integer" />
+		<sql-type jdbc-type="DECIMAL" scale="0" hibernate-type="java.lang.Integer"/>
+		<sql-type jdbc-type="DECIMAL" hibernate-type="java.lang.Double" />
+	</type-mapping>
+	<!--<table-filter match-name="OIM_.*"/>-->	
+	<table-filter match-name="REPS"/>
+	<table-filter match-name="PRODUCT"/>
+	<table-filter match-name="VENDORS"/>
+	<table-filter match-name="OIM_CHANNELS"/>
+	<table-filter match-name="OIM_CHANNEL_ACCESS_DETAILS"/>
+	<table-filter match-name="OIM_CHANNEL_ACCESS_FIELDS"/>
+	<table-filter match-name="OIM_CHANNEL_FILES"/>
+	<table-filter match-name="OIM_CHANNEL_SUPPLIER_MAP"/>
+	<table-filter match-name="OIM_FIELDS"/>
+	<table-filter match-name="OIM_FILEFORMATS"/>
+	<table-filter match-name="OIM_FILEFORMAT_PARAMS"/>
+	<table-filter match-name="OIM_FILETYPES"/>
+	<table-filter match-name="OIM_FILE_FIELD_MAP"/>
+	<table-filter match-name="OIM_ORDERS"/>
+	<table-filter match-name="OIM_ORDER_BATCHES"/>
+	<table-filter match-name="OIM_ORDER_BATCHES_TYPES"/>
+	<table-filter match-name="OIM_ORDER_DETAILS"/>
+	<table-filter match-name="OIM_ORDER_PROCESSING_RULE"/>
+	<table-filter match-name="OIM_ORDER_STATUSES"/>
+	<table-filter match-name="OIM_SUPPLIERS"/>
+	<table-filter match-name="OIM_SUPPLIER_METHODATTR_NAMES"/>
+	<table-filter match-name="OIM_SUPPLIER_METHODATTR_VALUES"/>
+	<table-filter match-name="OIM_SUPPLIER_METHODS"/>
+	<table-filter match-name="OIM_SUPPLIER_METHOD_NAMES"/>
+	<table-filter match-name="OIM_SUPPLIER_METHOD_TYPES"/>
+	<table-filter match-name="OIM_SUPPORTED_CHANNELS"/>
+	<table-filter match-name="OIM_UPLOADED_FILES"/>
+	<table-filter match-name="OIM_VENDOR_SUPPLIERS"/>
+	<table-filter match-name="OIM_VENDORSUPP_ORDERHISTORY"/>
+	<table name="OIM_CHANNELS" schema="KDYER"> 
+		<primary-key>
+			<generator class="sequence">
+				<param name="sequence">OIM_CHANNELS_SEQ</param>
+			</generator>				
+		</primary-key>
+	</table>
+	<table name="OIM_CHANNEL_ACCESS_DETAILS" schema="KDYER"> 
+		<primary-key>
+			<generator class="sequence">
+				<param name="sequence">OIM_CHANNEL_ACCESS_DETAILS_SEQ</param>
+			</generator>				
+		</primary-key>
+	</table>
+	<table name="OIM_FIELDS" schema="KDYER"> 
+		<primary-key>
+			<generator class="sequence">
+				<param name="sequence">OIM_FIELDS_SEQ</param>
+			</generator>				
+		</primary-key>
+	</table>
+	<table name="OIM_FILEFORMATS" schema="KDYER"> 
+		<primary-key>
+			<generator class="sequence">
+				<param name="sequence">OIM_FILEFORMATS_SEQ</param>
+			</generator>				
+		</primary-key>
+	</table>
+	<table name="OIM_FILEFORMAT_PARAMS" schema="KDYER"> 
+		<primary-key>
+			<generator class="sequence">
+				<param name="sequence">OIM_FILEFORMAT_PARAMS_SEQ</param>
+			</generator>				
+		</primary-key>
+	</table>
+	<table name="OIM_FILETYPES" schema="KDYER"> 
+		<primary-key>
+			<generator class="sequence">
+				<param name="sequence">OIM_FILETYPES_SEQ</param>
+			</generator>				
+		</primary-key>
+	</table>
+	<table name="OIM_FILE_FIELD_MAP" schema="KDYER"> 
+		<primary-key>
+			<generator class="sequence">
+				<param name="sequence">OIM_FILE_FIELD_MAP_SEQ</param>
+			</generator>				
+		</primary-key>
+	</table>
+	<table name="OIM_ORDERS" schema="KDYER"> 
+		<primary-key>
+			<generator class="sequence">
+				<param name="sequence">OIM_ORDERS_SEQ</param>
+			</generator>				
+		</primary-key>
+	</table>
+	<table name="OIM_ORDER_BATCHES" schema="KDYER"> 
+		<primary-key>
+			<generator class="sequence">
+				<param name="sequence">OIM_ORDER_BATCHES_SEQ</param>
+			</generator>				
+		</primary-key>
+	</table>
+	<table name="OIM_ORDER_DETAILS" schema="KDYER"> 
+		<primary-key>
+			<generator class="sequence">
+				<param name="sequence">OIM_ORDER_DETAILS_SEQ</param>
+			</generator>				
+		</primary-key>
+	</table>
+	<table name="OIM_ORDER_PROCESSING_RULE" schema="KDYER"> 
+		<primary-key>
+			<generator class="sequence">
+				<param name="sequence">OIM_ORDER_PROCESSING_RULE_SEQ</param>
+			</generator>				
+		</primary-key>
+	</table>
+	<table name="OIM_SUPPLIERS" schema="KDYER"> 
+		<primary-key>
+			<generator class="sequence">
+				<param name="sequence">OIM_SUPPLIERS_SEQ</param>
+			</generator>				
+		</primary-key>
+	</table>
+	<table name="OIM_SUPPLIER_METHODS" schema="KDYER"> 
+		<primary-key>
+			<generator class="sequence">
+				<param name="sequence">OIM_SUPPLIER_METHODS_SEQ</param>
+			</generator>				
+		</primary-key>
+	</table>
+	<table name="OIM_SUPPLIER_METHODATTR_VALUES" schema="KDYER"> 
+		<primary-key>
+			<generator class="sequence">
+				<param name="sequence">OIM_SUPPLIER_METHOD_ATTR_SEQ</param>
+			</generator>				
+		</primary-key>
+	</table>
+	<table name="OIM_SUPPORTED_CHANNELS" schema="KDYER"> 
+		<primary-key>
+			<generator class="sequence">
+				<param name="sequence">OIM_SUPPORTED_CHANNELS_SEQ</param>
+			</generator>				
+		</primary-key>
+	</table>
+	<table name="OIM_UPLOADED_FILES" schema="KDYER"> 
+		<primary-key>
+			<generator class="sequence">
+				<param name="sequence">OIM_UPLOADED_FILES_SEQ</param>
+			</generator>				
+		</primary-key>
+	</table>
+	<table name="OIM_VENDOR_SUPPLIERS" schema="KDYER"> 
+		<primary-key>
+			<generator class="sequence">
+				<param name="sequence">OIM_VENDOR_SUPPLIERS_SEQ</param>
+			</generator>				
+		</primary-key>
+	</table>	
+	<table name="OIM_CHANNEL_SUPPLIER_MAP" schema="KDYER"> 
+		<primary-key>
+			<generator class="sequence">
+				<param name="sequence">OIM_CHANNELSUPPLIERMAP_SEQ</param>
+			</generator>				
+		</primary-key>
+	</table>
+	<table name="OIM_CHANNEL_FILES" schema="KDYER"> 
+		<primary-key>
+			<generator class="sequence">
+				<param name="sequence">OIM_CHANNELFILES_SEQ</param>
+			</generator>				
+		</primary-key>
+	</table>
+	<table name="OIM_VENDORSUPP_ORDERHISTORY" schema="KDYER"> 
+		<primary-key>
+			<generator class="sequence">
+				<param name="sequence">OIM_VENDORSUPP_ORDERHIST_SEQ</param>
+			</generator>				
+		</primary-key>
+	</table>
+</hibernate-reverse-engineering>

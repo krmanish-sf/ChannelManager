@@ -1,0 +1,40 @@
+package salesmachine.hibernatehelper;
+
+import java.io.File;
+
+import org.hibernate.*;
+import org.hibernate.cfg.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+public class SessionManager {
+    private static Logger log = LoggerFactory.getLogger(SessionManager.class);
+    private static final SessionFactory sessionFactory;
+    static {
+        try {
+             // Create the SessionFactory
+        	 //File configFile = new File("/home/shared/salesmachine/hibernatehelper/hibernate.cfg.xml");
+        	sessionFactory = new Configuration().configure().buildSessionFactory();
+        } catch (Throwable ex) {
+             // Make sure you log the exception, as it might be swallowed
+             log.error("Initial SessionFactory creation failed.", ex);
+             throw new ExceptionInInitializerError(ex);
+        }
+    }
+    public static final ThreadLocal session = new ThreadLocal();
+    public static Session currentSession() {
+        Session s = (Session) session.get();
+        // Open a new Session, if this Thread has none yet
+        if (s == null) {
+             s = sessionFactory.openSession();
+             session.set(s);
+        }
+        return s;
+    }
+    public static void closeSession() {
+        Session s = (Session) session.get();
+        if (s != null)
+             s.close();
+        session.set(null);
+    }
+}

@@ -1,0 +1,32 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+"http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd">
+<!-- Generated 30 Mar, 2010 7:26:11 PM by Hibernate Tools 3.2.4.GA -->
+<hibernate-mapping>
+    <class name="salesmachine.hibernatedb.OimChannelSupplierMap" table="OIM_CHANNEL_SUPPLIER_MAP" schema="KDYER">
+        <id name="mapId" type="java.lang.Integer">
+            <column name="MAP_ID" precision="22" scale="0" />
+            <generator class="sequence">
+                <param name="sequence">OIM_CHANNELSUPPLIERMAP_SEQ</param>
+            </generator>
+        </id>
+        <many-to-one name="oimChannels" class="salesmachine.hibernatedb.OimChannels" fetch="select">
+            <column name="CHANNEL_ID" precision="22" scale="0" />
+        </many-to-one>
+        <many-to-one name="oimSuppliers" class="salesmachine.hibernatedb.OimSuppliers" fetch="select">
+            <column name="SUPPLIER_ID" precision="22" scale="0" />
+        </many-to-one>
+        <property name="supplierPrefix" type="string">
+            <column name="SUPPLIER_PREFIX" length="20" />
+        </property>
+        <property name="enableOrderAutomation" type="java.lang.Integer">
+            <column name="ENABLE_ORDER_AUTOMATION" precision="22" scale="0" />
+        </property>
+        <property name="insertionTm" type="date">
+            <column name="INSERTION_TM" length="7" />
+        </property>
+        <property name="deleteTm" type="date">
+            <column name="DELETE_TM" length="7" />
+        </property>
+    </class>
+</hibernate-mapping>

@@ -1,0 +1,172 @@
+@charset "utf-8";
+/* CSS Document */
+.ace-nav>li {
+	height: 55px
+}
+
+.ace-nav>li>a>[class*="icon-"] {
+	margin-top: 19px
+}
+
+.info1 {
+	top: 10px
+}
+
+#jumbo2 {
+	padding-bottom: 66px !important
+}
+
+#chart1 {
+	margin-top: 40px;
+	height: 300px
+}
+
+#sales-charts {
+	height: 280px !important
+}
+
+#tabledashmychannel {
+	overflow-x: hidden !important;
+	height: 230px
+}
+/*scroll bar Starts*/
+#tabledashmychannel::-webkit-scrollbar {
+	width: 10px;
+	height: 10px;
+}
+
+#tabledashmychannel::-webkit-scrollbar-button:start:decrement,#tabledashmychannel::-webkit-scrollbar-button:end:increment
+	{
+	height: 229px;
+	display: block;
+	background-color: transparent;
+}
+
+#tabledashmychannel::-webkit-scrollbar-track-piece {
+	background-color: #c3becf;
+	-webkit-border-radius: 6px;
+}
+
+#tabledashmychannel::-webkit-scrollbar-thumb:vertical {
+	height: 50px;
+	background-color: #9585bf;
+	-webkit-border-radius: 6px;
+}
+
+#tabledashmychannel::-webkit-scrollbar-thumb:vertical:hover {
+	height: 50px;
+	background-color: #fd9a2a;
+	-webkit-border-radius: 6px;
+}
+/*scroll bar Ends*/
+.axisLabels {
+	color: #4383b4 !important
+}
+
+a[class="btn btn-success btn-minier radius-2 dropdown-hover"] {
+	margin: 1px
+}
+
+a[class="btn btn-danger btn-minier radius-2 dropdown-hover"] {
+	margin: 1px
+}
+
+a[class="btn btn-info btn-minier radius-2 dropdown-hover"] {
+	margin: 1px
+}
+
+a[class="btn btn-warning btn-minier radius-2 dropdown-hover"] {
+	margin: 1px
+}
+
+.small14 {
+	font-size: 14px !important
+}
+
+#processmodel {
+	overflow-x: hidden !important;
+}
+/*#processmodel{overflow-x:hidden !important; height:468px}
+#processmodel::-webkit-scrollbar {
+width: 10px;
+height: 10px;
+}
+#processmodel::-webkit-scrollbar-button:start:decrement,
+#processmodel::-webkit-scrollbar-button:end:increment  {
+height: 451px;
+display: block;
+background-color: transparent;
+}
+#processmodel::-webkit-scrollbar-track-piece  {
+background-color: #c3becf;
+-webkit-border-radius: 6px;
+}
+#processmodel::-webkit-scrollbar-thumb:vertical {
+height: 50px;
+background-color: #9585bf;
+-webkit-border-radius: 6px;
+}
+#processmodel::-webkit-scrollbar-thumb:vertical:hover {
+height: 50px;
+background-color: #fd9a2a;
+-webkit-border-radius: 6px;
+}*/
+#processmodelM {
+	overflow-x: hidden !important;
+	height: 322px
+}
+
+#processmodelM::-webkit-scrollbar {
+	width: 10px;
+	height: 10px;
+}
+
+#processmodelM::-webkit-scrollbar-button:start:decrement,#processmodelM::-webkit-scrollbar-button:end:increment
+	{
+	height: 322px;
+	display: block;
+	background-color: transparent;
+}
+
+#processmodelM::-webkit-scrollbar-track-piece {
+	background-color: #c3becf;
+	-webkit-border-radius: 6px;
+}
+
+#processmodelM::-webkit-scrollbar-thumb:vertical {
+	height: 50px;
+	background-color: #9585bf;
+	-webkit-border-radius: 6px;
+}
+
+#processmodelM::-webkit-scrollbar-thumb:vertical:hover {
+	height: 50px;
+	background-color: #fd9a2a;
+	-webkit-border-radius: 6px;
+}
+
+#myModaleditdailog {
+	width: 79%;
+}
+/*#myModaleditdailog input{ margin:1px 5px 10px 5px;}
+#myModaleditdailog label{padding-left:5px; margin-bottom:0px !important}*/
+#myModalResolvecontent {
+	width: 80%;
+}
+
+#myModalResolvecontent label {
+	padding-top: 4px !important
+}
+
+#processselect1 {
+	margin: 6px
+}
+
+#tableprocesschannel th,#tableprocesschannel1 th {
+	vertical-align: text-top;
+}
+
+#myModalResolvemob .ohistory label {
+	padding-top: 5px !important;
+	margin-bottom: 0px !important
+}

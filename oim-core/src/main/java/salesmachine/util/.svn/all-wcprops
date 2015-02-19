@@ -1,0 +1,137 @@
+K 25
+svn:wc:ra_dav:version-url
+V 68
+/svn/InventorySource/!svn/ver/386/oim/oim-core/src/salesmachine/util
+END
+SpecialStringPart.java
+K 25
+svn:wc:ra_dav:version-url
+V 89
+/svn/InventorySource/!svn/ver/3/oim/oim-core/src/salesmachine/util/SpecialStringPart.java
+END
+FormObjectTimeout.java
+K 25
+svn:wc:ra_dav:version-url
+V 89
+/svn/InventorySource/!svn/ver/3/oim/oim-core/src/salesmachine/util/FormObjectTimeout.java
+END
+NumberFormat.java
+K 25
+svn:wc:ra_dav:version-url
+V 84
+/svn/InventorySource/!svn/ver/3/oim/oim-core/src/salesmachine/util/NumberFormat.java
+END
+OimFileLogStream.java
+K 25
+svn:wc:ra_dav:version-url
+V 90
+/svn/InventorySource/!svn/ver/288/oim/oim-core/src/salesmachine/util/OimFileLogStream.java
+END
+OimLogStream.java
+K 25
+svn:wc:ra_dav:version-url
+V 86
+/svn/InventorySource/!svn/ver/288/oim/oim-core/src/salesmachine/util/OimLogStream.java
+END
+IUploadObserver.java
+K 25
+svn:wc:ra_dav:version-url
+V 87
+/svn/InventorySource/!svn/ver/3/oim/oim-core/src/salesmachine/util/IUploadObserver.java
+END
+Server.java
+K 25
+svn:wc:ra_dav:version-url
+V 78
+/svn/InventorySource/!svn/ver/3/oim/oim-core/src/salesmachine/util/Server.java
+END
+SpecialFilePart.java
+K 25
+svn:wc:ra_dav:version-url
+V 87
+/svn/InventorySource/!svn/ver/3/oim/oim-core/src/salesmachine/util/SpecialFilePart.java
+END
+CSVParser.java
+K 25
+svn:wc:ra_dav:version-url
+V 81
+/svn/InventorySource/!svn/ver/3/oim/oim-core/src/salesmachine/util/CSVParser.java
+END
+FormObject2.java
+K 25
+svn:wc:ra_dav:version-url
+V 83
+/svn/InventorySource/!svn/ver/3/oim/oim-core/src/salesmachine/util/FormObject2.java
+END
+CSVReader.java
+K 25
+svn:wc:ra_dav:version-url
+V 81
+/svn/InventorySource/!svn/ver/3/oim/oim-core/src/salesmachine/util/CSVReader.java
+END
+SpecialGetMethod.java
+K 25
+svn:wc:ra_dav:version-url
+V 88
+/svn/InventorySource/!svn/ver/3/oim/oim-core/src/salesmachine/util/SpecialGetMethod.java
+END
+StringHandle.java
+K 25
+svn:wc:ra_dav:version-url
+V 84
+/svn/InventorySource/!svn/ver/3/oim/oim-core/src/salesmachine/util/StringHandle.java
+END
+Base64.java
+K 25
+svn:wc:ra_dav:version-url
+V 78
+/svn/InventorySource/!svn/ver/3/oim/oim-core/src/salesmachine/util/Base64.java
+END
+FtpFileUploader.java
+K 25
+svn:wc:ra_dav:version-url
+V 89
+/svn/InventorySource/!svn/ver/308/oim/oim-core/src/salesmachine/util/FtpFileUploader.java
+END
+Filter.java
+K 25
+svn:wc:ra_dav:version-url
+V 78
+/svn/InventorySource/!svn/ver/3/oim/oim-core/src/salesmachine/util/Filter.java
+END
+SpecialPostMethod.java
+K 25
+svn:wc:ra_dav:version-url
+V 89
+/svn/InventorySource/!svn/ver/3/oim/oim-core/src/salesmachine/util/SpecialPostMethod.java
+END
+CSVWriter.java
+K 25
+svn:wc:ra_dav:version-url
+V 81
+/svn/InventorySource/!svn/ver/3/oim/oim-core/src/salesmachine/util/CSVWriter.java
+END
+ImportVendorOrdersCron.java
+K 25
+svn:wc:ra_dav:version-url
+V 96
+/svn/InventorySource/!svn/ver/386/oim/oim-core/src/salesmachine/util/ImportVendorOrdersCron.java
+END
+FormObject.java
+K 25
+svn:wc:ra_dav:version-url
+V 84
+/svn/InventorySource/!svn/ver/348/oim/oim-core/src/salesmachine/util/FormObject.java
+END
+ExcHandle.java
+K 25
+svn:wc:ra_dav:version-url
+V 81
+/svn/InventorySource/!svn/ver/3/oim/oim-core/src/salesmachine/util/ExcHandle.java
+END
+CsvHelper.java
+K 25
+svn:wc:ra_dav:version-url
+V 81
+/svn/InventorySource/!svn/ver/3/oim/oim-core/src/salesmachine/util/CsvHelper.java
+END

@@ -1,0 +1,413 @@
+K 25
+svn:wc:ra_dav:version-url
+V 75
+/svn/InventorySource/!svn/ver/348/oim/oim-core/src/salesmachine/hibernatedb
+END
+OimOrderBatchesTypes.java
+K 25
+svn:wc:ra_dav:version-url
+V 99
+/svn/InventorySource/!svn/ver/3/oim/oim-core/src/salesmachine/hibernatedb/OimOrderBatchesTypes.java
+END
+OimFields.hbm.xml
+K 25
+svn:wc:ra_dav:version-url
+V 91
+/svn/InventorySource/!svn/ver/3/oim/oim-core/src/salesmachine/hibernatedb/OimFields.hbm.xml
+END
+OimFileformatParams.java
+K 25
+svn:wc:ra_dav:version-url
+V 98
+/svn/InventorySource/!svn/ver/3/oim/oim-core/src/salesmachine/hibernatedb/OimFileformatParams.java
+END
+VwOimOrders.hbm.xml
+K 25
+svn:wc:ra_dav:version-url
+V 93
+/svn/InventorySource/!svn/ver/3/oim/oim-core/src/salesmachine/hibernatedb/VwOimOrders.hbm.xml
+END
+Product.hbm.xml
+K 25
+svn:wc:ra_dav:version-url
+V 89
+/svn/InventorySource/!svn/ver/3/oim/oim-core/src/salesmachine/hibernatedb/Product.hbm.xml
+END
+OimSupportedChannels.java
+K 25
+svn:wc:ra_dav:version-url
+V 99
+/svn/InventorySource/!svn/ver/3/oim/oim-core/src/salesmachine/hibernatedb/OimSupportedChannels.java
+END
+OimOrderStatuses.java
+K 25
+svn:wc:ra_dav:version-url
+V 95
+/svn/InventorySource/!svn/ver/3/oim/oim-core/src/salesmachine/hibernatedb/OimOrderStatuses.java
+END
+OimVendorsuppOrderhistory.hbm.xml
+K 25
+svn:wc:ra_dav:version-url
+V 107
+/svn/InventorySource/!svn/ver/3/oim/oim-core/src/salesmachine/hibernatedb/OimVendorsuppOrderhistory.hbm.xml
+END
+OimFileformats.java
+K 25
+svn:wc:ra_dav:version-url
+V 93
+/svn/InventorySource/!svn/ver/3/oim/oim-core/src/salesmachine/hibernatedb/OimFileformats.java
+END
+OimSupplierMethods.java
+K 25
+svn:wc:ra_dav:version-url
+V 97
+/svn/InventorySource/!svn/ver/3/oim/oim-core/src/salesmachine/hibernatedb/OimSupplierMethods.java
+END
+VwOimOrdersId.java
+K 25
+svn:wc:ra_dav:version-url
+V 92
+/svn/InventorySource/!svn/ver/3/oim/oim-core/src/salesmachine/hibernatedb/VwOimOrdersId.java
+END
+OimFiletypes.hbm.xml
+K 25
+svn:wc:ra_dav:version-url
+V 94
+/svn/InventorySource/!svn/ver/3/oim/oim-core/src/salesmachine/hibernatedb/OimFiletypes.hbm.xml
+END
+OimSupplierShippingMethods.java
+K 25
+svn:wc:ra_dav:version-url
+V 107
+/svn/InventorySource/!svn/ver/322/oim/oim-core/src/salesmachine/hibernatedb/OimSupplierShippingMethods.java
+END
+OimChannelSupplierMap.java
+K 25
+svn:wc:ra_dav:version-url
+V 100
+/svn/InventorySource/!svn/ver/3/oim/oim-core/src/salesmachine/hibernatedb/OimChannelSupplierMap.java
+END
+OimChannels.java
+K 25
+svn:wc:ra_dav:version-url
+V 90
+/svn/InventorySource/!svn/ver/3/oim/oim-core/src/salesmachine/hibernatedb/OimChannels.java
+END
+OimChannelFiles.java
+K 25
+svn:wc:ra_dav:version-url
+V 94
+/svn/InventorySource/!svn/ver/3/oim/oim-core/src/salesmachine/hibernatedb/OimChannelFiles.java
+END
+OimOrderStatuses.hbm.xml
+K 25
+svn:wc:ra_dav:version-url
+V 98
+/svn/InventorySource/!svn/ver/3/oim/oim-core/src/salesmachine/hibernatedb/OimOrderStatuses.hbm.xml
+END
+OimOrders.java
+K 25
+svn:wc:ra_dav:version-url
+V 90
+/svn/InventorySource/!svn/ver/302/oim/oim-core/src/salesmachine/hibernatedb/OimOrders.java
+END
+OimFileformats.hbm.xml
+K 25
+svn:wc:ra_dav:version-url
+V 96
+/svn/InventorySource/!svn/ver/3/oim/oim-core/src/salesmachine/hibernatedb/OimFileformats.hbm.xml
+END
+OimUploadedFiles.hbm.xml
+K 25
+svn:wc:ra_dav:version-url
+V 98
+/svn/InventorySource/!svn/ver/3/oim/oim-core/src/salesmachine/hibernatedb/OimUploadedFiles.hbm.xml
+END
+OimFiletypes.java
+K 25
+svn:wc:ra_dav:version-url
+V 91
+/svn/InventorySource/!svn/ver/3/oim/oim-core/src/salesmachine/hibernatedb/OimFiletypes.java
+END
+OimChannelAccessFields.hbm.xml
+K 25
+svn:wc:ra_dav:version-url
+V 104
+/svn/InventorySource/!svn/ver/3/oim/oim-core/src/salesmachine/hibernatedb/OimChannelAccessFields.hbm.xml
+END
+OimOrderDetails.hbm.xml
+K 25
+svn:wc:ra_dav:version-url
+V 97
+/svn/InventorySource/!svn/ver/3/oim/oim-core/src/salesmachine/hibernatedb/OimOrderDetails.hbm.xml
+END
+OimSupplierMethods.hbm.xml
+K 25
+svn:wc:ra_dav:version-url
+V 100
+/svn/InventorySource/!svn/ver/3/oim/oim-core/src/salesmachine/hibernatedb/OimSupplierMethods.hbm.xml
+END
+Vendors.java
+K 25
+svn:wc:ra_dav:version-url
+V 86
+/svn/InventorySource/!svn/ver/3/oim/oim-core/src/salesmachine/hibernatedb/Vendors.java
+END
+OimOrderBatchesTypes.hbm.xml
+K 25
+svn:wc:ra_dav:version-url
+V 102
+/svn/InventorySource/!svn/ver/3/oim/oim-core/src/salesmachine/hibernatedb/OimOrderBatchesTypes.hbm.xml
+END
+OimChannels.hbm.xml
+K 25
+svn:wc:ra_dav:version-url
+V 93
+/svn/InventorySource/!svn/ver/3/oim/oim-core/src/salesmachine/hibernatedb/OimChannels.hbm.xml
+END
+OimChannelFiles.hbm.xml
+K 25
+svn:wc:ra_dav:version-url
+V 97
+/svn/InventorySource/!svn/ver/3/oim/oim-core/src/salesmachine/hibernatedb/OimChannelFiles.hbm.xml
+END
+OimUploadedFiles.java
+K 25
+svn:wc:ra_dav:version-url
+V 95
+/svn/InventorySource/!svn/ver/3/oim/oim-core/src/salesmachine/hibernatedb/OimUploadedFiles.java
+END
+OimVendorShippingMap.hbm.xml
+K 25
+svn:wc:ra_dav:version-url
+V 104
+/svn/InventorySource/!svn/ver/314/oim/oim-core/src/salesmachine/hibernatedb/OimVendorShippingMap.hbm.xml
+END
+OimChannelAccessDetails.hbm.xml
+K 25
+svn:wc:ra_dav:version-url
+V 105
+/svn/InventorySource/!svn/ver/3/oim/oim-core/src/salesmachine/hibernatedb/OimChannelAccessDetails.hbm.xml
+END
+OimSuppliers.java
+K 25
+svn:wc:ra_dav:version-url
+V 91
+/svn/InventorySource/!svn/ver/3/oim/oim-core/src/salesmachine/hibernatedb/OimSuppliers.java
+END
+OimVendorSuppliers.hbm.xml
+K 25
+svn:wc:ra_dav:version-url
+V 102
+/svn/InventorySource/!svn/ver/292/oim/oim-core/src/salesmachine/hibernatedb/OimVendorSuppliers.hbm.xml
+END
+OimOrderBatches.hbm.xml
+K 25
+svn:wc:ra_dav:version-url
+V 97
+/svn/InventorySource/!svn/ver/3/oim/oim-core/src/salesmachine/hibernatedb/OimOrderBatches.hbm.xml
+END
+Vendors.hbm.xml
+K 25
+svn:wc:ra_dav:version-url
+V 89
+/svn/InventorySource/!svn/ver/3/oim/oim-core/src/salesmachine/hibernatedb/Vendors.hbm.xml
+END
+OimChannelAccessDetails.java
+K 25
+svn:wc:ra_dav:version-url
+V 102
+/svn/InventorySource/!svn/ver/3/oim/oim-core/src/salesmachine/hibernatedb/OimChannelAccessDetails.java
+END
+OimVendorSuppliers.java
+K 25
+svn:wc:ra_dav:version-url
+V 99
+/svn/InventorySource/!svn/ver/292/oim/oim-core/src/salesmachine/hibernatedb/OimVendorSuppliers.java
+END
+OimFileFieldMap.hbm.xml
+K 25
+svn:wc:ra_dav:version-url
+V 97
+/svn/InventorySource/!svn/ver/3/oim/oim-core/src/salesmachine/hibernatedb/OimFileFieldMap.hbm.xml
+END
+OimFields.java
+K 25
+svn:wc:ra_dav:version-url
+V 88
+/svn/InventorySource/!svn/ver/3/oim/oim-core/src/salesmachine/hibernatedb/OimFields.java
+END
+OimChannelFilesId.java
+K 25
+svn:wc:ra_dav:version-url
+V 96
+/svn/InventorySource/!svn/ver/3/oim/oim-core/src/salesmachine/hibernatedb/OimChannelFilesId.java
+END
+OimSupplierMethodTypes.hbm.xml
+K 25
+svn:wc:ra_dav:version-url
+V 104
+/svn/InventorySource/!svn/ver/3/oim/oim-core/src/salesmachine/hibernatedb/OimSupplierMethodTypes.hbm.xml
+END
+OimChannelSupplierMap.hbm.xml
+K 25
+svn:wc:ra_dav:version-url
+V 103
+/svn/InventorySource/!svn/ver/3/oim/oim-core/src/salesmachine/hibernatedb/OimChannelSupplierMap.hbm.xml
+END
+OimSupplierMethodattrValues.java
+K 25
+svn:wc:ra_dav:version-url
+V 106
+/svn/InventorySource/!svn/ver/3/oim/oim-core/src/salesmachine/hibernatedb/OimSupplierMethodattrValues.java
+END
+OimOrderDetails.java
+K 25
+svn:wc:ra_dav:version-url
+V 94
+/svn/InventorySource/!svn/ver/3/oim/oim-core/src/salesmachine/hibernatedb/OimOrderDetails.java
+END
+OimChannelAccessFields.java
+K 25
+svn:wc:ra_dav:version-url
+V 101
+/svn/InventorySource/!svn/ver/3/oim/oim-core/src/salesmachine/hibernatedb/OimChannelAccessFields.java
+END
+OimOrders.hbm.xml
+K 25
+svn:wc:ra_dav:version-url
+V 93
+/svn/InventorySource/!svn/ver/302/oim/oim-core/src/salesmachine/hibernatedb/OimOrders.hbm.xml
+END
+OimSupplierMethodattrNames.java
+K 25
+svn:wc:ra_dav:version-url
+V 105
+/svn/InventorySource/!svn/ver/3/oim/oim-core/src/salesmachine/hibernatedb/OimSupplierMethodattrNames.java
+END
+OimOrderProcessingRule.hbm.xml
+K 25
+svn:wc:ra_dav:version-url
+V 104
+/svn/InventorySource/!svn/ver/3/oim/oim-core/src/salesmachine/hibernatedb/OimOrderProcessingRule.hbm.xml
+END
+OimSupportedChannels.hbm.xml
+K 25
+svn:wc:ra_dav:version-url
+V 102
+/svn/InventorySource/!svn/ver/3/oim/oim-core/src/salesmachine/hibernatedb/OimSupportedChannels.hbm.xml
+END
+OimOrderDetailsMods.hbm.xml
+K 25
+svn:wc:ra_dav:version-url
+V 101
+/svn/InventorySource/!svn/ver/3/oim/oim-core/src/salesmachine/hibernatedb/OimOrderDetailsMods.hbm.xml
+END
+Reps.hbm.xml
+K 25
+svn:wc:ra_dav:version-url
+V 88
+/svn/InventorySource/!svn/ver/348/oim/oim-core/src/salesmachine/hibernatedb/Reps.hbm.xml
+END
+OimVendorShippingMap.java
+K 25
+svn:wc:ra_dav:version-url
+V 101
+/svn/InventorySource/!svn/ver/314/oim/oim-core/src/salesmachine/hibernatedb/OimVendorShippingMap.java
+END
+OimOrderProcessingRule.java
+K 25
+svn:wc:ra_dav:version-url
+V 101
+/svn/InventorySource/!svn/ver/3/oim/oim-core/src/salesmachine/hibernatedb/OimOrderProcessingRule.java
+END
+OimSupplierMethodattrValues.hbm.xml
+K 25
+svn:wc:ra_dav:version-url
+V 109
+/svn/InventorySource/!svn/ver/3/oim/oim-core/src/salesmachine/hibernatedb/OimSupplierMethodattrValues.hbm.xml
+END
+OimOrderDetailsMods.java
+K 25
+svn:wc:ra_dav:version-url
+V 98
+/svn/InventorySource/!svn/ver/3/oim/oim-core/src/salesmachine/hibernatedb/OimOrderDetailsMods.java
+END
+Reps.java
+K 25
+svn:wc:ra_dav:version-url
+V 85
+/svn/InventorySource/!svn/ver/348/oim/oim-core/src/salesmachine/hibernatedb/Reps.java
+END
+OimOrderBatches.java
+K 25
+svn:wc:ra_dav:version-url
+V 94
+/svn/InventorySource/!svn/ver/3/oim/oim-core/src/salesmachine/hibernatedb/OimOrderBatches.java
+END
+OimSupplierMethodattrNames.hbm.xml
+K 25
+svn:wc:ra_dav:version-url
+V 108
+/svn/InventorySource/!svn/ver/3/oim/oim-core/src/salesmachine/hibernatedb/OimSupplierMethodattrNames.hbm.xml
+END
+OimSuppliers.hbm.xml
+K 25
+svn:wc:ra_dav:version-url
+V 94
+/svn/InventorySource/!svn/ver/3/oim/oim-core/src/salesmachine/hibernatedb/OimSuppliers.hbm.xml
+END
+VwOimOrders.java
+K 25
+svn:wc:ra_dav:version-url
+V 90
+/svn/InventorySource/!svn/ver/3/oim/oim-core/src/salesmachine/hibernatedb/VwOimOrders.java
+END
+Product.java
+K 25
+svn:wc:ra_dav:version-url
+V 86
+/svn/InventorySource/!svn/ver/3/oim/oim-core/src/salesmachine/hibernatedb/Product.java
+END
+OimSupplierMethodNames.hbm.xml
+K 25
+svn:wc:ra_dav:version-url
+V 104
+/svn/InventorySource/!svn/ver/3/oim/oim-core/src/salesmachine/hibernatedb/OimSupplierMethodNames.hbm.xml
+END
+OimSupplierShippingMethods.hbm.xml
+K 25
+svn:wc:ra_dav:version-url
+V 110
+/svn/InventorySource/!svn/ver/322/oim/oim-core/src/salesmachine/hibernatedb/OimSupplierShippingMethods.hbm.xml
+END
+OimFileformatParams.hbm.xml
+K 25
+svn:wc:ra_dav:version-url
+V 101
+/svn/InventorySource/!svn/ver/3/oim/oim-core/src/salesmachine/hibernatedb/OimFileformatParams.hbm.xml
+END
+OimFileFieldMap.java
+K 25
+svn:wc:ra_dav:version-url
+V 94
+/svn/InventorySource/!svn/ver/3/oim/oim-core/src/salesmachine/hibernatedb/OimFileFieldMap.java
+END
+OimVendorsuppOrderhistory.java
+K 25
+svn:wc:ra_dav:version-url
+V 104
+/svn/InventorySource/!svn/ver/3/oim/oim-core/src/salesmachine/hibernatedb/OimVendorsuppOrderhistory.java
+END
+OimSupplierMethodNames.java
+K 25
+svn:wc:ra_dav:version-url
+V 101
+/svn/InventorySource/!svn/ver/3/oim/oim-core/src/salesmachine/hibernatedb/OimSupplierMethodNames.java
+END
+OimSupplierMethodTypes.java
+K 25
+svn:wc:ra_dav:version-url
+V 101
+/svn/InventorySource/!svn/ver/3/oim/oim-core/src/salesmachine/hibernatedb/OimSupplierMethodTypes.java
+END

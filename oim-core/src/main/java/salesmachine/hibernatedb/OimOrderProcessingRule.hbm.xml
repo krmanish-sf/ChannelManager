@@ -1,0 +1,38 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+"http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<!-- Generated 30 Mar, 2010 7:26:11 PM by Hibernate Tools 3.2.4.GA -->
+<hibernate-mapping>
+    <class name="salesmachine.hibernatedb.OimOrderProcessingRule" table="OIM_ORDER_PROCESSING_RULE" schema="KDYER">
+        <id name="ruleId" type="java.lang.Integer">
+            <column name="RULE_ID" precision="22" scale="0" />
+            <generator class="sequence">
+                <param name="sequence">OIM_ORDER_PROCESSING_RULE_SEQ</param>
+            </generator>
+        </id>
+        <many-to-one name="oimChannels" class="salesmachine.hibernatedb.OimChannels" fetch="select">
+            <column name="CHANNEL_ID" precision="22" scale="0" />
+        </many-to-one>
+        <property name="processAll" type="java.lang.Integer">
+            <column name="PROCESS_ALL" precision="22" scale="0" />
+        </property>
+        <property name="processWithStatus" type="string">
+            <column name="PROCESS_WITH_STATUS" length="100" />
+        </property>
+        <property name="updateStoreOrderStatus" type="java.lang.Integer">
+            <column name="UPDATE_STORE_ORDER_STATUS" precision="22" scale="0" />
+        </property>
+        <property name="insertionTm" type="date">
+            <column name="INSERTION_TM" length="7" />
+        </property>
+        <property name="deleteTm" type="date">
+            <column name="DELETE_TM" length="7" />
+        </property>
+        <property name="supplierId" type="java.lang.Integer">
+            <column name="SUPPLIER_ID" precision="22" scale="0" />
+        </property>
+        <property name="updateWithStatus" type="string">
+            <column name="UPDATE_WITH_STATUS" length="100" />
+        </property>
+    </class>
+</hibernate-mapping>
