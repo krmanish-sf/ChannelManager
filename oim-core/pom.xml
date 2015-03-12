@@ -171,11 +171,11 @@
 			<artifactId>servicePcs</artifactId>
 			<version>1.0.0</version>
 		</dependency>
-		<!-- <dependency>
+		<dependency>
 			<groupId>com.amazon.sellercentral</groupId>
 			<artifactId>sellercentral</artifactId>
 			<version>1.0.0</version>
-		</dependency> -->
+		</dependency>
 		<dependency>
 			<groupId>com.amazonservices.mws</groupId>
 			<artifactId>client</artifactId>
