@@ -3,6 +3,7 @@ package com.is.cm.core.service;
 import java.util.Map;
 
 import com.is.cm.core.domain.ShippingCarrier;
+import com.is.cm.core.domain.ShippingMethod;
 import com.is.cm.core.domain.Supplier;
 import com.is.cm.core.domain.SupplierShippingMethod;
 import com.is.cm.core.domain.VendorShippingMap;
@@ -54,5 +55,8 @@ public interface SupplierService {
 
 	DeletedEvent<Integer> deleteShippingOverrideForSupplierMethod(
 			DeleteEvent deleteEvent);
+
+	ReadCollectionEvent<ShippingMethod> getShippingMethods(
+			RequestReadEvent<ShippingMethod> requestReadEvent);
 
 }

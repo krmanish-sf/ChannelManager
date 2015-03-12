@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
 import com.is.cm.core.domain.ShippingCarrier;
+import com.is.cm.core.domain.ShippingMethod;
 import com.is.cm.core.domain.Supplier;
 import com.is.cm.core.domain.SupplierShippingMethod;
 import com.is.cm.core.domain.VendorSupplier;
@@ -104,5 +105,13 @@ public class SupplierQueriesController {
 				.deleteShippingOverrideForSupplierMethod(new DeleteEvent(
 						supplierMethodId));
 		return new ResponseEntity<Integer>(event.getEntity(), HttpStatus.OK);
+	}
+
+	@RequestMapping(method = RequestMethod.GET, value = "/shippingmethods")
+	public ResponseEntity<List<ShippingMethod>> getShippingMethods() {
+		ReadCollectionEvent<ShippingMethod> event = supplierService
+				.getShippingMethods(new RequestReadEvent<ShippingMethod>());
+		return new ResponseEntity<List<ShippingMethod>>(event.getEntity(),
+				HttpStatus.OK);
 	}
 }

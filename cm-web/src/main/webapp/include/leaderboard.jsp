@@ -1,5 +1,5 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8"
-	pageEncoding="UTF-8"%>
+	pageEncoding="UTF-8" session="false"%>
 <div class="widget-box transparent" id="recent-box">
 	<div class="widget-header">
 		<h4 class="lighter smaller">

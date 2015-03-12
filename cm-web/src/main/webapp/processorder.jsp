@@ -21,45 +21,47 @@
           <div class="col-xs-12">
             <div class="row">
               <div class="col-sm-7 infobox-container">
+              <div class="col-sm-12 ">
                 <a class="infobox infobox-green" id="unprocessedCount"
-									href="processorder.jsp#unprocessed">
+										href="processorder.jsp#unprocessed">
                   <div class="infobox-icon"> <i class="icon-cogs"></i>
 							</div>
                   <div class="infobox-data"> <span
-											class="infobox-data-number">No</span>
+												class="infobox-data-number">No</span>
                     <div class="infobox-content">Unprocessed Orders</div>
                   </div>
                 </a>
                 <a class="infobox infobox-green" id="unprocessedValue"
-									href="processorder.jsp#unprocessed">
+										href="processorder.jsp#unprocessed">
                   <div class="infobox-icon"> <i
-											class="icon-dollar"></i> </div>
+												class="icon-dollar"></i> </div>
                   <div class="infobox-data"> <span
-											class="infobox-data-number">$0</span>
+												class="infobox-data-number">$0</span>
                     <div class="infobox-content">Unprocessed Value</div>
                   </div>
                 </a>
 				</div>
-                <div class="col-sm-7 infobox-container">
+                <div class="col-sm-12 ">
                  <a class="infobox infobox-red" id="unresolvedCount"
-									href="processorder.jsp#unresolved">
+										href="processorder.jsp#unresolved">
                   <div class="infobox-icon"> <i
-											class="icon-warning-sign"></i> </div>
+												class="icon-warning-sign"></i> </div>
                   <div class="infobox-data"> <span
-											class="infobox-data-number">No</span>
+												class="infobox-data-number">No</span>
                     <div class="infobox-content">Unresolved Orders</div>
                   </div>
                 </a>
                  <a class="infobox infobox-red" id="unresolvedValue"
-									href="processorder.jsp#unresolved">
+										href="processorder.jsp#unresolved">
                   <div class="infobox-icon"> <i
-											class="icon-dollar"></i> </div>
+												class="icon-dollar"></i> </div>
                   <div class="infobox-data"> <span
-											class="infobox-data-number">$0</span>
+												class="infobox-data-number">$0</span>
                     <div class="infobox-content">Unresolved Value</div>
                   </div>
                 </a>
                 <div class="space-6"></div>
+                </div>
               </div>
               <div class="col-sm-5">
                 <div class="widget-container-span">
@@ -86,7 +88,7 @@
             <div class="row">
               <div class="col-sm-12">
                 <h4 class="lighter pull-left"> <i
-										class="icon-star orange"></i> Manage your Order </h4>
+										class="icon-shopping-cart orange"></i> Manage your Order </h4>
               </div>
             </div>
             <div class="row">
@@ -383,7 +385,8 @@
                       <div class="modal-body ">
                         <div class="row">
                           <div class="col-sm-12">
-                            <form role="form" class="form-horizontal">
+                            <form role="form" class="form-horizontal"
+															id="order-form">
                               <div class="row">
                                 <div class="col-sm-4">
                                   <label>Bill No</label>
@@ -425,7 +428,7 @@
 																		data-bind-order="orderComment" maxlength="1000"
 																		class="pull-right width-56" name="ordercomment">
                                 </div>
-                              </div>
+                              </div> 
                               <div class="space-4"></div>
                               <fieldset>
                               <legend>Delivery</legend>
@@ -510,23 +513,61 @@
 																		class="pull-right" name="deliveryname">
                                 </div>
                                
-                                <div class="col-md-8">
+                                
+                              </div>
+                               <div class="space-4"></div>
+                               
+                            </form>
+                            <!-- PAGE CONTENT BEGINS -->
+                            <fieldset>
+                              <legend>Shipping Method</legend>
+                              <div class="row">
+                              <div class="col-sm-4">
+                                  <label>Store Shipping Text</label>
+                                </div>
+                                <div class="col-sm-8">
+                                <label data-bind-order="shippingDetails"></label>
+                                </div>
+							</div>
+																<div class="space-4"></div>
+                                <div class="row">
+                                <div class="col-sm-4">
+                                <label>Mapped Shipping Method</label>
+                                </div>
+                                <div class="col-sm-8">
+                                 <input type="text" id="shippingMethods"
+																		placeholder="Shipping mapping is missing, search and select"
+																		class="form-control ui-autocomplete-input"
+																		name="mapped-shipping"
+																		data-bind-order="shippingMethod.fullName">
+                                </div>
+							  </div>
+																<div class="space-4"></div>
+							  <div class="row">
+							  <div class="col-md-8 pull-right">
                                 	<button type="button" id="updateorder"
 																		class="btn btn-info btn-xs pull-right"> <i
 																			class="icon-ok "></i>Update</button>
 									<strong class="pull-right"> Save changes in the above payment or shipping details &gt;&nbsp;</strong>
                                 </div>
-                              </div>
-                            </form>
-                            <!-- PAGE CONTENT BEGINS -->
-                            
+							  </div>
+                              </fieldset>
                             <div class="row">
                               <div class="col-sm-12">
                                 <h4 class="modal-title">Product(s)</h4>
+                                
                                 <div class="hr hr-2"></div>
                                 <div class="space-4"></div>
                               </div>
-                          
+							<div id="warning-text" class="col-sm-12"
+																style="color: #FFF; background-color: red; margin: 3px 0px">
+																<strong>This order has multiple suppliers. Edit the product details below, or click "Confirm" to process as a multiple supplier order.</strong>
+                                <button
+																	class="btn btn-info btn-xs pull-right"
+																	id="confirm-order-shipment" type="button"> <i
+																		class="icon-ok "></i>Confirm</button>
+                                </div>                     
+                                <div class="space-4"></div>     
                             <table id="editordermodaltable"
 																class="table table-striped table-bordered table-hover table-responsive">
                               <thead>
@@ -605,9 +646,10 @@
 	<jsp:attribute name="pagejs">
 	
 <!-- inline scripts related to this page --> 
-
+<script type="text/javascript"
+			src="static/js/jquery-ui-1.10.3.full.min.js"></script>
 <script type="text/javascript">
-	var table_xy = null, tableModal = null;
+	var table_xy = null, tableModal = null, editOrder = null;
 	var MY_SUPPLIERS = [];
 	var STATUS = [ {
 		"statusId" : 3,
@@ -619,132 +661,21 @@
 		"statusId" : 2,
 		"statusValue" : "Processed"
 	}, {
-		"statusId" : 100,
-		"statusValue" : "Unconfirmed"
-	}, {
 		"statusId" : 5,
 		"statusValue" : "Manually Processed"
 	}, {
 		"statusId" : 6,
 		"statusValue" : "Canceled"
 	} ];
-	function a(e) {
+	function showResolve(e) {
 		var order = table_xy.fnGetData(e[0]);
-		order['@json_id'] = null;
-		$('#tablemodel1').data("order", order);
-		tableModal = $('#tablemodel1')
-				.DataTable(
-						{
-							bSort : false,
-							"aoColumns" : [
-									{
-										"mData" : function(orderDetail) {
-											return "<input type=\"text\" value=\""
-													+ (orderDetail.sku ? orderDetail.sku
-															: '') + "\"/>";
-										}
-									},
-									{
-										"mData" : function(orderDetail) {
-											return '<input type="text" class=\"pull-right width-100\" value="'
-													+ (orderDetail.productName ? orderDetail.productName
-															: "") + '"/>';
-										}
-									},
-									{
-										"mData" : function(orderDetail) {
-											return "<input type=\"text\" class=\"pull-right width-100\" value=\""
-													+ (orderDetail.quantity ? orderDetail.quantity
-															: 0) + "\"/>";
-										}
-									},
-									{
-										"mData" : function(orderDetail) {
-											return "<input type=\"text\" class=\"pull-right width-100\" value=\""
-													+ (orderDetail.salePrice ? orderDetail.salePrice
-															: 0) + "\"/>";
-										}
-									},
-									{
-										"mData" : function(orderDetail) {
-											var s = $("<select id=\"selectId\" name=\"selectName\" class=\"pull-right width-100\" />");
-											$("<option />", {
-												value : "",
-												text : ""
-											}).appendTo(s);
-											for (var val = 0; val < MY_SUPPLIERS.length; val++) {
-												var option = $(
-														"<option />",
-														{
-															value : MY_SUPPLIERS[val].oimSuppliers.supplierId,
-															text : MY_SUPPLIERS[val].oimSuppliers.supplierName
-														}).appendTo(s);
-												if (orderDetail.oimSuppliers != null
-														&& orderDetail.oimSuppliers.supplierId == MY_SUPPLIERS[val].oimSuppliers.supplierId) {
-													option.attr('selected',
-															true);
-												}
-											}
-
-											//orderDetail.oimOrderStatuses == null ? '': orderDetail.oimOrderStatuses.statusValue
-											return $('<div>').append(s).html();
-
-										}
-									},
-									{
-										"mData" : function(orderDetail) {
-											var s = $("<select id=\"selectId\" name=\"selectName\" class=\"pull-right width-100\" />");
-											for (var val = 0; val < STATUS.length; val++) {
-												var option = $(
-														"<option />",
-														{
-															value : STATUS[val].statusId,
-															text : STATUS[val].statusValue
-														}).appendTo(s);
-												if (orderDetail.oimOrderStatuses != null
-														&& orderDetail.oimOrderStatuses.statusId == STATUS[val].statusId) {
-													option.attr('selected',
-															true);
-												}
-											}
-
-											//orderDetail.oimOrderStatuses == null ? '': orderDetail.oimOrderStatuses.statusValue
-											return $('<div>').append(s).html();
-										}
-									},
-									{
-										"mData" : function(orderDetail) {
-											return '<button type="button" class="btn btn-info btn-xs pull-left " onclick="b($($(this).parent()).parent());"> <i class="icon-ok"></i>Update</button>';
-										}
-									} ],
-							"aaData" : order.oimOrderDetailses,
-							"bDestroy" : true
-						}).width('100%');
+		$('#order-form').hide();
+		showOrderEdit(order);
 	}
 
 	function process(e) {
 		var order = table_xy.fnGetData(e[0]);
-		$(this).CRUD({
-			url : "aggregators/orders/processed/" + order.orderId,
-			method : "POST",
-			data : JSON.stringify(order),
-			success : function(order) {
-				$.gritter.add({
-					title : 'Order Processing',
-					text : 'Order Processed successfully.',
-					class_name : 'gritter-success'
-				});
-				table_xy.fnReloadAjax();
-			},
-			error : function(a, b, c) {
-				$.gritter.add({
-					title : 'Order Processing',
-					text : 'Order Processing Failed.',
-					class_name : 'gritter-error'
-				});
-			}
-
-		});
+		$.CM.processOrder(order);
 	}
 
 	function b(e) {
@@ -820,10 +751,23 @@
 	}
 	function c(e) {
 		var order = table_xy.fnGetData(e[0]);
-		//$('#editordermodaltable').data("order", order);
+		$('#order-form').show();
+		showOrderEdit(order);
+	}
+	function showOrderEdit(order) {
 		var orderTemp = JSON.parse(JSON.stringify(order));
+		editOrder = orderTemp;
+		if (order.reason) {
+			$('#warning-text').show();
+		} else
+			$('#warning-text').hide();
+		$('#confirm-order-shipment').off('click').on('click', order,
+				function(e) {
+					order.reason = null;
+					$.CM.processOrder(order);
+				});
 		tableModal = $('#editordermodaltable')
-				.DataTable(
+				.dataTable(
 						{
 							bSort : false,
 							"aoColumns" : [
@@ -913,8 +857,11 @@
 							"aaData" : orderTemp.oimOrderDetailses,
 							"bDestroy" : true,
 							"bAutoWidth" : false
-						}).width('100%');
+						});
 		GenericBinder('order', orderTemp);
+		if (!orderTemp.shippingMethod) {
+			$('#shippingMethods').parents('.row').addClass('has-warning');
+		}
 		$('#updateorder').unbind("click").on('click', orderTemp, function(e) {
 			$(this).CRUD({
 				method : "PUT",
@@ -940,6 +887,31 @@
 
 	jQuery(function($) {
 		$(this).CRUD({
+			type : "GET",
+			url : "aggregators/suppliers/shippingmethods",
+			message : true,
+			cache : true,
+			success : function(json) {
+				var data = new Array();
+				$.each(json, function(i, e) {
+					data.push({
+						label : e.fullName,
+						value : e
+					});
+				});
+				$("#shippingMethods").autocomplete({
+					minLength : 0,
+					appendTo : $("#shippingMethods").parent(),
+					source : data,
+					select : function(event, ui) {
+						event.preventDefault();
+						$('#shippingMethods').val(ui.item.label);
+						editOrder.shippingMethod = ui.item.value;
+					}
+				});
+			}
+		});
+		$(this).CRUD({
 			url : "aggregators/suppliers",
 			method : "GET",
 			success : function(data) {
@@ -959,6 +931,7 @@
 												{
 													type : "GET",
 													url : sSource,
+													cache : true,
 													message : true,
 													data : aoData,
 													success : function(json) {
@@ -966,17 +939,26 @@
 														for (var i = 0; i < json.length; i++) {
 															var order = json[i];
 															order.unresolved = false;
+															var sameSupplier = true;
+															var firstSupplier = null;
 															for (var j = 0; j < order.oimOrderDetailses.length; j++) {
 																var od = order.oimOrderDetailses[j];
 																if (!od.oimSuppliers
 																		|| od.oimSuppliers.supplierId <= 0
+																		|| (firstSupplier && firstSupplier.supplierId != od.oimSuppliers.supplierId)
 																		|| !od.salePrice
 																		|| od.salePrice <= 0
 																		|| !od.quantity
 																		|| od.quantity <= 0) {
 																	order.unresolved = true;
+																	if ((firstSupplier && firstSupplier.supplierId != od.oimSuppliers.supplierId))
+																		order.reason = 'This order has multiple suppliers. Edit the product details below, or click “Confirm” to process as a multiple supplier order.';
 																	break;
 																}
+																firstSupplier = od.oimSuppliers;
+															}
+															if (!order.shippingMethod) {
+																order.unresolved = true;
 															}
 															var total = (order.orderTotalAmount != null && order.orderTotalAmount > 0) ? order.orderTotalAmount
 																	: 0;
@@ -1028,8 +1010,11 @@
 									},
 									{
 										"mData" : function(order) {
-											return new Date(order.orderTm)
-													.toLocaleDateString();
+											return "<span style='display:none'>"
+													+ order.orderTm
+													+ "</span>"
+													+ new Date(order.orderTm)
+															.toLocaleDateString();
 										}
 									},
 									{
@@ -1061,7 +1046,11 @@
 											if (!order.unresolved) {
 												return '<div class="panel panel-default"><a class="btn btn-success hidden-xs" href="javascript:;" onclick="process($(this).parent().parent().parent());">Process</a><a class="btn btn-success visible-xs btn-xs" href="javascript:;" onclick="process($(this).parent().parent().parent());">Process</a></div>';
 											} else {
-												return '<div class="panel panel-default"><a class="btn  btn-danger hidden-xs" href="#myModalResolve" onclick="a($(this).parent().parent().parent());" data-toggle="modal">Resolve</a><a class="btn btn-danger visible-xs btn-xs" href="#myModalResolvemob"  onclick="a($($($(this).parent()).parent().parent()));" data-toggle="modal">Resolve</a></div>';
+												var ret = '<div class="panel panel-default"><a class="btn  btn-danger hidden-xs" href="#myModaledit" onclick="showResolve($(this).parent().parent().parent());" data-toggle="modal">Resolve</a><a class="btn btn-danger visible-xs btn-xs" href="#myModalResolvemob"  onclick="a($($($(this).parent()).parent().parent()));" data-toggle="modal">Resolve</a></div>';
+												if (!order.shippingMethod) {
+													ret += '<small>Shipping Mapping Error</small>';
+												}
+												return ret;
 											}
 										}
 									} ]
@@ -1072,13 +1061,15 @@
 			if (hash && hash == '#unprocessed') {
 				table_xy.fnSort([ [ 9, 'asc' ] ]);
 			} else {
-				table_xy.fnSort([ [ 9, 'desc' ] ]);
+				table_xy.sort([ [ 9, 'desc' ] ]);
 			}
 		};
 		if (hash && hash == '#unprocessed') {
 			table_xy.fnSort([ [ 9, 'asc' ] ]);
-		} else {
+		} else if (hash == '#unresolved') {
 			table_xy.fnSort([ [ 9, 'desc' ] ]);
+		} else {
+			table_xy.fnSort([ [ 2, 'desc' ] ]);
 		}
 		$('.addresspop').popover({
 			container : 'body'

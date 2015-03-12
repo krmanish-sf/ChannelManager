@@ -43,17 +43,16 @@ public class ReportRepositoryDB extends RepositoryBase implements
 		m_startDate = startDate;
 		m_endDate = endDate;
 		Session dbSession = SessionManager.currentSession();
-		String channelId = "";
-		String supplierId = "";
+		int channelId = 0, supplierId = 0;
 		if (reportType == null)
 			reportType = "";
 		if (reportType.equalsIgnoreCase("supplier")) {
 			List<SupplierSalesData> supplierSales = getSupplierSalesData(
-					dbSession, getVendorId(), null);
+					dbSession, getVendorId(), channelId);
 			reportDataWrapper.put("suppliersales", supplierSales);
 		} else if (reportType.equalsIgnoreCase("product")) {
 			List<ProductSalesData> productSales = getProductSalesData(
-					dbSession, getVendorId(), null, null);
+					dbSession, getVendorId(), channelId, supplierId);
 			reportDataWrapper.put("productsales", productSales);
 		} else if (reportType.equalsIgnoreCase("channel")) {
 			List<ChannelSalesData> channelSales = getChannelSalesData(
@@ -61,19 +60,19 @@ public class ReportRepositoryDB extends RepositoryBase implements
 			reportDataWrapper.put("channelsales", channelSales);
 		} else if (reportType.equalsIgnoreCase("totalsales")) {
 			List<OverAllSalesData> overallSales = getOverallSalesData(
-					dbSession, getVendorId(), null, null, m_startDate,
-					m_endDate);
+					dbSession, getVendorId(), channelId, supplierId,
+					m_startDate, m_endDate);
 			reportDataWrapper.put("overAllSales", overallSales);
 		} else {
 			List<ChannelSalesData> channelSales = getChannelSalesData(
 					dbSession, getVendorId());
 			List<SupplierSalesData> supplierSales = getSupplierSalesData(
-					dbSession, getVendorId(), null);
+					dbSession, getVendorId(), channelId);
 			List<ProductSalesData> productSales = getProductSalesData(
-					dbSession, getVendorId(), null, null);
+					dbSession, getVendorId(), channelId, supplierId);
 			List<OverAllSalesData> overallSales = getOverallSalesData(
-					dbSession, getVendorId(), null, null, m_startDate,
-					m_endDate);
+					dbSession, getVendorId(), channelId, supplierId,
+					m_startDate, m_endDate);
 			reportDataWrapper.put("channelsales", channelSales);
 			reportDataWrapper.put("suppliersales", supplierSales);
 			reportDataWrapper.put("productsales", productSales);
@@ -87,158 +86,53 @@ public class ReportRepositoryDB extends RepositoryBase implements
 	public ReportDataWrapper getReportData(Date startDate, Date endDate) {
 		m_startDate = startDate;
 		m_endDate = endDate;
-		String channelId = "";
-		String supplierId = "";
+		int channelId = 0, supplierId = 0;
 
-		// channel report query substring.
 		Session dbSession = SessionManager.currentSession();
-		// Transaction tx = null;
 		try {
-			// tx = dbSession.beginTransaction();
-
-			// Here is your db code
 			reportDataWrapper.put("OrderSummaryData",
 					getOrderSummaryData(dbSession, getVendorId()));
 			List<OverAllSalesData> overallSales = null;
-			String format = "";// request.getParameter("format");
-			format = StringHandle.removeNull(format);
-			String reportType = "";/*
-									 * StringHandle.removeNull(request
-									 * .getParameter("reportType"));
-									 */
-
-			if (channelId.equals("") && supplierId.equals("")) {
-				List<ChannelSalesData> channelSales = getChannelSalesData(
-						dbSession, getVendorId());
-				List<SupplierSalesData> supplierSales = getSupplierSalesData(
-						dbSession, getVendorId(), null);
-				List<ProductSalesData> productSales = getProductSalesData(
-						dbSession, getVendorId(), null, null);
-				reportDataWrapper.put("channelsales", channelSales);
-				reportDataWrapper.put("suppliersales", supplierSales);
-				reportDataWrapper.put("productsales", productSales);
-
-				overallSales = getOverallSalesData(dbSession, getVendorId(),
-						null, null, m_startDate, m_endDate);
-				reportDataWrapper.put("overAllSales", overallSales);
-			} else {
-				if ((supplierId != "") && (channelId == "")) {
-					List<ProductSalesData> productSales = getProductSalesData(
-							dbSession, getVendorId(), null, supplierId);
-					String supplierName = getSupplierName(dbSession, supplierId);
-					reportDataWrapper.put("supplierName", supplierName);
-					reportDataWrapper.put("productsales", productSales);
-
-					overallSales = getOverallSalesData(dbSession,
-							getVendorId(), supplierId, null, m_startDate,
-							m_endDate);
-					reportDataWrapper.put("overAllSales", overallSales);
-				} else if ((supplierId == "") && (channelId != "")) {
-					List<SupplierSalesData> supplierSales = getSupplierSalesData(
-							dbSession, getVendorId(), channelId);
-					List<ProductSalesData> productSales = getProductSalesData(
-							dbSession, getVendorId(), channelId, null);
-					String channelName = getChannelName(dbSession, channelId);
-					reportDataWrapper.put("channelName", channelName);
-					reportDataWrapper.put("suppliersales", supplierSales);
-					reportDataWrapper.put("productsales", productSales);
-
-					overallSales = getOverallSalesData(dbSession,
-							getVendorId(), null, channelId, m_startDate,
-							m_endDate);
-					reportDataWrapper.put("overAllSales", overallSales);
-				} else {
-					List<ProductSalesData> productSales = getProductSalesData(
-							dbSession, getVendorId(), channelId, supplierId);
-					String channelName = getChannelName(dbSession, channelId);
-					reportDataWrapper.put("channelName", channelName);
-
-					String supplierName = getSupplierName(dbSession, supplierId);
-					reportDataWrapper.put("supplierName", supplierName);
-
-					reportDataWrapper.put("productsales", productSales);
-					overallSales = getOverallSalesData(dbSession,
-							getVendorId(), supplierId, channelId, m_startDate,
-							m_endDate);
-					reportDataWrapper.put("overAllSales", overallSales);
-				}
-			}
-			// tx.commit();
+			List<ChannelSalesData> channelSales = getChannelSalesData(
+					dbSession, getVendorId());
+			List<SupplierSalesData> supplierSales = getSupplierSalesData(
+					dbSession, getVendorId(), channelId);
+			List<ProductSalesData> productSales = getProductSalesData(
+					dbSession, getVendorId(), channelId, supplierId);
+			reportDataWrapper.put("channelsales", channelSales);
+			reportDataWrapper.put("suppliersales", supplierSales);
+			reportDataWrapper.put("productsales", productSales);
+			overallSales = getOverallSalesData(dbSession, getVendorId(),
+					channelId, supplierId, m_startDate, m_endDate);
+			reportDataWrapper.put("overAllSales", overallSales);
 		} catch (RuntimeException e) {
 			LOG.error(e.getMessage(), e);
-		} finally {
-			// SessionManager.closeSession();
 		}
-
 		return reportDataWrapper;
-	}
-
-	private String getSupplierName(Session dbSession, String supplierid) {
-		String supplierName = "";
-		try {
-			Query query = dbSession
-					.createQuery("select s.supplierName from salesmachine.hibernatedb.OimSuppliers s where s.supplierId=:sid");
-
-			Iterator iter = query.setInteger("sid",
-					Integer.parseInt(supplierid)).iterate();
-			if (iter.hasNext()) {
-				supplierName = (String) iter.next();
-				// System.out.println("!!! Supplier Name : " + supplierName);
-			}
-		} catch (NumberFormatException e) {
-			supplierName = "unknown";
-
-		} catch (Exception e) {
-			LOG.error("Error", e);
-		}
-
-		return supplierName;
-	}
-
-	private String getChannelName(Session dbSession, String channelid) {
-		String channelName = "";
-		try {
-			Query query = dbSession
-					.createQuery("select c.channelName from salesmachine.hibernatedb.OimChannels c where c.channelId=:cid");
-			Iterator iter = query
-					.setInteger("cid", Integer.parseInt(channelid)).iterate();
-
-			if (iter.hasNext()) {
-				channelName = (String) iter.next();
-			}
-
-		} catch (Exception e) {
-			LOG.error("Error", e);
-		}
-
-		return channelName;
 	}
 
 	@Override
 	public List<OverAllSalesData> getOverallSalesData(Integer vendorId,
-			String supplierId, String channelId, Date startDate, Date endDate) {
+			int supplierId, int channelId, Date startDate, Date endDate) {
 		Session dbSession = SessionManager.currentSession();
 		return getOverallSalesData(dbSession, vendorId, supplierId, channelId,
 				startDate, endDate);
 	}
 
 	public List<OverAllSalesData> getOverallSalesData(Session dbSession,
-			Integer vendorId, String supplierId, String channelId,
-			Date startDate, Date endDate) {
+			Integer vendorId, int supplierId, int channelId, Date startDate,
+			Date endDate) {
 		List<OverAllSalesData> overallSales = new ArrayList<OverAllSalesData>();
 		Double totalSalePrice = 0.00;
 		String dateSubQuery = " and d.insertionTm between to_date ('"
 				+ dateToString(startDate) + "', 'mm-dd-yyyy') AND to_date ('"
 				+ dateToString(endDate) + "', 'mm-dd-yyyy') ";
 		String conditionSubQuery = "";
-		if (supplierId == null && channelId == null) {
-			conditionSubQuery = "";
-		} else if (supplierId != null && channelId == null) {
-			conditionSubQuery = " and d.oimSuppliers.supplierId =:sid ";
-		} else if (supplierId == null && channelId != null) {
-			conditionSubQuery = " and o.oimOrderBatches.oimChannels.channelId =:cid ";
-		} else if (supplierId != null && channelId != null) {
-			conditionSubQuery = " and d.oimSuppliers.supplierId =:sid and o.oimOrderBatches.oimChannels.channelId =:cid ";
+		if (supplierId > 0) {
+			conditionSubQuery += " and d.oimSuppliers.supplierId =:sid ";
+		}
+		if (supplierId > 0) {
+			conditionSubQuery += " and o.oimOrderBatches.oimChannels.channelId =:cid ";
 		}
 		Query query = dbSession
 				.createQuery("select sum(d.salePrice*d.quantity), d.insertionTm from "
@@ -252,13 +146,11 @@ public class ReportRepositoryDB extends RepositoryBase implements
 						+ conditionSubQuery
 						+ " group by d.insertionTm order by d.insertionTm desc");
 		// System.out.println(query.getQueryString());
-		if (supplierId != null && channelId == null) {
-			query.setInteger("sid", Integer.parseInt(supplierId));
-		} else if (supplierId == null && channelId != null) {
-			query.setInteger("cid", Integer.parseInt(channelId));
-		} else if (supplierId != null && channelId != null) {
-			query.setInteger("cid", Integer.parseInt(channelId));
-			query.setInteger("sid", Integer.parseInt(supplierId));
+		if (supplierId > 0) {
+			query.setInteger("sid", supplierId);
+		}
+		if (channelId > 0) {
+			query.setInteger("cid", channelId);
 		}
 		query.setInteger("vid", vendorId);
 		Iterator iter = query.iterate();
@@ -281,10 +173,7 @@ public class ReportRepositoryDB extends RepositoryBase implements
 				}
 			});
 		}
-		// Hibernate.close(iter);// ??? // this is explicitly closing the
-		// iterator started by the session handler,
-		// this is not required here as sessionmanager.closesession will
-		// automatically be taking care of that.
+
 		DecimalFormat priceFormatter = new DecimalFormat("#0.00");
 		reportDataWrapper.put("additionalRevenues",
 				String.valueOf(priceFormatter.format(totalSalePrice)));
@@ -298,26 +187,17 @@ public class ReportRepositoryDB extends RepositoryBase implements
 		// + " and d.oimOrderStatuses.statusId = 0 "
 				);
 		// System.out.println(query.getQueryString());
-		if (supplierId != null && channelId == null) {
-			query.setInteger("sid", Integer.parseInt(supplierId));
-		} else if (supplierId == null && channelId != null) {
-			query.setInteger("cid", Integer.parseInt(channelId));
-		} else if (supplierId != null && channelId != null) {
-			query.setInteger("cid", Integer.parseInt(channelId));
-			query.setInteger("sid", Integer.parseInt(supplierId));
+		if (supplierId > 0) {
+			query.setInteger("sid", supplierId);
+		}
+		if (channelId > 0) {
+			query.setInteger("cid", channelId);
 		}
 		query.setInteger("vid", vendorId);
 		iter = query.iterate();
 		if (iter.hasNext()) {
 			reportDataWrapper.put("totalOrders", String.valueOf(iter.next()));
 		}
-
-		/*
-		 * if (!overallSales.containsKey(m_startDate)) {
-		 * overallSales.put(m_startDate, "0"); dates.add(m_startDate); } if
-		 * (!overallSales.containsKey(m_endDate)) { overallSales.put(m_endDate,
-		 * "0"); dates.add(0, m_endDate); }
-		 */
 		return overallSales;
 	}
 
@@ -407,11 +287,8 @@ public class ReportRepositoryDB extends RepositoryBase implements
 	}
 
 	private List<SupplierSalesData> getSupplierSalesData(Session dbSession,
-			Integer vendorId, String channelid) {
+			Integer vendorId, int channelid) {
 		List<SupplierSalesData> supplierSales = new ArrayList<SupplierSalesData>();
-		// channelid =
-		// StringHandle.removeNull(request.getParameter("channelid"));
-
 		String dateSubQuery = " and od.oimOrders.insertionTm between to_date ('"
 				+ dateToString(m_startDate)
 				+ "', 'mm-dd-yyyy')AND to_date ('"
@@ -419,7 +296,7 @@ public class ReportRepositoryDB extends RepositoryBase implements
 
 		try {
 			Query query = null;
-			if (channelid == null || "".equals(channelid)) {
+			if (channelid > 0) {
 				query = dbSession
 						.createQuery("select s.supplierId, s.supplierName, sum(od.salePrice*od.quantity) "
 								+ " from salesmachine.hibernatedb.OimOrderDetails od "
@@ -444,12 +321,12 @@ public class ReportRepositoryDB extends RepositoryBase implements
 								+ " od.oimSuppliers.deleteTm is null "
 								+ dateSubQuery
 								// + " and od.oimOrderStatuses.statusId = 0 "
-								+ " and od.oimOrders.oimOrderBatches.oimChannels.channelId=:cid"
+								//+ " and od.oimOrders.oimOrderBatches.oimChannels.channelId=:cid"
 								+ " group by s.supplierId, s.supplierName "
 								+ " order by sum(od.salePrice*od.quantity) desc");
 
 				query.setInteger("vid", vendorId);
-				query.setInteger("cid", Integer.parseInt(channelid));
+				//query.setInteger("cid", channelid);
 			}
 			// System.out.println(query.getQueryString());
 			Iterator iter = query.setFirstResult(0).setMaxResults(10).iterate();
@@ -517,77 +394,13 @@ public class ReportRepositoryDB extends RepositoryBase implements
 	}
 
 	private List<ProductSalesData> getProductSalesData(Session dbSession,
-			Integer vendorId, String channelid, String supplierid) {
+			Integer vendorId, int channelid, int supplierid) {
 		List<ProductSalesData> productSales = new ArrayList<ProductSalesData>();
-		// channelid =
-		// StringHandle.removeNull(request.getParameter("channelid"));
-		/*
-		 * supplierid = StringHandle
-		 * .removeNull(request.getParameter("supplierid"));
-		 */
-		supplierid = "";
 		String dateSubQuery = " and d.oimOrders.insertionTm between to_date ('"
 				+ dateToString(m_startDate) + "', 'mm-dd-yyyy') AND to_date ('"
 				+ dateToString(m_endDate) + "', 'mm-dd-yyyy') ";
 		try {
 			Query query = null;
-
-			/*
-			 * if (supplierid == null || supplierid.equalsIgnoreCase("unknown"))
-			 * { query = dbSession
-			 * .createQuery("Select d.sku, (d.salePrice * d.quantity) " +
-			 * " from salesmachine.hibernatedb.OimOrderDetails d" +
-			 * " where d.oimOrders.oimOrderBatches.oimChannels.vendors.vendorId =:vid"
-			 * + " and d.deleteTm is null and d.salePrice is not null " +
-			 * dateSubQuery +
-			 * " and d.oimSuppliers is null order by (d.salePrice * d.quantity) desc"
-			 * );
-			 * 
-			 * query.setInteger("vid", vendorId);
-			 * 
-			 * } else if ((channelid == "") && (supplierid != "")) { query =
-			 * dbSession
-			 * .createQuery("Select d.sku, (d.salePrice * d.quantity) " +
-			 * " from salesmachine.hibernatedb.OimOrderDetails d" +
-			 * " where d.oimOrders.oimOrderBatches.oimChannels.vendors.vendorId =:vid"
-			 * + " and d.oimSuppliers.supplierId =:sid " // +
-			 * " and d.oimOrderStatuses.statusId = 0 " +
-			 * " and d.deleteTm is null and d.salePrice is not null " +
-			 * dateSubQuery + " order by (d.salePrice * d.quantity) desc");
-			 * 
-			 * query.setInteger("vid", vendorId); query.setInteger("sid",
-			 * Integer.parseInt(supplierid));
-			 * 
-			 * } else if ((channelid != "") && (supplierid == "")) { query =
-			 * dbSession
-			 * .createQuery("Select d.sku, (d.salePrice * d.quantity) " +
-			 * " from salesmachine.hibernatedb.OimOrderDetails d" +
-			 * " where d.oimOrders.oimOrderBatches.oimChannels.vendors.vendorId =:vid"
-			 * + " and d.oimOrders.oimOrderBatches.oimChannels.channelId =:cid "
-			 * // + " and d.oimOrderStatuses.statusId = 0 " +
-			 * " and d.deleteTm is null and d.salePrice is not null " +
-			 * dateSubQuery + " order by (d.salePrice * d.quantity) desc");
-			 * 
-			 * query.setInteger("vid", vendorId); query.setInteger("cid",
-			 * Integer.parseInt(channelid));
-			 * 
-			 * } else if ((channelid != "") && (supplierid != "")) { query =
-			 * dbSession
-			 * .createQuery("Select d.sku, (d.salePrice * d.quantity) " +
-			 * " from salesmachine.hibernatedb.OimOrderDetails d" +
-			 * " where d.oimOrders.oimOrderBatches.oimChannels.vendors.vendorId =:vid"
-			 * // + " and d.oimOrderStatuses.statusId = 0 " +
-			 * " and d.deleteTm is null and d.salePrice is not null " +
-			 * dateSubQuery +
-			 * " and d.oimOrders.oimOrderBatches.oimChannels.channelId =:cid and d.oimSuppliers.supplierId =:sid order by (d.salePrice * d.quantity) desc"
-			 * );
-			 * 
-			 * query.setInteger("vid", vendorId); query.setInteger("cid",
-			 * Integer.parseInt(channelid)); query.setInteger("sid",
-			 * Integer.parseInt(supplierid));
-			 * 
-			 * } else {
-			 */
 			query = dbSession
 					.createQuery("Select d.sku, sum(d.salePrice * d.quantity),sum(d.quantity) "
 							+ " from salesmachine.hibernatedb.OimOrderDetails d"
@@ -1063,9 +876,11 @@ public class ReportRepositoryDB extends RepositoryBase implements
 		List<OimOrders> list = query.list();
 		int unprocessedCount = 0, unresolvedCount = 0;
 		Double unprocessedAmount = 0D, unresolvedAmount = 0D;
+		OimSuppliers firstSupplier = null;
 		boolean isUnresolved = false;
 		for (OimOrders oimOrders : list) {
 			if (oimOrders.getOimOrderDetailses() != null) {
+				firstSupplier = null;
 				isUnresolved = false;
 				Set<OimOrderDetails> listDetails = oimOrders
 						.getOimOrderDetailses();
@@ -1079,11 +894,19 @@ public class ReportRepositoryDB extends RepositoryBase implements
 					}
 					if (details.getOimSuppliers() == null
 							|| details.getSalePrice() == null
-							|| details.getQuantity() == null) {
+							|| details.getQuantity() == null
+							|| (firstSupplier != null && !firstSupplier
+									.getSupplierId().equals(
+											details.getOimSuppliers()
+													.getSupplierId()))) {
 						isUnresolved = true;
 						break;
 					}
+					firstSupplier = details.getOimSuppliers();
 				}
+
+				if (oimOrders.getOimShippingMethod() == null)
+					isUnresolved = true;
 				Double total = (oimOrders.getOrderTotalAmount() != null && oimOrders
 						.getOrderTotalAmount() > 0) ? oimOrders
 						.getOrderTotalAmount() : 0;
@@ -1159,11 +982,14 @@ public class ReportRepositoryDB extends RepositoryBase implements
 			errorDetails.put("processingtm", processingTm);
 			String errorCodeStr = "";
 			if (errorCode.intValue() == OimSupplierOrderPlacement.ERROR_PING_FAILURE) {
-				errorCodeStr = "Ping Failure";
+				errorCodeStr = "Supplier ("
+						+ supplier.getSupplierName()
+						+ ") can not be reached to post orders in their system.";
 			} else if (errorCode.intValue() == OimSupplierOrderPlacement.ERROR_UNCONFIGURED_SUPPLIER) {
-				errorCodeStr = "UnConfigured Supplier";
+				errorCodeStr = "Supplier (" + supplier.getSupplierName()
+						+ ") is not configured properly to send orders.";
 			} else if (errorCode.intValue() == OimSupplierOrderPlacement.ERROR_ORDER_PROCESSING) {
-				errorCodeStr = "Order Processing failure";
+				errorCodeStr = "You have some Failed orders that need your attention to resolve.";
 			}
 			errorDetails.put("errormsg", errorCodeStr);
 			supplierErrors.put(supplier.getSupplierId(), errorDetails);
@@ -1193,8 +1019,7 @@ public class ReportRepositoryDB extends RepositoryBase implements
 			Long cnt = (Long) row[2];
 			channelNameMap.put(cId, cName);
 			channelUnresolvedOrdersMap.put(cId, cnt);
-			LOG.debug("Channel: " + cName + "(Id:" + cId
-					+ ")\tCount: " + cnt);
+			LOG.debug("Channel: " + cName + "(Id:" + cId + ")\tCount: " + cnt);
 		}
 		returnMap.put("channelNameMap", channelNameMap);
 		returnMap.put("channelUnresolvedOrdersMap", channelUnresolvedOrdersMap);

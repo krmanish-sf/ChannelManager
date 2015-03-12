@@ -6,6 +6,10 @@ import java.util.Date;
 import salesmachine.hibernatedb.OimShippingMethod;
 
 public class ShippingMethod implements Serializable {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 7453582791510031167L;
 	private int id;
 	private ShippingCarrier shippingCarrier;
 	private String name;
@@ -52,6 +56,14 @@ public class ShippingMethod implements Serializable {
 		this.description = description;
 	}
 
+	public String getFullName() {
+		return toString();
+	}
+
+	public void setFullName(String fullName) {
+		// Left blank to support json parsing
+	}
+
 	public static ShippingMethod from(OimShippingMethod oimShippingMethod) {
 		ShippingMethod shippingMethod = new ShippingMethod();
 		shippingMethod.setCreatedOn(oimShippingMethod.getCreatedOn());
@@ -61,5 +73,21 @@ public class ShippingMethod implements Serializable {
 		shippingMethod.setShippingCarrier(ShippingCarrier
 				.from(oimShippingMethod.getOimShippingCarrier()));
 		return shippingMethod;
+	}
+
+	@Override
+	public String toString() {
+		return this.shippingCarrier.getName() + " " + this.name;
+	}
+
+	public OimShippingMethod toOimShippingMethod() {
+		OimShippingMethod retVal = new OimShippingMethod();
+		retVal.setCreatedOn(this.createdOn);
+		retVal.setDescription(this.description);
+		retVal.setId(this.id);
+		retVal.setName(this.name);
+		retVal.setOimShippingCarrier(this.shippingCarrier
+				.toOimShippingCarrier());
+		return retVal;
 	}
 }

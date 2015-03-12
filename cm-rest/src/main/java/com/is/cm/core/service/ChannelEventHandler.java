@@ -14,6 +14,7 @@ import salesmachine.util.OimLogStream;
 import com.is.cm.core.domain.Channel;
 import com.is.cm.core.domain.ChannelShippingMap;
 import com.is.cm.core.domain.Filetype;
+import com.is.cm.core.domain.SupportedChannel;
 import com.is.cm.core.domain.UploadedFile;
 import com.is.cm.core.event.CreateEvent;
 import com.is.cm.core.event.CreatedEvent;
@@ -161,7 +162,14 @@ public class ChannelEventHandler implements ChannelService {
 			RequestReadEvent<Integer> requestReadEvent) {
 		List<ChannelShippingMap> findShippingMapping = channelRepository
 				.findShippingMapping(requestReadEvent.getEntity());
-		return new ReadCollectionEvent<ChannelShippingMap>(
-				findShippingMapping);
+		return new ReadCollectionEvent<ChannelShippingMap>(findShippingMapping);
+	}
+
+	@Override
+	public ReadCollectionEvent<SupportedChannel> getSupportedChannels(
+			RequestReadEvent<SupportedChannel> requestReadEvent) {
+		List<SupportedChannel> supportedChannels = channelRepository
+				.findSupportedChannels();
+		return new ReadCollectionEvent<SupportedChannel>(supportedChannels);
 	}
 }

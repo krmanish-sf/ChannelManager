@@ -22,9 +22,7 @@
         <div class="col-xs-12">
               <div class="row">
               <div class="col-sm-12 inline">
-                      <h4 class="lighter pull-left">
-									<i class="icon-star orange"></i> My Supplier </h4>
-									<div class="widget-container-span">
+              <div class="widget-container-span">
 									<div class="widget-box">
 										<div class="widget-header header-color-green">
 											<h5>Tip:</h5>
@@ -43,6 +41,9 @@ If you have not yet configured your supplier, click "Add Supplier" to do it now.
 										</div>
 									</div>
 								</div> 
+                      <h4 class="lighter pull-left">
+									<i class="icon-truck orange"></i> My Supplier </h4>
+									
               <a data-toggle="modal" href="#mySupplieradd"
 									id="addSupplier" class="btn btn-success pull-right">Add Supplier</a>
               </div>
@@ -61,9 +62,9 @@ If you have not yet configured your supplier, click "Add Supplier" to do it now.
                     <th><i
 													class="icon-barcode icon-2x blue visible-xs"></i><span
 													class="hidden-xs visible-sm">Account</span></th>
-                    <th><i
+                    <%-- <th><i
 													class="icon-plane icon-2x blue visible-xs"></i><span
-													class="hidden-xs">Shipping Method</span></th>
+													class="hidden-xs">Shipping Method</span></th> --%>
                     <th><i class="icon-off icon-2x blue visible-xs"></i><span
 													class="hidden-xs">Test Mode</span></th>
                     <th class="hidden-xs">Order Push Details</th>
@@ -128,7 +129,8 @@ If you have not yet configured your supplier, click "Add Supplier" to do it now.
 															required="required" />
                             </div>
 												</div>
-                            <div class="form-group">
+                            <div class="form-group"
+													style="display: none;">
                               <label
 														class="col-sm-5 control-label no-padding-right">Default Shipping Method Code</label>
                               <div class="col-sm-5">
@@ -137,12 +139,6 @@ If you have not yet configured your supplier, click "Add Supplier" to do it now.
 															data-bind-vendorsupplier="defShippingMethodCode"
 															required="required" />
                             </div>
-													<div class="col-sm-2">
-													<a class="btn btn-info btn-sm hidden-xs icon-pencil"
-															href="#editshippingmethods" data-toggle="modal"></a><a
-															class="btn btn-info btn-xs icon-pencil visible-xs btn-xs"
-															href="#editshippingmethods" data-toggle="modal"></a>
-													</div>
 												</div>
                             <div class="form-group">
                               <label
@@ -276,7 +272,8 @@ If you have not yet configured your supplier, click "Add Supplier" to do it now.
 															type="text" value="" required />
                             </div>
 												</div>
-                            <div class="form-group">
+                            <div class="form-group"
+													style="display: none;">
                               <label
 														class="col-sm-5 control-label no-padding-right">Default Shipping Method Code</label>
                               <div class="col-sm-7">
@@ -341,62 +338,39 @@ If you have not yet configured your supplier, click "Add Supplier" to do it now.
                   <div class="modal-header">
                     <button type="button" class="close"
 										data-dismiss="modal" aria-hidden="true">&times;</button>
-                    <h4 class="modal-title">Edit Shipping Methods</h4>
+                    <h4 class="modal-title">Shipping Methods</h4>
                   </div>
                   <div class="modal-body ">
                     <div class="row">
                       <div class="container">
-                        <form class="form-horizontal" role="form"
-												id="shippingmethodsForm">										
-                            <!-- <div class="form-group">
-                              <label
-														class="col-sm-3 control-label no-padding-right">Shipping Method</label>
-                              <div class="col-sm-2">
-                              <input type="text" class="width-100"
-															name="shipping_text" />
-                            </div>
-												
-                              <label
-														class="col-sm-2 control-label no-padding-right">Maps To</label>
-                              <div class="col-sm-2">
-                              <input type="text" class="width-100"
-															name="shipping_text" />
-                            </div>
-                            <div class="col-sm-2">
-                              <button
-															class="btn btn-info btn-sm deleteparent" type="button"> <i
-																class="icon-ok "></i>Delete</button>
-                            </div>
-												</div> -->
-                             <div class="form-group center">
-                             <button class="btn btn-info btn-sm"
-														id="addshipping" type="button"> <i
-															class="icon-ok "></i>Add Shipping Mapping</button>
-                             <button class="btn btn-info btn-sm"
-														id="saveshippingmapping" type="button"> <i
-															class="icon-ok "></i>Update</button>
-                            </div>
-                         
-                         
-                        </form>
-                        <!-- PAGE CONTENT BEGINS --> 
+                      <div class="col-sm-12">
+							<table id="tableShippingMap"
+													class="table table-bordered table-striped table-responsive">
+								<thead class="thin-border-bottom">
+									<tr>
+										<th><i class="icon-barcode icon-2x blue visible-xs"></i><span
+																class="hidden-xs visible-sm">Shipping Carrier</span></th>
+										<th><i class="icon-plane icon-2x blue visible-xs"></i><span
+																class="hidden-xs">Shipping Method</span></th>
+										<th><i class="icon-user icon-2x blue visible-xs"></i> <span
+																class="hidden-xs">Supplier Shipping Carrier</span></th>
+										<th><i class="icon-user icon-2x blue visible-xs"></i> <span
+																class="hidden-xs">Supplier Shipping Method</span></th>
+									</tr>
+								</thead>
+								<tbody>
+								</tbody>
+							</table>
+						</div>
                         
                       </div>
-                      
                     </div>
                   </div>
                 </div>
-                <!-- PAGE CONTENT ENDS --> 
-              </div>
-              <!-- /.col --> 
+			</div>
             </div>
-      </div>
-      <!-- /span --> 
+      </div> 
     </div>
-    
-    <!-- /row --> 
-    
-    <!-- /.page-content --> 
   </div>
 </jsp:attribute>
 	<jsp:attribute name="pagejs">
@@ -414,45 +388,6 @@ If you have not yet configured your supplier, click "Add Supplier" to do it now.
 			$('#customSupplierFileFormatDiv').hide();
 			$('.supplieremailDiv').hide();
 		}
-		$('a[href="#editshippingmethods"]')
-				.each(
-						function(i) {
-							$(this)
-									.off('click')
-									.on(
-											'click',
-											vendorSupplier,
-											function(e) {
-												$(this)
-														.CRUD(
-																{
-																	url : '/aggregators/suppliers/'
-																			+ e.data.oimSuppliers.supplierId
-																			+ '/shippingmapping',
-																	method : "GET",
-																	success : function(
-																			data) {
-																		for (var i = 0; i < data.length; i++) {
-																			var time = (new Date())
-																					.getTime();
-																			var html = '<div class="form-group"><label class="col-sm-3 control-label no-padding-right">Shipping Method</label>'
-																					+ '<div class="col-sm-2"><input type="text" class="width-100" name="shipping_text_'
-												+ time
-												+ '" value="'+data[i].shippingText+'" /></div>'
-																					+ '<label class="col-sm-2 control-label no-padding-right">Maps To</label>'
-																					+ '<div class="col-sm-2"><input type="text" class="width-100" name="shipping_method_text_'+time+'" " value="'+data[i].oimShippingMethod.shippingName+'" /></div><div class="col-sm-2"><button class="btn btn-info btn-sm deleteparent" type="button">'
-																					+ '<i class="icon-ok "></i>Delete</button></div></div>';
-																			$(
-																					"#addshipping")
-																					.parent()
-																					.parent()
-																					.prepend(
-																							$(html));
-																		}
-																	}
-																});
-											});
-						});
 
 		$('#saveshippingmapping').off('click').on(
 				'click',
@@ -507,6 +442,7 @@ If you have not yet configured your supplier, click "Add Supplier" to do it now.
 																.fnDeleteRow(e[0]);
 														table_vendorSuppliers
 																.fnDraw();
+														getAlerts();
 													}
 												});
 							}
@@ -544,9 +480,13 @@ If you have not yet configured your supplier, click "Add Supplier" to do it now.
 									{
 										"mData" : "accountNumber"
 									},
-									{
-										"mData" : "defShippingMethodCode"
-									},
+									/* {
+										"mData" : function(vendorSupplier) {
+											return '<a class="btn btn-info btn-sm hidden-xs icon-exchange" href="#editshippingmethods"'
+													+ ' data-toggle="modal" onclick="$.CM.viewSupplierShippingMap($(this).parent().parent());"></a><a class="btn btn-info btn-xs icon-info visible-xs btn-xs"'
+													+ ' href="#editshippingmethods" data-toggle="modal" onclick="$.CM.viewSupplierShippingMap($(this).parent().parent());"></a>';
+										}
+									}, */
 									{
 										"mData" : function(vendorSupplier) {
 											return vendorSupplier.testMode ? "Enabled"
@@ -779,13 +719,12 @@ If you have not yet configured your supplier, click "Add Supplier" to do it now.
 						'click',
 						function() {
 							var time = (new Date()).getTime();
-							var html = '<div class="form-group"><label class="col-sm-3 control-label no-padding-right">Shipping Method</label>'
-									+ '<div class="col-sm-2"><input type="text" class="width-100" name="shipping_text_'
+							var html = '<div class="form-group">'
+									+ '<div class="col-sm-5 no-padding-left"><input type="text" class="width-100" name="shipping_text_'
 									+ time
 									+ '" /></div>'
-									+ '<label class="col-sm-2 control-label no-padding-right">Maps To</label>'
-									+ '<div class="col-sm-2"><input type="text" class="width-100" name="shipping_method_text_'+time+'" /></div><div class="col-sm-2"><button class="btn btn-info btn-sm deleteparent" type="button">'
-									+ '<i class="icon-ok "></i>Delete</button></div></div>';
+									+ '<div class="col-sm-6 no-padding-left"><input type="text" class="width-100" name="shipping_method_text_'+time+'" /></div><div class="col-sm-1 no-padding-left"><button class="btn btn-info btn-sm deleteparent" type="button">'
+									+ '<i class="icon-trash"></i></button></div></div>';
 							$(this).parent().parent().prepend($(html));
 						});
 

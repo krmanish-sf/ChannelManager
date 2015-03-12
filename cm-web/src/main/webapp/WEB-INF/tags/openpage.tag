@@ -2,14 +2,14 @@
 	description="Channel Manager content Page template"
 	pageEncoding="UTF-8"%><%@taglib uri="http://java.sun.com/jsp/jstl/core"
 	prefix="c"%><%@taglib uri="http://java.sun.com/jsp/jstl/functions"
-	prefix="fn"%><%@attribute name="maincontent" fragment="true"%><!DOCTYPE html>
+	prefix="fn"%><%@attribute name="maincontent" fragment="true"%>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta http-equiv="content-type" content="text/html; charset=UTF-8">
 <title>Inventory Source Channel Manager</title>
 <meta name="description" content="overview &amp; stats">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <!-- basic styles -->
 
 <link href="${pageContext.request.contextPath}/static/css/bootstrap.css"
@@ -61,10 +61,10 @@
 	<div class="navbar navbar-default" id="navbar">
 		<div class="navbar-container" id="navbar-container">
 			<div class="navbar-header pull-left">
-				<a href="${pageContext.request.contextPath}" class="navbar-brand"> <small> <img
+				<a href="${pageContext.request.contextPath}" class="navbar-brand">
+					<small> <img
 						src="${pageContext.request.contextPath}/static/images/isbrandlogo.png"
-						alt="logo"> Inventory
-						Source
+						alt="logo"> Inventory Source
 				</small>
 				</a>
 			</div>
@@ -122,14 +122,16 @@
 				</div>
 				<div class="modal-body ">
 					<div class="row">
-						<div class="container">Inventory Source is currently in a
-							Full Beta Release. We have selected our initial round of users
-							for this Beta release, but if you would like more details on
-							getting started with this order automation utility, please
-							contact us at support@inventorysource.com for more details about
-							service pricing and getting your business included as part of
-							this Beta version before our production release scheduled for
-							January 2015.</div>
+						<div class="container">
+							Inventory Source is currently in a Full Beta Release. We have
+							selected our initial round of users for this Beta release, but if
+							you would like more details on getting started with this order
+							automation utility, please contact us at <a target="_blank"
+								href="mailto:support@inventorysource.com">support@inventorysource.com</a>
+							for more details about service pricing and getting your business
+							included as part of this Beta version before our production
+							release scheduled for January 2015.
+						</div>
 					</div>
 				</div>
 			</div>

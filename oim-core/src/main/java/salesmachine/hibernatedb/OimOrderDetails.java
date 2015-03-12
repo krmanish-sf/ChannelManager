@@ -22,6 +22,8 @@ public class OimOrderDetails implements java.io.Serializable {
 	private Integer quantity;
 	private String productName;
 	private String productDesc;
+	private String supplierOrderStatus;
+	private String supplierOrderNumber;
 
 	public OimOrderDetails() {
 	}
@@ -147,6 +149,22 @@ public class OimOrderDetails implements java.io.Serializable {
 
 	public void setProductDesc(String productDesc) {
 		this.productDesc = productDesc;
+	}
+
+	public String getSupplierOrderStatus() {
+		return supplierOrderStatus;
+	}
+
+	public void setSupplierOrderStatus(String supplierOrderStatus) {
+		this.supplierOrderStatus = supplierOrderStatus;
+	}
+
+	public String getSupplierOrderNumber() {
+		return supplierOrderNumber;
+	}
+
+	public void setSupplierOrderNumber(String supplierOrderNumber) {
+		this.supplierOrderNumber = supplierOrderNumber;
 	}
 
 }

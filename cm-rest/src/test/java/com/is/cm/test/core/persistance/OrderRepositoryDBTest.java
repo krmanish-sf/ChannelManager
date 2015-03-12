@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
-import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,7 +18,7 @@ public class OrderRepositoryDBTest {
 	private static Logger LOG = LoggerFactory
 			.getLogger(OrderRepositoryDBTest.class);
 
-	@Test
+	
 	public void orderDataIntegrityAndConsistencyTest()
 			throws InterruptedException {
 

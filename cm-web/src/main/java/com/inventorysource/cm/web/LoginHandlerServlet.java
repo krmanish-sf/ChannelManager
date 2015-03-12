@@ -20,6 +20,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
 
 import salesmachine.hibernatedb.Reps;
+import salesmachine.util.StringHandle;
 
 import com.inventorysource.cm.web.config.ApplicationProperties;
 
@@ -46,11 +47,11 @@ public class LoginHandlerServlet extends HttpServlet {
 
 	protected void doPost(HttpServletRequest req, HttpServletResponse resp)
 			throws ServletException, IOException {
-		if (req.getSession() == null
-				|| req.getSession().getAttribute("reps") == null) {
-			HttpSession session = req.getSession(true);
+		HttpSession session = req.getSession(false);
+		if (session == null || session.getAttribute("reps") == null) {
 			String username = req.getParameter("username");
 			String password = req.getParameter("password");
+			String done = req.getParameter("done");
 			Map<String, String> loginDetails = new HashMap<String, String>();
 			loginDetails.put("username", username);
 			loginDetails.put("password", password);
@@ -59,30 +60,35 @@ public class LoginHandlerServlet extends HttpServlet {
 					ApplicationProperties.getRestServiceUrl() + "login",
 					loginDetails, salesmachine.hibernatedb.Reps.class);
 			Reps r = entity.getBody();
-			if (r != null) {
-				session.setAttribute("reps", r);
-				session.setAttribute("REST_URL",
-						ApplicationProperties.getRestServiceUrl());
-				if (r.getCmAllowed().intValue() == 1) {
-					Cookie cookie = new Cookie("SESSIONID", session.getId());
-					cookie.setPath("/");
-					//cookie.setDomain("http://localhost");
-					resp.addCookie(cookie);
-					resp.sendRedirect("index.jsp");
-				} else {
-					req.setAttribute(
-							"error",
-							"Channel Manager Service is not activated for this account. Use the Sign Up link to activate the service.");
-					LOG.debug("Channel Manager Service is not activated for this account. Use the Sign Up link to activate the service.");
-					resp.sendRedirect("payment.jsp");
-				}
-			} else {
+			if (r == null) {
 				req.setAttribute("error",
 						"Invalid user name or password! Please try again!");
 				RequestDispatcher rd = req.getServletContext()
 						.getRequestDispatcher("/login.jsp");
 				rd.include(req, resp);
+				return;
 			}
+
+			if (r.getCmAllowed().intValue() == 1) {
+				session = req.getSession(true);
+				session.setAttribute("reps", r);
+				session.setAttribute("REST_URL",
+						ApplicationProperties.getRestServiceUrl());
+				Cookie cookie = new Cookie("SESSIONID", session.getId());
+				cookie.setPath("/");
+				resp.addCookie(cookie);
+				req.setAttribute("reps", r);
+				if (StringHandle.isNullOrEmpty(done))
+					done = "index.jsp";
+				resp.sendRedirect(done);
+			} else {
+				req.setAttribute(
+						"error",
+						"Channel Manager Service is not activated for this account. Use the Sign Up link to activate the service.");
+				LOG.debug("Channel Manager Service is not activated for this account. Use the Sign Up link to activate the service.");
+				resp.sendRedirect("payment.jsp");
+			}
+
 		} else {
 			resp.sendRedirect("index.jsp");
 		}
@@ -98,10 +104,19 @@ public class LoginHandlerServlet extends HttpServlet {
 			resp.getOutputStream().write("Success".getBytes());
 			return;
 		}
-		if (req.getSession() == null) {
-			resp.sendRedirect("login.jsp");
+		HttpSession session = req.getSession(false);
+		if (session == null) {
+			RequestDispatcher rd = req.getServletContext()
+					.getRequestDispatcher("/login.jsp");
+			rd.include(req, resp);
+		} else if (session.getAttribute("reps") == null) {
+
+			RequestDispatcher rd = req.getServletContext()
+					.getRequestDispatcher("/login.jsp");
+			rd.include(req, resp);
+
 		} else {
-			resp.sendRedirect(req.getRequestURI());
+			resp.sendRedirect("index.jsp");
 		}
 	}
 }

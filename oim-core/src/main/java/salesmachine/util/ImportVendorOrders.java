@@ -156,7 +156,7 @@ public class ImportVendorOrders {
 								+ channelId);
 			} else {
 				log.debug("Pulling orders for channel id: " + channelId);
-				// coi.getVendorOrders();
+				coi.getVendorOrders();
 				getVendorOrders(channel, session);
 			}
 		} else {

@@ -3,12 +3,10 @@ package com.is.cm.core.persistance;
 import java.util.List;
 import java.util.Map;
 
-import salesmachine.hibernatedb.OimChannelShippingMap;
-
 import com.is.cm.core.domain.Channel;
 import com.is.cm.core.domain.ChannelShippingMap;
 import com.is.cm.core.domain.Filetype;
-import com.is.cm.core.domain.SupplierShippingMethod;
+import com.is.cm.core.domain.SupportedChannel;
 import com.is.cm.core.domain.UploadedFile;
 
 public interface ChannelRepository {
@@ -27,4 +25,6 @@ public interface ChannelRepository {
 	Channel findByName(String name);
 
 	List<ChannelShippingMap> findShippingMapping(Integer entity);
+
+	List<SupportedChannel> findSupportedChannels();
 }

@@ -414,7 +414,8 @@ public class Order extends DomainBase implements Serializable {
 				"oimOrderBatches", "oimOrderDetailses" });
 		order.oimOrderBatches = OrderBatch.from(oimorder.getOimOrderBatches());
 		if (oimorder.getOimOrderDetailses() != null) {
-			Iterator odIter = oimorder.getOimOrderDetailses().iterator();
+			Iterator<OimOrderDetails> odIter = oimorder.getOimOrderDetailses()
+					.iterator();
 			Set<OrderDetail> details = new HashSet<OrderDetail>();
 			while (odIter.hasNext()) {
 				OimOrderDetails od = (OimOrderDetails) odIter.next();
@@ -433,8 +434,11 @@ public class Order extends DomainBase implements Serializable {
 	public OimOrders toOimOrder() {
 		OimOrders oimorder = new OimOrders();
 		BeanUtils.copyProperties(this, oimorder, new String[] {
-				"oimOrderBatches", "oimOrderDetailses" });
+				"oimOrderBatches", "oimOrderDetailses", "shippingMethod" });
 		oimorder.setOimOrderBatches(this.oimOrderBatches.toOimOrderBatches());
+		if (this.shippingMethod != null)
+			oimorder.setOimShippingMethod(this.shippingMethod
+					.toOimShippingMethod());
 		return oimorder;
 	}
 

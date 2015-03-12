@@ -14,11 +14,11 @@ public interface ReportRepository {
 
 	Map<String, Map> getAlertAndErrors(int vendorId);
 
-	List<OverAllSalesData> getOverallSalesData(Integer vendorId,
-			String supplierId, String channelId, Date startDate, Date endDate);
-
 	List<?> getReportData(String reportType, Date startDate, Date endDate);
 
 	ReportDataWrapper getReportData(Date startDate, Date endDate,
 			String reportType);
+
+	List<OverAllSalesData> getOverallSalesData(Integer vendorId,
+			int supplierId, int channelId, Date startDate, Date endDate);
 }

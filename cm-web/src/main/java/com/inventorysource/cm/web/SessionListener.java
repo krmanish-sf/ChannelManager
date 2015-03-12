@@ -45,12 +45,10 @@ public class SessionListener implements HttpSessionListener {
 		}
 
 		Date now = new Date();
-		String message = new StringBuffer("New Session created on ")
-				.append(now.toString()).append("\nID: ").append(id)
-				.append("\n").append("There are now ")
-				.append("" + sessionCount)
-				.append(" live sessions in the application.").toString();
-
+		String message = new StringBuffer("Session ").append(id)
+				.append(" created at ").append(now.toString())
+				.append(". Total ").append(sessionCount)
+				.append(" live sessions.").toString();
 		log.debug(message);
 	}
 
@@ -63,11 +61,9 @@ public class SessionListener implements HttpSessionListener {
 			sessionMap.remove(id);
 			--sessionCount;
 		}
-		String message = new StringBuffer("Session destroyed"
-				+ "\nValue of destroyed session ID is").append("" + id)
-				.append("\n").append("There are now ")
-				.append("" + sessionCount)
-				.append(" live sessions in the application.").toString();
-		log.debug(message);
+		StringBuffer message = new StringBuffer("Session: {").append("" + id)
+				.append("} destroyed.").append(" There are now ")
+				.append("" + sessionCount).append(" live sessions.");
+		log.info(message.toString());
 	}
 }

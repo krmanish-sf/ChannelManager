@@ -22,12 +22,14 @@ import salesmachine.hibernatedb.OimOrderDetails;
 import salesmachine.hibernatedb.OimOrderStatuses;
 import salesmachine.hibernatedb.OimOrders;
 import salesmachine.hibernatedb.OimSuppliers;
+import salesmachine.hibernatedb.OimVendorsuppOrderhistory;
 import salesmachine.hibernatehelper.SessionManager;
 import salesmachine.oim.suppliers.OimSupplierOrderPlacement;
 import salesmachine.util.StringHandle;
 
 import com.is.cm.core.domain.Order;
 import com.is.cm.core.domain.OrderDetail;
+import com.is.cm.core.domain.shop.CCTRANSMISSION;
 
 public class OrderRepositoryDB extends RepositoryBase implements
 		OrderRepository {
@@ -241,7 +243,7 @@ public class OrderRepositoryDB extends RepositoryBase implements
 		} catch (RuntimeException e) {
 			if (tx != null && tx.isActive())
 				tx.rollback();
-			LOG.error("Error ocured in save/update", e);
+			LOG.error("Error occurred in save/update", e);
 		}
 		return Order.from(oimOrders);
 	}
@@ -269,6 +271,14 @@ public class OrderRepositoryDB extends RepositoryBase implements
 		try {
 			tx = dbSession.beginTransaction();
 			dbSession.merge(orderDetail);
+			List<OimVendorsuppOrderhistory> list = dbSession
+					.createCriteria(OimVendorsuppOrderhistory.class)
+					.add(Restrictions.eq("vendors.vendorId", getVendorId()))
+					.add(Restrictions.eq("oimSuppliers.supplierId", orderDetail
+							.getOimSuppliers().getSupplierId())).list();
+			for (OimVendorsuppOrderhistory oimVendorsuppOrderhistory : list) {
+				dbSession.delete(oimVendorsuppOrderhistory);
+			}
 			tx.commit();
 			dbSession.flush();
 		} catch (Exception e) {
@@ -297,7 +307,17 @@ public class OrderRepositoryDB extends RepositoryBase implements
 			} else {
 				details.setOimSuppliers(orderDetail.getOimSuppliers()
 						.toOimSupplier());
+				List<OimVendorsuppOrderhistory> list = dbSession
+						.createCriteria(OimVendorsuppOrderhistory.class)
+						.add(Restrictions.eq("vendors.vendorId", getVendorId()))
+						.add(Restrictions.eq("oimSuppliers.supplierId",
+								orderDetail.getOimSuppliers().getSupplierId()))
+						.list();
+				for (OimVendorsuppOrderhistory oimVendorsuppOrderhistory : list) {
+					dbSession.delete(oimVendorsuppOrderhistory);
+				}
 			}
+
 			dbSession.update(details);
 			tx.commit();
 			dbSession.flush();
@@ -567,16 +587,12 @@ public class OrderRepositoryDB extends RepositoryBase implements
 	}
 
 	@Override
-	public void processOrders(int supplierId, boolean sendOrders,
-			boolean updatestatus, String[] orderId) {
-		OimSupplierOrderPlacement osop = new OimSupplierOrderPlacement();
-		osop.m_RunModePlaceOrders = sendOrders;
-		osop.m_RunModeUpdateOrdersStatus = updatestatus;
-		String oids = implode(orderId);
+	public boolean processOrders(Order order) {
 		Session dbSession = SessionManager.currentSession();
-		if (osop.init(supplierId, dbSession, null)) {
-			osop.processVendorOrders(getVendorId(), oids);
-		}
+		OimSupplierOrderPlacement osop = new OimSupplierOrderPlacement(
+				dbSession);
+		OimOrders oimOrders = getById(order.getOrderId());
+		return osop.processVendorOrder(getVendorId(), oimOrders);
 	}
 
 	@Override
@@ -745,5 +761,64 @@ public class OrderRepositoryDB extends RepositoryBase implements
 	public OimOrders getById(int id) {
 		Session dbSession = SessionManager.currentSession();
 		return (OimOrders) dbSession.get(OimOrders.class, id);
+	}
+
+	@Override
+	public String trackOrderStatus(Integer entity) {
+		Session session = SessionManager.currentSession();
+		OimSupplierOrderPlacement osop = new OimSupplierOrderPlacement(session);
+		return osop.trackOrder(getVendorId(), entity);
+	}
+
+	@Override
+	public List<Order> findProcessedOrders() {
+		Session currentSession = SessionManager.currentSession();
+		List<Order> orderList = new ArrayList<Order>();
+		// Transaction tx = null;
+		try {
+			// tx = currentSession.beginTransaction();
+			Query query = currentSession
+					.createQuery("select distinct o from salesmachine.hibernatedb.OimOrders o "
+							+ "left join fetch o.oimOrderDetailses d "
+							+ "where o.deleteTm is null and "
+							+ "d.deleteTm is null and d.supplierOrderStatus is not null and "
+							+ "d.oimOrderStatuses.statusId = '2' and "
+							+ "o.oimOrderBatches.oimChannels.vendors.vendorId=:vid ");
+			query.setInteger("vid", getVendorId());
+			List<OimOrders> list = query.list();
+			LOG.debug("Found {} processed orders for vendor {}", list.size(),
+					getVendorId());
+			for (OimOrders oimorder : list) {
+				Order order = Order.from(oimorder);
+				orderList.add(order);
+				// prefetching it as it will be needed in the view
+				oimorder.getOimOrderBatches().getOimChannels().getChannelId();
+				Set orderdetails = oimorder.getOimOrderDetailses();
+				Iterator odIter = orderdetails.iterator();
+				LOG.debug("OrderId: {} Shipping:{} Total:{}",
+						oimorder.getOrderId(), oimorder.getShippingDetails(),
+						oimorder.getOrderTotalAmount());
+				Set<OrderDetail> details = new HashSet<OrderDetail>();
+				while (odIter.hasNext()) {
+					OimOrderDetails od = (OimOrderDetails) odIter.next();
+					details.add(OrderDetail.from(od));
+					od.getCostPrice();
+				}
+				order.setOimOrderDetailses(details);
+				// tx.commit();
+			}
+		} catch (HibernateException ex) {
+			/*
+			 * if (tx != null && tx.isActive()) tx.rollback();
+			 */
+			LOG.error(ex.getMessage(), ex);
+		}
+		return orderList;
+	}
+
+	@Override
+	public Order save(CCTRANSMISSION entity) {
+
+		return null;
 	}
 }

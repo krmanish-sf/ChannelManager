@@ -77,7 +77,12 @@ public class OrderCommandsController {
 			UriComponentsBuilder builder, @PathVariable int orderId) {
 		UpdatedEvent<Order> event = orderService
 				.processOrder(new UpdateEvent<Order>(orderId, order));
-		return new ResponseEntity<Order>(event.getEntity(), HttpStatus.OK);
+		if (event.isUpdateCompleted()) {
+			return new ResponseEntity<Order>(event.getEntity(), HttpStatus.OK);
+		} else {
+			return new ResponseEntity<Order>(event.getEntity(),
+					HttpStatus.FORBIDDEN);
+		}
 	}
 
 	@RequestMapping(method = { RequestMethod.POST }, value = "/processed/bulk/{action}")
@@ -87,4 +92,14 @@ public class OrderCommandsController {
 				action, new UpdateEvent<List<Integer>>(0, orders));
 		return new ResponseEntity<List<Order>>(event.getEntity(), HttpStatus.OK);
 	}
+
+	@RequestMapping(method = { RequestMethod.GET }, value = "/track/{orderDetailId}")
+	public ResponseEntity<String> processOrder(
+			@PathVariable Integer orderDetailId) {
+		UpdatedEvent<String> event = orderService
+				.trackOrderStatus(new UpdateEvent<Integer>(orderDetailId,
+						orderDetailId));
+		return new ResponseEntity<String>(event.getEntity(), HttpStatus.OK);
+	}
+
 }

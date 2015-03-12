@@ -15,7 +15,8 @@ import salesmachine.hibernatedb.OimOrders;
 import salesmachine.oim.api.OimConstants;
 
 import com.is.cm.core.domain.Order;
-import com.is.cm.core.domain.OrderDetail;
+import com.is.cm.core.domain.shop.CCTRANSMISSION;
+import com.is.cm.core.event.CreatedEvent;
 import com.is.cm.core.event.ReadCollectionEvent;
 import com.is.cm.core.event.RequestReadEvent;
 import com.is.cm.core.event.UpdateEvent;
@@ -91,6 +92,9 @@ public class OrderEventHandler implements OrderService {
 		} else if ("unresolved".equalsIgnoreCase(event.getEntity())) {
 			return new ReadCollectionEvent<Order>(
 					orderRepository.findUnresolvedOrders());
+		} else if ("posted".equalsIgnoreCase(event.getEntity())) {
+			return new ReadCollectionEvent<Order>(
+					orderRepository.findProcessedOrders());
 		}
 		return null;
 	}
@@ -98,19 +102,16 @@ public class OrderEventHandler implements OrderService {
 	@Override
 	public UpdatedEvent<Order> processOrder(UpdateEvent<Order> event) {
 		Order order = event.getEntity();
-		processOrderInternal(order);
-		return new UpdatedEvent<Order>(event.getEntity().getOrderId(),
-				event.getEntity());
+		if (processOrderInternal(order)) {
+			return new UpdatedEvent<Order>(event.getEntity().getOrderId(),
+					event.getEntity());
+		} else {
+			return UpdatedEvent.updateForbidden(event.getId(), order);
+		}
 	}
 
-	private void processOrderInternal(Order order) {
-
-		for (OrderDetail orderDetail : order.getOimOrderDetailses()) {
-			orderRepository.processOrders(orderDetail.getOimSuppliers()
-					.getSupplierId(), true, true, new String[] { String
-					.valueOf(order.getOrderId()) });
-		}
-
+	private boolean processOrderInternal(Order order) {
+		return orderRepository.processOrders(order);
 	}
 
 	@Override
@@ -122,15 +123,9 @@ public class OrderEventHandler implements OrderService {
 		Order o = (Order) order2;
 		LOG.debug(order2.getClass().getName());
 		for (Order order : orders) {
-			for (OrderDetail orderDetail : order.getOimOrderDetailses()) {
-				orderRepository.processOrders(orderDetail.getOimSuppliers()
-						.getSupplierId(), true, true, new String[] { String
-						.valueOf(order.getOrderId()) });
-			}
+			orderRepository.processOrders(order);
 		}
-
 		return new UpdatedEvent<List<Order>>(0, event.getEntity());
-
 	}
 
 	@Override
@@ -187,5 +182,18 @@ public class OrderEventHandler implements OrderService {
 			RequestReadEvent<Map<String, String>> requestReadEvent) {
 		List<Order> orders = orderRepository.find(requestReadEvent.getEntity());
 		return new ReadCollectionEvent<Order>(orders);
+	}
+
+	@Override
+	public UpdatedEvent<String> trackOrderStatus(
+			UpdateEvent<Integer> updateEvent) {
+		String trackOrderStatus = orderRepository.trackOrderStatus(updateEvent
+				.getEntity());
+		return new UpdatedEvent<String>(updateEvent.getId(), trackOrderStatus);
+	}
+
+	public CreatedEvent<Order> saveOrder(CreatedEvent<CCTRANSMISSION> event) {
+		Order order = orderRepository.save(event.getEntity());
+		return new CreatedEvent<Order>(order.getOrderId(), order);
 	}
 }

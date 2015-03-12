@@ -40,30 +40,21 @@ public class LoginFilter implements javax.servlet.Filter {
 		HttpServletRequest request = (HttpServletRequest) req;
 		HttpServletResponse response = (HttpServletResponse) resp;
 		String URI = request.getRequestURI();
+		LOG.debug(URI);
+		LOG.debug("Referer: " + request.getHeader("referer"));
 		HttpSession session = request.getSession(false);
 		if (URI.endsWith("login") || URI.endsWith("logout")
 				|| URI.contains("/static/") || URI.endsWith("signup.jsp")
 				|| URI.endsWith("signup")) {
 			chain.doFilter(request, response);
 		} else if (session == null || session.getAttribute("reps") == null) {
-			// Reps currentUser = (Reps) session.getAttribute("reps");
-			// Get relevant URI.
-
-			RequestDispatcher rd = request.getServletContext()
-					.getRequestDispatcher("/login.jsp");
-			// PrintWriter out = response.getWriter();
-			// out.println("<font color=red>Either user name or password is wrong.</font>");
-			rd.include(request, response);
+			response.sendRedirect("login");
 		} else {
 			RequestDispatcher rd = request.getServletContext()
 					.getRequestDispatcher(
 							URI.replace(request.getContextPath(), ""));
-			// PrintWriter out = response.getWriter();
-			// out.println("<font color=red>Either user name or password is wrong.</font>");
 			rd.include(request, response);
-			// ((HttpServletResponse) response).sendRedirect(URI);
 		}
-
 	}
 
 	public void destroy() {

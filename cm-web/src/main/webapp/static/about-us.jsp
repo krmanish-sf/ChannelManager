@@ -29,7 +29,7 @@
 										<p>
 											The <strong>Channel Manager Order Automation Utility</strong>
 											was developed by the team at <a
-												href="www.inventorysource.com">InventorySource.com</a>. Inventory
+												href="http://www.inventorysource.com">InventorySource.com</a>. Inventory
 											Source is the world's largest and longest running "Drop ship
 											Data Solution Provider" connecting resellers directly to
 											their real dropship supplier programs and helping you, the

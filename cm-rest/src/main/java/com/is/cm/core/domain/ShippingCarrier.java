@@ -53,4 +53,12 @@ public class ShippingCarrier implements Serializable {
 	public void setSupplier(Supplier supplier) {
 		this.supplier = supplier;
 	}
+
+	public OimShippingCarrier toOimShippingCarrier() {
+		OimShippingCarrier carrier = new OimShippingCarrier();
+		carrier.setCreatedOn(this.createdOn);
+		carrier.setId(this.id);
+		carrier.setName(this.name);
+		return carrier;
+	}
 }

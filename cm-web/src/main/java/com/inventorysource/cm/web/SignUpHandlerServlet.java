@@ -2,7 +2,6 @@ package com.inventorysource.cm.web;
 
 import java.io.IOException;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 
 import javax.servlet.RequestDispatcher;
@@ -12,14 +11,16 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
-import org.hibernate.Query;
+import org.hibernate.HibernateException;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
+import org.hibernate.criterion.Restrictions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
 
+import salesmachine.email.EmailUtil;
 import salesmachine.hibernatedb.Reps;
 import salesmachine.hibernatehelper.SessionManager;
 import salesmachine.util.FormObject;
@@ -32,6 +33,22 @@ public class SignUpHandlerServlet extends HttpServlet {
 			.getLogger(SignUpHandlerServlet.class);
 
 	@Override
+	protected void doGet(HttpServletRequest req, HttpServletResponse resp)
+			throws ServletException, IOException {
+		String cmd = req.getParameter("cmd");
+		if ("resend".equalsIgnoreCase(cmd)) {
+			resendLoginDetails(req, resp);
+			RequestDispatcher rd = req.getServletContext()
+					.getRequestDispatcher("/login.jsp");
+			rd.include(req, resp);
+		} else {
+			RequestDispatcher rd = req.getServletContext()
+					.getRequestDispatcher("/signup.jsp");
+			rd.include(req, resp);
+		}
+	}
+
+	@Override
 	protected void doPost(HttpServletRequest req, HttpServletResponse resp)
 			throws ServletException, IOException {
 		String cmd = req.getParameter("cmd");
@@ -39,7 +56,50 @@ public class SignUpHandlerServlet extends HttpServlet {
 			signUpStep1(req, resp);
 		} else if ("payment".equalsIgnoreCase(cmd)) {
 			signUpStep2(req, resp);
+		} else if ("resend".equalsIgnoreCase(cmd)) {
+			resendLoginDetails(req, resp);
+			RequestDispatcher rd = req.getServletContext()
+					.getRequestDispatcher("/login.jsp");
+			rd.include(req, resp);
 		}
+	}
+
+	private void resendLoginDetails(HttpServletRequest request,
+			HttpServletResponse response) throws ServletException, IOException {
+		String email = request.getParameter("email");
+
+		Session dbSession = SessionManager.currentSession();
+		Reps r = getRepByEmail(dbSession, email);
+
+		if (r != null) {
+			StringBuilder emailContent = new StringBuilder();
+			emailContent
+					.append("Dear ")
+					.append(r.getFirstName())
+					.append("<br>")
+					.append("<br>Here are your login details for your Inventory Source account:")
+					.append("<br><br>Login: ")
+					.append(r.getLogin())
+					.append("<br>Password: ")
+					.append(r.getPassword())
+					.append("<br><br>Cheers,<br>Inventory Source Channel Manager<br><a href='http://cm.inventorysource.com/admin'>cm.inventorysource.com</a>");
+			EmailUtil.sendEmail(email, "support@inventorysource.com",
+					"support@inventorysource.com", null,
+					"oim@inventorysource.com",
+					"Your Inventory Source Login Details",
+					emailContent.toString(), "text/html");
+			request.setAttribute("error",
+					"Login details for your account have been sent to " + email);
+		} else {
+			request.setAttribute("error",
+					"Could not find the login details for this email address - "
+							+ email);
+			RequestDispatcher rd = request.getServletContext()
+					.getRequestDispatcher("/signup.jsp");
+			rd.include(request, response);
+		}
+		SessionManager.closeSession();
+
 	}
 
 	private void signUpStep2(HttpServletRequest request,
@@ -174,7 +234,7 @@ public class SignUpHandlerServlet extends HttpServlet {
 		} else {
 			request.setAttribute(
 					"error",
-					"This email is already registered. Don't remember the account details? <a href='/members/oimhome.action?cmd=resend&email="
+					"This email is already registered. Don't remember the account details? <a href='signup?cmd=resend&email="
 							+ email
 							+ "'>Click here</a> to receive login details on your email.");
 			RequestDispatcher rd = request.getServletContext()
@@ -185,24 +245,25 @@ public class SignUpHandlerServlet extends HttpServlet {
 	}
 
 	static boolean uniqueEmail(Session dbSession, String login) {
+		return (getRepByEmail(dbSession, login) == null);
+	}
+
+	static Reps getRepByEmail(Session dbSession, String login) {
 		Transaction tx = null;
 		Reps r = null;
 		try {
 			tx = dbSession.beginTransaction();
-			// Here is your db code
-			Query query = dbSession
-					.createQuery("from salesmachine.hibernatedb.Reps r where r.login=:login");
-			query.setString("login", login);
-			Iterator it = query.iterate();
-			if (it.hasNext()) {
-				r = (salesmachine.hibernatedb.Reps) it.next();
+			Object uniqueResult = dbSession.createCriteria(Reps.class)
+					.add(Restrictions.eq("login", login)).uniqueResult();
+			if (uniqueResult instanceof Reps) {
+				r = (Reps) uniqueResult;
 			}
 			tx.commit();
-		} catch (RuntimeException e) {
+		} catch (HibernateException e) {
 			if (tx != null && tx.isActive())
 				tx.rollback();
 			LOG.error(e.getMessage(), e);
 		}
-		return (r == null);
+		return r;
 	}
 }

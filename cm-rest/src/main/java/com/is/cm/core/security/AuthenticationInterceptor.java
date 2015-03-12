@@ -32,6 +32,13 @@ public class AuthenticationInterceptor implements HandlerInterceptor {
 
 		if ("/login".equalsIgnoreCase(req.getServletPath()))
 			return true;
+		else if (req.getServletPath().contains("shop-com-order-listener")) {
+			LOG.info("Recieved Order XML post for SHOP.COM order processing...");
+			LOG.info("Content-Type:" + req.getContentType());
+			if (req.getParameter("data") != null)
+				LOG.info(req.getParameter("data"));
+			return true;
+		}
 		LOG.info(
 				"Checking request header for auth parameters to access resource path {}",
 				req.getServletPath());

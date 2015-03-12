@@ -39,4 +39,6 @@ public interface OrderService {
 	UpdatedEvent<List<Order>> bulkProcessOrder1(String status,
 			UpdateEvent<List<Integer>> event);
 
+	UpdatedEvent<String> trackOrderStatus(UpdateEvent<Integer> updateEvent);
+
 }

@@ -9,8 +9,13 @@ import java.util.StringTokenizer;
 
 import org.hibernate.Query;
 import org.hibernate.Session;
+import org.hibernate.criterion.Restrictions;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import salesmachine.hibernatedb.OimChannels;
+import salesmachine.hibernatedb.OimShippingMethod;
+import salesmachine.hibernatedb.OimSupplierShippingMethod;
 import salesmachine.hibernatedb.OimSuppliers;
 import salesmachine.hibernatedb.OimVendorShippingMap;
 import salesmachine.hibernatedb.OimVendorSuppliers;
@@ -23,33 +28,36 @@ import salesmachine.util.StringHandle;
 import com.suppliers.pcs.OrderReturnInfo;
 
 public abstract class Supplier {
+	private static final Logger log = LoggerFactory.getLogger(Supplier.class);
 	protected ArrayList successfulOrders = new ArrayList();
 	protected ArrayList failedOrders = new ArrayList();
 	protected HashMap stateCodeMapping = new HashMap();
 	protected HashMap countryCodeMapping = new HashMap();
 	protected HashMap orderSkuPrefixMap = new HashMap();
+	@Deprecated
 	protected OimLogStream logStream = new OimLogStream();
 	protected static final Integer ERROR_ORDER_PROCESSING = new Integer(3);
-	
+
 	public Supplier() {
-		logStream.println("!! CUstom processing initiated");
+		log.debug("Creating instance");
 		createStateNameMapping();
-		createCountryCodeMapping();		
+		createCountryCodeMapping();
 	}
-	
+
+	@Deprecated
 	public void setLogStream(OimLogStream ls) {
-		logStream = ls;		
+		logStream = ls;
 	}
-	
+
 	abstract public void sendOrders(Integer vendorId, OimVendorSuppliers ovs,
 			List orders);
-	
+
 	protected String getUSStateFullName(String stateCode) {
 		if (stateCodeMapping.containsKey(stateCode))
 			return (String) stateCodeMapping.get(stateCode);
 		return null;
 	}
-	
+
 	protected void updateVendorSupplierOrderHistory(Integer vid,
 			OimVendorSuppliers ovs, Object response) {
 		Session session = SessionManager.currentSession();
@@ -60,159 +68,199 @@ public abstract class Supplier {
 		history.setOimSuppliers(ovs.getOimSuppliers());
 		history.setProcessingTm(new Date());
 		history.setErrorCode(ERROR_ORDER_PROCESSING);
-		
-		if (response != null){
-			if(response instanceof OrderReturnInfo){
-				history.setDescription(((OrderReturnInfo)response).getReturnValue());
-			}else{
+
+		if (response != null) {
+			if (response instanceof OrderReturnInfo) {
+				history.setDescription(((OrderReturnInfo) response)
+						.getReturnValue());
+			} else {
 				history.setDescription(response.toString());
 			}
 		}
-		
+
 		session.save(history);
-		logStream
-				.println("!!! Added the order processing output to vendor supplier order history");
-	}		
-	
+		log.debug("Added the order processing output to vendor supplier order history");
+	}
 
 	/***
 	 * 
-	 * @param ovs OimVendorSupplier object
-	 * @return hashmap containing the channelids and sku prefix mentioned in the channel supplier map
+	 * @param ovs
+	 *            OimVendorSupplier object
+	 * @return hashmap containing the channelids and sku prefix mentioned in the
+	 *         channel supplier map
 	 */
-	protected HashMap setSkuPrefixForOrders(OimVendorSuppliers ovs){
+	protected HashMap setSkuPrefixForOrders(OimVendorSuppliers ovs) {
 		HashMap prefixChannelsSupplier = new HashMap();
 		Session session = SessionManager.currentSession();
 		Query query = session
 				.createQuery("select ocs.oimChannels, ocs.supplierPrefix from salesmachine.hibernatedb.OimChannelSupplierMap ocs where ocs.oimSuppliers=:supp ");
-		Iterator iter = query.setEntity("supp", ovs.getOimSuppliers()).iterate();
-		while(iter.hasNext()){
-			Object[] row = (Object[])iter.next();
-			OimChannels chan = (OimChannels)row[0];
-			String prefix = (String)row[1];
+		Iterator iter = query.setEntity("supp", ovs.getOimSuppliers())
+				.iterate();
+		while (iter.hasNext()) {
+			Object[] row = (Object[]) iter.next();
+			OimChannels chan = (OimChannels) row[0];
+			String prefix = (String) row[1];
 			prefix = StringHandle.removeNull(prefix);
 			prefixChannelsSupplier.put(chan.getChannelId(), prefix);
 		}
 		return prefixChannelsSupplier;
 	}
 
-	public static HashMap loadSupplierShippingMap(Session dbSession, OimSuppliers s, Vendors v) {
-		Query query = dbSession.createQuery("from salesmachine.hibernatedb.OimVendorShippingMap c " +
-								"where c.oimSuppliers=:supp and c.vendors=:vendor");
+	public static List<OimSupplierShippingMethod> loadSupplierShippingMap(
+			OimSuppliers s, Vendors v) {
+		Session dbSession = SessionManager.currentSession();
+		@SuppressWarnings(value = { "unchecked" })
+		List<OimSupplierShippingMethod> methods = dbSession
+				.createCriteria(OimSupplierShippingMethod.class)
+				.add(Restrictions.eq("oimSupplier", s)).list();
+		return methods;
+	}
+
+	@Deprecated
+	public static HashMap loadSupplierShippingMap(Session dbSession,
+			OimSuppliers s, Vendors v) {
+		Query query = dbSession
+				.createQuery("from salesmachine.hibernatedb.OimVendorShippingMap c "
+						+ "where c.oimSuppliers=:supp and c.vendors=:vendor");
 		query.setEntity("supp", s);
 		query.setEntity("vendor", v);
 		List methods = query.list();
-		
+
 		HashMap shipMap = new HashMap();
 		for (Iterator it = methods.iterator(); it.hasNext();) {
-			OimVendorShippingMap vsm = (OimVendorShippingMap)it.next();
+			OimVendorShippingMap vsm = (OimVendorShippingMap) it.next();
 			String shippingText = vsm.getShippingText();
 			String shippingCode = vsm.getOimShippingMethod().getShippingCode();
 			shipMap.put(shippingText, shippingCode);
-			
-			System.out.println(shippingText + " => " + shippingCode);
+
+			log.debug(shippingText + " => " + shippingCode);
 		}
-			
+
 		return shipMap;
 	}
-	
-	public static String findShippingCodeFromUserMapping(HashMap shippingMethods, String shippingDetails) {
-		String code = (String)shippingMethods.get(shippingDetails);
-		if (code != null && StringHandle.removeNull(code).length() > 0) {			
+
+	protected static OimSupplierShippingMethod findShippingCodeFromUserMapping(
+			List<OimSupplierShippingMethod> shippingMethods,
+			OimShippingMethod shippingDetails) {
+		for (OimSupplierShippingMethod oimSupplierShippingMethod : shippingMethods) {
+			if (oimSupplierShippingMethod.getOimShippingMethod().getName()
+					.equals(shippingDetails.getName())
+					&& oimSupplierShippingMethod
+							.getOimShippingCarrier()
+							.getName()
+							.equalsIgnoreCase(
+									shippingDetails.getOimShippingCarrier()
+											.getName())) {
+				return oimSupplierShippingMethod;
+			}
+		}
+		return null;
+	}
+
+	@Deprecated
+	public static String findShippingCodeFromUserMapping(
+			HashMap shippingMethods, String shippingDetails) {
+		String code = (String) shippingMethods.get(shippingDetails);
+		if (code != null && StringHandle.removeNull(code).length() > 0) {
 			return code;
 		}
-		
+
 		// Find the best match now
 		List shippingWords = new ArrayList();
-		StringTokenizer tokenizer = new StringTokenizer(shippingDetails.toLowerCase()," ");
-		while(tokenizer.hasMoreTokens()){
+		StringTokenizer tokenizer = new StringTokenizer(
+				shippingDetails.toLowerCase(), " ");
+		while (tokenizer.hasMoreTokens()) {
 			String token = tokenizer.nextToken();
 			shippingWords.add(token);
-		}		
-		
+		}
+
 		int maxMatch = 0;
 		String closestKey = "";
-		
+
 		for (Iterator it = shippingMethods.keySet().iterator(); it.hasNext();) {
-			String shipMethod = (String)it.next();
+			String shipMethod = (String) it.next();
 			int matchCount = 0;
 			for (Iterator tmp = shippingWords.iterator(); tmp.hasNext();) {
-				String word = (String)tmp.next();				
-				if (word.length() < 3) continue;
-				
-				if (shipMethod.toLowerCase().contains(word)) 
+				String word = (String) tmp.next();
+				if (word.length() < 3)
+					continue;
+
+				if (shipMethod.toLowerCase().contains(word))
 					matchCount++;
 			}
-			
+
 			if (matchCount > maxMatch) {
 				maxMatch = matchCount;
 				closestKey = shipMethod;
 			}
 		}
-		
-		if (maxMatch > 0 && maxMatch > shippingWords.size()/2) {
-			System.out.println(shippingDetails + " ["+maxMatch+"] " + closestKey);
-			return (String)shippingMethods.get(closestKey);
+
+		if (maxMatch > 0 && maxMatch > shippingWords.size() / 2) {
+			System.out.println(shippingDetails + " [" + maxMatch + "] "
+					+ closestKey);
+			return (String) shippingMethods.get(closestKey);
 		} else
 			return "";
 	}
 
-	public static String findShippingCodeFromSuggested(HashMap shippingMethods, String shippingDetails) {
+	public static String findShippingCodeFromSuggested(HashMap shippingMethods,
+			String shippingDetails) {
 		String shippingMethodCode = "";
 		// iterate over the shipping methods to find the shippingcode based
 		// on the order shipping details.
-		Iterator shipMethodsIt = shippingMethods.keySet().iterator();		
-		
+		Iterator shipMethodsIt = shippingMethods.keySet().iterator();
+
 		while (shipMethodsIt.hasNext()) {
 			String key = (String) shipMethodsIt.next();
 			if (shippingDetails.contains(key)) {
 				HashMap detailedShippingMethods = (HashMap) shippingMethods
 						.get(key);
 				Iterator iter = detailedShippingMethods.keySet().iterator();
-				int largestMatchCount=0;
-				
+				int largestMatchCount = 0;
+
 				while (iter.hasNext()) {
-					
+
 					String code = (String) iter.next();
-					String value = (String) detailedShippingMethods
-							.get(code);
-					
-					StringTokenizer tokenizer = new StringTokenizer(value," ");
-					int currentMatchCount=0;
-					int currentNotMatchCount=0;
+					String value = (String) detailedShippingMethods.get(code);
+
+					StringTokenizer tokenizer = new StringTokenizer(value, " ");
+					int currentMatchCount = 0;
+					int currentNotMatchCount = 0;
 					boolean notFound = false;
-					while(tokenizer.hasMoreTokens()){
+					while (tokenizer.hasMoreTokens()) {
 						String token = tokenizer.nextToken();
-						if(shippingDetails.contains(token)){
+						if (shippingDetails.contains(token)) {
 							currentMatchCount++;
-						}else{
+						} else {
 							currentNotMatchCount++;
 						}
 					}
-					
-					if(currentMatchCount>currentNotMatchCount && currentMatchCount>largestMatchCount){
+
+					if (currentMatchCount > currentNotMatchCount
+							&& currentMatchCount > largestMatchCount) {
 						shippingMethodCode = code;
 						largestMatchCount = currentMatchCount;
 					}
 				}
-				
-			}	// if (shippingDetails.contains(key)) {
-		}	// while (shipMethodsIt.hasNext()) {		
-		
+
+			} // if (shippingDetails.contains(key)) {
+		} // while (shipMethodsIt.hasNext()) {
+
 		return shippingMethodCode;
 	}
-		
+
 	public ArrayList getSuccessfulOrders() {
 		return successfulOrders;
 	}
 
 	public ArrayList getFailedOrders() {
 		return failedOrders;
-	}	
-	
+	}
+
 	public HashMap getDefaultShippingMapping() {
 		return null;
 	}
+
 	/***
 	 * US states mapping with 2 digit codes.
 	 */
@@ -278,11 +326,10 @@ public abstract class Supplier {
 		stateCodeMapping.put("WY", "Wyoming");
 	}
 
-	
 	/***
 	 * creates the country mapping with 2 digit country code.
 	 */
-	protected void createCountryCodeMapping(){
+	protected void createCountryCodeMapping() {
 		countryCodeMapping.put("Afghanistan", "AF");
 		countryCodeMapping.put("Aland Islands", "AX");
 		countryCodeMapping.put("Albania", "AL");
@@ -536,17 +583,18 @@ public abstract class Supplier {
 		countryCodeMapping.put("Zambia", "ZM");
 		countryCodeMapping.put("See CD Congo, Democratic Republic", "ZR");
 		countryCodeMapping.put("Zaire", "ZR");
-		countryCodeMapping.put("Zimbabwe", "ZW");		
-	}	
-	
-	protected void duplicateMapWithPrefixes(HashMap map, HashMap tmpmap, String[] prefixes) {
-		for (int i=0;i<prefixes.length;i++) {
+		countryCodeMapping.put("Zimbabwe", "ZW");
+	}
+
+	protected void duplicateMapWithPrefixes(HashMap map, HashMap tmpmap,
+			String[] prefixes) {
+		for (int i = 0; i < prefixes.length; i++) {
 			String prefix = prefixes[i];
 			for (Iterator it = tmpmap.keySet().iterator(); it.hasNext();) {
-				String tmpKey = (String)it.next();
-				String tmpValue = (String)tmpmap.get(tmpKey);
-				map.put(prefix+tmpKey, tmpValue);
+				String tmpKey = (String) it.next();
+				String tmpValue = (String) tmpmap.get(tmpKey);
+				map.put(prefix + tmpKey, tmpValue);
 			}
-		}		
-	}	
+		}
+	}
 }

@@ -8,6 +8,7 @@ import salesmachine.hibernatedb.OimOrders;
 
 import com.is.cm.core.domain.Order;
 import com.is.cm.core.domain.OrderDetail;
+import com.is.cm.core.domain.shop.CCTRANSMISSION;
 
 public interface OrderRepository {
 
@@ -31,10 +32,15 @@ public interface OrderRepository {
 
 	List<Order> findUnresolvedOrders();
 
-	void processOrders(int supplierId, boolean sendOrders,
-			boolean updatestatus, String[] orderId);
+	boolean processOrders(Order order);
 
 	List<Order> find(Map<String, String> map);
 
 	void update(OimOrderDetails orderDetail);
+
+	String trackOrderStatus(Integer entity);
+
+	List<Order> findProcessedOrders();
+
+	Order save(CCTRANSMISSION entity);
 }

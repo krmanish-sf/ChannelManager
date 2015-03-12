@@ -1,5 +1,6 @@
 package salesmachine.hibernatedb;
 
+@Deprecated
 public class OimVendorShippingMap {
 
 	private Integer id;
@@ -11,7 +12,7 @@ public class OimVendorShippingMap {
 	public OimVendorShippingMap() {
 	}
 
-	public OimVendorShippingMap(OimSuppliers oimSuppliers, Vendors vendors,  
+	public OimVendorShippingMap(OimSuppliers oimSuppliers, Vendors vendors,
 			OimSupplierShippingMethods oimShippingMethod, String shippingText) {
 		this.oimSuppliers = oimSuppliers;
 		this.vendors = vendors;
@@ -22,7 +23,7 @@ public class OimVendorShippingMap {
 	public Integer getId() {
 		return this.id;
 	}
-	
+
 	public void setId(Integer id) {
 		this.id = id;
 	}
@@ -47,9 +48,11 @@ public class OimVendorShippingMap {
 		return this.oimShippingMethod;
 	}
 
-	public void setOimShippingMethod(OimSupplierShippingMethods oimShippingMethod) {
+	public void setOimShippingMethod(
+			OimSupplierShippingMethods oimShippingMethod) {
 		this.oimShippingMethod = oimShippingMethod;
-	}	
+	}
+
 	public String getShippingText() {
 		return this.shippingText;
 	}

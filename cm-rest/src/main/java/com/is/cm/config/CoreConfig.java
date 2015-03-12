@@ -1,11 +1,12 @@
 package com.is.cm.config;
 
-import javax.servlet.ServletContext;
+import javax.servlet.Filter;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.web.filter.CommonsRequestLoggingFilter;
 import org.springframework.web.multipart.commons.CommonsMultipartResolver;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -105,15 +106,19 @@ public class CoreConfig {
 		return new UserEventHandler(userRepository);
 	}
 
-	
-	  @Bean public CommonsMultipartResolver multipartResolver() {
-	  return new CommonsMultipartResolver(); }
-	 
+	@Bean
+	public CommonsMultipartResolver multipartResolver() {
+		return new CommonsMultipartResolver();
+	}
 
-	/*@Bean
-	public CommonsMultipartResolver multipartResolver(
-			ServletContext servletContext) {
-		return new CommonsMultipartResolver(servletContext);
-	}*/
+	@Bean
+	Filter requestLoggingFilter() {
+		Filter filter = new CommonsRequestLoggingFilter();
+		return filter;
+	}
+	/*
+	 * @Bean public CommonsMultipartResolver multipartResolver( ServletContext
+	 * servletContext) { return new CommonsMultipartResolver(servletContext); }
+	 */
 
 }

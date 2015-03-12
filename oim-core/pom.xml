@@ -171,10 +171,20 @@
 			<artifactId>servicePcs</artifactId>
 			<version>1.0.0</version>
 		</dependency>
-		<dependency>
+		<!-- <dependency>
 			<groupId>com.amazon.sellercentral</groupId>
 			<artifactId>sellercentral</artifactId>
 			<version>1.0.0</version>
+		</dependency> -->
+		<dependency>
+			<groupId>com.amazonservices.mws</groupId>
+			<artifactId>client</artifactId>
+			<version>1.0</version>
+		</dependency>
+		<dependency>
+			<groupId>com.amazonservices.mws</groupId>
+			<artifactId>orders</artifactId>
+			<version>2013-09-01_v2015-02-13</version>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.axis</groupId>
@@ -191,6 +201,11 @@
 					<artifactId>servlet-api</artifactId>
 				</exclusion>
 			</exclusions>
+		</dependency>
+		<dependency>
+			<groupId>wsdl4j</groupId>
+			<artifactId>wsdl4j</artifactId>
+			<version>1.6.2</version>
 		</dependency>
 		<dependency>
 			<groupId>commons-discovery</groupId>
@@ -210,14 +225,7 @@
 			<scope>provided</scope>
 		</dependency>
 	</dependencies>
-	<!-- <repositories>
-		<repository>
-			<id>apache.snapshots</id>
-			<name>Apache Snapshot Repository</name>
-			<url>http://repository.apache.org/</url>
-			<releases>
-				<enabled>false</enabled>
-			</releases>
-		</repository>
-	</repositories> -->
+	<!-- <repositories> <repository> <id>apache.snapshots</id> <name>Apache 
+		Snapshot Repository</name> <url>http://repository.apache.org/</url> <releases> 
+		<enabled>false</enabled> </releases> </repository> </repositories> -->
 </project>

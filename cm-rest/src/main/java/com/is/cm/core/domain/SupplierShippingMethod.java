@@ -3,6 +3,7 @@ package com.is.cm.core.domain;
 import java.io.Serializable;
 
 import salesmachine.hibernatedb.OimSupplierShippingMethod;
+import salesmachine.util.StringHandle;
 
 public class SupplierShippingMethod implements Serializable {
 	private static final long serialVersionUID = -8448436767787388464L;
@@ -11,6 +12,7 @@ public class SupplierShippingMethod implements Serializable {
 	private ShippingCarrier shippingCarrier;
 	private ShippingMethod shippingMethod;
 	private String name;
+	private String carrierName;
 	private boolean isOverride;
 	private String overrideMethod;
 
@@ -58,6 +60,8 @@ public class SupplierShippingMethod implements Serializable {
 		SupplierShippingMethod supplierShippingMethod = new SupplierShippingMethod();
 		supplierShippingMethod.setId(method.getId());
 		supplierShippingMethod.setName(method.getName());
+		supplierShippingMethod.setCarrierName(StringHandle.removeNull(method
+				.getCarrierName()));
 		supplierShippingMethod.setShippingCarrier(ShippingCarrier.from(method
 				.getOimShippingCarrier()));
 		supplierShippingMethod.setShippingMethod(ShippingMethod.from(method
@@ -83,5 +87,13 @@ public class SupplierShippingMethod implements Serializable {
 
 	public void setOverrideMethod(String overrideMethod) {
 		this.overrideMethod = overrideMethod;
+	}
+
+	public String getCarrierName() {
+		return carrierName;
+	}
+
+	public void setCarrierName(String carrierName) {
+		this.carrierName = carrierName;
 	}
 }

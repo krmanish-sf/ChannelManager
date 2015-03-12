@@ -47,7 +47,7 @@
 									<strong>Inventory Source</strong> <br> Jacksonville, FL <br>
 									<br>
 									If you have any questions about getting started with the Channel Manager Order Utility or <a
-										href="www.inventorysource.com">InventorySource.com</a>, please contact us: <br> <abbr
+										href="http://www.inventorysource.com">InventorySource.com</a>, please contact us: <br> <abbr
 										title="Phone">P:</abbr>
 									(888) 351-3497
 									<br> <abbr title="Support Email">E:</abbr>

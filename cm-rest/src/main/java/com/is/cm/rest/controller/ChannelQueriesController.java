@@ -14,10 +14,9 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
-import salesmachine.hibernatedb.OimChannelShippingMap;
-
 import com.is.cm.core.domain.Channel;
 import com.is.cm.core.domain.ChannelShippingMap;
+import com.is.cm.core.domain.SupportedChannel;
 import com.is.cm.core.event.ReadCollectionEvent;
 import com.is.cm.core.event.RequestReadEvent;
 import com.is.cm.core.event.channels.AllChannelsEvent;
@@ -69,6 +68,18 @@ public class ChannelQueriesController {
 					HttpStatus.NOT_FOUND);
 		}
 		return new ResponseEntity<Collection<ChannelShippingMap>>(
+				details.getEntity(), HttpStatus.OK);
+	}
+
+	@RequestMapping(method = RequestMethod.GET, value = "/supported-channels")
+	public ResponseEntity<Collection<SupportedChannel>> getSupportedChannels() {
+		ReadCollectionEvent<SupportedChannel> details = channelService
+				.getSupportedChannels(new RequestReadEvent<SupportedChannel>());
+		if (!details.isEntityFound()) {
+			return new ResponseEntity<Collection<SupportedChannel>>(
+					HttpStatus.NOT_FOUND);
+		}
+		return new ResponseEntity<Collection<SupportedChannel>>(
 				details.getEntity(), HttpStatus.OK);
 	}
 }

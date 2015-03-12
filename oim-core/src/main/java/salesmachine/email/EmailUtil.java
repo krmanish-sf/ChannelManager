@@ -14,508 +14,504 @@ import javax.mail.internet.MimeBodyPart;
 import javax.mail.internet.MimeMessage;
 import javax.mail.internet.MimeMultipart;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import salesmachine.util.ExcHandle;
 import salesmachine.util.Server;
 
-
-
 public class EmailUtil {
-  public static int SEND_TO_ALL = 1;
-  public static int SEND_TO_NOT_RECEIVED_ANY = 2;
-  public static int SEND_TO_NOT_RECEIVED_THIS_ETID = 3;
+	private static final Logger log = LoggerFactory.getLogger(EmailUtil.class);
+	public static int SEND_TO_ALL = 1;
+	public static int SEND_TO_NOT_RECEIVED_ANY = 2;
+	public static int SEND_TO_NOT_RECEIVED_THIS_ETID = 3;
 
-  static boolean useHeader;
-  public static String MAILUSER = "mailuser@inventorysource.com";
-  public static String MAILPWD = "changeit";
-  public static String MAILHOST = "mail.inventorysource.com";
-  /**
-   * Constructor which sets whether to use a header in email
-   */
-  public EmailUtil(boolean useHeader_) {
-    if (useHeader_) {
-      useHeader = useHeader_;
-    }
-  }
+	static boolean useHeader;
+	public static String MAILUSER = "mailuser@inventorysource.com";
+	public static String MAILPWD = "changeit";
+	public static String MAILHOST = "mail.inventorysource.com";
 
-  /**
-   * Default constructor which uses a header
-   */
-  public EmailUtil() {
-    useHeader = true;
-  }
+	/**
+	 * Constructor which sets whether to use a header in email
+	 */
+	public EmailUtil(boolean useHeader_) {
+		if (useHeader_) {
+			useHeader = useHeader_;
+		}
+	}
 
-  /**
-   * Sends an email, with email information specified in the parameters.
-   *
-   * @return      If an error occurs return -1 else return 1
-   */
-  public static int sendEmail(String to, String from,String cc, String subject, String message, boolean useHeader) {
-    useHeader = useHeader;
-    int returnVal = sendEmail(to, from, cc, subject, message, "");
-    useHeader = true;
-    return returnVal;
-  }
+	/**
+	 * Default constructor which uses a header
+	 */
+	public EmailUtil() {
+		useHeader = true;
+	}
 
-  /**
-   * For sending simultaneous email messages (threading).
-   *
-   * @return      If an error occurs return -1 else return 1
-   */
-  public int sendEmailNotStatic(String to, String from,String cc, String subject, String message, boolean useHeader) {
-    useHeader = useHeader;
-    int returnVal = sendEmailNotStatic(to, from, cc, subject, message, "");
-    useHeader = true;
-    return returnVal;
-  }
+	/**
+	 * Sends an email, with email information specified in the parameters.
+	 * 
+	 * @return If an error occurs return -1 else return 1
+	 */
+	public static int sendEmail(String to, String from, String cc,
+			String subject, String message, boolean useHeader) {
+		// useHeader = useHeader;
+		int returnVal = sendEmail(to, from, cc, subject, message, "");
+		useHeader = true;
+		return returnVal;
+	}
 
-  /**
-   * Sends an email, with email information specified in the parameters.
-   *
-   * @return      If an error occurs return -1 else return 1
-   */
-  public static int sendEmail(String to,String from,String cc,String subject,String message) {
-    return sendEmail(to,from,cc,subject,message, "");
-  }
+	/**
+	 * For sending simultaneous email messages (threading).
+	 * 
+	 * @return If an error occurs return -1 else return 1
+	 */
+	public int sendEmailNotStatic(String to, String from, String cc,
+			String subject, String message, boolean useHeader) {
+		// useHeader = useHeader;
+		int returnVal = sendEmailNotStatic(to, from, cc, subject, message, "");
+		useHeader = true;
+		return returnVal;
+	}
 
+	/**
+	 * Sends an email, with email information specified in the parameters.
+	 * 
+	 * @return If an error occurs return -1 else return 1
+	 */
+	public static int sendEmail(String to, String from, String cc,
+			String subject, String message) {
+		return sendEmail(to, from, cc, subject, message, "");
+	}
 
-  /**
-   * Method added by Hambir Singh on 06 Decemeber 2006
-   * Sends an email, with email information specified in the parameters.
-   *
-   * @return      If an error occurs return -1 else return 1
-   */
-  public static int sendEmailWithAttachment(String to,String from,String cc,String subject,String message,String filename) {
-    return sendEmailWithAttachment(to,from,cc,subject,message,filename, "");
-  }
+	/**
+	 * Method added by Hambir Singh on 06 Decemeber 2006 Sends an email, with
+	 * email information specified in the parameters.
+	 * 
+	 * @return If an error occurs return -1 else return 1
+	 */
+	public static int sendEmailWithAttachment(String to, String from,
+			String cc, String subject, String message, String filename) {
+		return sendEmailWithAttachment(to, from, cc, subject, message,
+				filename, "");
+	}
 
-  /**
-   * For sending simultaneous email messages (threading).
-   *
-   * @return      If an error occurs return -1 else return 1
-   */
-  public int sendEmailNotStatic(String to,String from,String cc,String subject,String message) {
-    return sendEmailNotStatic(to,from,cc,subject,message, "");
-  }
+	/**
+	 * For sending simultaneous email messages (threading).
+	 * 
+	 * @return If an error occurs return -1 else return 1
+	 */
+	public int sendEmailNotStatic(String to, String from, String cc,
+			String subject, String message) {
+		return sendEmailNotStatic(to, from, cc, subject, message, "");
+	}
 
-  /**
-   * Sends an email, with email information specified in the parameters.
-   *
-   * @return      If an error occurs return -1 else return 1
-   */
-  public static int sendEmail(String to,String from,String cc,String subject,String message, String content_type) {
+	/**
+	 * Sends an email, with email information specified in the parameters.
+	 * 
+	 * @return If an error occurs return -1 else return 1
+	 */
+	public static int sendEmail(String to, String from, String cc,
+			String subject, String message, String content_type) {
+		log.debug("Sending email to:" + to);
+		String mailhost = MAILHOST;
+		if (!Server.isLocalhost()) {
+			mailhost = MAILHOST;
+		}
+		File f = new File("C:\\Property");
+		if (f.exists()) {
+			mailhost = "ICE";
+		}
 
-     System.out.println("Entered sendEmail. TO:" + to);
-     String mailhost = MAILHOST;
-     if (!Server.isLocalhost()) {
-        mailhost = MAILHOST;
-     }
-     File f = new File("C:\\Property");
-     if (f.exists()) {
-      mailhost = "ICE";
-     }
+		Properties props = System.getProperties();
+		// XXX - could use Session.getTransport() and Transport.connect()
+		// XXX - assume we're using SMTP
+		if (mailhost != null)
+			// props.put("mail.smtp.host", mailhost);
+			// props.put("mail.MailTransport.protocol", "smtp");
+			props.put("mail.smtp.host", mailhost);
+		props.put("mail.smtp.auth", "true");
+		props.put("mail.smtp.port", "25");
+		SmtpAuthenticator auth = new SmtpAuthenticator(MAILUSER, MAILPWD);
+		Session session = Session.getInstance(props, auth);
 
-     Properties props = System.getProperties();
-	    // XXX - could use Session.getTransport() and Transport.connect()
-	    // XXX - assume we're using SMTP
-	    if (mailhost != null)
-		    //props.put("mail.smtp.host", mailhost);
-                   //props.put("mail.MailTransport.protocol", "smtp");
-                   props.put("mail.smtp.host", mailhost);
-                   props.put("mail.smtp.auth","true");
-                   props.put("mail.smtp.port","25");
-                   SmtpAuthenticator auth = new SmtpAuthenticator(MAILUSER,MAILPWD);
-                   Session session = Session.getInstance(props, auth);
+		// Get a Session object
+		// Session session = Session.getDefaultInstance(props, null);
 
-	    // Get a Session object
-//	    Session session = Session.getDefaultInstance(props, null);
+		try {
+			// construct the message
+			Message msg = new MimeMessage(session);
+			if (from != null)
+				msg.setFrom(new InternetAddress(from));
+			else
+				msg.setFrom();
 
-      try {
-	      // construct the message
-	      Message msg = new MimeMessage(session);
-	      if (from != null)
-		      msg.setFrom(new InternetAddress(from));
-	      else
-          msg.setFrom();
-
-	      msg.setRecipients(Message.RecipientType.TO,
+			msg.setRecipients(Message.RecipientType.TO,
 					InternetAddress.parse(to, false));
-	      if (cc != null)
-		      msg.setRecipients(Message.RecipientType.CC,
-					InternetAddress.parse(cc, false));
-
-	      msg.setSubject(subject);
-        msg.setText(message);
-
-        if (!content_type.equals("")) {
-            msg.setHeader("Content-Type", content_type);
-          }
-
-        if (useHeader) {
-  	      msg.setHeader("X-Mailer", "Goober");
-          java.util.Date d = new java.util.Date();
-	        msg.setSentDate(d);
-        } else {
-        }
-
-	      // send the thing off
-          Transport transport = session.getTransport("smtp");
-          transport.connect(mailhost, MAILUSER, MAILPWD);
-
-
-
-	      Transport.send(msg);
-      }
-      catch(Exception e) {
-        ExcHandle.printStackTraceToErr(e);
-        return -1;
-      }
-
-      return 1;
-  }
-  
-  /**
-   * 
-   * Sends an email, with email information specified in the parameters.
-   *
-   * @return      If an error occurs return -1 else return 1
-   */
-  public static int sendEmail(String to,String from, String replyTo, String cc, String bcc, String subject,String message, String content_type) {
-
-	     System.out.println("Entered sendEmail. TO:" + to);
-	     String mailhost = MAILHOST;
-	     if (!Server.isLocalhost()) {
-	        mailhost = MAILHOST;
-	     }
-	     File f = new File("C:\\Property");
-	     if (f.exists()) {
-	      mailhost = "ICE";
-	     }
-
-	     Properties props = System.getProperties();
-		    // XXX - could use Session.getTransport() and Transport.connect()
-		    // XXX - assume we're using SMTP
-		    if (mailhost != null)
-			    //props.put("mail.smtp.host", mailhost);
-	                   //props.put("mail.MailTransport.protocol", "smtp");
-	                   props.put("mail.smtp.host", mailhost);
-	                   props.put("mail.smtp.auth","true");
-	                   props.put("mail.smtp.port","25");
-	                   SmtpAuthenticator auth = new SmtpAuthenticator(MAILUSER,MAILPWD);
-	                   Session session = Session.getInstance(props, auth);
-
-		    // Get a Session object
-//		    Session session = Session.getDefaultInstance(props, null);
-
-	      try {
-		      // construct the message
-		      Message msg = new MimeMessage(session);
-		      if (from != null)
-			      msg.setFrom(new InternetAddress(from));
-		      else
-	          msg.setFrom();
-
-		      msg.setRecipients(Message.RecipientType.TO,
-						InternetAddress.parse(to, false));
-		      if (cc != null)
-			      msg.setRecipients(Message.RecipientType.CC,
+			if (cc != null)
+				msg.setRecipients(Message.RecipientType.CC,
 						InternetAddress.parse(cc, false));
-		      if (bcc != null)
-	    	  		msg.setRecipients(Message.RecipientType.BCC,
-	    	  						InternetAddress.parse(bcc, false));
-		      msg.setSubject(subject);
-		      
-		      if (replyTo != null) {
-	              InternetAddress reply[] = new InternetAddress[1];
-	              reply[0] = new InternetAddress(replyTo);
-	              msg.setReplyTo(reply);
-	          }
-		      
-	        msg.setText(message);
 
-	        if (!content_type.equals("")) {
-	            msg.setHeader("Content-Type", content_type);
-	          }
+			msg.setSubject(subject);
+			msg.setText(message);
 
-	        if (useHeader) {
-	  	      msg.setHeader("X-Mailer", "Goober");
-	          java.util.Date d = new java.util.Date();
-		        msg.setSentDate(d);
-	        } else {
-	        }
+			if (!content_type.equals("")) {
+				msg.setHeader("Content-Type", content_type);
+			}
 
-		      // send the thing off
-	          Transport transport = session.getTransport("smtp");
-	          transport.connect(mailhost, MAILUSER, MAILPWD);
+			if (useHeader) {
+				msg.setHeader("X-Mailer", "Goober");
+				java.util.Date d = new java.util.Date();
+				msg.setSentDate(d);
+			} else {
+			}
 
+			// send the thing off
+			Transport transport = session.getTransport("smtp");
+			transport.connect(mailhost, MAILUSER, MAILPWD);
 
+			Transport.send(msg);
+		} catch (Exception e) {
+			ExcHandle.printStackTraceToErr(e);
+			return -1;
+		}
 
-		      Transport.send(msg);
-	      }
-	      catch(Exception e) {
-	        ExcHandle.printStackTraceToErr(e);
-	        return -1;
-	      }
+		return 1;
+	}
 
-	      return 1;
-	  }
+	/**
+	 * 
+	 * Sends an email, with email information specified in the parameters.
+	 * 
+	 * @return If an error occurs return -1 else return 1
+	 */
+	public static int sendEmail(String to, String from, String replyTo,
+			String cc, String bcc, String subject, String message,
+			String content_type) {
+		log.debug("Sending email to:" + to);
+		String mailhost = MAILHOST;
+		if (!Server.isLocalhost()) {
+			mailhost = MAILHOST;
+		}
+		File f = new File("C:\\Property");
+		if (f.exists()) {
+			mailhost = "ICE";
+		}
 
-  /**
-    * Method added by Hambir Singh on 06 Decemeber 2006
-    * Sends an email with an attachement and email other information specified in the parameters.
-    *
-    * @return      If an error occurs return -1 else return 1
-    */
-   public static int sendEmailWithAttachment(String to,String from,String cc,String subject,String message,String filename,String content_type) {
+		Properties props = System.getProperties();
+		// XXX - could use Session.getTransport() and Transport.connect()
+		// XXX - assume we're using SMTP
+		if (mailhost != null)
+			// props.put("mail.smtp.host", mailhost);
+			// props.put("mail.MailTransport.protocol", "smtp");
+			props.put("mail.smtp.host", mailhost);
+		props.put("mail.smtp.auth", "true");
+		props.put("mail.smtp.port", "25");
+		SmtpAuthenticator auth = new SmtpAuthenticator(MAILUSER, MAILPWD);
+		Session session = Session.getInstance(props, auth);
 
-      System.out.println("Entered sendEmail. TO:" + to);
-      String mailhost = MAILHOST;
-      if (!Server.isLocalhost()) {
-         mailhost = MAILHOST;
-      }
-      File f = new File("C:\\Property");
-      if (f.exists()) {
-       mailhost = "ICE";
-      }
+		// Get a Session object
+		// Session session = Session.getDefaultInstance(props, null);
 
-      Properties props = System.getProperties();
-             // XXX - could use Session.getTransport() and Transport.connect()
-             // XXX - assume we're using SMTP
-             if (mailhost != null)
-                    props.put("mail.smtp.host", mailhost);
-                    props.put("mail.smtp.auth","true");
-                    props.put("mail.smtp.port","25");
-                    SmtpAuthenticator auth = new SmtpAuthenticator(MAILUSER,MAILPWD);
-                    Session session = Session.getInstance(props, auth);
+		try {
+			// construct the message
+			Message msg = new MimeMessage(session);
+			if (from != null)
+				msg.setFrom(new InternetAddress(from));
+			else
+				msg.setFrom();
 
-             // Get a Session object
-//	    Session session = Session.getDefaultInstance(props, null);
-
-       try {
-               // construct the message
-               Message msg = new MimeMessage(session);
-               if (from != null)
-                       msg.setFrom(new InternetAddress(from));
-               else
-                   msg.setFrom();
-
-               msg.setRecipients(Message.RecipientType.TO,
-                                         InternetAddress.parse(to, false));
-               if (cc != null)
-                       msg.setRecipients(Message.RecipientType.CC,
-                                         InternetAddress.parse(cc, false));
-
-               msg.setSubject(subject);
-               //msg.setText(message);
-
-               // create and fill the first message part
-               MimeBodyPart mbp1 = new MimeBodyPart();
-               mbp1.setText(message);
-
-               // create the second message part
-               MimeBodyPart mbp2 = new MimeBodyPart();
-
-               // attach the file to the message
-               FileDataSource fds = new FileDataSource(filename);
-               mbp2.setDataHandler(new DataHandler(fds));
-               mbp2.setFileName(fds.getName());
-
-               // create the Multipart and add its parts to it
-               Multipart mp = new MimeMultipart();
-               mp.addBodyPart(mbp1);
-               mp.addBodyPart(mbp2);
-
-               // add the Multipart to the message
-               msg.setContent(mp);
-
-
-
-         if (!content_type.equals("")) {
-             msg.setHeader("Content-Type", content_type);
-           }
-
-         if (useHeader) {
-               msg.setHeader("X-Mailer", "Goober");
-               java.util.Date d = new java.util.Date();
-               msg.setSentDate(d);
-         } else {
-
-         }
-
-	       // send the thing off
-	       Transport transport = session.getTransport("smtp");
-	       transport.connect(mailhost, MAILUSER, MAILPWD);
-	       Transport.send(msg);
-       }
-       catch(Exception e) {
-         ExcHandle.printStackTraceToErr(e);
-         return -1;
-       }
-
-       return 1;
-   }
-
-
-
-  /**
-   * For sending simultaneous email messages (threading).
-   *
-   * @return      If an error occurs return -1 else return 1
-   */
-  public int sendEmailNotStatic(String to,String from,String cc,String subject,String message, String content_type) {
-
-     System.out.println("Entered sendEmail. TO:" + to);
-     String mailhost;
-     if (System.getProperty("java.version").equals("1.3.0")) { //on UTAH
-         mailhost = MAILHOST;
-     } else { //texas
-         mailhost = MAILHOST;
-     }
-     Properties props = System.getProperties();
-	    // XXX - could use Session.getTransport() and Transport.connect()
-	    // XXX - assume we're using SMTP
-	    if (mailhost != null)
-		    props.put("mail.smtp.host", mailhost);
-
-	    // Get a Session object
-	    Session session = Session.getDefaultInstance(props, null);
-      //System.out.println("to = " + to);
-      //System.out.println("from = " + from);
-      try {
-	      // construct the message
-	      Message msg = new MimeMessage(session);
-	      if (from != null)
-		      msg.setFrom(new InternetAddress(from));
-	      else
-          msg.setFrom();
-
-	      msg.setRecipients(Message.RecipientType.TO,
+			msg.setRecipients(Message.RecipientType.TO,
 					InternetAddress.parse(to, false));
-	      if (cc != null)
-		      msg.setRecipients(Message.RecipientType.CC,
-					InternetAddress.parse(cc, false));
+			if (cc != null)
+				msg.setRecipients(Message.RecipientType.CC,
+						InternetAddress.parse(cc, false));
+			if (bcc != null)
+				msg.setRecipients(Message.RecipientType.BCC,
+						InternetAddress.parse(bcc, false));
+			msg.setSubject(subject);
 
-	      msg.setSubject(subject);
-        msg.setText(message);
+			if (replyTo != null) {
+				InternetAddress reply[] = new InternetAddress[1];
+				reply[0] = new InternetAddress(replyTo);
+				msg.setReplyTo(reply);
+			}
 
-        if (!content_type.equals("")) {
-            msg.setHeader("Content-Type", content_type);
-          }
-        if (useHeader) {
-  	      msg.setHeader("X-Mailer", "Goober");
-          java.util.Date d = new java.util.Date();
-	        msg.setSentDate(d);
-        } else {
-        }
+			msg.setText(message);
 
-	      // send the thing off
-	      Transport.send(msg);
-      }
-      catch(Exception e) {
-        ExcHandle.printStackTraceToErr(e);
-        return -1;
-      }
+			if (!content_type.equals("")) {
+				msg.setHeader("Content-Type", content_type);
+			}
 
-      return 1;
-  }
+			if (useHeader) {
+				msg.setHeader("X-Mailer", "Goober");
+				java.util.Date d = new java.util.Date();
+				msg.setSentDate(d);
+			} else {
+			}
 
-  public static int sendEmailWithAttachmentAndBCC(String to,String from, String replyTo, String cc,String bcc, String subject,String message,String filename,String content_type) {
+			// send the thing off
+			Transport transport = session.getTransport("smtp");
+			transport.connect(mailhost, MAILUSER, MAILPWD);
 
-      System.out.println("Entered sendEmail. TO:" + to);
-      String mailhost = MAILHOST;
-      if (!Server.isLocalhost()) {
-         mailhost = MAILHOST;
-      }
-      File f = new File("C:\\Property");
-      if (f.exists()) {
-       mailhost = "ICE";
-      }
+			Transport.send(msg);
+		} catch (Exception e) {
+			ExcHandle.printStackTraceToErr(e);
+			return -1;
+		}
 
-      Properties props = System.getProperties();
-             // XXX - could use Session.getTransport() and Transport.connect()
-             // XXX - assume we're using SMTP
-             if (mailhost != null)
-                    props.put("mail.smtp.host", mailhost);
-                    props.put("mail.smtp.auth","true");
-                    props.put("mail.smtp.port","25");
-                    SmtpAuthenticator auth = new SmtpAuthenticator(MAILUSER,MAILPWD);
-                    Session session = Session.getInstance(props, auth);
+		return 1;
+	}
 
-             // Get a Session object
-//	    Session session = Session.getDefaultInstance(props, null);
+	/**
+	 * Method added by Hambir Singh on 06 Decemeber 2006 Sends an email with an
+	 * attachement and email other information specified in the parameters.
+	 * 
+	 * @return If an error occurs return -1 else return 1
+	 */
+	public static int sendEmailWithAttachment(String to, String from,
+			String cc, String subject, String message, String filename,
+			String content_type) {
 
-       try {
-               // construct the message
-               Message msg = new MimeMessage(session);
-               if (from != null)
-                       msg.setFrom(new InternetAddress(from));
-               else
-                   msg.setFrom();
+		log.debug("Sending email to:" + to);
+		String mailhost = MAILHOST;
+		if (!Server.isLocalhost()) {
+			mailhost = MAILHOST;
+		}
+		File f = new File("C:\\Property");
+		if (f.exists()) {
+			mailhost = "ICE";
+		}
 
-               msg.setRecipients(Message.RecipientType.TO,
-                                         InternetAddress.parse(to, false));
-               if (cc != null)
-                       msg.setRecipients(Message.RecipientType.CC,
-                                         InternetAddress.parse(cc, false));
-     	      if (bcc != null)
-     	    	  		msg.setRecipients(Message.RecipientType.BCC,
-     	    	  						InternetAddress.parse(bcc, false));
+		Properties props = System.getProperties();
+		// XXX - could use Session.getTransport() and Transport.connect()
+		// XXX - assume we're using SMTP
+		if (mailhost != null)
+			props.put("mail.smtp.host", mailhost);
+		props.put("mail.smtp.auth", "true");
+		props.put("mail.smtp.port", "25");
+		SmtpAuthenticator auth = new SmtpAuthenticator(MAILUSER, MAILPWD);
+		Session session = Session.getInstance(props, auth);
 
-               msg.setSubject(subject);
-               
-               if (replyTo != null) {
-	               InternetAddress reply[] = new InternetAddress[1];
-	               reply[0] = new InternetAddress(replyTo);
-	               msg.setReplyTo(reply);
-               }
-               
-               //msg.setText(message);
+		// Get a Session object
+		// Session session = Session.getDefaultInstance(props, null);
 
-               // create and fill the first message part
-               MimeBodyPart mbp1 = new MimeBodyPart();
-               mbp1.setText(message);
+		try {
+			// construct the message
+			Message msg = new MimeMessage(session);
+			if (from != null)
+				msg.setFrom(new InternetAddress(from));
+			else
+				msg.setFrom();
 
-               // create the second message part
-               MimeBodyPart mbp2 = new MimeBodyPart();
+			msg.setRecipients(Message.RecipientType.TO,
+					InternetAddress.parse(to, false));
+			if (cc != null)
+				msg.setRecipients(Message.RecipientType.CC,
+						InternetAddress.parse(cc, false));
 
-               // attach the file to the message
-               FileDataSource fds = new FileDataSource(filename);
-               mbp2.setDataHandler(new DataHandler(fds));
-               mbp2.setFileName(fds.getName());
+			msg.setSubject(subject);
+			// msg.setText(message);
 
-               // create the Multipart and add its parts to it
-               Multipart mp = new MimeMultipart();
-               mp.addBodyPart(mbp1);
-               mp.addBodyPart(mbp2);
+			// create and fill the first message part
+			MimeBodyPart mbp1 = new MimeBodyPart();
+			mbp1.setText(message);
 
-               // add the Multipart to the message
-               msg.setContent(mp);
+			// create the second message part
+			MimeBodyPart mbp2 = new MimeBodyPart();
 
+			// attach the file to the message
+			FileDataSource fds = new FileDataSource(filename);
+			mbp2.setDataHandler(new DataHandler(fds));
+			mbp2.setFileName(fds.getName());
 
+			// create the Multipart and add its parts to it
+			Multipart mp = new MimeMultipart();
+			mp.addBodyPart(mbp1);
+			mp.addBodyPart(mbp2);
 
-         if (!content_type.equals("")) {
-             msg.setHeader("Content-Type", content_type);
-           }
+			// add the Multipart to the message
+			msg.setContent(mp);
 
-         if (useHeader) {
-               msg.setHeader("X-Mailer", "Goober");
-               java.util.Date d = new java.util.Date();
-               msg.setSentDate(d);
-         } else {
+			if (!content_type.equals("")) {
+				msg.setHeader("Content-Type", content_type);
+			}
 
-         }
+			if (useHeader) {
+				msg.setHeader("X-Mailer", "Goober");
+				java.util.Date d = new java.util.Date();
+				msg.setSentDate(d);
+			} else {
 
-	       // send the thing off
-	       Transport transport = session.getTransport("smtp");
-	       transport.connect(mailhost, MAILUSER, MAILPWD);
-	       Transport.send(msg);
-       }
-       catch(Exception e) {
-         ExcHandle.printStackTraceToErr(e);
-         return -1;
-       }
+			}
 
-       return 1;
-   }
+			// send the thing off
+			Transport transport = session.getTransport("smtp");
+			transport.connect(mailhost, MAILUSER, MAILPWD);
+			Transport.send(msg);
+		} catch (Exception e) {
+			ExcHandle.printStackTraceToErr(e);
+			return -1;
+		}
+
+		return 1;
+	}
+
+	/**
+	 * For sending simultaneous email messages (threading).
+	 * 
+	 * @return If an error occurs return -1 else return 1
+	 */
+	public int sendEmailNotStatic(String to, String from, String cc,
+			String subject, String message, String content_type) {
+		log.debug("Sending email to:" + to);
+		String mailhost;
+		if (System.getProperty("java.version").equals("1.3.0")) { // on UTAH
+			mailhost = MAILHOST;
+		} else { // texas
+			mailhost = MAILHOST;
+		}
+		Properties props = System.getProperties();
+		// XXX - could use Session.getTransport() and Transport.connect()
+		// XXX - assume we're using SMTP
+		if (mailhost != null)
+			props.put("mail.smtp.host", mailhost);
+
+		// Get a Session object
+		Session session = Session.getDefaultInstance(props, null);
+		// System.out.println("to = " + to);
+		// System.out.println("from = " + from);
+		try {
+			// construct the message
+			Message msg = new MimeMessage(session);
+			if (from != null)
+				msg.setFrom(new InternetAddress(from));
+			else
+				msg.setFrom();
+
+			msg.setRecipients(Message.RecipientType.TO,
+					InternetAddress.parse(to, false));
+			if (cc != null)
+				msg.setRecipients(Message.RecipientType.CC,
+						InternetAddress.parse(cc, false));
+
+			msg.setSubject(subject);
+			msg.setText(message);
+
+			if (!content_type.equals("")) {
+				msg.setHeader("Content-Type", content_type);
+			}
+			if (useHeader) {
+				msg.setHeader("X-Mailer", "Goober");
+				java.util.Date d = new java.util.Date();
+				msg.setSentDate(d);
+			} else {
+			}
+
+			// send the thing off
+			Transport.send(msg);
+		} catch (Exception e) {
+			ExcHandle.printStackTraceToErr(e);
+			return -1;
+		}
+
+		return 1;
+	}
+
+	public static int sendEmailWithAttachmentAndBCC(String to, String from,
+			String replyTo, String cc, String bcc, String subject,
+			String message, String filename, String content_type) {
+		log.debug("Sending email to:" + to);
+		String mailhost = MAILHOST;
+		if (!Server.isLocalhost()) {
+			mailhost = MAILHOST;
+		}
+		File f = new File("C:\\Property");
+		if (f.exists()) {
+			mailhost = "ICE";
+		}
+
+		Properties props = System.getProperties();
+		// XXX - could use Session.getTransport() and Transport.connect()
+		// XXX - assume we're using SMTP
+		if (mailhost != null)
+			props.put("mail.smtp.host", mailhost);
+		props.put("mail.smtp.auth", "true");
+		props.put("mail.smtp.port", "25");
+		SmtpAuthenticator auth = new SmtpAuthenticator(MAILUSER, MAILPWD);
+		Session session = Session.getInstance(props, auth);
+
+		// Get a Session object
+		// Session session = Session.getDefaultInstance(props, null);
+
+		try {
+			// construct the message
+			Message msg = new MimeMessage(session);
+			if (from != null)
+				msg.setFrom(new InternetAddress(from));
+			else
+				msg.setFrom();
+
+			msg.setRecipients(Message.RecipientType.TO,
+					InternetAddress.parse(to, false));
+			if (cc != null)
+				msg.setRecipients(Message.RecipientType.CC,
+						InternetAddress.parse(cc, false));
+			if (bcc != null)
+				msg.setRecipients(Message.RecipientType.BCC,
+						InternetAddress.parse(bcc, false));
+
+			msg.setSubject(subject);
+
+			if (replyTo != null) {
+				InternetAddress reply[] = new InternetAddress[1];
+				reply[0] = new InternetAddress(replyTo);
+				msg.setReplyTo(reply);
+			}
+
+			// msg.setText(message);
+
+			// create and fill the first message part
+			MimeBodyPart mbp1 = new MimeBodyPart();
+			mbp1.setText(message);
+
+			// create the second message part
+			MimeBodyPart mbp2 = new MimeBodyPart();
+
+			// attach the file to the message
+			FileDataSource fds = new FileDataSource(filename);
+			mbp2.setDataHandler(new DataHandler(fds));
+			mbp2.setFileName(fds.getName());
+
+			// create the Multipart and add its parts to it
+			Multipart mp = new MimeMultipart();
+			mp.addBodyPart(mbp1);
+			mp.addBodyPart(mbp2);
+
+			// add the Multipart to the message
+			msg.setContent(mp);
+
+			if (!content_type.equals("")) {
+				msg.setHeader("Content-Type", content_type);
+			}
+
+			if (useHeader) {
+				msg.setHeader("X-Mailer", "Goober");
+				java.util.Date d = new java.util.Date();
+				msg.setSentDate(d);
+			} else {
+
+			}
+
+			// send the thing off
+			Transport transport = session.getTransport("smtp");
+			transport.connect(mailhost, MAILUSER, MAILPWD);
+			Transport.send(msg);
+		} catch (Exception e) {
+			ExcHandle.printStackTraceToErr(e);
+			return -1;
+		}
+
+		return 1;
+	}
 
 }
-

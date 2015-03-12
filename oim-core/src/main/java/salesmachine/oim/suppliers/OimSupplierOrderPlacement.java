@@ -9,7 +9,6 @@ import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Random;
 import java.util.Set;
 
 import jxl.Workbook;
@@ -22,6 +21,8 @@ import jxl.write.biff.RowsExceededException;
 import org.hibernate.Query;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import salesmachine.email.EmailUtil;
 import salesmachine.hibernatedb.OimFields;
@@ -37,7 +38,6 @@ import salesmachine.hibernatedb.OimVendorsuppOrderhistory;
 import salesmachine.hibernatedb.Reps;
 import salesmachine.hibernatedb.Vendors;
 import salesmachine.hibernatehelper.PojoHelper;
-import salesmachine.hibernatehelper.SessionManager;
 import salesmachine.oim.api.OimConstants;
 import salesmachine.orderfile.DatabaseFile;
 import salesmachine.orderfile.DefaultCsvFile;
@@ -48,9 +48,11 @@ import salesmachine.util.OimLogStream;
 import salesmachine.util.StringHandle;
 
 public class OimSupplierOrderPlacement {
-	Session m_dbSession;
-	OimSuppliers m_supplier;
-	OimSupplierMethods m_supplierMethods;
+	private static Logger log = LoggerFactory
+			.getLogger(OimSupplierOrderPlacement.class);
+	private final Session m_dbSession;
+	private OimSuppliers m_supplier;
+	private OimSupplierMethods m_supplierMethods;
 
 	public static final int PCS = 1;
 	public static final int MOBILELINE = 2;
@@ -67,22 +69,34 @@ public class OimSupplierOrderPlacement {
 	public static final int BRADLEYCALDWELL = 581;
 	public static final int HONESTGREEN = 1822;
 
-	public boolean m_RunModePlaceOrders = true;
-	public boolean m_RunModeUpdateOrdersStatus = true;
+	// public boolean m_RunModePlaceOrders = true;
+	// public boolean m_RunModeUpdateOrdersStatus = true;
 	public float m_RunModeFailPct = 20;
-
-	protected OimLogStream logStream = new OimLogStream();
+	@Deprecated
+	protected OimLogStream logStream;
 
 	public static final Integer ERROR_NONE = 0;
 	public static final Integer ERROR_UNCONFIGURED_SUPPLIER = 1;
 	public static final Integer ERROR_PING_FAILURE = 2;
 	public static final Integer ERROR_ORDER_PROCESSING = 3;
 
+	public OimSupplierOrderPlacement(Session dbSession) {
+		this.m_dbSession = dbSession;
+		logStream = new OimLogStream();
+	}
+
+	@Deprecated
 	public boolean init(int supplierId, Session dbSession, OimLogStream ols) {
-		m_dbSession = dbSession;
 		if (ols != null) {
 			logStream = ols;
 		}
+		if (logStream == null) {
+			logStream = new OimLogStream();
+		}
+		return init(supplierId);
+	}
+
+	private boolean init(int supplierId) {
 		Transaction tx = null;
 		try {
 			tx = m_dbSession.beginTransaction();
@@ -92,8 +106,7 @@ public class OimSupplierOrderPlacement {
 					.createQuery("from salesmachine.hibernatedb.OimSuppliers as s where s.supplierId=:id and s.deleteTm is null");
 			query.setInteger("id", supplierId);
 			if (!query.iterate().hasNext()) {
-				logStream.println("No supplier found for supplier id: "
-						+ supplierId);
+				log.debug("No supplier found for supplier id: " + supplierId);
 				return false;
 			} else {
 				m_supplier = (OimSuppliers) query.iterate().next();
@@ -116,7 +129,6 @@ public class OimSupplierOrderPlacement {
 		} finally {
 			tx.rollback();
 		}
-
 		return true;
 	}
 
@@ -150,7 +162,7 @@ public class OimSupplierOrderPlacement {
 
 		for (Iterator it = vendorIds.iterator(); it.hasNext();) {
 			Integer vendorId = (Integer) it.next();
-			logStream.println("Processing orders for vendor: " + vendorId);
+			log.debug("Processing orders for vendor: " + vendorId);
 			processVendorOrders(vendorId);
 		}
 
@@ -184,9 +196,71 @@ public class OimSupplierOrderPlacement {
 		return processVendorOrders(vendorId, "");
 	}
 
-	public boolean processVendorOrders(Integer vendorId, String orderIds) {
-		logStream.println("Processing orders for vendor id: " + vendorId);
+	public boolean processVendorOrder(Integer vendorId, OimOrders oimOrders) {
+		log.debug("Processing orders for vendor id: " + vendorId);
+		// Transaction tx = null;
+		boolean ordersSent = false;
+		try {
 
+			List orders = new ArrayList();
+			List<Integer> successfulOrders = new ArrayList<Integer>();
+			List<Integer> failedOrders = new ArrayList<Integer>();
+			int countToProcess = 0;
+			try {
+				// tx = m_dbSession.beginTransaction();
+				// Removed the order details which have been processed
+
+				Set unprocessedDetails = new HashSet();
+				for (Iterator detailIt = oimOrders.getOimOrderDetailses()
+						.iterator(); detailIt.hasNext();) {
+					OimOrderDetails detail = (OimOrderDetails) detailIt.next();
+					if (OimConstants.ORDER_STATUS_UNPROCESSED.equals(detail
+							.getOimOrderStatuses().getStatusId())) {
+						unprocessedDetails.add(detail);
+						countToProcess++;
+					}
+				}
+				oimOrders.setOimOrderDetailses(unprocessedDetails);
+				// tx.commit();
+				orders.add(oimOrders);
+			} catch (RuntimeException e) {
+				// tx.rollback();
+				e.printStackTrace();
+			}
+			if (countToProcess == 0) {
+				return true;
+			}
+			log.debug("Number of order details to process: " + countToProcess);
+
+			try {
+				// tx = m_dbSession.beginTransaction();
+				log.debug("Sending orders to the supplier");
+				sendOrderToSupplier(vendorId, oimOrders, successfulOrders,
+						failedOrders);
+				// tx.commit();
+			} catch (RuntimeException e) {
+				log.error(e.getMessage(), e);
+			}
+
+			updateOrderStatus(successfulOrders,
+					OimConstants.ORDER_STATUS_PROCESSED_SUCCESS);
+			updateOrderStatus(failedOrders,
+					OimConstants.ORDER_STATUS_PROCESSED_FAILED);
+			if (failedOrders.size() == 0) {
+				updateVendorSupplierOrderHistory(vendorId, ERROR_NONE, "");
+				ordersSent = true;
+			} else
+				ordersSent = false;
+		} catch (RuntimeException e) {
+			log.error(e.getMessage(), e);
+			return false;
+		}
+		return ordersSent;
+	}
+
+	@Deprecated
+	public boolean processVendorOrders(Integer vendorId, String orderIds) {
+		log.debug("Processing orders for vendor id: " + vendorId);
 		Transaction tx = null;
 		try {
 			OimVendorSuppliers ovs = null;
@@ -205,7 +279,8 @@ public class OimSupplierOrderPlacement {
 				if (it.hasNext()) {
 					ovs = (OimVendorSuppliers) it.next();
 					ping = pingSupplier(vendorId, ovs, errorMessage);
-				}
+				} else
+					return false;
 				tx.commit();
 			} catch (RuntimeException e) {
 				tx.rollback();
@@ -215,14 +290,14 @@ public class OimSupplierOrderPlacement {
 			if (ovs == null || ovs.getTestMode() > 0) {
 				updateVendorSupplierOrderHistory(vendorId, ERROR_PING_FAILURE,
 						"Supplier is not configured for this vendor");
-				logStream.println("Supplier is not configured for this vendor");
+				log.debug("Supplier is not configured for this vendor");
 				return false;
 			} else if (!ping) {
 				updateVendorSupplierOrderHistory(vendorId, ERROR_PING_FAILURE,
 						errorMessage.toString());
-				logStream.println("Could not connect to the supplier: "
+				log.debug("Could not connect to the supplier: "
 						+ ovs.getOimSuppliers().getSupplierName());
-				logStream.println(errorMessage);
+				log.debug(errorMessage.toString());
 				return false;
 			}
 
@@ -272,66 +347,41 @@ public class OimSupplierOrderPlacement {
 				e.printStackTrace();
 			}
 
-			System.out.println("Number of order details to process: "
-					+ countToProcess);
+			log.debug("Number of order details to process: " + countToProcess);
 			if (countToProcess == 0)
 				return true;
 
 			boolean ordersSent = true;
 			try {
 				tx = m_dbSession.beginTransaction();
-
-				if (m_RunModePlaceOrders) {
-					logStream.println("Sending orders to the supplier");
-					ordersSent = sendOrdersToSupplier(vendorId, ovs, orders,
-							successfulOrders, failedOrders);
-				} else {
-					// Randomly mark them as placed or failed
-					logStream
-							.println("RUNNING IN TEST MODE: Randomly mark them as placed or failed");
-					Random r = new Random();
-					for (int i = 0; i < orders.size(); i++) {
-						OimOrders order = (OimOrders) orders.get(i);
-						for (Iterator detailIt = order.getOimOrderDetailses()
-								.iterator(); detailIt.hasNext();) {
-							OimOrderDetails detail = (OimOrderDetails) detailIt
-									.next();
-							if (r.nextInt(100) > m_RunModeFailPct)
-								successfulOrders.add(detail.getDetailId());
-							else
-								failedOrders.add(detail.getDetailId());
-						}
-					}
-				}
-
+				log.debug("Sending orders to the supplier");
+				ordersSent = sendOrdersToSupplier(vendorId, ovs, orders,
+						successfulOrders, failedOrders);
 				tx.commit();
 			} catch (RuntimeException e) {
 				e.printStackTrace();
 				if (tx != null)
 					tx.rollback();
 			}
-			logStream.println("Successful orders: " + successfulOrders.size());
-			logStream.println("Failed orders: " + failedOrders.size());
+			log.debug("Successful orders: " + successfulOrders.size());
+			log.debug("Failed orders: " + failedOrders.size());
 
-			if (m_RunModeUpdateOrdersStatus) {
-				if (ordersSent) {
-					logStream
-							.println("Updating orders status to placed in the database");
-					updateOrderStatus(successfulOrders,
-							OimConstants.ORDER_STATUS_PROCESSED_SUCCESS);
-					updateOrderStatus(failedOrders,
-							OimConstants.ORDER_STATUS_PROCESSED_FAILED);
-				} else {
-					logStream
-							.println("Sending order failed. Not updating order statuses");
-				}
+			if (ordersSent) {
+				logStream
+						.println("Updating orders status to placed in the database");
+				updateOrderStatus(successfulOrders,
+						OimConstants.ORDER_STATUS_PROCESSED_SUCCESS);
+				updateOrderStatus(failedOrders,
+						OimConstants.ORDER_STATUS_PROCESSED_FAILED);
 			} else {
-				logStream.println("RUNNING IN TEST MODE: Not updating orders");
+				logStream
+						.println("Sending order failed. Not updating order statuses");
 			}
 
 			if (failedOrders.size() == 0) {
 				updateVendorSupplierOrderHistory(vendorId, ERROR_NONE, "");
-			}
+			} else
+				return false;
 		} catch (RuntimeException e) {
 			e.printStackTrace();
 		}
@@ -340,6 +390,7 @@ public class OimSupplierOrderPlacement {
 
 	private boolean pingSupplier(Integer vendorId, OimVendorSuppliers ovs,
 			StringBuffer errorMessage) {
+		// init(ovs.getOimSuppliers().getSupplierId());
 		Integer supplierMethodNameId = m_supplierMethods
 				.getOimSupplierMethodNames().getMethodNameId();
 		if (OimConstants.SUPPLIER_METHOD_NAME_EMAIL
@@ -348,10 +399,7 @@ public class OimSupplierOrderPlacement {
 					m_supplierMethods,
 					OimConstants.SUPPLIER_METHOD_ATTRIBUTES_EMAILADDRESS);
 			// May need to handle the case of bad email in the future
-			if (!m_RunModePlaceOrders) {
-				errorMessage.append("Incorrect email address: " + emailAddress);
-				return false;
-			}
+
 			return true;
 		}
 
@@ -396,11 +444,345 @@ public class OimSupplierOrderPlacement {
 
 		if (OimConstants.SUPPLIER_METHOD_NAME_CUSTOM
 				.equals(supplierMethodNameId)) {
-			logStream.println("!!! Ping custom supplier");
+			log.debug("!!! Ping custom supplier");
 			return true;
 		}
 
 		return false;
+	}
+
+	private boolean sendOrderToSupplier(Integer vendorId, OimOrders oimOrders,
+			List<Integer> successfulOrders, List<Integer> failedOrders) {
+		List<OimOrders> orders = new ArrayList<OimOrders>();
+		orders.add(oimOrders);
+		for (OimOrderDetails oimOrderDetails : (Set<OimOrderDetails>) oimOrders
+				.getOimOrderDetailses()) {
+			init(oimOrderDetails.getOimSuppliers().getSupplierId());
+			OimVendorSuppliers ovs = null;
+			boolean ping = false;
+			StringBuffer errorMessage = new StringBuffer();
+			Query query;
+			Transaction tx = null;
+			try {
+				tx = m_dbSession.beginTransaction();
+
+				// Here is your db code
+				query = m_dbSession
+						.createQuery("from OimVendorSuppliers s where s.oimSuppliers=:supp and s.vendors.vendorId=:vid and s.deleteTm is null");
+				query.setEntity("supp", m_supplier);
+				query.setInteger("vid", vendorId);
+				Iterator it = query.iterate();
+				if (it.hasNext()) {
+					ovs = (OimVendorSuppliers) it.next();
+					ping = pingSupplier(vendorId, ovs, errorMessage);
+				} else {
+					return false;
+				}
+				tx.commit();
+			} catch (RuntimeException e) {
+				if (tx != null && tx.isActive())
+					tx.rollback();
+				e.printStackTrace();
+			}
+
+			Integer supplierMethodNameId = m_supplierMethods
+					.getOimSupplierMethodNames().getMethodNameId();
+			log.debug("Supplier Method Id: " + supplierMethodNameId);
+			if (OimConstants.SUPPLIER_METHOD_NAME_CUSTOM
+					.equals(supplierMethodNameId)) {
+				log.debug("!!! Custom method called");
+				Supplier s = null;
+				int supplierId = ovs.getOimSuppliers().getSupplierId();
+				switch (supplierId) {
+				case PCS:
+					log.debug("!!! SENDING ORDERS TO PCS");
+					s = new PCS();
+					break;
+				case MOBILELINE:
+					log.debug("!!! SENDING ORDERS TO Mobileline");
+					s = new Mobileline();
+					break;
+				case PETRA:
+					log.debug("!!! SENDING ORDERS TO Petra");
+					s = new Petra();
+					break;
+				case ICELLA:
+					log.debug("!!! SENDING ORDERS TO iCella");
+					s = new Icella();
+					break;
+				case PCI:
+					log.debug("!!! SENDING ORDERS TO Progressive Concepts");
+					s = new ProgressiveConcepts();
+					break;
+				case MOTENG:
+					log.debug("!!! SENDING ORDERS TO Moteng");
+					s = new Moteng();
+					break;
+				case DRBOTT:
+					log.debug("!!! SENDING ORDERS TO DrBott");
+					s = new DrBott();
+					break;
+				case RAX:
+					log.debug("!!! SENDING ORDERS TO Rax");
+					s = new Rax();
+					break;
+				case DROPSHIPDIRECT:
+					log.debug("!!! SENDING ORDERS TO Dropship Direct");
+					s = new DropshipDirect();
+					break;
+				case DROPSHIPDIRECTAUTOMOTIVES:
+					logStream
+							.println("!!! SENDING ORDERS TO Dropship Direct Automotives");
+					s = new DropshipDirect();
+					break;
+				case BnF:
+					log.debug("!!! SENDING ORDERS TO BnF USA");
+					s = new BF();
+					break;
+				case DandH:
+					log.debug("!!! SENDING ORDERS TO DandH");
+					s = new DandH();
+					break;
+				case BRADLEYCALDWELL:
+					log.debug("!!! SENDING ORDERS TO BRADLEYCALDWELL");
+					s = new BradleyCaldwell();
+					break;
+				case HONESTGREEN:
+					log.debug("SENDING ORDERS TO HONEST GREEN");
+					s = new HonestGreen();
+					break;
+				}
+				if (s != null) {
+					s.setLogStream(logStream);
+					s.sendOrders(vendorId, ovs, orders);
+					successfulOrders.addAll(s.successfulOrders);
+					failedOrders.addAll(s.failedOrders);
+				} else {
+					log.debug("Unknown Supplier Id: " + supplierId);
+				}
+			} else if (OimConstants.SUPPLIER_METHOD_NAME_EMAIL
+					.equals(supplierMethodNameId)
+					|| OimConstants.SUPPLIER_METHOD_NAME_FTP
+							.equals(supplierMethodNameId)) {
+				String tmp = PojoHelper.getSupplierMethodAttributeValue(
+						m_supplierMethods,
+						OimConstants.SUPPLIER_METHOD_ATTRIBUTES_FILETYPEID);
+
+				// Find if there is an associated file
+				OimFiletypes oimFile = null;
+				if (tmp != null && tmp.length() > 0) {
+					Integer fileid = Integer.valueOf(tmp);
+					log.debug("Using File Id: " + fileid
+							+ " for generating supplier order file");
+					query = m_dbSession
+							.createQuery("select f from OimFiletypes f where f.fileTypeId=:fileId and f.deleteTm is null");
+					Iterator it = query.setInteger("fileId", fileid.intValue())
+							.iterate();
+					if (!it.hasNext()) {
+						logStream
+								.println("No file defined for this supplier file id: "
+										+ fileid);
+					} else {
+						oimFile = (OimFiletypes) it.next();
+					}
+				}
+
+				int fileFormat = 1;
+				try {
+					fileFormat = Integer
+							.parseInt(PojoHelper
+									.getSupplierMethodAttributeValue(
+											m_supplierMethods,
+											OimConstants.SUPPLIER_METHOD_ATTRIBUTES_FILEFORMAT));
+				} catch (Exception e) {
+					e.printStackTrace();
+					fileFormat = 1;
+				}
+
+				OrderFile ofile = null;
+				if (fileFormat == OimConstants.FILE_FORMAT_XLS) {
+					ofile = new DefaultXlsFile(m_dbSession);
+				} else {
+					ofile = new DefaultCsvFile(m_dbSession);
+				}
+				if (oimFile != null) {
+					ofile = new DatabaseFile(m_dbSession, oimFile);
+				}
+				ofile.build();
+
+				String name = (String) ofile.getFileFormatParams().get(
+						OimConstants.FILE_FORMAT_PARAMS_NAME);
+				if (name != null && name.length() > 0) {
+					if (name.indexOf("#SupplierAccountNumber") != -1) {
+						String accountNumber = ovs.getAccountNumber();
+						name = name.replaceAll("#SupplierAccountNumber",
+								accountNumber);
+					}
+				}
+				String fileName = "";
+				if (fileFormat == OimConstants.FILE_FORMAT_XLS) {
+					fileName = "" + vendorId + "-" + m_supplier.getSupplierId()
+							+ ".xls";
+					log.debug("Generating file " + fileName);
+					try {
+						generateXlsFile(orders, ofile.getFileFieldMaps(),
+								fileName, ofile.getFileFormatParams(),
+								ofile.getSpecificsProvider(ovs));
+					} catch (Exception e) {
+						// TODO Auto-generated catch block
+						log.debug(e.getMessage());
+						e.printStackTrace();
+					}
+				} else if (fileFormat == OimConstants.FILE_FORMAT_CSV) {
+					fileName = "" + vendorId + "-" + m_supplier.getSupplierId()
+							+ ".csv";
+					if (name != null && name.length() > 0)
+						fileName = name;
+					log.debug("Generating file " + fileName);
+					try {
+						generateCsvFile(orders, ofile.getFileFieldMaps(),
+								fileName, ofile.getFileFormatParams(),
+								ofile.getSpecificsProvider(ovs));
+					} catch (Exception e) {
+						// TODO Auto-generated catch block
+						log.debug(e.getMessage());
+						e.printStackTrace();
+					}
+				}
+
+				// Get the reps object to get the email id and name of the
+				// vendor to
+				// whom the order status email will go in case the
+				// emaiNotification
+				// is set for him.
+				Query q = m_dbSession
+						.createQuery("select r from salesmachine.hibernatedb.Reps r where r.vendorId = "
+								+ vendorId);
+				Reps r = new Reps();
+				Iterator repsIt = q.iterate();
+				if (repsIt.hasNext()) {
+					r = (Reps) repsIt.next();
+				}
+
+				if (OimConstants.SUPPLIER_METHOD_NAME_FTP
+						.equals(supplierMethodNameId)) {
+					String ftpServer = PojoHelper
+							.getSupplierMethodAttributeValue(
+									m_supplierMethods,
+									OimConstants.SUPPLIER_METHOD_ATTRIBUTES_FTPSERVER);
+					String ftpLogin = PojoHelper
+							.getSupplierMethodAttributeValue(
+									m_supplierMethods,
+									OimConstants.SUPPLIER_METHOD_ATTRIBUTES_FTPLOGIN);
+					String ftpPassword = PojoHelper
+							.getSupplierMethodAttributeValue(
+									m_supplierMethods,
+									OimConstants.SUPPLIER_METHOD_ATTRIBUTES_FTPPASSWORD);
+
+					if ("#accountspecific".equals(ftpLogin))
+						ftpLogin = ovs.getLogin();
+					if ("#accountspecific".equals(ftpPassword))
+						ftpPassword = ovs.getPassword();
+
+					String ftpFolder = PojoHelper
+							.getSupplierMethodAttributeValue(
+									m_supplierMethods,
+									OimConstants.SUPPLIER_METHOD_ATTRIBUTES_FTPFOLDER);
+
+					FtpFileUploader uploader = new FtpFileUploader(ftpServer,
+							ftpLogin, ftpPassword, 5, 0);
+					try {
+						uploader.Upload(ftpFolder, fileName, fileName);
+					} catch (Exception e) {
+						// TODO Auto-generated catch block
+						log.debug(e.getMessage());
+						e.printStackTrace();
+						return false;
+					}
+
+				} else if (OimConstants.SUPPLIER_METHOD_NAME_EMAIL
+						.equals(supplierMethodNameId)) {
+					String emailAddress = PojoHelper
+							.getSupplierMethodAttributeValue(
+									m_supplierMethods,
+									OimConstants.SUPPLIER_METHOD_ATTRIBUTES_EMAILADDRESS);
+					if (fileFormat == OimConstants.FILE_FORMAT_SEND_PLAIN_TEXT_IN_EMAIL) {
+						try {
+							String vendor_name = StringHandle.removeNull(r
+									.getFirstName())
+									+ " "
+									+ StringHandle.removeNull(r.getLastName());
+							String emailContent = "Dear " + vendor_name
+									+ "<br>";
+							emailContent += "<br>Following is the status of the orders processed for the supplier "
+									+ ovs.getOimSuppliers().getSupplierName()
+									+ " : - <br>";
+							emailContent += generateMailBody(orders,
+									ofile.getFileFieldMaps(),
+									new StandardFileSpecificsProvider(
+											m_dbSession, ovs, new Vendors(
+													vendorId)));
+							EmailUtil.sendEmail(emailAddress,
+									"support@inventorysource.com",
+									r.getLogin(), null,
+									"oim@inventorysource.com," + r.getLogin(),
+									m_supplier.getSupplierName() + " Orders",
+									emailContent, "text/html");
+						} catch (Exception e1) {
+							// TODO Auto-generated catch block
+							e1.printStackTrace();
+						}
+					} else {
+						EmailUtil.sendEmailWithAttachmentAndBCC(emailAddress,
+								"support@inventorysource.com", r.getLogin(),
+								null,
+								"oim@inventorysource.com," + r.getLogin(),
+								m_supplier.getSupplierName() + " Orders",
+								"Find attached the orders from my store.",
+								fileName, "");
+						// EmailUtil.sendEmailWithAttachment(emailAddress,"support@inventorysource.com",
+						// "mayank@inventorysource.com", "Orders",
+						// "Find attached the orders from my store.",fileName);
+					}
+				}
+
+				String nameEmail = StringHandle.removeNull(r.getFirstName())
+						+ " " + StringHandle.removeNull(r.getLastName());
+				String emailContent = "Dear " + nameEmail + "<br>";
+				emailContent += "<br>Following is the status of the orders processed for the supplier "
+						+ ovs.getOimSuppliers().getSupplierName() + " : - <br>";
+				boolean emailNotification = false;
+
+				// In both these cases i.e. Ftp File Upload and Email, orders
+				// can
+				// not fail at this stage
+				// So all of them need to be marked placed
+				for (int i = 0; i < orders.size(); i++) {
+					OimOrders order = (OimOrders) orders.get(i);
+
+					// Send Email Notifications if is set to true.
+					if (order.getOimOrderBatches().getOimChannels()
+							.getEmailNotifications() == 1) {
+						emailNotification = true;
+						String orderStatus = "Successfully Placed";
+						emailContent += "<b>Store Order ID "
+								+ order.getStoreOrderId() + "</b> -> "
+								+ orderStatus + " ";
+						emailContent += "<br>";
+					}
+				}
+				if (emailNotification) {
+					emailContent += "<br>Thanks, <br>Inventorysource support<br>";
+					logStream
+							.println("!! Sending email to user about order processing");
+					EmailUtil.sendEmail(r.getLogin(),
+							"support@inventorysource.com", "",
+							"Order processing update results", emailContent,
+							"text/html");
+				}
+			}
+		}
+		return true;
 	}
 
 	private boolean sendOrdersToSupplier(Integer vendorId,
@@ -408,47 +790,47 @@ public class OimSupplierOrderPlacement {
 			List failedOrders) {
 		Integer supplierMethodNameId = m_supplierMethods
 				.getOimSupplierMethodNames().getMethodNameId();
-		logStream.println("Supplier Method Id: " + supplierMethodNameId);
+		log.debug("Supplier Method Id: " + supplierMethodNameId);
 		if (OimConstants.SUPPLIER_METHOD_NAME_CUSTOM
 				.equals(supplierMethodNameId)) {
-			logStream.println("!!! Custom method called");
+			log.debug("!!! Custom method called");
 			Supplier s = null;
 			int supplierId = ovs.getOimSuppliers().getSupplierId();
 			switch (supplierId) {
 			case PCS:
-				logStream.println("!!! SENDING ORDERS TO PCS");
+				log.debug("!!! SENDING ORDERS TO PCS");
 				s = new PCS();
 				break;
 			case MOBILELINE:
-				logStream.println("!!! SENDING ORDERS TO Mobileline");
+				log.debug("!!! SENDING ORDERS TO Mobileline");
 				s = new Mobileline();
 				break;
 			case PETRA:
-				logStream.println("!!! SENDING ORDERS TO Petra");
+				log.debug("!!! SENDING ORDERS TO Petra");
 				s = new Petra();
 				break;
 			case ICELLA:
-				logStream.println("!!! SENDING ORDERS TO iCella");
+				log.debug("!!! SENDING ORDERS TO iCella");
 				s = new Icella();
 				break;
 			case PCI:
-				logStream.println("!!! SENDING ORDERS TO Progressive Concepts");
+				log.debug("!!! SENDING ORDERS TO Progressive Concepts");
 				s = new ProgressiveConcepts();
 				break;
 			case MOTENG:
-				logStream.println("!!! SENDING ORDERS TO Moteng");
+				log.debug("!!! SENDING ORDERS TO Moteng");
 				s = new Moteng();
 				break;
 			case DRBOTT:
-				logStream.println("!!! SENDING ORDERS TO DrBott");
+				log.debug("!!! SENDING ORDERS TO DrBott");
 				s = new DrBott();
 				break;
 			case RAX:
-				logStream.println("!!! SENDING ORDERS TO Rax");
+				log.debug("!!! SENDING ORDERS TO Rax");
 				s = new Rax();
 				break;
 			case DROPSHIPDIRECT:
-				logStream.println("!!! SENDING ORDERS TO Dropship Direct");
+				log.debug("!!! SENDING ORDERS TO Dropship Direct");
 				s = new DropshipDirect();
 				break;
 			case DROPSHIPDIRECTAUTOMOTIVES:
@@ -457,19 +839,19 @@ public class OimSupplierOrderPlacement {
 				s = new DropshipDirect();
 				break;
 			case BnF:
-				logStream.println("!!! SENDING ORDERS TO BnF USA");
+				log.debug("!!! SENDING ORDERS TO BnF USA");
 				s = new BF();
 				break;
 			case DandH:
-				logStream.println("!!! SENDING ORDERS TO DandH");
+				log.debug("!!! SENDING ORDERS TO DandH");
 				s = new DandH();
 				break;
 			case BRADLEYCALDWELL:
-				logStream.println("!!! SENDING ORDERS TO BRADLEYCALDWELL");
+				log.debug("!!! SENDING ORDERS TO BRADLEYCALDWELL");
 				s = new BradleyCaldwell();
 				break;
 			case HONESTGREEN:
-				logStream.println("SENDING ORDERS TO HONEST GREEN");
+				log.debug("SENDING ORDERS TO HONEST GREEN");
 				s = new HonestGreen();
 				break;
 			}
@@ -479,7 +861,7 @@ public class OimSupplierOrderPlacement {
 				successfulOrders.addAll(s.getSuccessfulOrders());
 				failedOrders.addAll(s.getFailedOrders());
 			} else {
-				logStream.println("Unknown Supplier Id: " + supplierId);
+				log.debug("Unknown Supplier Id: " + supplierId);
 			}
 		} else if (OimConstants.SUPPLIER_METHOD_NAME_EMAIL
 				.equals(supplierMethodNameId)
@@ -493,7 +875,7 @@ public class OimSupplierOrderPlacement {
 			OimFiletypes oimFile = null;
 			if (tmp != null && tmp.length() > 0) {
 				Integer fileid = Integer.valueOf(tmp);
-				logStream.println("Using File Id: " + fileid
+				log.debug("Using File Id: " + fileid
 						+ " for generating supplier order file");
 				Query query = m_dbSession
 						.createQuery("select f from OimFiletypes f where f.fileTypeId=:fileId and f.deleteTm is null");
@@ -544,14 +926,14 @@ public class OimSupplierOrderPlacement {
 			if (fileFormat == OimConstants.FILE_FORMAT_XLS) {
 				fileName = "" + vendorId + "-" + m_supplier.getSupplierId()
 						+ ".xls";
-				logStream.println("Generating file " + fileName);
+				log.debug("Generating file " + fileName);
 				try {
 					generateXlsFile(orders, ofile.getFileFieldMaps(), fileName,
 							ofile.getFileFormatParams(),
 							ofile.getSpecificsProvider(ovs));
 				} catch (Exception e) {
 					// TODO Auto-generated catch block
-					logStream.println(e.getMessage());
+					log.debug(e.getMessage());
 					e.printStackTrace();
 				}
 			} else if (fileFormat == OimConstants.FILE_FORMAT_CSV) {
@@ -559,14 +941,14 @@ public class OimSupplierOrderPlacement {
 						+ ".csv";
 				if (name != null && name.length() > 0)
 					fileName = name;
-				logStream.println("Generating file " + fileName);
+				log.debug("Generating file " + fileName);
 				try {
 					generateCsvFile(orders, ofile.getFileFieldMaps(), fileName,
 							ofile.getFileFormatParams(),
 							ofile.getSpecificsProvider(ovs));
 				} catch (Exception e) {
 					// TODO Auto-generated catch block
-					logStream.println(e.getMessage());
+					log.debug(e.getMessage());
 					e.printStackTrace();
 				}
 			}
@@ -611,7 +993,7 @@ public class OimSupplierOrderPlacement {
 					uploader.Upload(ftpFolder, fileName, fileName);
 				} catch (Exception e) {
 					// TODO Auto-generated catch block
-					logStream.println(e.getMessage());
+					log.debug(e.getMessage());
 					e.printStackTrace();
 					return false;
 				}
@@ -752,7 +1134,7 @@ public class OimSupplierOrderPlacement {
 							.getMappedFieldModifierRuleWr());
 					String fieldValue = StringHandle.removeNull(fileSpecifics
 							.getFieldValueFromOrder(detail, map));
-					// logStream.println("Field Id: "+field.getFieldId()+"\t ("+field.getFieldName()+")"+"\t:"+fieldValue);
+					// log.debug("Field Id: "+field.getFieldId()+"\t ("+field.getFieldName()+")"+"\t:"+fieldValue);
 					if (j > 0)
 						dataline += fieldDelimiter;
 					dataline += textDelimiter + fieldValue + textDelimiter;
@@ -860,7 +1242,7 @@ public class OimSupplierOrderPlacement {
 					OimFileFieldMap map = (OimFileFieldMap) it.next();
 					String fieldValue = StringHandle.removeNull(fileSpecifics
 							.getFieldValueFromOrder(detail, map));
-					// logStream.println("Field Id: "+field.getFieldId()+"\t ("+field.getFieldName()+")"+"\t:"+fieldValue);
+					// log.debug("Field Id: "+field.getFieldId()+"\t ("+field.getFieldName()+")"+"\t:"+fieldValue);
 					if (j > 0)
 						dataline.append(map.getMappedFieldName() + " : "
 								+ fieldValue + "<br/>");
@@ -876,7 +1258,7 @@ public class OimSupplierOrderPlacement {
 
 	private boolean updateOrderStatus(List orders, Integer status) {
 		if (orders == null || orders.size() == 0) {
-			logStream.println("No orders to update with status: " + status);
+			log.debug("No orders to update with status: " + status);
 			return true;
 		}
 		String orderDetails = "";
@@ -910,7 +1292,7 @@ public class OimSupplierOrderPlacement {
 							+ orderDetails
 							+ ")");
 			int rows = q.executeUpdate();
-			logStream.println("Updated order details. Rows changed: " + rows);
+			log.debug("Updated order details. Rows changed: " + rows);
 
 			tx.commit();
 		} catch (RuntimeException e) {
@@ -920,21 +1302,37 @@ public class OimSupplierOrderPlacement {
 		return true;
 	}
 
-	public static void main(String[] args) {
-		Session session = SessionManager.currentSession();
-
-		int supplierId = Integer.parseInt(args[0]);
-		OimLogStream logStream = new OimLogStream();
-		logStream.println("Processing orders for SupplierId: " + supplierId);
-		OimSupplierOrderPlacement osp = new OimSupplierOrderPlacement();
-		osp.m_RunModeUpdateOrdersStatus = false;
-
-		if (!osp.init(supplierId, session, logStream)) {
-			logStream.println("Failed initializing.");
-			System.exit(0);
+	public String trackOrder(Integer vendorId, Integer orderDetailId) {
+		Session session = m_dbSession;
+		Transaction tx = null;
+		String orderStatus;
+		tx = session.beginTransaction();
+		OimOrderDetails oimOrderDetails = (OimOrderDetails) session.get(
+				OimOrderDetails.class, orderDetailId);
+		HasTracking s = null;
+		OimVendorSuppliers oimVendorSuppliers = null;
+		Query query = session
+				.createQuery("from OimVendorSuppliers s where s.oimSuppliers=:supp and s.vendors.vendorId=:vid and s.deleteTm is null");
+		query.setEntity("supp", oimOrderDetails.getOimSuppliers());
+		query.setInteger("vid", vendorId);
+		Object it = query.uniqueResult();
+		if (it instanceof OimVendorSuppliers)
+			oimVendorSuppliers = (OimVendorSuppliers) it;
+		switch (oimOrderDetails.getOimSuppliers().getSupplierId()) {
+		case DandH:
+			s = new DandH();
+			orderStatus = s.getOrderStatus(oimVendorSuppliers,
+					oimOrderDetails.getSupplierOrderNumber());
+			oimOrderDetails.setSupplierOrderStatus(orderStatus);
+			session.update(oimOrderDetails);
+			break;
+		default:
+			orderStatus = "Tracking orders for "
+					+ oimOrderDetails.getOimSuppliers().getSupplierName()
+					+ " is not suported.";
+			break;
 		}
-		osp.processVendorOrders(38677);
-		SessionManager.closeSession();
-		System.exit(0);
+		tx.commit();
+		return orderStatus;
 	}
 }

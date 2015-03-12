@@ -6,21 +6,22 @@ import java.io.OutputStream;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 
 import javax.net.ssl.HttpsURLConnection;
 
-import org.hibernate.Query;
 import org.hibernate.Session;
 import org.hibernate.criterion.Restrictions;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import salesmachine.email.EmailUtil;
 import salesmachine.hibernatedb.OimFields;
 import salesmachine.hibernatedb.OimFileFieldMap;
 import salesmachine.hibernatedb.OimOrderDetails;
 import salesmachine.hibernatedb.OimOrders;
+import salesmachine.hibernatedb.OimSupplierShippingMethod;
 import salesmachine.hibernatedb.OimVendorSuppliers;
 import salesmachine.hibernatedb.Reps;
 import salesmachine.hibernatedb.Vendors;
@@ -28,10 +29,12 @@ import salesmachine.hibernatehelper.SessionManager;
 import salesmachine.util.StringHandle;
 
 public class BF extends Supplier {
+	private static final Logger log = LoggerFactory.getLogger(BF.class);
+
 	/***
 	 * @Requirement for Integration 1) Username : login ID 2) Password :
 	 *              password 3) Account : lincenceKey This method send orders to
-	 *              BnF USA line supplie
+	 *              BnF USA line supplier
 	 * @param vendorId
 	 *            VendorID
 	 * @param ovs
@@ -40,7 +43,7 @@ public class BF extends Supplier {
 	 *            list of orders containing order info.
 	 */
 	public void sendOrders(Integer vendorId, OimVendorSuppliers ovs, List orders) {
-		logStream.println("!!Started sending orders to BnF USA");
+		log.info("Started sending orders to BnF USA");
 		// populate orderSkuPrefixMap with channel id and the prefix to be used
 		// for the given supplier.
 		orderSkuPrefixMap = setSkuPrefixForOrders(ovs);
@@ -96,35 +99,27 @@ public class BF extends Supplier {
 		String emailContent = "Dear " + name + "<br>";
 		emailContent += "<br>Following is the status of the orders processed for the supplier "
 				+ ovs.getOimSuppliers().getSupplierName() + " : - <br>";
-		Session session = SessionManager.currentSession();
 		Vendors v = new Vendors();
 		v.setVendorId(r.getVendorId());
-		HashMap shippingMethods = loadSupplierShippingMap(session,
+		List<OimSupplierShippingMethod> shippingMethods = loadSupplierShippingMap(
 				ovs.getOimSuppliers(), v);
 		// Write the data now
 		for (int i = 0; i < orders.size(); i++) {
 			OimOrders order = (OimOrders) orders.get(i);
 			String shippingDetails = StringHandle.removeNull(order
 					.getShippingDetails());
-			String shippingMethodCode = findShippingCodeFromUserMapping(
-					shippingMethods, shippingDetails);
-			if (shippingMethodCode.length() == 0) {
-				logStream
-						.println(shippingDetails
-								+ ": Couldnt find the shipping code | Assigning the default shipping : "
-								+ ovs.getDefShippingMethodCode());
+			String shippingMethodCode;
+			OimSupplierShippingMethod shippingMethod = findShippingCodeFromUserMapping(
+					shippingMethods, order.getOimShippingMethod());
+			if (shippingMethod == null) {
+				log.warn(shippingDetails
+						+ ": Couldnt find the shipping code | Assigning the default shipping : "
+						+ ovs.getDefShippingMethodCode());
 				shippingMethodCode = StringHandle.removeNull(ovs
 						.getDefShippingMethodCode());
 			} else {
-				logStream.println("!!! Shipping method code found : "
-						+ shippingMethodCode);
-			}
-
-			if (shippingMethodCode == null
-					|| shippingMethodCode.trim().length() == 0) {
-				shippingMethodCode = "";
-				logStream
-						.println("Shipping method code could not be found as defined in the order shipping details and also the default shipping code was not set.");
+				log.info("Shipping method code found : " + shippingMethod);
+				shippingMethodCode = shippingMethod.toString();
 			}
 			order.setShippingDetails(shippingMethodCode);
 
@@ -200,11 +195,12 @@ public class BF extends Supplier {
 								+ map.getMappedFieldName() + ">\n";
 					} else if ("ship_via".equals(StringHandle.removeNull(map
 							.getMappedFieldName())) && addShippingDetails) {
-						val += "<" + map.getMappedFieldName()
-								+ "><![CDATA[1]]></" + map.getMappedFieldName()
-								+ ">\n";
-						// val +=
-						// "<"+map.getMappedFieldName()+"><![CDATA["+StringHandle.removeNull(fieldValue)+"]]></"+map.getMappedFieldName()+">\n";
+						// val += "<" + map.getMappedFieldName()
+						// + "><![CDATA[1]]></" + map.getMappedFieldName()
+						// + ">\n";
+						val += "<" + map.getMappedFieldName() + "><![CDATA["
+								+ StringHandle.removeNull(fieldValue) + "]]></"
+								+ map.getMappedFieldName() + ">\n";
 					} else if ("ship_acct".equals(StringHandle.removeNull(map
 							.getMappedFieldName())) && addShippingDetails) {
 						val += "<" + map.getMappedFieldName() + "><![CDATA["
@@ -266,7 +262,7 @@ public class BF extends Supplier {
 			try {
 				xmlResponse = postOrder(xmlRequest, r);
 			} catch (Exception e) {
-				e.printStackTrace();
+				log.error(e.getMessage(), e);
 			}
 			// Output the response
 			if (xmlResponse != null
@@ -300,14 +296,12 @@ public class BF extends Supplier {
 
 			String logEmailContent = "";
 			if (xmlResponse != null) {
-				logStream.println("!! ---------------STORE ORDER ID : "
-						+ order.getStoreOrderId() + "---------");
-				logStream
-						.println("!! ORDER PLACED : "
-								+ ((xmlResponse
-										.indexOf("<xml_action>PROCESS</xml_action>") != -1) == true ? "Yes"
-										: "No"));
-				logStream.println("!! GET RETURN VALUE : " + xmlResponse);
+				log.info("STORE ORDER ID : " + order.getStoreOrderId());
+				log.info("ORDER PLACED : "
+						+ ((xmlResponse
+								.indexOf("<xml_action>PROCESS</xml_action>") != -1) == true ? "Yes"
+								: "No"));
+				log.info("GET RETURN VALUE : " + xmlResponse);
 				logEmailContent = "----------------Store ORDER ID : "
 						+ order.getStoreOrderId() + "---------\n\n";
 				logEmailContent += "Order Placed : "
@@ -330,7 +324,6 @@ public class BF extends Supplier {
 		}// END for(int i=0;i<orders.size();i++) {
 		if (emailNotification) {
 			emailContent += "<br>Thanks, <br>Inventory Source Team<br>";
-			logStream.println("Sending email to " + r.getLogin());
 			EmailUtil.sendEmail(r.getLogin(), "support@inventorysource.com",
 					"", "Order Processing Results", emailContent, "text/html");
 		}
@@ -370,7 +363,7 @@ public class BF extends Supplier {
 			response = sb.toString();
 
 		} catch (Exception e) {
-			e.printStackTrace();
+			log.error(e.getMessage(), e);
 			String logEmailContent = "-------------- Order failed with Exception -------------\n";
 			logEmailContent += "-------------- XML SOAP REQUEST SENT -------------\n";
 			logEmailContent += request + "\n";
@@ -378,7 +371,7 @@ public class BF extends Supplier {
 			logEmailContent += "-------------- XML SOAP RESPONSE CAME -------------\n";
 			logEmailContent += e + "\n";
 			logEmailContent += "--------------------------------------------------";
-			logStream.println(logEmailContent);
+
 			String emailSubject = "Order failed for Vendor : "
 					+ r.getFirstName() + " " + r.getLastName() + " VID : "
 					+ r.getVendorId();

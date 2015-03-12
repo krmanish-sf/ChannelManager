@@ -3,12 +3,10 @@ package com.is.cm.core.service;
 import java.util.List;
 import java.util.Map;
 
-import salesmachine.hibernatedb.OimChannelShippingMap;
-import salesmachine.hibernatedb.OimShippingMethod;
-
 import com.is.cm.core.domain.Channel;
 import com.is.cm.core.domain.ChannelShippingMap;
 import com.is.cm.core.domain.Filetype;
+import com.is.cm.core.domain.SupportedChannel;
 import com.is.cm.core.domain.UploadedFile;
 import com.is.cm.core.event.CreateEvent;
 import com.is.cm.core.event.CreatedEvent;
@@ -46,4 +44,7 @@ public interface ChannelService {
 
 	ReadCollectionEvent<ChannelShippingMap> findShippingMethods(
 			RequestReadEvent<Integer> requestReadEvent);
+
+	ReadCollectionEvent<SupportedChannel> getSupportedChannels(
+			RequestReadEvent<SupportedChannel> requestReadEvent);
 }

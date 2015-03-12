@@ -15,19 +15,24 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import oracle.xml.parser.v2.DOMParser;
 import oracle.xml.parser.v2.XMLDocument;
 
+import org.hibernate.Criteria;
 import org.hibernate.Query;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
+import org.hibernate.criterion.Restrictions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
+import salesmachine.hibernatedb.OimChannelShippingMap;
 import salesmachine.hibernatedb.OimChannelSupplierMap;
 import salesmachine.hibernatedb.OimChannels;
 import salesmachine.hibernatedb.OimOrderBatches;
@@ -142,7 +147,7 @@ public class CREOrderImport implements IOrderImport {
 
 			if (batch.getOimOrderses().size() == 0) {
 				logStream
-						.println("\n\nOrder Import Process Complete.\n\nNo new orders found on the store.");
+						.println("\nOrder Import Process Complete.\nNo new orders found on the store.");
 				return true;
 			}
 
@@ -202,6 +207,31 @@ public class CREOrderImport implements IOrderImport {
 					order.setOimOrderBatches(batch);
 					order.setOrderFetchTm(new Date());
 					order.setInsertionTm(new Date());
+					String shippingDetails = order.getShippingDetails();
+					Integer supportedChannelId = m_channel
+							.getOimSupportedChannels().getSupportedChannelId();
+					Criteria findCriteria = m_dbSession
+							.createCriteria(OimChannelShippingMap.class);
+					findCriteria.add(Restrictions.eq(
+							"oimSupportedChannel.supportedChannelId",
+							supportedChannelId));
+					List<OimChannelShippingMap> list = findCriteria.list();
+					for (OimChannelShippingMap entity : list) {
+						String shippingRegEx = entity.getShippingRegEx();
+						Pattern p = Pattern.compile(shippingRegEx,
+								Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
+						Matcher m = p.matcher(shippingDetails);
+						if (m.find() && m.groupCount() >= 2) {
+							order.setOimShippingMethod(entity
+									.getOimShippingMethod());
+							LOG.info("Shipping set to "
+									+ entity.getOimShippingMethod());
+							break;
+						}
+					}
+					if (order.getOimShippingMethod() == null)
+						LOG.warn("Shipping can't be mapped for order "
+								+ order.getStoreOrderId());
 					m_dbSession.save(order);
 					LOG.info("Saved order id: " + order.getOrderId());
 
@@ -228,7 +258,7 @@ public class CREOrderImport implements IOrderImport {
 					logStream.println("No new order found on store.");
 				}
 			} else {
-				LOG.info("FAILURE_GETPRODUCT_NULL_RESPONSE");
+				LOG.error("FAILURE_GETPRODUCT_NULL_RESPONSE");
 			}
 		} catch (Exception e) {
 			LOG.info(e.getMessage(), e);

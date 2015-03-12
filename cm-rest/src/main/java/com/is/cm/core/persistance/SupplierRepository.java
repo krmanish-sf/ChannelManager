@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.is.cm.core.domain.ShippingCarrier;
+import com.is.cm.core.domain.ShippingMethod;
 import com.is.cm.core.domain.Supplier;
 import com.is.cm.core.domain.SupplierShippingMethod;
 import com.is.cm.core.domain.VendorShippingMap;
@@ -45,5 +46,7 @@ public interface SupplierRepository {
 
 	List<SupplierShippingMethod> saveShippingOverrideForSupplierMethod(
 			Integer integer, String string);
+
+	List<ShippingMethod> getShippingMethods();
 
 }

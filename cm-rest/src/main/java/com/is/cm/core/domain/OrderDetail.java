@@ -24,7 +24,9 @@ public class OrderDetail extends DomainBase implements java.io.Serializable {
 	private Integer quantity;
 	private String productName;
 	private String productDesc;
-
+	private String supplierOrderStatus;
+	private String supplierOrderNumber;
+	
 	public OrderDetail() {
 	}
 
@@ -150,6 +152,22 @@ public class OrderDetail extends DomainBase implements java.io.Serializable {
 		if (this.oimOrders != null)
 			target.setOimOrders(this.oimOrders.toOimOrder());
 		return target;
+	}
+
+	public String getSupplierOrderStatus() {
+		return supplierOrderStatus;
+	}
+
+	public void setSupplierOrderStatus(String supplierOrderStatus) {
+		this.supplierOrderStatus = supplierOrderStatus;
+	}
+
+	public String getSupplierOrderNumber() {
+		return supplierOrderNumber;
+	}
+
+	public void setSupplierOrderNumber(String supplierOrderNumber) {
+		this.supplierOrderNumber = supplierOrderNumber;
 	}
 
 }

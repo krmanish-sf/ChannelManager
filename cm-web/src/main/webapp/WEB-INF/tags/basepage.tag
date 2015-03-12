@@ -6,13 +6,16 @@
 	uri="http://java.sun.com/jsp/jstl/core" prefix="c"%><%@taglib
 	uri="http://java.sun.com/jsp/jstl/functions" prefix="fn"%><%@attribute
 	name="maincontent" fragment="true"%><%@attribute name="pagejs"
-	fragment="true"%><!DOCTYPE html>
+	fragment="true"%>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta http-equiv="Content-Type" content="text/html">
 <meta name="description" content="overview &amp; stats">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
+<link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
+<link rel="icon" href="favicon.ico" type="image/x-icon">
 <title>Inventory Source Channel Manager</title>
 <!-- basic styles -->
 
@@ -31,6 +34,7 @@
 <link rel="stylesheet" href="static/css/inventory.min.css" />
 <link rel="stylesheet" href="static/css/ace-rtl.min.css" />
 <link rel="stylesheet" href="static/css/ace-skins.min.css" />
+<link rel="stylesheet" href="static/css/jquery-ui-1.10.3.full.min.css" />
 <!--[if lte IE 8]>
 		  <link rel="stylesheet" href="static/css/ace-ie.min.css" />
 		<![endif]-->
@@ -85,43 +89,40 @@
 				<!-- /.brand -->
 			</div>
 			<!-- /.navbar-header -->
-			<c:if
-				test="${not fn:containsIgnoreCase(pageContext.request.requestURI, \"login.jsp\")}">
-				<div class="navbar-header pull-right" role="navigation">
-					<ul class="nav ace-nav" id="header-nav">
-						<li class="purple"><a data-toggle="dropdown"
-							class="dropdown-toggle" href="#"> <i
-								class="icon-bell-alt icon-animated-bell"></i> <span
-								class="badge badge-important alert-count"></span>
-						</a>
-							<ul
-								class="pull-right dropdown-navbar navbar-pink dropdown-menu dropdown-caret dropdown-close alert-details">
-								<li class="dropdown-header"><i class="icon-warning-sign"></i>
-									Errors</li>
-							</ul></li>
-						<li class="light-blue"><a data-toggle="dropdown" href="#"
-							class="dropdown-toggle"> <!-- <img class="nav-user-photo"
+			<div class="navbar-header pull-right" role="navigation">
+				<ul class="nav ace-nav" id="header-nav">
+					<li class="purple"><a data-toggle="dropdown"
+						class="dropdown-toggle" href="#"> <i
+							class="icon-bell-alt icon-animated-bell"></i> <span
+							class="badge badge-important alert-count"></span>
+					</a>
+						<ul
+							class="pull-right dropdown-navbar navbar-pink dropdown-menu dropdown-caret dropdown-close alert-details">
+							<li class="dropdown-header"><i class="icon-warning-sign"></i>
+								Errors</li>
+						</ul></li>
+					<li class="light-blue"><a data-toggle="dropdown" href="#"
+						class="dropdown-toggle"> <!-- <img class="nav-user-photo"
 								src="static/images/user.jpg" alt="Jason's Photo"> --> <span
-								class="user-info info1"> <small>Welcome,</small>
-									${reps.getFirstName() }
-							</span> <i class="icon-caret-down"></i>
-						</a>
-							<ul
-								class="user-menu pull-right dropdown-menu dropdown-yellow dropdown-caret dropdown-close">
-								<!-- <li><a href="#"> <i class="icon-cog"></i> Settings
+							class="user-info info1"> <small>Welcome,</small> <c:out
+									value="${sessionScope.reps.getFirstName()}" />
+						</span> <i class="icon-caret-down"></i>
+					</a>
+						<ul
+							class="user-menu pull-right dropdown-menu dropdown-yellow dropdown-caret dropdown-close">
+							<!-- <li><a href="#"> <i class="icon-cog"></i> Settings
 								</a></li>
 								<li><a href="#"> <i class="icon-user"></i> Profile
 								</a></li> 
 								<li class="divider"></li>-->
-								<li><a href="<%=request.getContextPath()%>/logout"> <i
-										class="icon-off"></i> Logout
-								</a></li>
-							</ul></li>
-					</ul>
-					<!-- /.ace-nav -->
-				</div>
-				<!-- /.navbar-header -->
-			</c:if>
+							<li><a href="${pageContext.request.contextPath}/logout">
+									<i class="icon-off"></i> Logout
+							</a></li>
+						</ul></li>
+				</ul>
+				<!-- /.ace-nav -->
+			</div>
+			<!-- /.navbar-header -->
 			<div class="pull-right">
 				<a data-toggle="modal" href="#learn-more"
 					class="navbar-brand small14"><i class="icon-info"></i>&nbsp;Learn
@@ -196,8 +197,8 @@
 						</li>
 						<li
 							<c:if test="${fn:containsIgnoreCase(pageContext.request.requestURI, \"shipping-mappings.jsp\")}"> class="active" </c:if>>
-							<a href="shipping-mappings.jsp"> <i class="icon-exchange"></i> <span
-								class="menu-text">Shipping Mappings</span>
+							<a href="shipping-mappings.jsp"> <i class="icon-exchange"></i>
+								<span class="menu-text">Shipping Mappings</span>
 						</a>
 						</li>
 						<li
@@ -207,17 +208,26 @@
 								<b class="arrow icon-angle-down"></b>
 						</a>
 							<ul class="submenu"
-								<c:if test="${fn:containsIgnoreCase(pageContext.request.requestURI, \"processorder.jsp\") || fn:containsIgnoreCase(pageContext.request.requestURI, \"orderhistory.jsp\")}"> style="display: block;" </c:if>>
+								<c:if test="${fn:containsIgnoreCase(pageContext.request.requestURI, \"processorder.jsp\") || fn:containsIgnoreCase(pageContext.request.requestURI, \"order-tracking.jsp\")|| fn:containsIgnoreCase(pageContext.request.requestURI, \"orderhistory.jsp\")}"> style="display: block;" </c:if>>
 								<li
 									<c:if test="${fn:containsIgnoreCase(pageContext.request.requestURI, \"processorder.jsp\")}"> class="active" </c:if>>
-									<a href="processorder.jsp"> <i class="icon-resize-small"></i>
+									<a href="processorder.jsp"> <i class="icon-share"></i>
 										Process Orders
 								</a>
+
 								</li>
 								<li
+									<c:if test="${fn:containsIgnoreCase(pageContext.request.requestURI, \"order-tracking.jsp\")}"> class="active" </c:if>>
+									<a href="order-tracking.jsp"> <i class="icon-resize-small"></i>
+										Track Orders
+								</a>
+
+								</li>
+
+								<li
 									<c:if test="${fn:containsIgnoreCase(pageContext.request.requestURI, \"orderhistory.jsp\")}"> class="active" </c:if>>
-									<a href="orderhistory.jsp"> <i class="icon-resize-small"></i>
-										Order History
+									<a href="orderhistory.jsp"> <i class="icon-time"></i> Order
+										History
 								</a>
 								</li>
 							</ul>
@@ -233,13 +243,13 @@
 								<li
 									<c:if test="${fn:containsIgnoreCase(pageContext.request.requestURI, \"reportmax.jsp\")}"> class="active" </c:if>>
 									<a href="reportmax.jsp"> <i class="icon-resize-small"></i>
-										Reporting(All in one page)
+										View All Reports
 								</a>
 								</li>
 								<li
 									<c:if test="${fn:containsIgnoreCase(pageContext.request.requestURI, \"reportmin.jsp\")}"> class="active" </c:if>>
 									<a href="reportmin.jsp"> <i class="icon-resize-small"></i>
-										Reporting(Minimalist)
+										Generate Visual Report
 								</a>
 								</li>
 							</ul>
@@ -291,7 +301,7 @@
 			<jsp:invoke fragment="maincontent" />
 		</div>
 	</div>
-<br>
+	<br>
 	<div class="navbar navbar-bottom footer navbar-fixed-bottom">
 		<div class="navbar-inner">
 			<div class="navbar-container">
@@ -383,7 +393,8 @@
 		src="static/js/jquery.numberformatter-1.2.4.min.js"></script>
 	<script src="static/js/flot/jquery.flot.pie.min.js"></script>
 	<script src="static/js/flot/jquery.flot.resize.min.js"></script>
-	<script type="text/javascript" src="//cdn.datatables.net/1.10.3/js/jquery.dataTables.min.js"></script>
+	<script type="text/javascript"
+		src="//cdn.datatables.net/1.10.3/js/jquery.dataTables.min.js"></script>
 	<script type="text/javascript"
 		src="static/js/jquery.dataTables.bootstrap.min.js"></script>
 	<script type="text/javascript"
@@ -400,100 +411,83 @@
 	<script src="static/js/ace-extra.min.js"></script>
 	<script src="static/js/jquery.validate.min.js"></script>
 	<jsp:invoke fragment="pagejs" />
-	<c:if
-		test="${not fn:containsIgnoreCase(pageContext.request.requestURI, \"login.jsp\")}">
-		<script type="text/javascript">
-			$(document)
-					.ready(
+	<script type="text/javascript">
+		$(document).ready(function() {
+			ace.settings.check('#navbar', 'fixed');
+			ace.settings.check('#sidebar', 'fixed');
+			$('.datepicker').datepicker();
+			$('body').popover({
+				container : 'body',
+				selector : '.addresspop'
+			});
+			$(document).on('shown.bs.popover', '.addresspop', function() {
+				setTimeout(function() {
+					$('.addresspop').popover('hide');
+				}, 10000);
 
-							function() {
-								ace.settings.check('#navbar', 'fixed');
-								ace.settings.check('#sidebar', 'fixed');
-								$('.datepicker').datepicker();
-								$('body').popover({
-									container : 'body',
-									selector : '.addresspop'
-								});
-								$(document).on(
-										'shown.bs.popover',
-										'.addresspop',
-										function() {
-											setTimeout(function() {
-												$('.addresspop')
-														.popover('hide');
-											}, 10000);
-
-										});
-								$(document)
-										.on(
-												'hidden.bs.popover',
-												'.addresspop',
-												function() {
-													$(
-															"div[class='popover fade bottom']")
-															.remove();
-												});
-								$('.dialogs,.comments').slimScroll({
-									height : '300px'
-								});
-								$('[data-rel="tooltip"]').tooltip();
-								$(this)
-										.CRUD(
-												{
-													url : 'aggregators/reports/notifications',
-													method : 'GET',
-													success : function(data) {
-														var count = 0;
-														$
-																.each(
-																		data.supplierErrors,
-																		function(
-																				i) {
-																			count++;
-																			var cldiv = $(
-																					'<div>')
-																					.addClass(
-																							'clearfix');
-																			var li = $('<li>');
-																			var a = $('<a>');
-																			var d2 = cldiv
-																					.clone();
-																			$(
-																					'<span>')
-																					.addClass(
-																							'pull-left')
-																					.html(
-																							"Supplier: "
-																									+ data.supplierErrors[i].supplier)
-																					.appendTo(
-																							cldiv);
-																			$(
-																					'<span>')
-																					.addClass(
-																							'pull-left')
-																					.html(
-																							"Error Message: "
-																									+ data.supplierErrors[i].errormsg)
-																					.appendTo(
-																							d2);
-																			a
-																					.append(cldiv);
-																			a
-																					.append(d2);
-																			li
-																					.append(
-																							a)
-																					.appendTo(
-																							'#header-nav li ul.alert-details');
-																		});
-														$(
-																'#header-nav li span.alert-count')
-																.html(count);
-													}
-												});
+			});
+			$(document).on('hidden.bs.popover', '.addresspop', function() {
+				$("div[class='popover fade bottom']").remove();
+			});
+			$('.dialogs,.comments').slimScroll({
+				height : '300px'
+			});
+			$('[data-rel="tooltip"]').tooltip();
+			getAlerts();
+		});
+		function getAlerts() {
+			$(this)
+					.CRUD(
+							{
+								url : 'aggregators/reports/notifications',
+								method : 'GET',
+								success : function(data) {
+									var count = 0;
+									$('#header-nav li ul.alert-details')
+											.empty();
+									$
+											.each(
+													data.supplierErrors,
+													function(i) {
+														var url;
+														if (data.supplierErrors[i].errorcode == 3)
+															url = 'orderhistory.jsp?order_status=3';
+														else
+															url = 'suppliers.jsp';
+														count++;
+														var cldiv = $('<div>')
+																.addClass(
+																		'clearfix');
+														var li = $('<li>');
+														var a = $('<a style="white-space: normal;text-align: left;" href="${pageContext.request.contextPath}/'+url+'">');
+														var d2 = cldiv.clone();
+														$('<span>')
+																.addClass(
+																		'pull-left')
+																.html(
+																		"Supplier: "
+																				+ data.supplierErrors[i].supplier)
+																.appendTo(cldiv);
+														$('<span>')
+																.addClass(
+																		'pull-left')
+																.html(
+																		"Message: "
+																				+ data.supplierErrors[i].errormsg)
+																.appendTo(d2);
+														a.append(cldiv);
+														a.append(d2);
+														li
+																.append(a)
+																.appendTo(
+																		'#header-nav li ul.alert-details');
+													});
+									$('#header-nav li span.alert-count').html(
+											count);
+								}
 							});
-		</script>
-	</c:if>
+		}
+	</script>
 	<script>
 		(function(i, s, o, g, r, a, m) {
 			i['GoogleAnalyticsObject'] = r;

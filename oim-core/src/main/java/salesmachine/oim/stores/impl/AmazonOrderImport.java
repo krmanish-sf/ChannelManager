@@ -88,7 +88,7 @@ public class AmazonOrderImport implements IOrderImport {
 
 			MerchantInterfaceMimeLocator locator = new MerchantInterfaceMimeLocator();
 			MerchantInterface_PortType port = locator.getMerchantInterface(
-					new URL("https://merchant-api.amazon.com/gateway/merchant-interface-mime"));
+					new URL("https://mws.amazonservices.com"));
 			Merchant merchant = new Merchant();
 			merchant.setMerchantIdentifier(m_merchantIdentifier);
 			((MerchantInterface_BindingStub) port).setUsername(m_user);

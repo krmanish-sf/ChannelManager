@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.is.cm.core.domain.ShippingCarrier;
+import com.is.cm.core.domain.ShippingMethod;
 import com.is.cm.core.domain.Supplier;
 import com.is.cm.core.domain.SupplierShippingMethod;
 import com.is.cm.core.domain.VendorShippingMap;
@@ -147,5 +148,13 @@ public class SupplierEventHandler implements SupplierService {
 		supplierRepository.deleteShippingOverrideForSupplierMethod(deleteEvent
 				.getId());
 		return new DeletedEvent<Integer>(deleteEvent.getId());
+	}
+
+	@Override
+	public ReadCollectionEvent<ShippingMethod> getShippingMethods(
+			RequestReadEvent<ShippingMethod> requestReadEvent) {
+		List<ShippingMethod> entities = supplierRepository.getShippingMethods();
+
+		return new ReadCollectionEvent<ShippingMethod>(entities);
 	}
 }

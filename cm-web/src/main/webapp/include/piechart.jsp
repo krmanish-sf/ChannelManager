@@ -1,5 +1,5 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8"
-	pageEncoding="UTF-8"%>
+	pageEncoding="UTF-8" session="false"%>
 <div class="widget-box">
 	<div
 		class="widget-header widget-header-flat widget-header-small well-sm repbkcolor_green">

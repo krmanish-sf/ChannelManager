@@ -10,29 +10,24 @@
 						<li class="active">Order History</li>
 					</ul>
 				</div>
-				<div class="page-content">
-					<div class="page-header">
-						<h1>
+		<div class="page-content">
+		<div class="page-header">
+				<h1>
 							Order History<small> <i class="icon-double-angle-right"></i>
 								overview &amp; stats
 							</small>
 						</h1>
 					</div>
-					<!-- /.page-header -->
-
-					<div class="row">
-						<div class="col-xs-12">
-						
-<div class="row">
+		<div class="row">
 							<div class="col-xs-12">
 <div class="widget-box transparent">
 	<div class="widget-header">
                   <div class="widget-toolbar pull-left">
                     <ul id="recent-tab" class="nav nav-tabs">
                       <li class="active"> <a href="#tabs-1"
-													class="red" data-toggle="tab">Basic Search</a> </li>
+											class="red" data-toggle="tab">Basic Search</a> </li>
                       <li> <a href="#tabs-2" class="green"
-													data-toggle="tab">Advanced Search</a> </li>
+											data-toggle="tab">Advanced Search</a> </li>
                     </ul>
                   </div>
                 </div>
@@ -64,18 +59,18 @@
 				<td>From</td>
 				<td>
     <input type="text" id="datefrom" name="datefrom" size="16"
-															class="span2 datepicker" placeholder="mm/dd/yyyy">
+													class="span2 datepicker" placeholder="mm/dd/yyyy">
     														 
 				</td>
 				<td>To</td>
 				<td>
     <input type="text" id="dateto" name="dateto" size="16"
-															class="span2 datepicker" placeholder="mm/dd/yyyy">
+													class="span2 datepicker" placeholder="mm/dd/yyyy">
     			</td>
 			<td>Order Status</td>
 				<td>
 					<select multiple="multiple" style="width: 150px;" size="4"
-															name="order_status" id="order_status">
+													name="order_status" id="order_status">
 					</select>
 				</td>
 			</tr>
@@ -134,8 +129,8 @@
 		</table>		
 	</div>
 	</div>
-	<div class="row">
-<div class="container">
+	</div>
+<div class="col-xs-12">
 	<button type="button" id="searchBtn" class="btn btn-info">
 	<i class="icon-ok bigger-110"></i>Search</button>
 	<button type="reset" class="btn" id="clearBtn">
@@ -143,76 +138,42 @@
 		</div>
 	</div>
 	</div>
-								</div>
-							</div>
-</div>
-							<!-- /widget-main -->
-							<div class="row">
+	<div class="col-sm-12">
+                <h4 class="lighter pull-left"> <i
+								class="icon-time orange"></i> Your Order History</h4>
+    </div>
+    <!-- /widget-main -->
+	<div class="col-xs-12">
 								<div class="space-2"></div>
 								<div class="widget-main no-padding">
-									<div role="grid" class="dataTables_wrapper"
-									id="tableprocesschannel1_wrapper">
-										<table id="tableprocesschannel1"
-										class="table table-bordered table-striped  table-responsive dataTable"
-										aria-describedby="tableprocesschannel1_info">
+								<table id="tableprocesschannel1"
+								class="table table-bordered table-striped  table-responsive dataTable">
 											<thead class="thin-border-bottom">
 												<tr role="row">
-													<th class="sorting" role="columnheader" tabindex="0"
-													aria-controls="tableprocesschannel1" rowspan="1"
-													colspan="1" style="width: 47px;"
-													aria-label="Order Id: activate to sort column ascending"><i
-													class="icon-sort-by-order-alt icon-2x blue visible-xs"></i><span
-													class="hidden-xs visible-sm">Order Id</span></th>
-													<th class="hidden-xs sorting" role="columnheader"
-													tabindex="0" aria-controls="tableprocesschannel1"
-													rowspan="1" colspan="1" style="width: 37px;"
-													aria-label="Date: activate to sort column ascending">Date</th>
-													<th class="sorting" role="columnheader" tabindex="0"
-													aria-controls="tableprocesschannel1" rowspan="1"
-													colspan="1" style="width: 67px;"
-													aria-label="Customer: activate to sort column ascending"><i
-													class="icon-home icon-2x blue visible-xs"></i><span
-													class="hidden-xs">Customer</span></th>
-													<th class="hidden-sm hidden-xs sorting" role="columnheader"
-													tabindex="0" aria-controls="tableprocesschannel1"
-													rowspan="1" colspan="1" style="width: 80px;"
-													aria-label="Channel Name: activate to sort column ascending">Channel
+													<th><i
+											class="icon-sort-by-order-alt icon-2x blue visible-xs"></i><span
+											class="hidden-xs visible-sm">Order Id</span></th>
+												<th>Order Status</th>
+													<th class="hidden-xs sorting" role="columnheader">Date</th>
+													<th class="sorting" role="columnheader"><i
+											class="icon-home icon-2x blue visible-xs"></i><span
+											class="hidden-xs">Customer</span></th>
+													<th class="hidden-sm hidden-xs sorting">Channel
 														Name</th>
-													<th class="hidden-md hidden-sm hidden-xs sorting"
-													role="columnheader" tabindex="0"
-													aria-controls="tableprocesschannel1" rowspan="1"
-													colspan="1" style="width: 85px;"
-													aria-label="No Of Products: activate to sort column ascending">Unique SKU's</th>
-													<th class="hidden-sm hidden-xs sorting" role="columnheader"
-													tabindex="0" aria-controls="tableprocesschannel1"
-													rowspan="1" colspan="1" style="width: 146px;"
-													aria-label="Shipping: activate to sort column ascending"><span>Shipping</span></th>
-													<th class="sorting" role="columnheader" tabindex="0"
-													aria-controls="tableprocesschannel1" rowspan="1"
-													colspan="1" style="width: 56px;"
-													aria-label="Order Total: activate to sort column ascending"><i
-													class="icon-usd icon-2x blue visible-xs"></i><span
-													class="hidden-xs">Order Total</span></th>
-													<th class="sorting_disabled hidden-xs sorting"
-													role="columnheader" tabindex="0"
-													aria-controls="tableprocesschannel" rowspan="1" colspan="1"
-													style="width: 50px;"
-													aria-label="Edit Order: activate to sort column ascending">Edit Order</th>
-													<th class="sorting_disabled sorting" role="columnheader"
-													tabindex="0" aria-controls="tableprocesschannel1"
-													rowspan="1" colspan="1" style="width: 110px;"
-													aria-label=": activate to sort column ascending"></th>
+												<th class="hidden-sm hidden-xs sorting"><span>Shipping</span></th>
+												<th><i class="icon-usd icon-2x blue visible-xs"></i><span
+											class="hidden-xs">Order Total</span></th>
+												<th class="hidden-xs">Edit Order</th>
 												</tr>
 											</thead>
 									</table>
-									</div>
 									<div aria-hidden="true" role="dialog" tabindex="-1"
-									id="myModalResolve" class="modal fade">
+								id="myModalResolve" class="modal fade">
 										<div id="myModalResolvecontent" class="modal-dialog">
 											<div class="modal-content">
 												<div class="modal-header">
 													<button aria-hidden="true" data-dismiss="modal"
-													class="close" type="button">&times;</button>
+												class="close" type="button">&times;</button>
 													<h4 class="modal-title">Detail</h4>
 												</div>
 												<div id="processmodel" class="modal-body ">
@@ -220,7 +181,7 @@
 														<div class="col-xs-12">
 															<!-- PAGE CONTENT BEGINS -->
 															<table id="tableorderdetails"
-															class="table table-striped table-bordered table-hover table-responsive">
+														class="table table-striped table-bordered table-hover table-responsive">
 																<thead>
 																	<tr>
 																		<th>Sku</th>
@@ -233,16 +194,16 @@
 																<tbody>
 																	<tr>
 																		<td><input type="text" value="RS1234" readonly=""
-																		class="pull-right width-100" name="billno"></td>
+																	class="pull-right width-100" name="billno"></td>
 																		<td><input type="text"
-																		value="Ravish Test Product" readonly=""
-																		class="pull-right width-100" name="orderdate"></td>
+																	value="Ravish Test Product" readonly=""
+																	class="pull-right width-100" name="orderdate"></td>
 																		<td><input type="text" value="4" readonly=""
-																		class="pull-right width-100" name="Quantity"></td>
+																	class="pull-right width-100" name="Quantity"></td>
 																		<td><input type="text" value="0.0" readonly=""
-																		class="pull-right width-100" name="SalePrice"></td>
+																	class="pull-right width-100" name="SalePrice"></td>
 																		<td><input type="text" value="Unprocessed"
-																		readonly="" class="pull-right width-100" name="Status"></td>
+																	readonly="" class="pull-right width-100" name="Status"></td>
 																	</tr>
 																</tbody>
 															</table>
@@ -257,12 +218,12 @@
 									</div>
 									<!-- / mobile.modal -->
 									<div aria-hidden="true" role="dialog" tabindex="-1"
-									id="myModalResolvemob" class="modal fade">
+								id="myModalResolvemob" class="modal fade">
 										<div class="modal-dialog">
 											<div class="modal-content">
 												<div class="modal-header">
 													<button aria-hidden="true" data-dismiss="modal"
-													class="close" type="button">&times;</button>
+												class="close" type="button">&times;</button>
 													<h4 class="modal-title">Detail</h4>
 												</div>
 												<div class="modal-body">
@@ -271,22 +232,22 @@
 															<div class="container">
 																<label class="col-sm-3 control-label no-padding-left">
 																	Sku:</label> <br> <input type="text" value=" NV8083538"
-																class="col-xs-10 col-sm-9" readonly="">
+															class="col-xs-10 col-sm-9" readonly="">
 															</div>
 															<div class="container">
 																<label class="col-sm-3 control-label no-padding-left">Name:</label>
 																<br> <input type="text" value="Ravish Test Product"
-																readonly="" class="col-xs-10 col-sm-5">
+															readonly="" class="col-xs-10 col-sm-5">
 															</div>
 															<div class="container">
 																<label class="col-sm-3 control-label no-padding-left">Quantity:</label>
 																<br> <input type="text" class="col-xs-10 col-sm-5"
-																readonly="" value="4">
+															readonly="" value="4">
 															</div>
 															<div class="container">
 																<label class="col-sm-3 control-label no-padding-left">Default:</label>
 																<br> <input type="text" value="Unprocessed"
-																readonly="" class="col-xs-10 col-sm-5" name="Status">
+															readonly="" class="col-xs-10 col-sm-5" name="Status">
 																<br>
 															</div>
 															<div class="hr hr-20"></div>
@@ -301,14 +262,14 @@
 									</div>
 									<!-- /.modal-content -->
 									<div aria-hidden="true" role="dialog" tabindex="-1"
-									id="myModaledit" class="modal fade">
+								id="myModaledit" class="modal fade">
                   <div class="modal-dialog" id="myModaleditdailog">
                     <div class="modal-content">
                       <div class="modal-header">
                         <button aria-hidden="true" data-dismiss="modal"
-													class="close" type="button">&times;</button>
+												class="close" type="button">&times;</button>
                         <h4 class="modal-title">Order Detail: Order Id# <span
-														data-bind-order="storeOrderId"></span> </h4>
+													data-bind-order="storeOrderId"></span> </h4>
                       </div>
                       <div class="modal-body ">
                         <div class="row">
@@ -318,19 +279,19 @@
                                 <div class="col-sm-4">
                                   <label>Bill No</label>
                                   <input type="text"
-																		data-bind-order="orderId" readonly="readonly"
-																		class="pull-right">
+																	data-bind-order="orderId" readonly="readonly"
+																	class="pull-right">
                                 </div>
                                 <div class="col-sm-4">
                                   <label>Order Date</label>
                                   <input type="text" id="orderdate"
-																		data-bind-order="orderTm" readonly="readonly"
-																		class="pull-right" name="orderdate">
+																	data-bind-order="orderTm" readonly="readonly"
+																	class="pull-right" name="orderdate">
                                 </div> <div class="col-sm-4">
                                   <label>Total Amount</label>
                                   <input type="text" id="ordertotalamt"
-																		data-bind-order="orderTotalAmount" class="pull-right"
-																		maxlength="50" name="ordertotalamt">
+																	data-bind-order="orderTotalAmount" class="pull-right"
+																	maxlength="50" name="ordertotalamt">
                                 </div>
                                 
                               </div>
@@ -339,21 +300,21 @@
                                 <div class="col-sm-4">
                                   <label>Shipping Details</label>
                                   <input type="text"
-																		id="shippingdetails" data-bind-order="shippingDetails"
-																		class="pull-right" maxlength="500"
-																		name="shippingdetails">
+																	id="shippingdetails" data-bind-order="shippingDetails"
+																	class="pull-right" maxlength="500"
+																	name="shippingdetails">
                                 </div>
                                 <div class="col-sm-4">
                                   <label>Payment Method</label>
                                   <input type="text" id="paymentmethod"
-																		data-bind-order="payMethod" class="pull-right"
-																		maxlength="500" name="paymentmethod">
+																	data-bind-order="payMethod" class="pull-right"
+																	maxlength="500" name="paymentmethod">
                                 </div>
                                 <div class="col-sm-4">
                                   <label>Comments</label>
                                   <input type="text" id="ordercomment"
-																		data-bind-order="orderComment" maxlength="1000"
-																		class="pull-right width-56" name="ordercomment">
+																	data-bind-order="orderComment" maxlength="1000"
+																	class="pull-right width-56" name="ordercomment">
                                 </div>
                               </div>
                               <div class="space-4"></div>
@@ -364,24 +325,24 @@
                               <div class="col-sm-4">
                                   <label>Address Line 1</label>
                                   <input type="text"
-																			id="deliverystreetadd"
-																			data-bind-order="deliveryStreetAddress"
-																			class="pull-right" maxlength="200"
-																			name="deliverystreetadd">
+																		id="deliverystreetadd"
+																		data-bind-order="deliveryStreetAddress"
+																		class="pull-right" maxlength="200"
+																		name="deliverystreetadd">
                                 </div>
                                 <div class="col-sm-4">
                                   <label>Address Line 2</label>
                                   <input type="text" id="deliverysuburb"
-																			data-bind-order="deliverySuburb" maxlength="20"
-																			class="pull-right" name="deliverysuburb">
+																		data-bind-order="deliverySuburb" maxlength="20"
+																		class="pull-right" name="deliverysuburb">
                                 </div>
                                 
                                 <div class="col-sm-4">
                                   <label>Company</label>
                                   <input type="text"
-																			id="deliverycompany"
-																			data-bind-order="deliveryCompany" class="pull-right"
-																			maxlength="100" name="deliverycompany">
+																		id="deliverycompany" data-bind-order="deliveryCompany"
+																		class="pull-right" maxlength="100"
+																		name="deliverycompany">
                                 </div>
                               </div>
                               <div class="space-4"></div>
@@ -389,21 +350,21 @@
                                 <div class="col-sm-4">
                                   <label>City</label>
                                   <input type="text" id="deliverycity"
-																			data-bind-order="deliveryCity" class="pull-right"
-																			maxlength="50" name="deliverycity">
+																		data-bind-order="deliveryCity" class="pull-right"
+																		maxlength="50" name="deliverycity">
                                 </div>
                                 <div class="col-sm-4">
                                   <label>State/Province</label>
                                   <input type="text" id="deliverystate"
-																			data-bind-order="deliveryState" class="pull-right"
-																			maxlength="20" name="deliverystate">
+																		data-bind-order="deliveryState" class="pull-right"
+																		maxlength="20" name="deliverystate">
                                 </div>
                                 <div class="col-sm-4">
                                   <label>Country</label>
                                   <input type="text"
-																			id="deliverycountry"
-																			data-bind-order="deliveryCountry" class="pull-right"
-																			maxlength="20" name="deliverycountry">
+																		id="deliverycountry" data-bind-order="deliveryCountry"
+																		class="pull-right" maxlength="20"
+																		name="deliverycountry">
                                 </div>
                               </div>
                               <div class="space-4"></div>
@@ -411,20 +372,20 @@
                                 <div class="col-sm-4">
                                   <label>Zip</label>
                                   <input type="text" id="deliveryzip"
-																			data-bind-order="deliveryZip" class="pull-right"
-																			maxlength="20" name="deliveryzip">
+																		data-bind-order="deliveryZip" class="pull-right"
+																		maxlength="20" name="deliveryzip">
                                 </div>
                                 <div class="col-sm-4">
                                   <label>Phone</label>
                                   <input type="text" id="deliveryphone"
-																			data-bind-order="deliveryPhone" class="pull-right"
-																			maxlength="20" name="deliveryphone">
+																		data-bind-order="deliveryPhone" class="pull-right"
+																		maxlength="20" name="deliveryphone">
                                 </div>
                                 <div class="col-sm-4">
                                   <label>Email</label>
                                   <input type="text" id="deliveryemail"
-																			data-bind-order="deliveryEmail" class="pull-right"
-																			maxlength="100" name="deliveryemail">
+																		data-bind-order="deliveryEmail" class="pull-right"
+																		maxlength="100" name="deliveryemail">
                                 </div>
                               </div>
                               
@@ -436,14 +397,14 @@
                               <div class="col-sm-4">
                                   <label>Delivery Name</label>
                                   <input type="text" id="deliveryname"
-																		data-bind-order="deliveryName" maxlength="200"
-																		class="pull-right" name="deliveryname">
+																	data-bind-order="deliveryName" maxlength="200"
+																	class="pull-right" name="deliveryname">
                                 </div>
                                
                                 <div class="col-md-4">
                                   <button type="button" id="updateorder"
-																		class="btn btn-info btn-xs pull-left"> <i
-																			class="icon-ok "></i>Update</button>
+																	class="btn btn-info btn-xs pull-left"> <i
+																		class="icon-ok "></i>Update</button>
                                 </div>
                               </div>
                             </form>
@@ -457,7 +418,7 @@
                               </div>
                             </div>
                             <table id="editordermodaltable"
-															class="table table-striped table-bordered table-hover table-responsive">
+														class="table table-striped table-bordered table-hover table-responsive">
                               <thead>
                                 <tr>
                                   <th>Sku</th>
@@ -524,13 +485,12 @@
                 </div>
 								</div>
 							</div>
-						</div>
 						<!-- /.modal-content -->
-					</div>
-				</div>
-			</div>
-			<!-- /.page-content -->
-			</jsp:attribute>
+						</div>
+		</div>
+	</div>		
+	<!-- /.page-content -->
+	</jsp:attribute>
 	<jsp:attribute name="pagejs">
 	<!-- inline scripts related to this page -->
 	<script type="text/javascript">
@@ -546,9 +506,6 @@
 			"statusId" : 2,
 			"statusValue" : "Processed"
 		}, {
-			"statusId" : 100,
-			"statusValue" : "Unconfirmed"
-		}, {
 			"statusId" : 5,
 			"statusValue" : "Manually Processed"
 		}, {
@@ -557,11 +514,11 @@
 		} ];
 		function a(e) {
 			console.log(e[0]);
-			var order = table_xy.fnGetData(e[0]);
+			var order = table_xy.row(e[0]).data();
 			console.log(order.orderId);
 			console.log(order);
 			$('#tableorderdetails')
-					.DataTable(
+					.dataTable(
 							{
 								"aoColumns" : [
 										{
@@ -590,19 +547,52 @@
 			var orderDetail = tableModal.fnGetData(e[0]);
 			updateOrderDetail(orderDetail, $(e[0]).find('input')[0], $(e[0])
 					.find('input')[1], $(e[0]).find('input')[2], $(e[0]).find(
-					'select')[0], $(e[0]).find('select')[1], e[0]);
+					'input')[3], $(e[0]).find('select')[0], $(e[0]).find(
+					'select')[1], e[0]);
 		}
 
-		function updateOrderDetail(orderDetail, name, quantity, saleprice,
+		function updateOrderDetail(orderDetail, sku, name, quantity, saleprice,
 				supplier, status, button) {
+			if (!sku.value) {
+				alert('SKU is required');
+				sku.focus();
+				return false;
+			}
+			orderDetail.sku = sku.value;
+
 			orderDetail.productName = $(name).val();
-			orderDetail.quantity = $(quantity).val();
+			if (!quantity.value) {
+				alert('Quantity is required');
+				quantity.focus();
+				return false;
+			}
+			if (quantity.value <= 0) {
+				alert('Quantity must be positive');
+				quantity.focus();
+				return false;
+			}
+			orderDetail.quantity = Math.round(quantity.value);
 			orderDetail.salePrice = $(saleprice).val();
+			if (!saleprice.value) {
+				alert('Saleprice is required');
+				saleprice.focus();
+				return false;
+			}
+
+			if (saleprice.value <= 0) {
+				alert('Saleprice must be more than zero.');
+				saleprice.focus();
+				return false;
+			}
 			orderDetail.oimOrderStatuses.statusId = $(status).val();
 			orderDetail.oimOrderStatuses.statusValue = $(status).text();
-			if (orderDetail.oimSuppliers == null)
+			if ($(supplier).val()) {
 				orderDetail.oimSuppliers = {};
-			orderDetail.oimSuppliers.supplierId = $(supplier).val();
+				orderDetail.oimSuppliers.supplierId = $(supplier).val();
+			} else {
+				orderDetail.oimSuppliers = null;
+			}
+
 			$(button).CRUD(
 					{
 						method : "PUT",
@@ -614,7 +604,8 @@
 								title : "Update Order Detail",
 								text : "Order Detail updated successfully."
 							});
-							table_xy.fnReloadAjax();
+							table_xy.ajax.reload();
+							getAlerts();
 							$('#myModaledit').modal('hide');
 						},
 						error : function(data, textStatus, jqXHR) {
@@ -626,15 +617,19 @@
 					});
 		}
 		function c(e) {
-			var order = table_xy.fnGetData(e[0]);
+			var order = table_xy.row(e[0]).data();
 			var orderTemp = JSON.parse(JSON.stringify(order));
 			tableModal = $('#editordermodaltable')
-					.DataTable(
+					.dataTable(
 							{
 								bSort : false,
 								"aoColumns" : [
 										{
-											"mData" : "sku",
+											"mData" : function(orderDetail) {
+												return "<input type=\"text\" class=\"width-100\" value=\""
+														+ (orderDetail.sku ? orderDetail.sku
+																: '') + "\"/>";
+											},
 											"sWidth" : "20%"
 										},
 										{
@@ -710,7 +705,19 @@
 										},
 										{
 											"mData" : function(orderDetail) {
-												return '<button type="button" class="btn btn-info btn-xs pull-left " onclick="b($($(this).parent()).parent());"> <i class="icon-ok"></i>Update</button>';
+												var text = '';
+
+												if (orderDetail.supplierOrderStatus) {
+													text = '<span id="orderStatus'+orderDetail.detailId+'">';
+													text += orderDetail.supplierOrderStatus
+															+ '</span>';
+												}
+												if (orderDetail.supplierOrderNumber)
+													text += '<br><a onclick="$.CM.trackOrder('
+															+ orderDetail.detailId
+															+ ');">Refresh</a>';
+												return text
+														+ '<button type="button" class="btn btn-info btn-xs pull-left " onclick="b($($(this).parent()).parent());"> <i class="icon-ok"></i>Update</button>';
 											},
 											"sWidth" : "10%"
 										} ],
@@ -726,7 +733,7 @@
 							url : 'aggregators/orders',
 							data : JSON.stringify(e.data),
 							success : function(data, textStatus, jqXHR) {
-								table_xy.fnReloadAjax();
+								table_xy.ajax.reload();
 								$.gritter.add({
 									title : "Update Order",
 									text : "Order updated successfully."
@@ -745,6 +752,20 @@
 		}
 
 		jQuery(function($) {
+			var order_status = '${param["order_status"]}';
+			for (var val = 0; val < STATUS.length; val++) {
+				if (order_status != '' && order_status == STATUS[val].statusId) {
+					$("<option />", {
+						value : STATUS[val].statusId,
+						text : STATUS[val].statusValue
+					}).attr('selected', 'selected').appendTo('#order_status');
+				} else {
+					$("<option />", {
+						value : STATUS[val].statusId,
+						text : STATUS[val].statusValue
+					}).appendTo('#order_status');
+				}
+			}
 			$(this).CRUD({
 				url : "aggregators/suppliers",
 				method : "GET",
@@ -763,29 +784,42 @@
 				method : "GET",
 				success : function(data) {
 					for (var val = 0; val < data.length; val++) {
-						var option = $("<option />", {
+						$("<option />", {
 							value : data[val].channelId,
 							text : data[val].channelName
 						}).appendTo("#channels");
 					}
 				}
 			});
+
 			table_xy = $('#tableprocesschannel1')
-					.dataTable(
+					.DataTable(
 							{
-								"bProcessing" : true,
-								"sAjaxSource" : 'aggregators/orders',
-								"fnServerData" : function(sSource, aoData,
-										fnCallback, oSettings) {
-									oSettings.jqXHR = $(this).CRUD({
-										type : "GET",
-										url : sSource,
-										data : aoData,
-										message : true,
-										success : fnCallback
+								"order" : [ [ 2, "desc" ] ],
+								"processing" : true,
+								"serverSide" : false,
+								"sAjaxDataProp" : "",
+								"ajax" : function(data, callback, settings) {
+									var id = $('#tabs-1').is(':visible') ? '#tabs-1'
+											: '#tabs-2';
+									var map = {};
+									$(id + " :input").each(function() {
+										if (this.name) {
+											if (map[this.name])
+												map[this.name] += ',';
+											map[this.name] = this.value;
+										}
+									});
+									$(this).CRUD({
+										"method" : "POST",
+										"url" : 'aggregators/orders/search',
+										"data" : JSON.stringify(map),
+										"message" : true,
+										"success" : function(d) {
+											callback(d);
+										}
 									});
 								},
-								"sAjaxDataProp" : '',
 								"bDestroy" : true,
 								"aoColumns" : [
 										{
@@ -793,8 +827,34 @@
 										},
 										{
 											"mData" : function(order) {
-												return new Date(order.orderTm)
-														.toLocaleDateString();
+												var text = '';
+												for (var i = 0; i < order.oimOrderDetailses.length; i++) {
+													var orderDetail = order.oimOrderDetailses[i];
+													if (orderDetail.supplierOrderStatus) {
+														text += "<b>"
+																+ orderDetail.sku
+																+ "</b>";
+														text += ':<span id="orderStatus'+orderDetail.detailId+'">';
+														text += orderDetail.supplierOrderStatus
+																+ '</span>';
+													}
+													if (orderDetail.supplierOrderNumber)
+														text += '<br><a style="cursor:pointer;" onclick="$.CM.trackOrder('
+																+ orderDetail.detailId
+																+ ');">Refresh</a>';
+												}
+												return text;
+											},
+											"bSortable" : false
+										},
+										{
+											"mData" : function(order) {
+												return "<span style='display:none'>"
+														+ order.orderTm
+														+ "</span>"
+														+ new Date(
+																order.orderTm)
+																.toLocaleDateString();
 											}
 										},
 										{
@@ -806,9 +866,6 @@
 											}
 										},
 										{
-											"mData" : "oimOrderDetailses.length"
-										},
-										{
 											"mData" : "shippingDetails"
 										},
 										{
@@ -818,14 +875,8 @@
 											"mData" : function(order) {
 												return '<a href="#myModaledit" data-toggle="modal" onclick="c($($(this).parent()).parent());" class="btn btn-info btn-sm icon-pencil"></a>';
 											}
-										},
-										{
-											"mData" : function(order) {
-												return '<a class="btn  btn-info hidden-xs" href="#myModalResolve" onclick="a($($(this).parent()).parent());" data-toggle="modal">View Detail</a>';
-											}
 										} ]
 							});
-			table_xy.fnSort([ [ 1, 'desc' ] ]);
 			$('.addresspop').popover({
 				container : 'body'
 			});
@@ -847,7 +898,7 @@
 			});
 			function tooltip_placement(context, source) {
 				var $source = $(source);
-				var $parent = $source.closest('.tab-content')
+				var $parent = $source.closest('.tab-content');
 				var off1 = $parent.offset();
 				var w1 = $parent.width();
 
@@ -897,84 +948,9 @@
 						else
 							$(this).closest('li').removeClass('selected');
 					});
-
-			for (var val = 0; val < STATUS.length; val++) {
-				var option = $("<option />", {
-					value : STATUS[val].statusId,
-					text : STATUS[val].statusValue
-				}).appendTo('#order_status');
-			}
-			$('#searchBtn')
-					.on(
-							'click',
-							function() {
-								var id = $('#tabs-1').is(':visible') ? '#tabs-1'
-										: '#tabs-2';
-								var map = {};
-								$(id + " :input").each(function() {
-									if (this.name) {
-										if (map[this.name])
-											map[this.name] += ',';
-										map[this.name] = this.value;
-									}
-								});
-								$(this)
-										.CRUD(
-												{
-													url : "aggregators/orders/search",
-													method : "POST",
-													message : true,
-													data : JSON.stringify(map),
-													success : function(data) {
-														table_xy = $(
-																'#tableprocesschannel1')
-																.dataTable(
-																		{
-																			"bProcessing" : true,
-																			"aaData" : data,
-																			"bDestroy" : true,
-																			"aoColumns" : [
-																					{
-																						"mData" : "storeOrderId"
-																					},
-																					{
-																						"mData" : "orderTm"
-																					},
-																					{
-																						"mData" : "customerName"
-																					},
-																					{
-																						"mData" : function(
-																								order) {
-																							return order.oimOrderBatches.oimChannels.channelName;
-																						}
-																					},
-																					{
-																						"mData" : "oimOrderDetailses.length"
-																					},
-																					{
-																						"mData" : "shippingDetails"
-																					},
-																					{
-																						"mData" : "orderTotalAmount"
-																					},
-																					{
-																						"mData" : function(
-																								order) {
-																							return '<a href="#myModaledit" data-toggle="modal" onclick="c($($(this).parent()).parent());" class="btn btn-info btn-sm icon-pencil"></a>';
-																						}
-																					},
-																					{
-																						"mData" : function(
-																								order) {
-																							return '<a class="btn  btn-info hidden-xs" href="#myModalResolve" onclick="a($($(this).parent()).parent());" data-toggle="modal">View Detail</a>';
-																						}
-																					} ]
-																		});
-													}
-												});
-
-							});
+			$('#searchBtn').on('click', function() {
+				table_xy.ajax.reload();
+			});
 			$('#clearBtn').on('click', function() {
 				var id = $('#tabs-1').is(':visible') ? '#tabs-1' : '#tabs-2';
 				$(id).find(':text').val('');

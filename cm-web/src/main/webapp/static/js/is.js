@@ -746,7 +746,7 @@ function evalArray(obj, expr) {
 							"aoColumns" : [
 									{
 										"mData" : function(d) {
-											return "default";
+											return "Default";
 										}
 									},
 									{
@@ -791,13 +791,17 @@ function evalArray(obj, expr) {
 									{
 										"mData" : function(d) {
 											if (d.override) {
-												return "overridden";
+												return "Overridden";
 											}
-											return "default";
+											return "Default";
 										}
 									},
 									{
 										"mData" : "shippingMethod.name"
+									},
+
+									{
+										"mData" : "carrierName"
 									},
 									{
 										"mData" : function(d) {
@@ -859,6 +863,54 @@ function evalArray(obj, expr) {
 								text : "Override saved successfully."
 							}
 						});
+	};
+	$.CM.processOrder = function(order) {
+		$(this).CRUD({
+			url : "aggregators/orders/processed/" + order.orderId,
+			method : "POST",
+			data : JSON.stringify(order),
+			success : function(order) {
+				$.gritter.add({
+					title : 'Order Processing',
+					text : 'Order Processed successfully.',
+					class_name : 'gritter-success'
+				});
+				table_xy.fnReloadAjax();
+				getAlerts();
+			},
+			error : function(a, b, c) {
+				$.gritter.add({
+					title : 'Order Processing',
+					text : 'Order Processing Failed.',
+					class_name : 'gritter-error'
+				});
+				table_xy.fnReloadAjax();
+				getAlerts();
+			}
+		});
+	};
+	$.CM.trackOrder = function(orderDetailId) {
+		$(this).CRUD({
+			url : "aggregators/orders/track/" + orderDetailId,
+			method : "GET",
+			success : function(status) {
+				$('#orderStatus' + orderDetailId).text(status);
+				$.gritter.add({
+					title : 'Order Tracking',
+					text : 'Order Status : ' + status,
+					class_name : 'gritter-success'
+				});
+
+			},
+			error : function(a, b, c) {
+				$.gritter.add({
+					title : 'Order Tracking',
+					text : 'Order Tracking Failed.',
+					class_name : 'gritter-error'
+				});
+			}
+
+		});
 	};
 }(jQuery));
 $.fn.dataTableExt.oApi.fnReloadAjax = function(oSettings, sNewSource,

@@ -34,6 +34,7 @@ import salesmachine.util.StringHandle;
 import com.is.cm.core.domain.Channel;
 import com.is.cm.core.domain.ChannelShippingMap;
 import com.is.cm.core.domain.Filetype;
+import com.is.cm.core.domain.SupportedChannel;
 import com.is.cm.core.domain.UploadedFile;
 
 public class ChannelRepositoryDb extends RepositoryBase implements
@@ -431,5 +432,17 @@ public class ChannelRepositoryDb extends RepositoryBase implements
 			retList.add(ChannelShippingMap.from(entity));
 		}
 		return retList;
+	}
+
+	@Override
+	public List<SupportedChannel> findSupportedChannels() {
+		Session session = SessionManager.currentSession();
+		List<OimSupportedChannels> list = session.createCriteria(
+				OimSupportedChannels.class).addOrder(Order.asc("channelName")).list();
+		List<SupportedChannel> supportedChannels = new ArrayList<SupportedChannel>();
+		for (OimSupportedChannels oimSupportedChannel : list) {
+			supportedChannels.add(SupportedChannel.from(oimSupportedChannel));
+		}
+		return supportedChannels;
 	}
 }

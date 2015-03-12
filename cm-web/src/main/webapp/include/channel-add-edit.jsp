@@ -1,5 +1,5 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8"
-	pageEncoding="UTF-8"%>
+	pageEncoding="UTF-8" session="false"%>
 <div class="modal fade" id="mychanneledit" tabindex="-1" role="dialog"
 	aria-hidden="true">
 	<div id="mychanneleditdailog" class="modal-dialog">
@@ -41,6 +41,7 @@
 														<option value="1">CRE Loaded</option>
 														<option value="3">Inventory Source - Hosted</option>
 														<option value="2">Magento</option>
+														<option value="7">Shop.com</option>
 														<option value="5">Yahoo Store</option>
 														<option value="6">Zen Cart</option>
 														<option value="0">Custom Channel</option>
@@ -241,13 +242,14 @@
 											<label class="col-sm-5 control-label no-padding-right">Orders
 												To Process From Channel</label>
 											<div class="col-sm-7">
-												<input type="radio" value="1" name="processorders"
+												<!-- <input type="radio" value="1" name="processorders"
 													id="processordersall" required="required"
 													onclick="javascript:hideNext(this);"
 													data-bind-channel="oimOrderProcessingRules[0].processAll" />
-												Process All Orders<br /> <input type="radio" value="0"
-													name="processorders" id="processorderscustom"
-													required="required" onclick="javascript:toggleNext(this);"
+												Process All Orders<br /> -->
+												<input type="hidden" value="0" name="processorders"
+													id="processorderscustom" required="required"
+													onclick="javascript:toggleNext(this);"
 													data-bind-channel="oimOrderProcessingRules[0].processAll" />
 												Process only orders with status set to<br> <input
 													type="text" required="required"
@@ -260,13 +262,14 @@
 											<label class="col-sm-5 control-label no-padding-right">Edit
 												Order When Complete</label>
 											<div class="col-sm-7">
-												<input type="radio" value="0" name="updateorders"
+												<!-- <input type="radio" value="0" name="updateorders"
 													id="updateordersno" required="required"
 													onclick="javascript:hideNext(this);"
 													data-bind-channel="oimOrderProcessingRules[0].updateStoreOrderStatus" />Do
-												not update order status <br /> <input type="radio"
-													value="1" name="updateorders" id="updateordersyes"
-													onclick="javascript:toggleNext(this);" required="required"
+												not update order status <br />  -->
+												<input type="hidden" value="1" name="updateorders"
+													id="updateordersyes" onclick="javascript:toggleNext(this);"
+													required="required"
 													data-bind-channel="oimOrderProcessingRules[0].updateStoreOrderStatus" />Set
 												the order status to<br /> <input type="text"
 													required="required" name="updateorderscustomstatus"

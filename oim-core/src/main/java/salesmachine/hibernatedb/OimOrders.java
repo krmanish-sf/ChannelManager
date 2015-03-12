@@ -53,6 +53,7 @@ public class OimOrders implements java.io.Serializable {
 	private String payMethod;
 	private String orderComment;
 	private Set oimOrderDetailses = new HashSet(0);
+	private OimShippingMethod oimShippingMethod;
 
 	public OimOrders() {
 	}
@@ -449,6 +450,14 @@ public class OimOrders implements java.io.Serializable {
 
 	public void setOimOrderDetailses(Set oimOrderDetailses) {
 		this.oimOrderDetailses = oimOrderDetailses;
+	}
+
+	public OimShippingMethod getOimShippingMethod() {
+		return oimShippingMethod;
+	}
+
+	public void setOimShippingMethod(OimShippingMethod oimShippingMethod) {
+		this.oimShippingMethod = oimShippingMethod;
 	}
 
 }

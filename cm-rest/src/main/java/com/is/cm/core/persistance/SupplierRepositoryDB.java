@@ -22,6 +22,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import salesmachine.hibernatedb.OimShippingCarrier;
+import salesmachine.hibernatedb.OimShippingMethod;
 import salesmachine.hibernatedb.OimSupplierMethodNames;
 import salesmachine.hibernatedb.OimSupplierMethodTypes;
 import salesmachine.hibernatedb.OimSupplierMethodattrNames;
@@ -33,12 +34,14 @@ import salesmachine.hibernatedb.OimSupplierShippingOverride;
 import salesmachine.hibernatedb.OimSuppliers;
 import salesmachine.hibernatedb.OimVendorShippingMap;
 import salesmachine.hibernatedb.OimVendorSuppliers;
+import salesmachine.hibernatedb.OimVendorsuppOrderhistory;
 import salesmachine.hibernatedb.Vendors;
 import salesmachine.hibernatehelper.SessionManager;
 import salesmachine.oim.api.OimConstants;
 import salesmachine.util.StringHandle;
 
 import com.is.cm.core.domain.ShippingCarrier;
+import com.is.cm.core.domain.ShippingMethod;
 import com.is.cm.core.domain.Supplier;
 import com.is.cm.core.domain.SupplierShippingMethod;
 import com.is.cm.core.domain.VendorShippingMap;
@@ -275,6 +278,14 @@ public class SupplierRepositoryDB extends RepositoryBase implements
 			tx = dbSession.beginTransaction();
 			OimVendorSuppliers ovs = (OimVendorSuppliers) dbSession.get(
 					OimVendorSuppliers.class, vendorSupplierId);
+			List<OimVendorsuppOrderhistory> list = dbSession
+					.createCriteria(OimVendorsuppOrderhistory.class)
+					.add(Restrictions.eq("vendors.vendorId", getVendorId()))
+					.add(Restrictions.eq("oimSuppliers.supplierId", ovs
+							.getOimSuppliers().getSupplierId())).list();
+			for (OimVendorsuppOrderhistory oimVendorsuppOrderhistory : list) {
+				dbSession.delete(oimVendorsuppOrderhistory);
+			}
 			ovs.setDeleteTm(new Date());
 			dbSession.update(ovs);
 			tx.commit();
@@ -682,5 +693,21 @@ public class SupplierRepositoryDB extends RepositoryBase implements
 			return null;
 		}
 		return null;
+	}
+
+	@Override
+	public List<ShippingMethod> getShippingMethods() {
+		Session dbSession = SessionManager.currentSession();
+		List<ShippingMethod> list = new ArrayList<ShippingMethod>();
+		try {
+			List<OimShippingMethod> oimShippingMethods = dbSession
+					.createCriteria(OimShippingMethod.class).list();
+			for (OimShippingMethod oimShippingMethod : oimShippingMethods) {
+				list.add(ShippingMethod.from(oimShippingMethod));
+			}
+		} catch (HibernateException e) {
+			LOG.error(e.getMessage(), e);
+		}
+		return list;
 	}
 }
