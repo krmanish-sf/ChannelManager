@@ -9,10 +9,18 @@ public class OimConstants {
 	public static final Integer CHANNEL_ACCESSDETAIL_ADMIN_PWD = new Integer(6);
 	public static final Integer CHANNEL_ACCESSDETAIL_SCRIPT_PATH = new Integer(7);
 	public static final Integer CHANNEL_ACCESSDETAIL_AUTH_KEY = new Integer(8);
+	@Deprecated
 	public static final Integer CHANNEL_ACCESSDETAIL_MERCHANT_TOKEN = new Integer(9);
+	@Deprecated 
 	public static final Integer CHANNEL_ACCESSDETAIL_AMAZON_USER = new Integer(10);
+	@Deprecated 
 	public static final Integer CHANNEL_ACCESSDETAIL_AMAZON_PASS = new Integer(11);
 	public static final Integer CHANNEL_ACCESSDETAIL_YAHOO_STOREID = new Integer(12);
+	public static final Integer CHANNEL_ACCESSDETAIL_SHOP_CATALOGID = new Integer(13);
+	public static final Integer CHANNEL_ACCESSDETAIL_AMAZON_SELLERID = new Integer(14);
+	public static final Integer CHANNEL_ACCESSDETAIL_AMAZON_MWS_AUTH_TOKEN = new Integer(15);
+	public static final Integer CHANNEL_ACCESSDETAIL_AMAZON_MWS_MARKETPLACE_ID= new Integer(16);
+	
 	
 	public static final Integer ORDERBATCH_TYPE_ID_AUTOMATED = new Integer(1);
 	public static final Integer ORDERBATCH_TYPE_ID_MANUAL = new Integer(2);

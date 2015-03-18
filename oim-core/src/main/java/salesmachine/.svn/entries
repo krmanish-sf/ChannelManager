@@ -1,49 +1,0 @@
-10
-
-dir
-392
-http://sourcefuse.svnrepository.com/svn/InventorySource/oim/oim-core/src/salesmachine
-http://sourcefuse.svnrepository.com/svn/InventorySource
-
-
-
-2013-01-09T06:23:06.689150Z
-392
-jitendra.malhotra
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-0f366283-b693-4b71-a7b0-6e53cbff7a85
-
-orderfile
-dir
-
-util
-dir
-
-test
-dir
-
-hibernatehelper
-dir
-
-oim
-dir
-
-email
-dir
-
-hibernatedb
-dir
-

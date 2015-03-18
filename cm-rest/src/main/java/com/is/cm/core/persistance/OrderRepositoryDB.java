@@ -1,13 +1,17 @@
 package com.is.cm.core.persistance;
 
+import java.text.DecimalFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.hibernate.Criteria;
 import org.hibernate.HibernateException;
 import org.hibernate.Query;
 import org.hibernate.Session;
@@ -16,20 +20,26 @@ import org.hibernate.criterion.Restrictions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import salesmachine.hibernatedb.OimChannelAccessDetails;
+import salesmachine.hibernatedb.OimChannelSupplierMap;
 import salesmachine.hibernatedb.OimChannels;
 import salesmachine.hibernatedb.OimOrderBatches;
+import salesmachine.hibernatedb.OimOrderBatchesTypes;
 import salesmachine.hibernatedb.OimOrderDetails;
 import salesmachine.hibernatedb.OimOrderStatuses;
 import salesmachine.hibernatedb.OimOrders;
 import salesmachine.hibernatedb.OimSuppliers;
 import salesmachine.hibernatedb.OimVendorsuppOrderhistory;
 import salesmachine.hibernatehelper.SessionManager;
+import salesmachine.oim.api.OimConstants;
 import salesmachine.oim.suppliers.OimSupplierOrderPlacement;
 import salesmachine.util.StringHandle;
 
 import com.is.cm.core.domain.Order;
 import com.is.cm.core.domain.OrderDetail;
+import com.is.cm.core.domain.shop.CCORDER;
 import com.is.cm.core.domain.shop.CCTRANSMISSION;
+import com.is.cm.core.domain.shop.ITEMS;
 
 public class OrderRepositoryDB extends RepositoryBase implements
 		OrderRepository {
@@ -817,8 +827,195 @@ public class OrderRepositoryDB extends RepositoryBase implements
 	}
 
 	@Override
-	public Order save(CCTRANSMISSION entity) {
+	public List<Order> save(CCTRANSMISSION entity) {
 
+		String catalogid = entity.getCATALOGID();
+		OimChannels oimChannel = getOimChannel(catalogid);
+		Session m_dbSession = SessionManager.currentSession();
+		Transaction tx = null;
+		List<Order> orderList = new ArrayList<Order>();
+		try {
+			DecimalFormat df = new DecimalFormat("#.##");
+			SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+			Set suppliers = oimChannel.getOimChannelSupplierMaps();
+			Map supplierMap = new HashMap();
+			Iterator itr = suppliers.iterator();
+			while (itr.hasNext()) {
+				OimChannelSupplierMap map = (OimChannelSupplierMap) itr.next();
+				if (map.getDeleteTm() != null)
+					continue;
+
+				String prefix = map.getSupplierPrefix();
+				OimSuppliers supplier = map.getOimSuppliers();
+				System.out.println("prefix :: " + prefix + "supplierID :: "
+						+ supplier.getSupplierId());
+				supplierMap.put(prefix, supplier);
+			}
+
+			boolean ordersSaved = false;
+
+			OimOrderBatches batch = new OimOrderBatches();
+			batch.setOimChannels(oimChannel);
+			batch.setOimOrderBatchesTypes(new OimOrderBatchesTypes(
+					OimConstants.ORDERBATCH_TYPE_ID_AUTOMATED));
+
+			// Save Batch..
+			tx = m_dbSession.beginTransaction();
+			batch.setInsertionTm(new Date());
+			batch.setCreationTm(new Date());
+			m_dbSession.save(batch);
+			OimOrders order = null;
+			for (CCORDER ccorder : entity.getCCORDER()) {
+				order = new OimOrders();
+				order.setBillingCity(ccorder.getBILLINGLABEL().getADDRESS()
+						.getADCITY());
+				order.setBillingCompany(ccorder.getBILLINGLABEL().getADDRESS()
+						.getADCOMPANY());
+				order.setBillingCountry(ccorder.getBILLINGLABEL().getADDRESS()
+						.getADCOUNTRY());
+				order.setBillingEmail(ccorder.getBILLINGLABEL().getCUSTOMER()
+						.getCUEMAIL());
+				order.setBillingName(ccorder.getBILLINGLABEL().getCUSTOMER()
+						.getCUFIRSTNAME()
+						+ " "
+						+ ccorder.getBILLINGLABEL().getCUSTOMER()
+								.getCULASTNAME());
+				order.setBillingPhone(ccorder.getBILLINGLABEL().getCUSTOMER()
+						.getCUPHONE());
+				order.setBillingState(ccorder.getBILLINGLABEL().getADDRESS()
+						.getADSTATE());
+				order.setBillingStreetAddress(ccorder.getBILLINGLABEL()
+						.getADDRESS().getADADDRESS1());
+				order.setBillingSuburb(ccorder.getBILLINGLABEL().getADDRESS()
+						.getADADDRESS2());
+				order.setBillingZip(ccorder.getBILLINGLABEL().getADDRESS()
+						.getADZIP());
+
+				// ***************************************
+				order.setCustomerCity(ccorder.getBILLINGLABEL().getADDRESS()
+						.getADCITY());
+				order.setCustomerCompany(ccorder.getBILLINGLABEL().getADDRESS()
+						.getADCOMPANY());
+				order.setCustomerCountry(ccorder.getBILLINGLABEL().getADDRESS()
+						.getADCOUNTRY());
+				order.setCustomerEmail(ccorder.getBILLINGLABEL().getCUSTOMER()
+						.getCUEMAIL());
+				order.setCustomerName(ccorder.getBILLINGLABEL().getCUSTOMER()
+						.getCUFIRSTNAME()
+						+ " "
+						+ ccorder.getBILLINGLABEL().getCUSTOMER()
+								.getCULASTNAME());
+				order.setCustomerPhone(ccorder.getBILLINGLABEL().getCUSTOMER()
+						.getCUPHONE());
+				order.setCustomerState(ccorder.getBILLINGLABEL().getADDRESS()
+						.getADSTATE());
+				order.setCustomerStreetAddress(ccorder.getBILLINGLABEL()
+						.getADDRESS().getADADDRESS1());
+				order.setCustomerSuburb(ccorder.getBILLINGLABEL().getADDRESS()
+						.getADADDRESS2());
+				order.setCustomerZip(ccorder.getBILLINGLABEL().getADDRESS()
+						.getADZIP());
+				// ***************************************
+				order.setDeliveryCity(ccorder.getSHIPPINGLABEL().getADDRESS()
+						.getADCITY());
+				order.setDeliveryCompany(ccorder.getSHIPPINGLABEL()
+						.getADDRESS().getADCOMPANY());
+				order.setDeliveryCountry(ccorder.getSHIPPINGLABEL()
+						.getADDRESS().getADCOUNTRY());
+				order.setDeliveryEmail(ccorder.getSHIPPINGLABEL().getCUSTOMER()
+						.getCUEMAIL());
+				order.setDeliveryName(ccorder.getSHIPPINGLABEL().getCUSTOMER()
+						.getCUFIRSTNAME()
+						+ " "
+						+ ccorder.getSHIPPINGLABEL().getCUSTOMER()
+								.getCULASTNAME());
+				order.setDeliveryPhone(ccorder.getSHIPPINGLABEL().getCUSTOMER()
+						.getCUPHONE());
+				order.setDeliveryState(ccorder.getSHIPPINGLABEL().getADDRESS()
+						.getADSTATE());
+				order.setDeliveryStreetAddress(ccorder.getSHIPPINGLABEL()
+						.getADDRESS().getADADDRESS1());
+				order.setDeliverySuburb(ccorder.getSHIPPINGLABEL().getADDRESS()
+						.getADADDRESS2());
+				order.setDeliveryZip(ccorder.getSHIPPINGLABEL().getADDRESS()
+						.getADZIP());
+				order.setOrderComment(ccorder.getSHOPPERCOMMENTS());
+				order.setOimOrderBatches(batch);
+				order.setInsertionTm(new Date());
+				order.setOrderFetchTm(new Date());
+				order.setStoreOrderId(ccorder.getINVOICENO());
+				order.setShippingDetails(ccorder.getSHIPPINGLABEL()
+						.getSLMETHOD());
+				order.setOrderTm(new Date());
+				String paymentMethod = "";
+				if (ccorder.getPAYMENTMETHOD().getBANKACCOUNT() != null) {
+					paymentMethod = "Bank Account";
+				} else if (ccorder.getPAYMENTMETHOD().getBANKTRANSFER() != null) {
+					paymentMethod = "Bank Transfer";
+				} else if (ccorder.getPAYMENTMETHOD().getCOD() != null) {
+					paymentMethod = "Cash on Delivery";
+				} else if (ccorder.getPAYMENTMETHOD().getCODWITHDELIVERYDATE() != null) {
+					paymentMethod = "Cash on Delivery";
+				} else if (ccorder.getPAYMENTMETHOD().getCREDITCARD() != null) {
+					paymentMethod = "Credit Card";
+				}
+				order.setPayMethod(paymentMethod);
+				String orderTotal = ccorder.getTOTALS().getTLTOTAL();
+				orderTotal = orderTotal.replace("$", "");
+				order.setOrderTotalAmount(Double.parseDouble(orderTotal));
+				Set<OimOrderDetails> detailSet = new HashSet<OimOrderDetails>();
+				for (ITEMS items : ccorder.getITEMS()) {
+					OimOrderDetails details = new OimOrderDetails();
+					String unitPrice = items.getITEM().getITUNITPRICE();
+					unitPrice = unitPrice.replace("$", "");
+					details.setCostPrice(Double.parseDouble(unitPrice));
+					details.setInsertionTm(new Date());
+					details.setOimOrderStatuses(new OimOrderStatuses(
+							OimConstants.ORDER_STATUS_UNPROCESSED));
+					details.setProductDesc(items.getITEM().getITDESCRIPTION());
+					details.setSku(items.getITEM().getITSKU());
+					details.setSalePrice(Double.parseDouble(unitPrice));
+					details.setProductName(items.getITEM().getITDESCRIPTION());
+					String quantity = items.getITEM().getITQUANTITY();
+					details.setQuantity(Integer.valueOf(quantity));
+					String skuPrefix = items.getITEM().getITSKU()
+							.substring(0, 2);
+					OimSuppliers oimSuppliers = (OimSuppliers) supplierMap
+							.get(skuPrefix);
+					if (oimSuppliers != null) {
+						details.setOimSuppliers(oimSuppliers);
+					}
+					details.setOimOrders(order);
+					m_dbSession.saveOrUpdate(details);
+					detailSet.add(details);
+				}
+				order.setOimOrderDetailses(detailSet);
+				m_dbSession.save(order);
+			}
+			tx.commit();
+
+		} catch (Exception e) {
+			if (tx != null && tx.isActive())
+				tx.rollback();
+			LOG.error(e.getMessage(), e);
+		}
+
+		return null;
+	}
+
+	private OimChannels getOimChannel(String ccatalogId) {
+		Session currentSession = SessionManager.currentSession();
+		Criteria add = currentSession
+				.createCriteria(OimChannelAccessDetails.class)
+				.add(Restrictions.eq("oimChannelAccessFields.fieldId",
+						OimConstants.CHANNEL_ACCESSDETAIL_SHOP_CATALOGID))
+				.add(Restrictions.eq("detailFieldValue", ccatalogId));
+
+		List<OimChannelAccessDetails> list = add.list();
+		for (OimChannelAccessDetails details : list) {
+			OimChannels oimChannels = details.getOimChannels();
+			return oimChannels;
+		}
 		return null;
 	}
 }

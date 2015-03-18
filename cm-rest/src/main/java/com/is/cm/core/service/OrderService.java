@@ -4,6 +4,9 @@ import java.util.List;
 import java.util.Map;
 
 import com.is.cm.core.domain.Order;
+import com.is.cm.core.domain.shop.CCTRANSMISSION;
+import com.is.cm.core.event.CreateEvent;
+import com.is.cm.core.event.CreatedEvent;
 import com.is.cm.core.event.ReadCollectionEvent;
 import com.is.cm.core.event.RequestReadEvent;
 import com.is.cm.core.event.UpdateEvent;
@@ -40,5 +43,7 @@ public interface OrderService {
 			UpdateEvent<List<Integer>> event);
 
 	UpdatedEvent<String> trackOrderStatus(UpdateEvent<Integer> updateEvent);
+
+	CreatedEvent<List<Order>> saveOrder(CreateEvent<CCTRANSMISSION> event);
 
 }

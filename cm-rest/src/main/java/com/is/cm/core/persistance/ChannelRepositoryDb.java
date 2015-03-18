@@ -78,17 +78,19 @@ public class ChannelRepositoryDb extends RepositoryBase implements
 						OimConstants.CHANNEL_ACCESSDETAIL_CHANNEL_URL,
 						StringHandle.removeNull(getParameter("storeurl")));
 				addChannelAccessDetail(dbSession, c,
-						OimConstants.CHANNEL_ACCESSDETAIL_MERCHANT_TOKEN,
-						StringHandle.removeNull(getParameter("merchanttoken")));
-				addChannelAccessDetail(dbSession, c,
-						OimConstants.CHANNEL_ACCESSDETAIL_AMAZON_USER,
-						StringHandle.removeNull(getParameter("amazonuser")));
-				addChannelAccessDetail(dbSession, c,
-						OimConstants.CHANNEL_ACCESSDETAIL_AMAZON_PASS,
-						StringHandle.removeNull(getParameter("amazonpass")));
-				addChannelAccessDetail(dbSession, c,
-						OimConstants.CHANNEL_ACCESSDETAIL_SCRIPT_PATH,
-						StringHandle.removeNull(getParameter("storeurl")));
+						OimConstants.CHANNEL_ACCESSDETAIL_AMAZON_SELLERID,
+						StringHandle.removeNull(getParameter("mws-seller-id")));
+				addChannelAccessDetail(
+						dbSession,
+						c,
+						OimConstants.CHANNEL_ACCESSDETAIL_AMAZON_MWS_AUTH_TOKEN,
+						StringHandle.removeNull(getParameter("mws-auth-token")));
+				addChannelAccessDetail(
+						dbSession,
+						c,
+						OimConstants.CHANNEL_ACCESSDETAIL_AMAZON_MWS_MARKETPLACE_ID,
+						StringHandle
+								.removeNull(getParameter("mws-marketplace-id")));
 				LOG.debug("Saved amazon channel access details");
 			} else if (c.getOimSupportedChannels().getSupportedChannelId() == 5) {
 				addChannelAccessDetail(dbSession, c,
@@ -97,6 +99,14 @@ public class ChannelRepositoryDb extends RepositoryBase implements
 				addChannelAccessDetail(dbSession, c,
 						OimConstants.CHANNEL_ACCESSDETAIL_YAHOO_STOREID,
 						StringHandle.removeNull(getParameter("yahoostoreid")));
+				LOG.debug("Saved yahoo channel access details");
+			} else if (c.getOimSupportedChannels().getSupportedChannelId() == 7) {
+				addChannelAccessDetail(dbSession, c,
+						OimConstants.CHANNEL_ACCESSDETAIL_CHANNEL_URL,
+						StringHandle.removeNull(getParameter("storeurl")));
+				addChannelAccessDetail(dbSession, c,
+						OimConstants.CHANNEL_ACCESSDETAIL_SHOP_CATALOGID,
+						StringHandle.removeNull(getParameter("catalog-id")));
 				LOG.debug("Saved yahoo channel access details");
 			} else if (c.getOimSupportedChannels().getSupportedChannelId() != 0) {
 				addChannelAccessDetail(dbSession, c,
@@ -437,8 +447,9 @@ public class ChannelRepositoryDb extends RepositoryBase implements
 	@Override
 	public List<SupportedChannel> findSupportedChannels() {
 		Session session = SessionManager.currentSession();
-		List<OimSupportedChannels> list = session.createCriteria(
-				OimSupportedChannels.class).addOrder(Order.asc("channelName")).list();
+		List<OimSupportedChannels> list = session
+				.createCriteria(OimSupportedChannels.class)
+				.addOrder(Order.asc("channelName")).list();
 		List<SupportedChannel> supportedChannels = new ArrayList<SupportedChannel>();
 		for (OimSupportedChannels oimSupportedChannel : list) {
 			supportedChannels.add(SupportedChannel.from(oimSupportedChannel));

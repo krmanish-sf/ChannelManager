@@ -42,5 +42,5 @@ public interface OrderRepository {
 
 	List<Order> findProcessedOrders();
 
-	Order save(CCTRANSMISSION entity);
+	List<Order> save(CCTRANSMISSION entity);
 }

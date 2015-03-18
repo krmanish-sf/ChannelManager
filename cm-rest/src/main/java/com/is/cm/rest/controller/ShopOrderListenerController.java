@@ -1,6 +1,7 @@
 package com.is.cm.rest.controller;
 
 import java.io.StringReader;
+import java.util.List;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
@@ -17,10 +18,13 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import com.is.cm.core.domain.Order;
 import com.is.cm.core.domain.shop.CCTRANSMISSION;
 import com.is.cm.core.domain.shop.CCTRANSMISSIONRESPONSE;
 import com.is.cm.core.domain.shop.ORDER;
 import com.is.cm.core.domain.shop.STATUS;
+import com.is.cm.core.event.CreateEvent;
+import com.is.cm.core.event.CreatedEvent;
 import com.is.cm.core.service.OrderService;
 
 @Controller
@@ -63,6 +67,9 @@ public class ShopOrderListenerController extends BaseController {
 					.unmarshal(reader);
 			log.info("Recieved new order from shop.com for catalogID: {}",
 					orderData.getCATALOGID());
+
+			CreatedEvent<List<Order>> saveOrder = orderService
+					.saveOrder(new CreateEvent<CCTRANSMISSION>(orderData));
 			CCTRANSMISSIONRESPONSE cc = new CCTRANSMISSIONRESPONSE();
 			ORDER order = new ORDER();
 			order.setALTURACATALOGID(orderData.getCATALOGID());

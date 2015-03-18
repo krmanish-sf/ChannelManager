@@ -39,8 +39,11 @@ import salesmachine.hibernatehelper.SessionManager;
 import salesmachine.oim.api.OimConstants;
 import salesmachine.oim.suppliers.OimSupplierOrderPlacement;
 import salesmachine.oim.suppliers.Supplier;
+import salesmachine.util.Filter;
 
 public class HibernateTest {
+	private static List<OimChannelAccessDetails> list;
+
 	@Test
 	public void selectExamples() {
 		Session session = SessionManager.currentSession();
@@ -490,6 +493,7 @@ public class HibernateTest {
 
 	public static void main(String args[]) {
 		try {
+			String abc = Filter.transForm("s/$//g", "$33.44");
 			String txt = "United Parcel Service (1 x 2.60lbs) (Next Day Air):";
 
 			String re1 = "(United)"; // Variable Name 1

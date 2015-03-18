@@ -26,6 +26,18 @@
 			<version>0.3-3</version>
 		</dependency>
 		<dependency>
+			<groupId>org.apache.httpcomponents</groupId>
+			<artifactId>httpclient</artifactId>
+			<version>4.2.3</version>
+			<scope>runtime</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.httpcomponents</groupId>
+			<artifactId>httpcore</artifactId>
+			<version>4.2.1</version>
+			<scope>runtime</scope>
+		</dependency>
+		<dependency>
 			<groupId>javax.mail</groupId>
 			<artifactId>mail</artifactId>
 			<version>1.4</version>
@@ -171,11 +183,8 @@
 			<artifactId>servicePcs</artifactId>
 			<version>1.0.0</version>
 		</dependency>
-		<dependency>
-			<groupId>com.amazon.sellercentral</groupId>
-			<artifactId>sellercentral</artifactId>
-			<version>1.0.0</version>
-		</dependency>
+		<!-- <dependency> <groupId>com.amazon.sellercentral</groupId> <artifactId>sellercentral</artifactId> 
+			<version>1.0.0</version> </dependency> -->
 		<dependency>
 			<groupId>com.amazonservices.mws</groupId>
 			<artifactId>client</artifactId>

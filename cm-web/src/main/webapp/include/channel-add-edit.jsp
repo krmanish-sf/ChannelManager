@@ -38,11 +38,11 @@
 														id="channelselect" class="width-70 pull-left">
 														<option value="" selected>Select channel</option>
 														<option value="4">Amazon Seller Central</option>
-														<option value="1">CRE Loaded</option>
-														<option value="3">Inventory Source - Hosted</option>
-														<option value="2">Magento</option>
+														<!-- <option value="1">CRE Loaded</option> -->
+														<!-- <option value="3">Inventory Source - Hosted</option> -->
+														<!-- <option value="2">Magento</option> -->
 														<option value="7">Shop.com</option>
-														<option value="5">Yahoo Store</option>
+														<!-- <option value="5">Yahoo Store</option> -->
 														<option value="6">Zen Cart</option>
 														<option value="0">Custom Channel</option>
 													</select>
@@ -135,33 +135,33 @@
 												</div>
 											</div>
 											<div class="form-group store-info amazon-store">
-												<label for="merchanttoken"
-													class="col-sm-5 control-label no-padding-right">Merchant
-													Token:</label>
+												<label for="mws-seller-id"
+													class="col-sm-5 control-label no-padding-right">Seller
+													ID:</label>
 												<div class="col-sm-7">
 													<input type="text" required="required"
-														data-bind-channel="customMapper:oimChannelAccessDetailses[oimChannelAccessFields.fieldId=9].detailFieldValue"
-														name="merchanttoken" class="width-70" />
+														data-bind-channel="customMapper:oimChannelAccessDetailses[oimChannelAccessFields.fieldId=14].detailFieldValue"
+														name="mws-seller-id" class="width-70" />
 												</div>
 											</div>
 											<div class="form-group store-info amazon-store">
-												<label for="amazonuser"
-													class="col-sm-5 control-label no-padding-right">Amazon
-													UserName:</label>
+												<label for="mws-marketplace-id"
+													class="col-sm-5 control-label no-padding-right">MWS
+													Marketplace ID:</label>
 												<div class="col-sm-7">
 													<input type="text" required="required"
-														data-bind-channel="customMapper:oimChannelAccessDetailses[oimChannelAccessFields.fieldId=10].detailFieldValue"
-														name="amazonuser" class="width-70" />
+														data-bind-channel="customMapper:oimChannelAccessDetailses[oimChannelAccessFields.fieldId=16].detailFieldValue"
+														name="mws-marketplace-id" class="width-70" />
 												</div>
 											</div>
 											<div class="form-group store-info amazon-store">
-												<label for="amazonpass"
-													class="col-sm-5 control-label no-padding-right">Amazon
-													Password:</label>
+												<label for="mws-auth-token"
+													class="col-sm-5 control-label no-padding-right">MWS
+													Auth Token:</label>
 												<div class="col-sm-7">
-													<input type="text" name="amazonpass" class="width-70"
-														required="required"
-														data-bind-channel="customMapper:oimChannelAccessDetailses[oimChannelAccessFields.fieldId=11].detailFieldValue" />
+													<input type="text" required="required"
+														data-bind-channel="customMapper:oimChannelAccessDetailses[oimChannelAccessFields.fieldId=15].detailFieldValue"
+														name="mws-auth-token" class="width-70" />
 												</div>
 											</div>
 											<div class="form-group store-info yahoo-store">
@@ -172,6 +172,17 @@
 													<input type="text" name="yahoostoreid" class="width-70"
 														required="required"
 														data-bind-channel="customMapper:oimChannelAccessDetailses[oimChannelAccessFields.fieldId=12].detailFieldValue" />
+												</div>
+											</div>
+											<div class="form-group store-info shop-store">
+												<label for="catalog-id"
+													class="col-sm-5 control-label no-padding-right">Shop.com
+													Catalog ID </label>
+												<div class="col-sm-7">
+													<input type="text" name="catalog-id" class="width-70"
+														placeholder="Enter shop.com Catalog ID"
+														required="required"
+														data-bind-channel="customMapper:oimChannelAccessDetailses[oimChannelAccessFields.fieldId=13].detailFieldValue" />
 												</div>
 											</div>
 											<div class="form-group center">

@@ -1,25 +1,24 @@
 package salesmachine.oim.stores.impl;
 
-import java.io.ByteArrayOutputStream;
-import java.net.URL;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.StringTokenizer;
 
-import javax.activation.DataHandler;
-import javax.xml.soap.AttachmentPart;
+import javax.xml.datatype.XMLGregorianCalendar;
 
-import org.apache.axis.holders.OctetStreamHolder;
 import org.hibernate.Query;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import salesmachine.hibernatedb.OimChannelSupplierMap;
 import salesmachine.hibernatedb.OimChannels;
@@ -31,25 +30,34 @@ import salesmachine.hibernatedb.OimOrderStatuses;
 import salesmachine.hibernatedb.OimOrders;
 import salesmachine.hibernatedb.OimSuppliers;
 import salesmachine.hibernatehelper.PojoHelper;
-import salesmachine.markets.sellercentral.Merchant;
-import salesmachine.markets.sellercentral.MerchantDocumentInfo;
-import salesmachine.markets.sellercentral.MerchantInterfaceMimeLocator;
-import salesmachine.markets.sellercentral.MerchantInterface_BindingStub;
-import salesmachine.markets.sellercentral.MerchantInterface_PortType;
 import salesmachine.oim.api.OimConstants;
 import salesmachine.oim.stores.api.IOrderImport;
-import salesmachine.util.NumberFormat;
 import salesmachine.util.OimLogStream;
 import salesmachine.util.StringHandle;
 
+import com.amazonservices.mws.client.MwsUtl;
+import com.amazonservices.mws.orders._2013_09_01.MarketplaceWebServiceOrdersClient;
+import com.amazonservices.mws.orders._2013_09_01.model.ListOrderItemsRequest;
+import com.amazonservices.mws.orders._2013_09_01.model.ListOrderItemsResponse;
+import com.amazonservices.mws.orders._2013_09_01.model.ListOrderItemsResult;
+import com.amazonservices.mws.orders._2013_09_01.model.ListOrdersRequest;
+import com.amazonservices.mws.orders._2013_09_01.model.ListOrdersResponse;
+import com.amazonservices.mws.orders._2013_09_01.model.Order;
+import com.amazonservices.mws.orders._2013_09_01.model.OrderItem;
+import com.amazonservices.mws.orders._2013_09_01.model.ResponseHeaderMetadata;
+
 public class AmazonOrderImport implements IOrderImport {
-	private String m_merchantIdentifier, m_user, m_password;
+	private static final Logger log = LoggerFactory
+			.getLogger(AmazonOrderImport.class);
+	private String sellerId, mwsAuthToken;
+	private List<String> marketPlaceIdList = null;
 	private Session m_dbSession;
 	private OimChannels m_channel;
 	private OimOrderProcessingRule m_orderProcessingRule;
 	private OimLogStream logStream;
 
 	public boolean getVendorOrders() {
+		Transaction tx = null;
 
 		try {
 			DecimalFormat df = new DecimalFormat("#.##");
@@ -64,16 +72,17 @@ public class AmazonOrderImport implements IOrderImport {
 
 				String prefix = map.getSupplierPrefix();
 				OimSuppliers supplier = map.getOimSuppliers();
-				System.out.println("prefix :: " + prefix + "supplierID :: "+ supplier.getSupplierId());
+				System.out.println("prefix :: " + prefix + "supplierID :: "
+						+ supplier.getSupplierId());
 				supplierMap.put(prefix, supplier);
 			}
 
-			Transaction tx = null;
 			boolean ordersSaved = false;
 
 			OimOrderBatches batch = new OimOrderBatches();
 			batch.setOimChannels(m_channel);
-			batch.setOimOrderBatchesTypes(new OimOrderBatchesTypes(OimConstants.ORDERBATCH_TYPE_ID_AUTOMATED));
+			batch.setOimOrderBatchesTypes(new OimOrderBatchesTypes(
+					OimConstants.ORDERBATCH_TYPE_ID_AUTOMATED));
 
 			// Save Batch..
 			tx = m_dbSession.beginTransaction();
@@ -86,331 +95,184 @@ public class AmazonOrderImport implements IOrderImport {
 
 			long start = System.currentTimeMillis();
 
-			MerchantInterfaceMimeLocator locator = new MerchantInterfaceMimeLocator();
-			MerchantInterface_PortType port = locator.getMerchantInterface(
-					new URL("https://mws.amazonservices.com"));
-			Merchant merchant = new Merchant();
-			merchant.setMerchantIdentifier(m_merchantIdentifier);
-			((MerchantInterface_BindingStub) port).setUsername(m_user);
-			((MerchantInterface_BindingStub) port).setPassword(m_password);
+			// Get a client connection.
+			// Make sure you've set the variables in
+			// MarketplaceWebServiceOrdersSampleConfig.
+			MarketplaceWebServiceOrdersClient client = MarketplaceWebServiceOrdersClientConfig
+					.getClient();
 
-			MerchantDocumentInfo[] info = port.getAllPendingDocumentInfo(merchant, "_GET_FLAT_FILE_ORDERS_DATA_");
-			// MerchantDocumentInfo[] info = port.getLastNPendingDocumentInfo(merchant, "_GET_FLAT_FILE_ORDERS_DATA_", 100);
-			// MerchantDocumentInfo[] info = port.getAllPendingDocumentInfo(merchant, "_GET_FLAT_FILE_ORDER_REPORT_DATA_");
-			// MerchantDocumentInfo[] info = port.getAllPendingDocumentInfo(merchant, "_GET_ORDERS_DATA_");
-			// MerchantDocumentInfo[] info = port.getAllPendingDocumentInfo(merchant, "_GET_FLAT_FILE_ACTIONABLE_ORDER_DATA_");
+			// Create a request.
+			ListOrdersRequest request = new ListOrdersRequest();
 
-			System.out.println("Total pending order data documents found : "+ info.length);
-
-			// Get all the orders for the current channel
-			ArrayList currentOrders = getCurrentOrders();
-
+			request.setSellerId(sellerId);
+			request.setMWSAuthToken(mwsAuthToken);
+			request.setMarketplaceId(marketPlaceIdList);
 			Calendar c = Calendar.getInstance();
 			c.setTime(new Date());
 			c.add(Calendar.DATE, -14);
 			Date cutoffDate = c.getTime();
+			XMLGregorianCalendar createdAfter = MwsUtl.getDTF()
+					.newXMLGregorianCalendar();
+			createdAfter.setYear(cutoffDate.getYear());
+			createdAfter.setMonth(cutoffDate.getMonth());
+			createdAfter.setDay(cutoffDate.getDate());
+			createdAfter.setHour(cutoffDate.getHours());
+			createdAfter.setMinute(cutoffDate.getMinutes());
+			createdAfter.setSecond(cutoffDate.getSeconds());
+			request.setCreatedAfter(createdAfter);
+			// Make the call.
+			ListOrdersResponse response = client.listOrders(request);
+			ResponseHeaderMetadata rhmd = response.getResponseHeaderMetadata();
+			// We recommend logging every the request id and timestamp of every
+			// call.
+			log.debug("Response:");
+			log.debug("RequestId: " + rhmd.getRequestId());
+			log.debug("Timestamp: " + rhmd.getTimestamp());
 
-			OimOrders lastOrder = null;
-			double totalOrderAmount = 0;
+			log.info("Total order(s) fetched: {}", response
+					.getListOrdersResult().getOrders().size());
+
+			// Get all the orders for the current channel
+			List currentOrders = getCurrentOrders();
 
 			int numOrdersSaved = 0;
-			for (int i = 0; i < info.length; i++) {
-
-				System.out.println("Downloading next order document file " + i);
-				String docId = info[i].getDocumentID();
-				port.getDocument(merchant, docId, new OctetStreamHolder());
-				Object[] returnAttachments = ((MerchantInterface_BindingStub) port).getAttachments();
-				if (returnAttachments.length <= 0)
+			for (Order order2 : response.getListOrdersResult().getOrders()) {
+				if (currentOrders.contains(order2.getSellerOrderId())) {
+					log.debug("Order is already imported in the system, skipping to next Order.");
 					continue;
-				AttachmentPart attachment = (AttachmentPart) returnAttachments[0];
-				DataHandler handler = attachment.getDataHandler();
-				ByteArrayOutputStream os = new ByteArrayOutputStream();
-				handler.writeTo(os);
-				String orderFileStr = os.toString();
-				// System.out.println("****** orderFileStr : "+orderFileStr);
-				StringTokenizer linetokenizer = new StringTokenizer(orderFileStr, "\n");
-				if (linetokenizer.countTokens() > 0)
-					linetokenizer.nextToken();
-				else
-					continue;
-
-				while (linetokenizer.hasMoreTokens()) {
-					String orderId = "", orderItemId = "", purchaseDate = "", paymentsDate = "", buyerEmail = "", buyerName = "";
-					String buyerPhone = "", currency = "";
-					String deliveryName = "", deliveryAddr1 = "";
-					String deliveryAddr2 = "", deliveryAddr3 = "", deliveryCity = "", deliveryState = "", deliveryPin = "";
-					String deliveryCountry = "", deliveryPhone = "", deliveryStartDate = "", deliveryEndDate = "";
-					String deliveryTimeZone = "", deliveryInstructions = "", salesChannel = "", orderChannel = "";
-					String orderChannelInstance = "", shipServiceLevel = "";
-					String sku = "", productName = "", quantity = "", itemPrice = "", itemTax = "";
-					String shippingPrice = "", shippingTax = "";
-					
-					// System.out.println("!NEXT LINE OF ORDER");
-					String orderData = linetokenizer.nextToken();
-					// System.out.println("**** orderData : "+orderData);
-					String[] orderTokenizer = orderData.split("	");
-
-					for (int j = 0; j < orderTokenizer.length; j++) {
-
-						switch (j) {
-						case 0:
-							orderId = StringHandle.removeNull(orderTokenizer[j]);
-							// System.out.println(j+" oid "+orderId);
-							break;
-						case 1:
-							orderItemId = orderTokenizer[j];
-							// System.out.println(j+" oitemid "+orderItemId);
-							break;
-						case 2:
-							purchaseDate = orderTokenizer[j];
-							// System.out.println(j+" purchasedate : "+purchaseDate);
-							break;
-						case 3:
-							paymentsDate = orderTokenizer[j];
-							// System.out.println(j+" paymentdate : "+paymentsDate);
-							break;
-						case 4:
-							buyerEmail = orderTokenizer[j];
-							// System.out.println(j+" buyweremial : "+buyerEmail);
-							break;
-						case 5:
-							buyerName = orderTokenizer[j];
-							// System.out.println(j+" buywer name "+buyerName);
-							break;
-						case 6:
-							buyerPhone = orderTokenizer[j];
-							// System.out.println(j+" buywer phone "+buyerPhone);
-							break;
-						case 7:
-							sku = orderTokenizer[j];
-							// System.out.println(j+" sku : "+sku);
-							break;
-						case 8:
-							productName = orderTokenizer[j];
-							break;
-						case 9:
-							quantity = orderTokenizer[j];
-							break;
-						case 10:
-							currency = orderTokenizer[j];
-							// System.out.println(j+" curr : "+currency);
-							break;
-						case 11:
-							itemPrice = orderTokenizer[j];
-							break;
-						case 12:
-							itemTax = orderTokenizer[j];
-							break;
-						case 13:
-							shippingPrice = orderTokenizer[j];
-							break;
-						case 14:
-							shippingTax = orderTokenizer[j];
-							break;
-						case 15:
-							shipServiceLevel = orderTokenizer[j];
-							break;
-						case 16:
-							deliveryName = orderTokenizer[j];
-							// System.out.println(j+" del name "+deliveryName);
-							break;
-						case 17:
-							deliveryAddr1 = orderTokenizer[j];
-							// System.out.println(j+" del add1 "+deliveryAddr1);
-							break;
-						case 18:
-							deliveryAddr2 = orderTokenizer[j];
-							// System.out.println(j+" del add2 "+deliveryAddr2);
-							break;
-						case 19:
-							deliveryAddr3 = orderTokenizer[j];
-							// System.out.println(j+" del add3 "+deliveryAddr3);
-							break;
-						case 20:
-							deliveryCity = orderTokenizer[j];
-							// System.out.println(j+" del city "+deliveryCity);
-							break;
-						case 21:
-							deliveryState = orderTokenizer[j];
-							// System.out.println(j+" del state "+deliveryState);
-							break;
-						case 22:
-							deliveryPin = orderTokenizer[j];
-							// System.out.println(j+" del pin "+deliveryPin);
-							break;
-						case 23:
-							deliveryCountry = orderTokenizer[j];
-							// System.out.println(j+" del country : "+deliveryCountry);
-							break;
-						case 24:
-							deliveryPhone = orderTokenizer[j];
-							// System.out.println(j+" del phone "+deliveryPhone);
-							break;
-						case 25:
-							break;
-						case 26:
-							break;
-						case 27:
-							break;
-						case 28:
-							break;
-						case 29:
-							deliveryStartDate = orderTokenizer[j];
-							break;
-						case 30:
-							deliveryEndDate = orderTokenizer[j];
-							break;
-						case 31:
-							deliveryTimeZone = orderTokenizer[j];
-							break;
-						case 32:
-							deliveryInstructions = orderTokenizer[j];
-							break;
-						case 33:
-							salesChannel = orderTokenizer[j];
-							break;
-						case 34:
-							orderChannel = orderTokenizer[j];
-							break;
-						case 35:
-							orderChannelInstance = orderTokenizer[j];
-							break;
-						}
-					}
-
-					if (lastOrder != null && !lastOrder.getStoreOrderId().equals(orderId)) {
-						numOrdersSaved++;
-						//System.out.println(new Date().toString() + " Order("+ numOrdersSaved + ")");
-
-						lastOrder.setOrderTotalAmount(totalOrderAmount);
-						m_dbSession.save(lastOrder);
-						tx.commit();
-
-						ordersSaved = false;
-
-						currentOrders.add(lastOrder.getStoreOrderId());
-						lastOrder = null;
-
-						totalOrderAmount = 0;
-						tx = m_dbSession.beginTransaction();
-					}
-
-					Date orderTime = null;
-					try {
-						orderTime = sdf.parse(purchaseDate);
-						if (orderTime.before(cutoffDate))
-							continue;
-					} catch (Exception e) {
-
-					}
-
-					if (!orderId.equals("") && !currentOrders.contains(orderId)) {
-						OimOrders order = null;
-						if (lastOrder != null && lastOrder.getStoreOrderId().equals(orderId)) {
-							order = lastOrder;
-						} else {
-							// New order
-							order = new OimOrders();
-							order.setStoreOrderId(orderId);
-
-							order.setDeliveryName(deliveryName);
-							order.setDeliveryStreetAddress(deliveryAddr1 + ", "+ deliveryAddr2);
-							order.setDeliverySuburb(deliveryAddr3);
-							order.setDeliveryCity(deliveryCity);
-							order.setDeliveryState(deliveryState);
-							order.setDeliveryCountry(deliveryCountry);
-							order.setDeliveryZip(deliveryPin);
-							order.setDeliveryEmail(buyerEmail);
-							order.setDeliveryPhone(deliveryPhone);
-
-							order.setCustomerName(buyerName);
-							order.setCustomerPhone(buyerPhone);
-							order.setCustomerEmail(buyerEmail);
-
-							order.setInsertionTm(new Date());
-							order.setOrderTm(orderTime);
-							order.setShippingDetails(shipServiceLevel);
-							order.setOrderTotalAmount(totalOrderAmount);
-
-							// Saving Order..
-							order.setOimOrderBatches(batch);
-							order.setOrderFetchTm(new Date());
-							order.setInsertionTm(new Date());
-
-							lastOrder = order;
-						}
-
-						int qty = 0;
-						double itemPriceD = 0;
-						try {
-							qty = Integer.parseInt(quantity);
-							itemPriceD = Double.parseDouble(itemPrice);
-						} catch (Exception e) {
-							qty = 0;
-							itemPriceD = 0;
-						}
-
-						OimOrderDetails details = new OimOrderDetails();
-						details.setSalePrice(new Double(df.format(itemPriceD)));
-						details.setQuantity(new Integer(quantity));
-						details.setSku(sku);
-						details.setOimOrders(order);
-						details.setInsertionTm(new Date());
-						details.setOimOrderStatuses(new OimOrderStatuses(OimConstants.ORDER_STATUS_UNPROCESSED));
-
-						String prefix = "";
-						if (sku.length() > 2) 
-							prefix = sku.substring(0, 2);
-
-						OimSuppliers supplier = null;
-						if (supplierMap.containsKey(prefix)) 
-							supplier = (OimSuppliers) supplierMap.get(prefix);
-
-						details.setOimSuppliers(supplier);
-
-						totalOrderAmount += qty * itemPriceD;
-
-						m_dbSession.save(details);
-						ordersSaved = true;
-					} else {
-						// String skippingOrder =
-						// orderId.equals("")?"order is empty.":"order already exists. Store order id : "+orderId;
-						// System.out.println("!!! Skipping order as "+skippingOrder);
-					}
 				}
-			}
+				OimOrders oimOrders = new OimOrders();
+				oimOrders.setBillingCity(order2.getShippingAddress().getCity());
+				oimOrders.setBillingCompany(order2.getShippingAddress()
+						.getAddressLine3());
+				oimOrders.setBillingCountry(order2.getShippingAddress()
+						.getCounty());
+				oimOrders.setBillingEmail(order2.getBuyerEmail());
+				oimOrders.setBillingName(order2.getShippingAddress().getName());
+				oimOrders.setBillingPhone(order2.getShippingAddress()
+						.getPhone());
+				oimOrders.setBillingState(order2.getShippingAddress()
+						.getStateOrRegion());
+				oimOrders.setBillingStreetAddress(order2.getShippingAddress()
+						.getAddressLine1());
+				oimOrders.setBillingSuburb(order2.getShippingAddress()
+						.getAddressLine2());
+				oimOrders.setBillingZip(order2.getShippingAddress()
+						.getPostalCode());
 
-			long time = (System.currentTimeMillis() - start);
-			System.out.println(" -- Finished importing orders in "+ (time / 1000) + " seconds ("
-					+ NumberFormat.roundDouble((time / 1000 / 60))+ " minutes)" + "\n");
+				oimOrders
+						.setCustomerCity(order2.getShippingAddress().getCity());
+				oimOrders.setCustomerCompany(order2.getShippingAddress()
+						.getAddressLine3());
+				oimOrders.setCustomerCountry(order2.getShippingAddress()
+						.getCounty());
+				oimOrders.setCustomerEmail(order2.getBuyerEmail());
+				oimOrders
+						.setCustomerName(order2.getShippingAddress().getName());
+				oimOrders.setCustomerPhone(order2.getShippingAddress()
+						.getPhone());
+				oimOrders.setCustomerState(order2.getShippingAddress()
+						.getStateOrRegion());
+				oimOrders.setCustomerStreetAddress(order2.getShippingAddress()
+						.getAddressLine1());
+				oimOrders.setCustomerSuburb(order2.getShippingAddress()
+						.getAddressLine2());
+				oimOrders.setCustomerZip(order2.getShippingAddress()
+						.getPostalCode());
 
-			if (ordersSaved) {
+				oimOrders
+						.setDeliveryCity(order2.getShippingAddress().getCity());
+				oimOrders.setDeliveryCompany(order2.getShippingAddress()
+						.getAddressLine3());
+				oimOrders.setDeliveryCountry(order2.getShippingAddress()
+						.getCounty());
+				oimOrders.setDeliveryEmail(order2.getBuyerEmail());
+				oimOrders
+						.setDeliveryName(order2.getShippingAddress().getName());
+				oimOrders.setDeliveryPhone(order2.getShippingAddress()
+						.getPhone());
+				oimOrders.setDeliveryState(order2.getShippingAddress()
+						.getStateOrRegion());
+				oimOrders.setDeliveryStreetAddress(order2.getShippingAddress()
+						.getAddressLine1());
+				oimOrders.setDeliverySuburb(order2.getShippingAddress()
+						.getAddressLine2());
+				oimOrders.setDeliveryZip(order2.getShippingAddress()
+						.getPostalCode());
+
+				oimOrders.setInsertionTm(new Date());
+				oimOrders.setOimOrderBatches(batch);
+				// oimOrders.setOrderComment(order2);
+				oimOrders.setOrderFetchTm(new Date());
+				oimOrders.setOrderTm(order2.getPurchaseDate()
+						.toGregorianCalendar().getTime());
+				oimOrders.setOrderTotalAmount(Double.parseDouble(order2
+						.getOrderTotal().getAmount()));
+				oimOrders.setPayMethod(order2.getPaymentMethod());
+				oimOrders.setShippingDetails(order2.getShipServiceLevel());
+				oimOrders.setStoreOrderId(order2.getSellerOrderId());
+				m_dbSession.save(oimOrders);
+				ListOrderItemsRequest itemsRequest = new ListOrderItemsRequest();
+				itemsRequest.setSellerId(sellerId);
+				itemsRequest.setMWSAuthToken(mwsAuthToken);
+				String amazonOrderId = order2.getAmazonOrderId();
+				itemsRequest.setAmazonOrderId(amazonOrderId);
+
+				ListOrderItemsResponse listOrderResponse = client
+						.listOrderItems(itemsRequest);
+				ListOrderItemsResult listOrderItemsResult = listOrderResponse
+						.getListOrderItemsResult();
+				Set<OimOrderDetails> detailSet = new HashSet<OimOrderDetails>();
+				for (OrderItem orderItem : listOrderItemsResult.getOrderItems()) {
+					OimOrderDetails details = new OimOrderDetails();
+					details.setCostPrice(Double.parseDouble(orderItem
+							.getItemPrice().getAmount()));
+					details.setInsertionTm(new Date());
+					details.setOimOrderStatuses(new OimOrderStatuses(
+							OimConstants.ORDER_STATUS_UNPROCESSED));
+					String skuPrefix = orderItem.getSellerSKU().substring(0, 2);
+					OimSuppliers oimSuppliers = (OimSuppliers) supplierMap
+							.get(skuPrefix);
+					if (oimSuppliers != null) {
+						details.setOimSuppliers(oimSuppliers);
+					}
+					details.setProductDesc(orderItem.getTitle());
+					details.setProductName(orderItem.getTitle());
+					details.setQuantity(orderItem.getQuantityOrdered());
+					details.setSalePrice(Double.parseDouble(orderItem
+							.getItemPrice().getAmount()));
+					details.setSku(orderItem.getSellerSKU());
+					details.setOimOrders(oimOrders);
+					m_dbSession.save(details);
+					detailSet.add(details);
+				}
+				oimOrders.setOimOrderDetailses(detailSet);
+				m_dbSession.saveOrUpdate(oimOrders);
 				numOrdersSaved++;
-				System.out.println(new Date().toString() + " Order("+ numOrdersSaved + ")");
-
-				lastOrder.setOrderTotalAmount(totalOrderAmount);
-				m_dbSession.save(lastOrder);
-				tx.commit();
-				System.out.println("Import process complete !!!! ");
-			} else {
-				tx.rollback();
 			}
+			tx.commit();
+			logStream.println("Imported " + numOrdersSaved + " Orders");
+			log.debug("Finished importing orders...");
+
 		} catch (Exception e) {
-			System.out.println(e.getMessage());
-			e.printStackTrace();
+			if (tx != null && tx.isActive())
+				tx.rollback();
+			log.error(e.getMessage(), e);
+			logStream.println("Import Orders failed ");
 		}
 		return true;
 	}
 
-	public boolean init(int channelID, Session dbSession, OimLogStream log) {
+	public boolean init(int channelID, Session dbSession, OimLogStream logStream) {
 		m_dbSession = dbSession;
-		if (log != null)
-			logStream = log;
+		if (this.logStream != null)
+			this.logStream = logStream;
 		else
-			logStream = new OimLogStream();
+			this.logStream = new OimLogStream();
 
 		Transaction tx = m_dbSession.beginTransaction();
-		Query query = m_dbSession.createQuery("from salesmachine.hibernatedb.OimChannels as c where c.channelId=:channelID");
+		Query query = m_dbSession
+				.createQuery("from salesmachine.hibernatedb.OimChannels as c where c.channelId=:channelID");
 		query.setInteger("channelID", channelID);
 		tx.commit();
 		if (!query.iterate().hasNext()) {
@@ -420,15 +282,26 @@ public class AmazonOrderImport implements IOrderImport {
 
 		m_channel = (OimChannels) query.iterate().next();
 		System.out.println("Channel name : " + m_channel.getChannelName());
-		m_merchantIdentifier = PojoHelper.getChannelAccessDetailValue(m_channel, OimConstants.CHANNEL_ACCESSDETAIL_MERCHANT_TOKEN);
-		m_user = PojoHelper.getChannelAccessDetailValue(m_channel,OimConstants.CHANNEL_ACCESSDETAIL_AMAZON_USER);
-		m_password = PojoHelper.getChannelAccessDetailValue(m_channel,OimConstants.CHANNEL_ACCESSDETAIL_AMAZON_PASS);
-		m_merchantIdentifier = StringHandle.removeNull(m_merchantIdentifier);
-		m_user = StringHandle.removeNull(m_user);
-		m_password = StringHandle.removeNull(m_password);
-
-		if (m_merchantIdentifier.length() == 0) {
-			System.out.println("Merchant identifier is blank. Please provide this detail.");
+		sellerId = StringHandle.removeNull(PojoHelper
+				.getChannelAccessDetailValue(m_channel,
+						OimConstants.CHANNEL_ACCESSDETAIL_AMAZON_SELLERID));
+		mwsAuthToken = StringHandle
+				.removeNull(PojoHelper
+						.getChannelAccessDetailValue(
+								m_channel,
+								OimConstants.CHANNEL_ACCESSDETAIL_AMAZON_MWS_AUTH_TOKEN));
+		String marketPlaceIds = StringHandle
+				.removeNull(PojoHelper
+						.getChannelAccessDetailValue(
+								m_channel,
+								OimConstants.CHANNEL_ACCESSDETAIL_AMAZON_MWS_MARKETPLACE_ID));
+		String[] split = marketPlaceIds.split(",");
+		marketPlaceIdList = new ArrayList<String>();
+		for (int i = 0; i < split.length; i++) {
+			marketPlaceIdList.add(split[i]);
+		}
+		if (sellerId.length() == 0 || mwsAuthToken.length() == 0) {
+			log.error("Channel setup is not correct. Please provide this details.");
 			return false;
 		}
 		return true;
@@ -437,7 +310,8 @@ public class AmazonOrderImport implements IOrderImport {
 	public ArrayList getCurrentOrders() {
 		ArrayList orders = new ArrayList();
 
-		Query query = m_dbSession.createQuery("select o from salesmachine.hibernatedb.OimOrders o where o.oimOrderBatches.oimChannels=:chan");
+		Query query = m_dbSession
+				.createQuery("select o from salesmachine.hibernatedb.OimOrders o where o.oimOrderBatches.oimChannels=:chan");
 		query.setEntity("chan", m_channel);
 		Iterator iter = query.iterate();
 		while (iter.hasNext()) {
