@@ -449,6 +449,7 @@ public class ChannelRepositoryDb extends RepositoryBase implements
 		Session session = SessionManager.currentSession();
 		List<OimSupportedChannels> list = session
 				.createCriteria(OimSupportedChannels.class)
+				.add(Restrictions.isNull("deleteTm"))
 				.addOrder(Order.asc("channelName")).list();
 		List<SupportedChannel> supportedChannels = new ArrayList<SupportedChannel>();
 		for (OimSupportedChannels oimSupportedChannel : list) {

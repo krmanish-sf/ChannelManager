@@ -253,19 +253,20 @@ public class AmazonOrderImport implements IOrderImport {
 			tx.commit();
 			logStream.println("Imported " + numOrdersSaved + " Orders");
 			log.debug("Finished importing orders...");
-
+			return true;
 		} catch (Exception e) {
 			if (tx != null && tx.isActive())
 				tx.rollback();
 			log.error(e.getMessage(), e);
-			logStream.println("Import Orders failed ");
+			logStream.println("Import Orders failed (" + e.getMessage() + ")");
+			return false;
 		}
-		return true;
+
 	}
 
 	public boolean init(int channelID, Session dbSession, OimLogStream logStream) {
 		m_dbSession = dbSession;
-		if (this.logStream != null)
+		if (logStream != null)
 			this.logStream = logStream;
 		else
 			this.logStream = new OimLogStream();
@@ -302,6 +303,8 @@ public class AmazonOrderImport implements IOrderImport {
 		}
 		if (sellerId.length() == 0 || mwsAuthToken.length() == 0) {
 			log.error("Channel setup is not correct. Please provide this details.");
+			this.logStream
+					.println("Channel setup is not correct. Please provide this details.");
 			return false;
 		}
 		return true;

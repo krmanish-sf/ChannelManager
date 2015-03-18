@@ -459,6 +459,7 @@ function evalArray(obj, expr) {
 		}
 	};
 
+	
 }(jQuery));
 
 (function($) {
@@ -911,6 +912,82 @@ function evalArray(obj, expr) {
 			}
 
 		});
+	};
+	$.CM.bindChannels = function(tableId) {
+		return $(tableId)
+				.dataTable(
+						{
+							"bPaginate" : false,
+							"bLengthChange" : false,
+							"bPaginate" : false,
+							"bInfo" : false,
+							"bFilter" : false,
+							"bJQueryUI" : true,
+							"sDom" : 'lfrtip',
+							"sAjaxSource" : 'aggregators/channels',
+							"fnServerData" : function(sSource, aoData,
+									fnCallback, oSettings) {
+								oSettings.jqXHR = $(this).CRUD({
+									type : "GET",
+									url : sSource,
+									data : aoData,
+									success : fnCallback
+								});
+							},
+							"sAjaxDataProp" : '',
+							"aoColumns" : [
+									{
+										"mData" : "channelName"
+									},
+									{
+										"mData" : function(channel) {
+											for (var i = 0; i < channel.oimChannelAccessDetailses.length; i++) {
+												if (channel.oimChannelAccessDetailses[i].oimChannelAccessFields.fieldId == 1) {
+													if (channel.oimChannelAccessDetailses[i].detailFieldValue == null)
+														channel.oimChannelAccessDetailses[i].detailFieldValue = "N/A";
+													return '<a class="btn btn-default icon-info-sign btn-xs visible-xs addresspop" data-toggle="popover" data-container="body"  data-placement="bottom" data-content="'
+															+ channel.oimChannelAccessDetailses[i].detailFieldValue
+															+ '" data-original-title="Url"></a><div class="hidden-xs">'
+															+ channel.oimChannelAccessDetailses[i].detailFieldValue
+															+ '</div>';
+												}
+											}
+										}
+									},
+									{
+										"mData" : "oimSupportedChannels.channelName"
+									},
+									{
+										"bSortable" : false,
+										"sWidth" : "100px",
+										"mData" : function(channel) {
+											var toolTip = "Pull Order";
+											var onClick = 'onclick="$.CM.pullorder($(this).parent().parent())"';
+											var icon = "icon-circle-arrow-left";
+											if (channel.oimSupportedChannels.supportedChannelId == 0
+													|| channel.oimSupportedChannels.supportedChannelId == 7) {
+												toolTip += " not supported";
+												onClick = "";
+												icon = "icon-ban-circle";
+											}
+											return '<a class="btn btn-yellow btn-minier radius-2 dropdown-hover"  '
+													+ onClick
+													+ '><i class="'
+													+ icon
+													+ '"></i> <span role="menu" class="dropdown-menu tooltip-success purple dropdown-menu dropdown-yellow pull-right dropdown-caret dropdown-close">'
+													+ toolTip
+													+ '</span></a>&nbsp;<a class="btn btn-success btn-minier radius-2 dropdown-hover" data-toggle="modal" href="#uploadordermodal" onclick="uploadFile($(this).parent().parent().parent())"><i class="icon-upload"></i> <span data-rel="tooltip" class="dropdown-menu tooltip-success purple dropdown-menu dropdown-yellow pull-right dropdown-caret dropdown-close">File Upload</span></a>&nbsp;'
+													+ '<a href="#singleordermodal" onclick="singleorder($(this).parent().parent().parent())" class="btn btn-purple btn-minier radius-2 dropdown-hover" data-toggle="modal"><i class=" icon-plus-sign"></i> <span role="menu" class="dropdown-menu tooltip-success purple dropdown-menu dropdown-yellow pull-right dropdown-caret dropdown-close">Single Order Entry</span> </a>'
+													+ '&nbsp;<a href="#channelShippingModal" onclick="$.CM.viewShippingMap($(this).parent().parent())" class="btn btn-purple btn-minier radius-2 dropdown-hover" data-toggle="modal"><i class="icon-exchange"></i> <span role="menu" class="dropdown-menu tooltip-success purple dropdown-menu dropdown-yellow pull-right dropdown-caret dropdown-close">View Shipping Mapping</span></a>';
+										}
+									},
+									{
+										"bSortable" : false,
+										"mData" : function(row) {
+											return '<a class="btn btn-info btn-minier radius-2 dropdown-hover" data-toggle="modal" href="#mychanneledit" onclick="channel(\'edit\',$(this).parent().parent())"><i class="icon-pencil"></i><span data-rel="tooltip" class="dropdown-menu tooltip-success purple dropdown-menu dropdown-yellow pull-right dropdown-caret dropdown-close">Edit Channel Setting</span></a><a class="btn btn-danger btn-minier radius-2 dropdown-hover" onclick="del($($($(this).parent()).parent()))"><i class="icon-trash"></i><span data-rel="tooltip" class="dropdown-menu tooltip-success purple dropdown-menu dropdown-yellow pull-right dropdown-caret dropdown-close">Delete Channel</span></a>';
+										}
+									} ]
+						});
 	};
 }(jQuery));
 $.fn.dataTableExt.oApi.fnReloadAjax = function(oSettings, sNewSource,
