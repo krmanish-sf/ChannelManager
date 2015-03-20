@@ -24,6 +24,27 @@ public class OrderProcessingRule extends DomainBase implements
 	private Integer supplierId;
 	private String updateWithStatus;
 
+	private String pullWithStatus;
+	private String confirmedStatus;
+	private String processedStatus;
+	private String failedStatus;
+
+	public String getConfirmedStatus() {
+		return confirmedStatus;
+	}
+
+	public void setConfirmedStatus(String confirmedStatus) {
+		this.confirmedStatus = confirmedStatus;
+	}
+
+	public String getFailedStatus() {
+		return failedStatus;
+	}
+
+	public void setFailedStatus(String failedStatus) {
+		this.failedStatus = failedStatus;
+	}
+
 	public OrderProcessingRule() {
 	}
 
@@ -104,6 +125,22 @@ public class OrderProcessingRule extends DomainBase implements
 		BeanUtils
 				.copyProperties(source, target, new String[] { "oimChannels" });
 		return target;
+	}
+
+	public String getProcessedStatus() {
+		return processedStatus;
+	}
+
+	public void setProcessedStatus(String processedStatus) {
+		this.processedStatus = processedStatus;
+	}
+
+	public String getPullWithStatus() {
+		return pullWithStatus;
+	}
+
+	public void setPullWithStatus(String pullWithStatus) {
+		this.pullWithStatus = pullWithStatus;
 	}
 
 }

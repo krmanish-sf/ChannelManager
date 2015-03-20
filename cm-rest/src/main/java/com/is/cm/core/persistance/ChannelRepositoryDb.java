@@ -217,23 +217,10 @@ public class ChannelRepositoryDb extends RepositoryBase implements
 		OimOrderProcessingRule rule = new OimOrderProcessingRule();
 		rule.setOimChannels(c);
 		rule.setInsertionTm(new Date());
-
-		if ("1".equals(channelDetails.get("processorders"))) {
-			rule.setProcessAll(1);
-		} else {
-			String customStatus = channelDetails
-					.get("processorderscustomstatus");
-			rule.setProcessAll(0);
-			rule.setProcessWithStatus(customStatus);
-		}
-
-		if ("1".equals(channelDetails.get("updateorders"))) {
-			String orderStatus = channelDetails.get("updateorderscustomstatus");
-			rule.setUpdateStoreOrderStatus(1);
-			rule.setUpdateWithStatus(orderStatus);
-		} else {
-			rule.setUpdateStoreOrderStatus(0);
-		}
+		rule.setPullWithStatus(channelDetails.get("pull-with-status"));
+		rule.setConfirmedStatus(channelDetails.get("confirmed-status"));
+		rule.setProcessedStatus(channelDetails.get("processed-status"));
+		rule.setFailedStatus(channelDetails.get("failed-status"));
 		dbSession.save(rule);
 	}
 

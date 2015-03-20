@@ -459,7 +459,6 @@ function evalArray(obj, expr) {
 		}
 	};
 
-	
 }(jQuery));
 
 (function($) {
@@ -988,6 +987,67 @@ function evalArray(obj, expr) {
 										}
 									} ]
 						});
+	};
+	$.CM.resetChannelForm = function(val) {
+		switch (val) {
+		case "1":
+		case "2":
+		case "3":
+		case "6":
+			$(".store-info").each(
+					function(i, e) {
+						if ($(this).hasClass('amazon-store')
+								|| $(this).hasClass('yahoo-store')
+								|| $(this).hasClass('shop-store'))
+							$(this).hide();
+						else
+							$(this).show();
+					});
+			break;
+		case "7":
+			$(".store-info").each(function(i, e) {
+				if ($(this).hasClass('shop-store'))
+					$(this).show();
+				else
+					$(this).hide();
+			});
+			break;
+		case "4":
+			$(".store-info").each(function(i, e) {
+				if ($(this).hasClass('amazon-store'))
+					$(this).show();
+				else
+					$(this).hide();
+			});
+			break;
+		case "5":
+			$(".store-info").each(function(i, e) {
+				if ($(this).hasClass('yahoo-store'))
+					$(this).show();
+				else
+					$(this).hide();
+			});
+			break;
+		case "0":
+		default:
+			$(".store-info").hide();
+			break;
+		}
+		$('table#tablesuppliers tbody tr').each(function(i, e) {
+			var checkbox = $(e).find('input[type="checkbox"]');
+			if (val == "0") {
+				checkbox.prop('checked', false);
+			}
+			var input = $(e).find('input[type="text"]');
+			var select = $(e).find('select');
+			if (checkbox.is(":checked")) {
+				input.show();
+				select.show();
+			} else {
+				input.hide();
+				select.hide();
+			}
+		});
 	};
 }(jQuery));
 $.fn.dataTableExt.oApi.fnReloadAjax = function(oSettings, sNewSource,

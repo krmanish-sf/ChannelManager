@@ -48,6 +48,7 @@ import salesmachine.oim.api.OimConstants;
 import salesmachine.oim.stores.api.IOrderImport;
 import salesmachine.util.FormObject;
 import salesmachine.util.OimLogStream;
+import salesmachine.util.StringHandle;
 import HTTPClient.CookieModule;
 
 import com.stevesoft.pat.Regex;
@@ -85,20 +86,19 @@ public class CREOrderImport implements IOrderImport {
 		String scriptPath = PojoHelper.getChannelAccessDetailValue(m_channel,
 				OimConstants.CHANNEL_ACCESSDETAIL_SCRIPT_PATH);
 		LOG.info("Checking the script path");
-		if (scriptPath == null || scriptPath.equalsIgnoreCase("")) {
+		if (StringHandle.isNullOrEmpty(scriptPath)) {
 			LOG.warn("Channel is not yet setup for automation.");
 			log.println("Channel is not yet setup for automation. Script not found.");
 			return false;
 		}
 
-		Regex scriptMatch = Regex.perlCode("/http:\\/\\/(.+?)\\/(.+)/i");
+		Regex scriptMatch = Regex.perlCode("/https?:\\/\\/(.+?)\\/(.+)/i");
 		if (scriptMatch.search(scriptPath)) {
 			m_storeURL = scriptMatch.stringMatched(1);
 			m_filePath = "/" + scriptMatch.stringMatched(2);
 		} else {
 			LOG.error("FAILED TO PARSE SCRIPT LOCATION");
 			log.println("Failed to parse script location.");
-			LOG.error("FAILURE_PARSE_MARKETURL");
 			return false;
 		}
 		return true;
@@ -151,27 +151,20 @@ public class CREOrderImport implements IOrderImport {
 				return true;
 			}
 
-			if (m_orderProcessingRule.getUpdateStoreOrderStatus().intValue() > 0) {
-				// Update status
-				if (m_orderProcessingRule.getUpdateWithStatus() != null
-						&& m_orderProcessingRule.getUpdateWithStatus().trim()
-								.length() > 0) {
-					response = sendOrderStatusRequest(batch,
-							m_orderProcessingRule.getUpdateWithStatus());
-				}
-			} else {
-				// Don't update status
+			// Update status
+			if (!StringHandle.isNullOrEmpty(m_orderProcessingRule
+					.getConfirmedStatus())) {
+				response = sendOrderStatusRequest(batch,
+						m_orderProcessingRule.getConfirmedStatus());
 			}
 
-			if (!"".equals(response)) {
+			if (!StringHandle.isNullOrEmpty(response)) {
 				StringReader str = new StringReader(response);
 				List updatedOrders = parseUpdateResponse(str);
-
 				Set orders = batch.getOimOrderses();
-
 				Set confirmedOrders = new HashSet();
-				if (m_orderProcessingRule.getUpdateStoreOrderStatus()
-						.intValue() > 0) {
+				if (!StringHandle.isNullOrEmpty(m_orderProcessingRule
+						.getConfirmedStatus())) {
 					for (Iterator it = orders.iterator(); it.hasNext();) {
 						OimOrders order = (OimOrders) it.next();
 						if (updatedOrders.contains(order.getStoreOrderId())) {
@@ -310,11 +303,15 @@ public class CREOrderImport implements IOrderImport {
 	public String sendGetOrdersRequest() {
 		String getprod_xml = "<xmlPopulate>"
 				+ "<header>"
-				+ "<requestType>GetOrders</requestType>"
+				+ "<requestType>GetOrders</requestType><orderStatus>"
+				+ ((OimOrderProcessingRule) m_channel
+						.getOimOrderProcessingRules().iterator().next())
+						.getPullWithStatus()
+				+ "</orderStatus>"
 				+ "<passkey>"
 				+ PojoHelper.getChannelAccessDetailValue(m_channel,
 						OimConstants.CHANNEL_ACCESSDETAIL_AUTH_KEY)
-				+ "</passkey>" + "</header>" + "</xmlPopulate>";
+				+ "</passkey>" + "</header></xmlPopulate>";
 		String getprod_response = sendRequest(getprod_xml);
 		return getprod_response.trim();
 	}
@@ -501,12 +498,10 @@ public class CREOrderImport implements IOrderImport {
 			Iterator iter = query.iterate();
 			if (iter.hasNext()) {
 				m_orderProcessingRule = (OimOrderProcessingRule) iter.next();
-
-				if (m_orderProcessingRule.getProcessAll().intValue() == 0) {
-					String status = m_orderProcessingRule
-							.getProcessWithStatus();
-					LOG.info("status to pull :" + status);
-
+				if (StringHandle.isNullOrEmpty(m_orderProcessingRule
+						.getPullWithStatus())) {
+					String status = m_orderProcessingRule.getPullWithStatus();
+					LOG.info("Pull orders with status :" + status);
 					formData.put("orderpulltype", status);
 				}
 			}
@@ -582,9 +577,11 @@ public class CREOrderImport implements IOrderImport {
 	}
 
 	public String sendOrderStatusRequest(OimOrderBatches batch, String status) {
-		StringBuffer xmlrequest = new StringBuffer("<xmlPopulate>\n"
-				+ "<header>\n"
-				+ "<requestType>updateorders</requestType>\n"
+		StringBuffer xmlrequest = new StringBuffer("<xmlPopulate>"
+				+ "<header>"
+				+ "<requestType>updateorders</requestType><orderStatus>"
+				+ status
+				+ "</orderStatus>"
 				+ "<passkey>"
 				+ PojoHelper.getChannelAccessDetailValue(m_channel,
 						OimConstants.CHANNEL_ACCESSDETAIL_AUTH_KEY)

@@ -227,6 +227,7 @@
 												<tbody>
 												</tbody>
 											</table>
+											<div class="form-group"></div>
 											<div class="form-group center">
 												<button class="btn btn-info btn-sm second-button"
 													type="button">
@@ -251,70 +252,39 @@
 									<div class="panel-collapse collapse" id="collapseThree">
 										<div class="form-group">
 											<label class="col-sm-5 control-label no-padding-right">Orders
-												To Process From Channel</label>
+												To Pull From Channel</label>
 											<div class="col-sm-7">
-												<!-- <input type="radio" value="1" name="processorders"
-													id="processordersall" required="required"
-													onclick="javascript:hideNext(this);"
-													data-bind-channel="oimOrderProcessingRules[0].processAll" />
-												Process All Orders<br /> -->
-												<input type="hidden" value="0" name="processorders"
-													id="processorderscustom" required="required"
-													onclick="javascript:toggleNext(this);"
-													data-bind-channel="oimOrderProcessingRules[0].processAll" />
-												Process only orders with status set to<br> <input
-													type="text" required="required"
-													name="processorderscustomstatus"
-													id="processorderscustomstatus"
-													data-bind-channel="oimOrderProcessingRules[0].processWithStatus" />
+												Pull orders with status set to<br> <input type="text"
+													required="required" name="pull-with-status"
+													data-bind-channel="oimOrderProcessingRules[0].pullWithStatus" />
 											</div>
 										</div>
 										<div class="form-group">
-											<label class="col-sm-5 control-label no-padding-right">Edit
-												Order When Complete</label>
+											<label class="col-sm-5 control-label no-padding-right">Order
+												Status When imported to Channel Manager</label>
 											<div class="col-sm-7">
-												<!-- <input type="radio" value="0" name="updateorders"
-													id="updateordersno" required="required"
-													onclick="javascript:hideNext(this);"
-													data-bind-channel="oimOrderProcessingRules[0].updateStoreOrderStatus" />Do
-												not update order status <br />  -->
-												<input type="hidden" value="1" name="updateorders"
-													id="updateordersyes" onclick="javascript:toggleNext(this);"
-													required="required"
-													data-bind-channel="oimOrderProcessingRules[0].updateStoreOrderStatus" />Set
-												the order status to<br /> <input type="text"
-													required="required" name="updateorderscustomstatus"
-													id="updateorderscustomstatus"
-													data-bind-channel="oimOrderProcessingRules[0].updateWithStatus" />
+												<input type="text" required="required"
+													name="confirmed-status"
+													data-bind-channel="oimOrderProcessingRules[0].confirmedStatus" />
 											</div>
 										</div>
-										<script type="text/javascript">
-											function hideNext(el) {
-												if ($(el).is(":checked")) {
-													$(el)
-															.parent()
-															.find(
-																	'input[type="text"]')
-															.hide();
-												} else {
-													$(el)
-															.parent()
-															.find(
-																	'input[type="text"]')
-															.show();
-												}
-											}
-											function toggleNext(el) {
-												if ($(el).is(":checked"))
-													$(el).parent().find(
-															'input[type=text]')
-															.show();
-												else
-													$(el).parent().find(
-															'input[type=text]')
-															.hide();
-											}
-										</script>
+										<div class="form-group">
+											<label class="col-sm-5 control-label no-padding-right">Order
+												Status When Processed</label>
+											<div class="col-sm-7">
+												<input type="text" required="required"
+													name="processed-status"
+													data-bind-channel="oimOrderProcessingRules[0].processedStatus" />
+											</div>
+										</div>
+										<div class="form-group">
+											<label class="col-sm-5 control-label no-padding-right">Order
+												Status When Failed</label>
+											<div class="col-sm-7">
+												<input type="text" required="required" name="failed-status"
+													data-bind-channel="oimOrderProcessingRules[0].failedStatus" />
+											</div>
+										</div>
 										<div class="form-group center">
 											<button class="btn btn-info btn-sm" type="button"
 												id="btnSave">

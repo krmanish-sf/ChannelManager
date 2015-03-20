@@ -41,6 +41,8 @@ import salesmachine.oim.suppliers.OimSupplierOrderPlacement;
 import salesmachine.oim.suppliers.Supplier;
 import salesmachine.util.Filter;
 
+import com.stevesoft.pat.Regex;
+
 public class HibernateTest {
 	private static List<OimChannelAccessDetails> list;
 
@@ -493,6 +495,13 @@ public class HibernateTest {
 
 	public static void main(String args[]) {
 		try {
+			Regex scriptMatch = Regex.perlCode("/https?:\\/\\/(.+?)\\/(.+)/i");
+			if (scriptMatch.search("http://amitytest.authsafe.com/zencart-oim.php")) {
+				System.out.println( scriptMatch.stringMatched(1));
+				System.out.println( "/" + scriptMatch.stringMatched(2));
+				System.exit(0);
+			}
+			System.exit(0);
 			String abc = Filter.transForm("s/$//g", "$33.44");
 			String txt = "United Parcel Service (1 x 2.60lbs) (Next Day Air):";
 

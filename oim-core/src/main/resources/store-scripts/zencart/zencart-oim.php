@@ -82,6 +82,11 @@ function requestType($array_haystack,$PassKey)
 				$type="update Product Orders";
 				$cat=strtolower($xml_value["value"]);
 			}
+			if(strtolower($xml_value["tag"])=="orderstatus")
+			{
+				$type="Get Product Orders";
+				$order_status_name=$xml_value["value"];
+			}
 			if(strtolower($xml_value["tag"])=="passkey")
 			{
 				$entered_key=strtolower($xml_value["value"]);
@@ -106,26 +111,26 @@ function requestType($array_haystack,$PassKey)
 			}
 		case "getorders":
 			{
-				getOrders();
+				getOrders($order_status_name);
 				break;
 			}
 		case "updateorders":
 			{
-				updateorders($array_haystack);
+				updateorders($array_haystack,$order_status_name);
 				break;
 			}
 	}
 
 }
 
-function getOrders(){
+function getOrders($order_status_name){
 	
 	$xml_str = "<?xml version=\"1.0\" encoding=\"iso-8859-1\"?>\n";
 	$xml_str .="<OrderXML>";
 
 	connect_db();
 	//$sql="select o.orders_id, o.payment_method,o.delivery_name, o.customers_name, o.billing_name, o.delivery_company, o.customers_company, o.billing_company, o.delivery_city, o.customers_city, o.billing_city, o.delivery_street_address, o.customers_street_address, o.billing_street_address, o.delivery_suburb, o.customers_suburb, o.billing_suburb, o.delivery_postcode, o.customers_postcode, o.billing_postcode, o.delivery_state, o.customers_state, o.billing_state, o.delivery_country, o.customers_country, o.billing_country, o.customers_telephone, o.customers_email_address, date_format(o.date_purchased,'%m-%d-%Y') date_purchased, o.customers_id,op.products_model,op.final_price,op.products_price,op.products_quantity  from orders o ,orders_products op where o.orders_id=op.orders_id and o.orders_status = '1' order by o.date_purchased DESC";
-	$sql="select o.orders_id, o.payment_method,o.delivery_name, o.customers_name, o.billing_name, o.delivery_company, o.customers_company, o.billing_company, o.delivery_city, o.customers_city, o.billing_city, o.delivery_street_address, o.customers_street_address, o.billing_street_address, o.delivery_suburb, o.customers_suburb, o.billing_suburb, o.delivery_postcode, o.customers_postcode, o.billing_postcode, o.delivery_state, o.customers_state, o.billing_state, o.delivery_country, o.customers_country, o.billing_country, o.customers_telephone, o.customers_email_address, date_format(o.date_purchased,'%m-%d-%Y') date_purchased, o.customers_id from orders o where o.orders_status = '1' order by o.date_purchased DESC";
+	$sql="select o.orders_id, o.payment_method,o.delivery_name, o.customers_name, o.billing_name, o.delivery_company, o.customers_company, o.billing_company, o.delivery_city, o.customers_city, o.billing_city, o.delivery_street_address, o.customers_street_address, o.billing_street_address, o.delivery_suburb, o.customers_suburb, o.billing_suburb, o.delivery_postcode, o.customers_postcode, o.billing_postcode, o.delivery_state, o.customers_state, o.billing_state, o.delivery_country, o.customers_country, o.billing_country, o.customers_telephone, o.customers_email_address, date_format(o.date_purchased,'%m-%d-%Y') date_purchased, o.customers_id from orders o INNER JOIN orders_status os on o.orders_status=os.orders_status_id where os.orders_status_name = '".$order_status_name."' order by o.date_purchased DESC";
 	$ordPendingQuery = mysql_query($sql);
 
 	// Checking for pending orders
@@ -290,10 +295,15 @@ function connect_db(){
 	$db_selected = mysql_select_db(DB_NAME,$dbhandle);
 }
 
-function updateorders($array_haystack){
+function updateorders($array_haystack,$order_status_name){
 	connect_db();
 	$oID="";
 	$status="";
+	$status_id_query = "select orders_status_id from orders_status where orders_status_name='".$order_status_name."'";
+	$status_result = mysql_query($status_id_query);
+	if(mysql_num_rows($status_result) > 0){
+		$status = mysql_fetch_array($status_result);
+	}
 	$xml_str = "<?xml version=\"1.0\" encoding=\"iso-8859-1\"?>\n";
 	$xml_str .="<OrderUpdateXML>";
 	if ((!empty($array_haystack)) AND (is_array($array_haystack)))
@@ -308,14 +318,14 @@ function updateorders($array_haystack){
 			if(strtolower($xml_value["tag"])=="order_status")
 			{
 				$type="Checking for test database connection";
-				$status=strtolower($xml_value["value"]);
+				//$status=strtolower($xml_value["value"]);
 			}
 			if($oID!="" && $status!="") {
 				//	echo("update orders set orders_status = '" . $status . "' where orders_id = '".$oID."'");
-				mysql_query("update orders set orders_status = '" . $status . "' where orders_id = '".$oID."'");
+				mysql_query("update orders set orders_status = '" . $status["orders_status_id"] . "' where orders_id = '".$oID."'");
 				$xml_str .="<UpdatedOrder>" . $oID . "</UpdatedOrder>";
 				$oID="";
-				$status="";
+				//$status="";
 			} else {
 					
 			}
