@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8"?>
+<xs:schema attributeFormDefault="unqualified"
+	elementFormDefault="qualified" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+	<xs:element name="XMLRESPONSE">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element name="ORDERSTATUS" maxOccurs="unbounded"
+					minOccurs="0">
+					<xs:complexType>
+						<xs:sequence>
+							<xs:element type="xs:string" name="DATE" />
+							<xs:element type="xs:string" name="BRANCH" />
+							<xs:element type="xs:short" name="PONUM" />
+							<xs:element type="xs:int" name="ORDERNUM" />
+							<xs:element type="xs:int" name="INVOICE" />
+							<xs:element name="INVTOTAL">
+								<xs:complexType>
+									<xs:simpleContent>
+										<xs:extension base="xs:float">
+											<xs:attribute type="xs:byte" name="Tax" use="optional" />
+											<xs:attribute type="xs:byte" name="Freight" use="optional" />
+											<xs:attribute type="xs:byte" name="Handling"
+												use="optional" />
+											<xs:attribute type="xs:float" name="SubTotal"
+												use="optional" />
+										</xs:extension>
+									</xs:simpleContent>
+								</xs:complexType>
+							</xs:element>
+							<xs:element name="SOLDTO">
+								<xs:complexType>
+									<xs:sequence>
+										<xs:element type="xs:string" name="NAME" />
+										<xs:element type="xs:string" name="ADDRESS" />
+										<xs:element type="xs:string" name="CITY" />
+										<xs:element type="xs:string" name="STATE" />
+										<xs:element type="xs:short" name="ZIP" />
+									</xs:sequence>
+								</xs:complexType>
+							</xs:element>
+							<xs:element name="SHIPTO">
+								<xs:complexType>
+									<xs:sequence>
+										<xs:element type="xs:string" name="NAME" />
+										<xs:element type="xs:string" name="ADDRESS" />
+										<xs:element type="xs:string" name="CITY" />
+										<xs:element type="xs:string" name="STATE" />
+										<xs:element type="xs:short" name="ZIP" />
+									</xs:sequence>
+								</xs:complexType>
+							</xs:element>
+							<xs:element name="ORDERDETAIL">
+								<xs:complexType>
+									<xs:sequence>
+										<xs:element name="DETAILITEM" maxOccurs="unbounded"
+											minOccurs="0">
+											<xs:complexType>
+												<xs:sequence>
+													<xs:element type="xs:string" name="ITEMNO" />
+													<xs:element type="xs:float" name="PRICE" />
+													<xs:element type="xs:byte" name="QUANTITY" />
+													<xs:element type="xs:byte" name="QTYBO" />
+													<xs:element type="xs:string" name="VENDOR" />
+													<xs:element type="xs:string" name="DESCRIPTION" />
+												</xs:sequence>
+											</xs:complexType>
+										</xs:element>
+									</xs:sequence>
+								</xs:complexType>
+							</xs:element>
+							<xs:element name="PACKAGE" maxOccurs="unbounded"
+								minOccurs="0">
+								<xs:complexType>
+									<xs:sequence>
+										<xs:element type="xs:string" name="CARRIER" />
+										<xs:element type="xs:string" name="SERVICE" />
+										<xs:element type="xs:string" name="TRACKNUM" />
+										<xs:element type="xs:string" name="SHIPPED" />
+										<xs:element name="SHIPITEM" maxOccurs="unbounded"
+											minOccurs="0">
+											<xs:complexType>
+												<xs:sequence>
+													<xs:element type="xs:string" name="SHIPITEMNO" />
+													<xs:element type="xs:string" name="SERIALNO"
+														minOccurs="0" />
+												</xs:sequence>
+											</xs:complexType>
+										</xs:element>
+									</xs:sequence>
+								</xs:complexType>
+							</xs:element>
+						</xs:sequence>
+					</xs:complexType>
+				</xs:element>
+				<xs:element type="xs:string" name="STATUS" />
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+</xs:schema>
+
+

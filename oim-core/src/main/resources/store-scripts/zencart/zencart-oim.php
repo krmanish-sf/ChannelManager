@@ -299,6 +299,7 @@ function updateorders($array_haystack,$order_status_name){
 	connect_db();
 	$oID="";
 	$status="";
+	$order_tracking=null;
 	$status_id_query = "select orders_status_id from orders_status where orders_status_name='".$order_status_name."'";
 	$status_result = mysql_query($status_id_query);
 	if(mysql_num_rows($status_result) > 0){
@@ -312,17 +313,26 @@ function updateorders($array_haystack,$order_status_name){
 		{
 			if(strtolower($xml_value["tag"])=="order_id")
 			{
-				$type="Checking for test database connection";
+				//$type="Checking for test database connection";
 				$oID=strtolower($xml_value["value"]);
 			}
 			if(strtolower($xml_value["tag"])=="order_status")
 			{
-				$type="Checking for test database connection";
+				//$type="Checking for test database connection";
 				//$status=strtolower($xml_value["value"]);
 			}
-			if($oID!="" && $status!="") {
-				//	echo("update orders set orders_status = '" . $status . "' where orders_id = '".$oID."'");
+			if(strtolower($xml_value["tag"])=="order_tracking")
+			{
+				//$type="Checking for test database connection";
+				$order_tracking=strtolower($xml_value["value"]);
+			}
+			if($oID!="" && $status!="" && $order_tracking!=null) {
 				mysql_query("update orders set orders_status = '" . $status["orders_status_id"] . "' where orders_id = '".$oID."'");
+				echo  "amit".$status["orders_status_id"];
+				if($order_tracking!=""){
+					$insert_status_history = "INSERT INTO orders_status_history (`orders_status_history_id`, `orders_id`, `orders_status_id`, `date_added`, `customer_notified`, `comments`) VALUES (NULL, '".$oID."', '". $status["orders_status_id"] ."', now(), '0', '".$order_tracking."');";
+					mysql_query($insert_status_history);
+				}				
 				$xml_str .="<UpdatedOrder>" . $oID . "</UpdatedOrder>";
 				$oID="";
 				//$status="";

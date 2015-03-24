@@ -25,10 +25,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import salesmachine.email.EmailUtil;
+import salesmachine.hibernatedb.OimChannels;
 import salesmachine.hibernatedb.OimFields;
 import salesmachine.hibernatedb.OimFileFieldMap;
 import salesmachine.hibernatedb.OimFiletypes;
 import salesmachine.hibernatedb.OimOrderDetails;
+import salesmachine.hibernatedb.OimOrderProcessingRule;
 import salesmachine.hibernatedb.OimOrderStatuses;
 import salesmachine.hibernatedb.OimOrders;
 import salesmachine.hibernatedb.OimSupplierMethods;
@@ -38,7 +40,10 @@ import salesmachine.hibernatedb.OimVendorsuppOrderhistory;
 import salesmachine.hibernatedb.Reps;
 import salesmachine.hibernatedb.Vendors;
 import salesmachine.hibernatehelper.PojoHelper;
+import salesmachine.hibernatehelper.SessionManager;
 import salesmachine.oim.api.OimConstants;
+import salesmachine.oim.stores.api.IOrderImport;
+import salesmachine.oim.stores.impl.OrderImportManager;
 import salesmachine.orderfile.DatabaseFile;
 import salesmachine.orderfile.DefaultCsvFile;
 import salesmachine.orderfile.DefaultXlsFile;
@@ -1305,7 +1310,7 @@ public class OimSupplierOrderPlacement {
 	public String trackOrder(Integer vendorId, Integer orderDetailId) {
 		Session session = m_dbSession;
 		Transaction tx = null;
-		String orderStatus;
+		String orderStatus, trackingDetail = "Not shipped yet";
 		tx = session.beginTransaction();
 		OimOrderDetails oimOrderDetails = (OimOrderDetails) session.get(
 				OimOrderDetails.class, orderDetailId);
@@ -1333,6 +1338,33 @@ public class OimSupplierOrderPlacement {
 			break;
 		}
 		tx.commit();
+		// Update the store with tracking info
+		OimOrders oimOrders = oimOrderDetails.getOimOrders();
+		OimChannels oimChannels = oimOrders.getOimOrderBatches()
+				.getOimChannels();
+		Integer channelId = oimChannels.getChannelId();
+		IOrderImport iOrderImport = OrderImportManager
+				.getIOrderImport(channelId);
+		OimLogStream stream = new OimLogStream();
+		if (iOrderImport != null) {
+			log.debug("Created the iorderimport object");
+			if (!iOrderImport.init(channelId, SessionManager.currentSession(),
+					stream)) {
+				log.debug("Failed initializing the channel with Id:{}",
+						channelId);
+			} else {
+				iOrderImport
+						.updateStoreOrder(oimOrders.getStoreOrderId(),
+								((OimOrderProcessingRule) oimChannels
+										.getOimOrderProcessingRules()
+										.iterator().next())
+										.getProcessedStatus(), trackingDetail);
+			}
+		} else {
+			log.error("Could not find a bean to work with this Channel.");
+			stream.println("This Channel type is not supported for pushing order updates.");
+		}
+
 		return orderStatus;
 	}
 }

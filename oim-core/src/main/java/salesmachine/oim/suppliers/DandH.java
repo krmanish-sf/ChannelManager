@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -14,6 +15,9 @@ import java.util.Iterator;
 import java.util.List;
 
 import javax.net.ssl.HttpsURLConnection;
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBException;
+import javax.xml.bind.Unmarshaller;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -38,6 +42,7 @@ import salesmachine.hibernatedb.OimVendorSuppliers;
 import salesmachine.hibernatedb.Reps;
 import salesmachine.hibernatedb.Vendors;
 import salesmachine.hibernatehelper.SessionManager;
+import salesmachine.oim.suppliers.modal.dh.XMLRESPONSE;
 import salesmachine.util.StringHandle;
 
 public class DandH extends Supplier implements HasTracking {
@@ -455,6 +460,18 @@ public class DandH extends Supplier implements HasTracking {
 				sb.append(line + '\n');
 			}
 			response = sb.toString();
+			JAXBContext jaxbContext;
+			try {
+				jaxbContext = JAXBContext.newInstance(XMLRESPONSE.class);
+				Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
+
+				StringReader reader = new StringReader(response);
+				XMLRESPONSE orderStatusResponse = (XMLRESPONSE) unmarshaller
+						.unmarshal(reader);
+				log.debug(orderStatusResponse.getSTATUS());
+			} catch (JAXBException e) {
+				log.error(e.getMessage(), e);
+			}
 			String invoice = getXPath(response,
 					"/XMLRESPONSE/ORDERSTATUS/INVOICE/text()");
 			if ("In Process".equalsIgnoreCase(invoice)) {

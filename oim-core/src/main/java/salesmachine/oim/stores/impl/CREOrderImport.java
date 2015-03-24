@@ -594,6 +594,7 @@ public class CREOrderImport implements IOrderImport {
 			xmlrequest.append("<order_id>" + order.getStoreOrderId()
 					+ "</order_id>");
 			xmlrequest.append("<order_status>" + status + "</order_status>");
+			xmlrequest.append("<order_tracking></order_tracking>");
 			xmlrequest.append("</xml_order>\n");
 		}
 		xmlrequest.append("</xmlPopulate>");
@@ -682,6 +683,36 @@ public class CREOrderImport implements IOrderImport {
 		}
 		SessionManager.closeSession();
 		System.exit(0);
+	}
+
+	@Override
+	public boolean updateStoreOrder(String storeOrderId, String orderStatus,
+			String trackingDetail) {
+
+		StringBuffer xmlrequest = new StringBuffer("<xmlPopulate>"
+				+ "<header>"
+				+ "<requestType>updateorders</requestType><orderStatus>"
+				+ orderStatus
+				+ "</orderStatus>"
+				+ "<passkey>"
+				+ PojoHelper.getChannelAccessDetailValue(m_channel,
+						OimConstants.CHANNEL_ACCESSDETAIL_AUTH_KEY)
+				+ "</passkey></header>");
+
+		xmlrequest.append("<xml_order>\n");
+		xmlrequest.append("<order_id>" + storeOrderId + "</order_id>");
+		xmlrequest.append("<order_status>" + orderStatus + "</order_status>");
+		xmlrequest.append("<order_tracking>" + trackingDetail
+				+ "</order_tracking>");
+		xmlrequest.append("</xml_order>\n");
+
+		xmlrequest.append("</xmlPopulate>");
+
+		String getprod_response = sendRequest(xmlrequest.toString());
+		LOG.debug("Update Store order complete.");
+		LOG.debug(getprod_response.trim());
+
+		return false;
 	}
 
 }

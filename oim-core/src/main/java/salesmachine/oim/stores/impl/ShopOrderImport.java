@@ -19,4 +19,11 @@ public class ShopOrderImport implements IOrderImport {
 		return false;
 	}
 
+	@Override
+	public boolean updateStoreOrder(String storeOrderId, String orderStatus,
+			String trackingDetail) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
 }

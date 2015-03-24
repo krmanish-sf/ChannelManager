@@ -323,4 +323,11 @@ public class AmazonOrderImport implements IOrderImport {
 		}
 		return orders;
 	}
+
+	@Override
+	public boolean updateStoreOrder(String storeOrderId, String orderStatus,
+			String trackingDetail) {
+		// TODO Auto-generated method stub
+		return false;
+	}
 }

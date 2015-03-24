@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<xs:schema attributeFormDefault="unqualified"
+	elementFormDefault="qualified" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+	<xs:element name="XMLFORMPOST">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element type="xs:string" name="REQUEST" />
+				<xs:element name="LOGIN">
+					<xs:complexType>
+						<xs:sequence>
+							<xs:element type="xs:string" name="USERID" />
+							<xs:element type="xs:string" name="PASSWORD" />
+						</xs:sequence>
+					</xs:complexType>
+				</xs:element>
+				<xs:element name="STATUSREQUEST" maxOccurs="unbounded"
+					minOccurs="0">
+					<xs:complexType>
+						<xs:sequence>
+							<xs:element type="xs:string" name="PONUM" minOccurs="0" />
+							<xs:element type="xs:string" name="ORDERNUM"
+								minOccurs="0" />
+							<xs:element type="xs:string" name="INVOICE" minOccurs="0" />
+						</xs:sequence>
+					</xs:complexType>
+				</xs:element>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+</xs:schema>
+
+
