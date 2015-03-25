@@ -114,7 +114,7 @@ public class CREOrderImport implements IOrderImport {
 			}
 
 			Set suppliers = m_channel.getOimChannelSupplierMaps();
-			Map supplierMap = new HashMap();
+			Map<String, OimSuppliers> supplierMap = new HashMap<String, OimSuppliers>();
 			Iterator itr = suppliers.iterator();
 			while (itr.hasNext()) {
 				OimChannelSupplierMap map = (OimChannelSupplierMap) itr.next();
@@ -123,8 +123,8 @@ public class CREOrderImport implements IOrderImport {
 
 				String prefix = map.getSupplierPrefix();
 				OimSuppliers supplier = map.getOimSuppliers();
-				LOG.info("prefix :: " + prefix + "supplierID :: "
-						+ supplier.getSupplierId());
+				LOG.info("Supplier Prefix: {} ID: {}", prefix,
+						supplier.getSupplierId());
 				supplierMap.put(prefix, supplier);
 			}
 
@@ -138,7 +138,7 @@ public class CREOrderImport implements IOrderImport {
 			} else {
 				LOG.error("FAILURE_GETPRODUCT_NULL_RESPONSE");
 				logStream
-						.println("Channel returned null response in response to fetch Orders.");
+						.println("Channel returned null in response to fetch Orders.");
 				return false;
 			}
 
@@ -147,7 +147,7 @@ public class CREOrderImport implements IOrderImport {
 
 			if (batch.getOimOrderses().size() == 0) {
 				logStream
-						.println("\nOrder Import Process Complete.\nNo new orders found on the store.");
+						.println("Order Import Process Complete. No new orders found on the store.");
 				return true;
 			}
 
@@ -594,7 +594,7 @@ public class CREOrderImport implements IOrderImport {
 			xmlrequest.append("<order_id>" + order.getStoreOrderId()
 					+ "</order_id>");
 			xmlrequest.append("<order_status>" + status + "</order_status>");
-			xmlrequest.append("<order_tracking></order_tracking>");
+			xmlrequest.append("<order_tracking>Imported to InventorySource Channel Manager</order_tracking>");
 			xmlrequest.append("</xml_order>\n");
 		}
 		xmlrequest.append("</xmlPopulate>");

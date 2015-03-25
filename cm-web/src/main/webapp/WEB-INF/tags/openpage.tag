@@ -6,10 +6,14 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta http-equiv="content-type" content="text/html; charset=UTF-8">
-<title>Inventory Source Channel Manager</title>
+<meta http-equiv="Content-Type" content="text/html">
 <meta name="description" content="overview &amp; stats">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="viewport"
+	content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<link rel="shortcut icon" href="static/favicon.ico" type="image/x-icon">
+<link rel="icon" href="static/favicon.ico" type="image/x-icon">
+<title>Inventory Source Channel Manager</title>
 <!-- basic styles -->
 
 <link href="${pageContext.request.contextPath}/static/css/bootstrap.css"

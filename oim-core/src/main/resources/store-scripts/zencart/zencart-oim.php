@@ -307,6 +307,7 @@ function updateorders($array_haystack,$order_status_name){
 	}
 	$xml_str = "<?xml version=\"1.0\" encoding=\"iso-8859-1\"?>\n";
 	$xml_str .="<OrderUpdateXML>";
+	//echo "$order_tracking:".$order_tracking."A";
 	if ((!empty($array_haystack)) AND (is_array($array_haystack)))
 	{
 		foreach ($array_haystack as $xml_key => $xml_value)
@@ -325,10 +326,12 @@ function updateorders($array_haystack,$order_status_name){
 			{
 				//$type="Checking for test database connection";
 				$order_tracking=strtolower($xml_value["value"]);
+				//echo "$order_tracking:".$order_tracking."A";
 			}
-			if($oID!="" && $status!="" && $order_tracking!=null) {
+			
+			if($oID!="" && $status!="" && $order_tracking!="") {
 				mysql_query("update orders set orders_status = '" . $status["orders_status_id"] . "' where orders_id = '".$oID."'");
-				echo  "amit".$status["orders_status_id"];
+				//echo  "amit".$status["orders_status_id"];
 				if($order_tracking!=""){
 					$insert_status_history = "INSERT INTO orders_status_history (`orders_status_history_id`, `orders_id`, `orders_status_id`, `date_added`, `customer_notified`, `comments`) VALUES (NULL, '".$oID."', '". $status["orders_status_id"] ."', now(), '0', '".$order_tracking."');";
 					mysql_query($insert_status_history);
