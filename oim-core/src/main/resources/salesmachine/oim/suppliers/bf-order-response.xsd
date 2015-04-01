@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema attributeFormDefault="unqualified"
+	elementFormDefault="qualified" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+	<xs:element name="orderxmlresp">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element name="order">
+					<xs:complexType>
+						<xs:sequence>
+							<xs:element type="xs:byte" name="id" />
+							<xs:element name="shipping">
+								<xs:complexType>
+									<xs:sequence>
+										<xs:element type="xs:string" name="ship_to" />
+										<xs:element type="xs:string" name="ship_contact" />
+										<xs:element type="xs:string" name="ship_add" />
+										<xs:element type="xs:string" name="ship_add2" />
+										<xs:element type="xs:string" name="ship_city" />
+										<xs:element type="xs:string" name="ship_st" />
+										<xs:element type="xs:short" name="ship_zip" />
+									</xs:sequence>
+								</xs:complexType>
+							</xs:element>
+							<xs:element name="processing">
+								<xs:complexType>
+									<xs:sequence>
+										<xs:element type="xs:byte" name="po_num" />
+										<xs:element type="xs:string" name="exp" />
+										<xs:element type="xs:string" name="ship_via" />
+										<xs:element type="xs:string" name="ship_acct" />
+										<xs:element type="xs:string" name="inv_notes" />
+										<xs:element type="xs:int" name="inv_num" />
+										<xs:element type="xs:int" name="xml_conf" />
+										<xs:element type="xs:string" name="xml_action" />
+									</xs:sequence>
+								</xs:complexType>
+							</xs:element>
+							<xs:element name="totals">
+								<xs:complexType>
+									<xs:sequence>
+										<xs:element type="xs:float" name="sub_total" />
+										<xs:element type="xs:byte" name="disc" />
+										<xs:element type="xs:float" name="handling" />
+										<xs:element type="xs:string" name="exp_fee" />
+										<xs:element type="xs:float" name="ship_amt" />
+										<xs:element type="xs:string" name="tax" />
+										<xs:element type="xs:float" name="inv_total" />
+									</xs:sequence>
+								</xs:complexType>
+							</xs:element>
+						</xs:sequence>
+					</xs:complexType>
+				</xs:element>
+				<xs:element name="items">
+					<xs:complexType>
+						<xs:sequence>
+							<xs:element name="item">
+								<xs:complexType>
+									<xs:sequence>
+										<xs:element type="xs:string" name="vend_id" />
+										<xs:element type="xs:string" name="item_id" />
+										<xs:element type="xs:byte" name="qty" />
+										<xs:element type="xs:string" name="action" />
+										<xs:element type="xs:float" name="price" />
+									</xs:sequence>
+								</xs:complexType>
+							</xs:element>
+						</xs:sequence>
+					</xs:complexType>
+				</xs:element>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+</xs:schema>
