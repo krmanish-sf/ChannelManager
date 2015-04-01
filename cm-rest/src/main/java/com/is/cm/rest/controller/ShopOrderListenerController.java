@@ -18,11 +18,13 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import salesmachine.oim.stores.modal.shop.order.CCTRANSMISSION;
+import salesmachine.oim.stores.modal.shop.order.CCTRANSMISSIONRESPONSE;
+import salesmachine.oim.stores.modal.shop.order.ORDER;
+import salesmachine.oim.stores.modal.shop.order.STATUS;
+import salesmachine.oim.stores.modal.shop.order.status.OrderStatus;
+
 import com.is.cm.core.domain.Order;
-import com.is.cm.core.domain.shop.CCTRANSMISSION;
-import com.is.cm.core.domain.shop.CCTRANSMISSIONRESPONSE;
-import com.is.cm.core.domain.shop.ORDER;
-import com.is.cm.core.domain.shop.STATUS;
 import com.is.cm.core.event.CreateEvent;
 import com.is.cm.core.event.CreatedEvent;
 import com.is.cm.core.service.OrderService;
@@ -49,7 +51,7 @@ public class ShopOrderListenerController extends BaseController {
 		cc.setORDER(order);
 		STATUS status = new STATUS();
 		status.setMESSAGE("Invoice received successfully");
-		status.setSTATUSCODE("700");
+		status.setSTATUSCODE(OrderStatus.Order_received_by_seller.getValue());
 		cc.setSTATUS(status);
 		return new ResponseEntity<CCTRANSMISSIONRESPONSE>(cc, HttpStatus.OK);
 	}

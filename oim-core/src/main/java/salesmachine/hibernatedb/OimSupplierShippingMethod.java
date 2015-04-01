@@ -2,6 +2,8 @@ package salesmachine.hibernatedb;
 
 import java.io.Serializable;
 
+import salesmachine.util.StringHandle;
+
 public class OimSupplierShippingMethod implements Serializable {
 	private static final long serialVersionUID = -3498347688014484119L;
 	private int id;
@@ -70,6 +72,6 @@ public class OimSupplierShippingMethod implements Serializable {
 
 	@Override
 	public String toString() {
-		return this.carrierName + " " + this.name;
+		return (StringHandle.removeNull(this.carrierName) + " " + this.name).trim();
 	}
 }

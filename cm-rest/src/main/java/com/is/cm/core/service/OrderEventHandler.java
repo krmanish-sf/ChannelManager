@@ -13,9 +13,9 @@ import salesmachine.hibernatedb.OimOrderDetails;
 import salesmachine.hibernatedb.OimOrderStatuses;
 import salesmachine.hibernatedb.OimOrders;
 import salesmachine.oim.api.OimConstants;
+import salesmachine.oim.stores.modal.shop.order.CCTRANSMISSION;
 
 import com.is.cm.core.domain.Order;
-import com.is.cm.core.domain.shop.CCTRANSMISSION;
 import com.is.cm.core.event.CreateEvent;
 import com.is.cm.core.event.CreatedEvent;
 import com.is.cm.core.event.ReadCollectionEvent;

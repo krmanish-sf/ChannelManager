@@ -6,7 +6,7 @@
 //
 
 
-package com.is.cm.core.domain.shop;
+package salesmachine.oim.stores.modal.shop.order;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
@@ -25,7 +25,8 @@ import javax.xml.bind.annotation.XmlType;
  *   &lt;complexContent>
  *     &lt;restriction base="{http://www.w3.org/2001/XMLSchema}anyType">
  *       &lt;sequence>
- *         &lt;element ref="{}CU_SHOPPER_FLAG" minOccurs="0"/>
+ *         &lt;element ref="{}DISCOUNT_CODE"/>
+ *         &lt;element ref="{}DISCOUNT_AMOUNT"/>
  *       &lt;/sequence>
  *     &lt;/restriction>
  *   &lt;/complexContent>
@@ -36,36 +37,63 @@ import javax.xml.bind.annotation.XmlType;
  */
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "", propOrder = {
-    "cushopperflag"
+    "discountcode",
+    "discountamount"
 })
-@XmlRootElement(name = "CU_SHOPPER_FLAGS")
-public class CUSHOPPERFLAGS {
+@XmlRootElement(name = "CC_DISCOUNT")
+public class CCDISCOUNT {
 
-    @XmlElement(name = "CU_SHOPPER_FLAG")
-    protected CUSHOPPERFLAG cushopperflag;
+    @XmlElement(name = "DISCOUNT_CODE", required = true)
+    protected String discountcode;
+    @XmlElement(name = "DISCOUNT_AMOUNT", required = true)
+    protected String discountamount;
 
     /**
-     * Gets the value of the cushopperflag property.
+     * Gets the value of the discountcode property.
      * 
      * @return
      *     possible object is
-     *     {@link CUSHOPPERFLAG }
+     *     {@link String }
      *     
      */
-    public CUSHOPPERFLAG getCUSHOPPERFLAG() {
-        return cushopperflag;
+    public String getDISCOUNTCODE() {
+        return discountcode;
     }
 
     /**
-     * Sets the value of the cushopperflag property.
+     * Sets the value of the discountcode property.
      * 
      * @param value
      *     allowed object is
-     *     {@link CUSHOPPERFLAG }
+     *     {@link String }
      *     
      */
-    public void setCUSHOPPERFLAG(CUSHOPPERFLAG value) {
-        this.cushopperflag = value;
+    public void setDISCOUNTCODE(String value) {
+        this.discountcode = value;
+    }
+
+    /**
+     * Gets the value of the discountamount property.
+     * 
+     * @return
+     *     possible object is
+     *     {@link String }
+     *     
+     */
+    public String getDISCOUNTAMOUNT() {
+        return discountamount;
+    }
+
+    /**
+     * Sets the value of the discountamount property.
+     * 
+     * @param value
+     *     allowed object is
+     *     {@link String }
+     *     
+     */
+    public void setDISCOUNTAMOUNT(String value) {
+        this.discountamount = value;
     }
 
 }

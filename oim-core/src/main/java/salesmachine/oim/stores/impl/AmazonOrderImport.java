@@ -1,7 +1,6 @@
 package salesmachine.oim.stores.impl;
 
-import java.text.DecimalFormat;
-import java.text.SimpleDateFormat;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -12,6 +11,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.Marshaller;
 import javax.xml.datatype.XMLGregorianCalendar;
 
 import org.hibernate.Query;
@@ -32,9 +33,16 @@ import salesmachine.hibernatedb.OimSuppliers;
 import salesmachine.hibernatehelper.PojoHelper;
 import salesmachine.oim.api.OimConstants;
 import salesmachine.oim.stores.api.IOrderImport;
+import salesmachine.oim.stores.modal.amazon.order.fulfillment.OrderAcknowledgement;
+import salesmachine.util.ApplicationProperties;
 import salesmachine.util.OimLogStream;
 import salesmachine.util.StringHandle;
 
+import com.amazonaws.mws.MarketplaceWebService;
+import com.amazonaws.mws.MarketplaceWebServiceClient;
+import com.amazonaws.mws.MarketplaceWebServiceConfig;
+import com.amazonaws.mws.model.IdList;
+import com.amazonaws.mws.model.SubmitFeedRequest;
 import com.amazonservices.mws.client.MwsUtl;
 import com.amazonservices.mws.orders._2013_09_01.MarketplaceWebServiceOrdersClient;
 import com.amazonservices.mws.orders._2013_09_01.model.ListOrderItemsRequest;
@@ -56,14 +64,66 @@ public class AmazonOrderImport implements IOrderImport {
 	private OimOrderProcessingRule m_orderProcessingRule;
 	private OimLogStream logStream;
 
+	public boolean init(int channelID, Session dbSession, OimLogStream logStream) {
+		m_dbSession = dbSession;
+		if (logStream != null)
+			this.logStream = logStream;
+		else
+			this.logStream = new OimLogStream();
+
+		Transaction tx = m_dbSession.beginTransaction();
+		Query query = m_dbSession
+				.createQuery("from salesmachine.hibernatedb.OimChannels as c where c.channelId=:channelID");
+		query.setInteger("channelID", channelID);
+		tx.commit();
+		if (!query.iterate().hasNext()) {
+			System.out.println("No channel found for channel id: " + channelID);
+			return false;
+		}
+
+		m_channel = (OimChannels) query.iterate().next();
+		System.out.println("Channel name : " + m_channel.getChannelName());
+		sellerId = StringHandle.removeNull(PojoHelper
+				.getChannelAccessDetailValue(m_channel,
+						OimConstants.CHANNEL_ACCESSDETAIL_AMAZON_SELLERID));
+		mwsAuthToken = StringHandle
+				.removeNull(PojoHelper
+						.getChannelAccessDetailValue(
+								m_channel,
+								OimConstants.CHANNEL_ACCESSDETAIL_AMAZON_MWS_AUTH_TOKEN));
+		String marketPlaceIds = StringHandle
+				.removeNull(PojoHelper
+						.getChannelAccessDetailValue(
+								m_channel,
+								OimConstants.CHANNEL_ACCESSDETAIL_AMAZON_MWS_MARKETPLACE_ID));
+		String[] split = marketPlaceIds.split(",");
+		marketPlaceIdList = new ArrayList<String>();
+		for (int i = 0; i < split.length; i++) {
+			marketPlaceIdList.add(split[i]);
+		}
+		if (sellerId.length() == 0 || mwsAuthToken.length() == 0) {
+			log.error("Channel setup is not correct. Please provide this details.");
+			this.logStream
+					.println("Channel setup is not correct. Please provide this details.");
+			return false;
+		}
+
+		query = m_dbSession
+				.createQuery("select opr from salesmachine.hibernatedb.OimOrderProcessingRule opr where opr.deleteTm is null and opr.oimChannels=:chan");
+		query.setEntity("chan", m_channel);
+		Iterator iter = query.iterate();
+		if (iter.hasNext()) {
+			m_orderProcessingRule = (OimOrderProcessingRule) iter.next();
+		}
+		return true;
+	}
+
 	public boolean getVendorOrders() {
 		Transaction tx = null;
 
 		try {
-			DecimalFormat df = new DecimalFormat("#.##");
-			SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
 			Set suppliers = m_channel.getOimChannelSupplierMaps();
-			Map supplierMap = new HashMap();
+			Map<String, OimSuppliers> supplierMap = new HashMap<String, OimSuppliers>();
 			Iterator itr = suppliers.iterator();
 			while (itr.hasNext()) {
 				OimChannelSupplierMap map = (OimChannelSupplierMap) itr.next();
@@ -72,8 +132,8 @@ public class AmazonOrderImport implements IOrderImport {
 
 				String prefix = map.getSupplierPrefix();
 				OimSuppliers supplier = map.getOimSuppliers();
-				System.out.println("prefix :: " + prefix + "supplierID :: "
-						+ supplier.getSupplierId());
+				log.info("Supplier Prefix: {} ID: {}", prefix,
+						supplier.getSupplierId());
 				supplierMap.put(prefix, supplier);
 			}
 
@@ -93,20 +153,49 @@ public class AmazonOrderImport implements IOrderImport {
 
 			tx = m_dbSession.beginTransaction();
 
-			long start = System.currentTimeMillis();
-
 			// Get a client connection.
 			// Make sure you've set the variables in
-			// MarketplaceWebServiceOrdersSampleConfig.
+			// MarketplaceWebServiceOrdersClientConfig.
 			MarketplaceWebServiceOrdersClient client = MarketplaceWebServiceOrdersClientConfig
 					.getClient();
-
+			MarketplaceWebServiceConfig config = new MarketplaceWebServiceConfig();
+			MarketplaceWebService service = new MarketplaceWebServiceClient(
+					ApplicationProperties
+							.getProperty(ApplicationProperties.MWS_ACCESS_KEY),
+					ApplicationProperties
+							.getProperty(ApplicationProperties.MWS_SECRET_KEY),
+					ApplicationProperties
+							.getProperty(ApplicationProperties.MWS_APP_NAME),
+					ApplicationProperties
+							.getProperty(ApplicationProperties.MWS_APP_VERSION),
+					config);
 			// Create a request.
 			ListOrdersRequest request = new ListOrdersRequest();
-
 			request.setSellerId(sellerId);
 			request.setMWSAuthToken(mwsAuthToken);
 			request.setMarketplaceId(marketPlaceIdList);
+			if (!StringHandle.isNullOrEmpty(m_orderProcessingRule
+					.getPullWithStatus())) {
+				List<String> pullWithStatus = new ArrayList<String>();
+				String[] split = m_orderProcessingRule.getPullWithStatus()
+						.split(",");
+				for (String pullStatus : split) {
+					pullWithStatus.add(pullStatus);
+				}
+				request.setOrderStatus(pullWithStatus);
+			}
+			SubmitFeedRequest submitFeedRequest = new SubmitFeedRequest();
+			submitFeedRequest.setMerchant(sellerId);
+			submitFeedRequest.setMWSAuthToken(mwsAuthToken);
+			submitFeedRequest
+					.setMarketplaceIdList(new IdList(marketPlaceIdList));
+			submitFeedRequest.setFeedType("_POST_ORDER_ACKNOWLEDGEMENT_DATA_");
+			JAXBContext jaxbContext = JAXBContext
+					.newInstance(OrderAcknowledgement.class);
+			Marshaller marshaller = jaxbContext.createMarshaller();
+			// marshaller.marshal(, output);
+			InputStream orderAcknowledgement = null;
+			submitFeedRequest.setFeedContent(orderAcknowledgement);
 			Calendar c = Calendar.getInstance();
 			c.setTime(new Date());
 			c.add(Calendar.DATE, -14);
@@ -137,7 +226,8 @@ public class AmazonOrderImport implements IOrderImport {
 
 			int numOrdersSaved = 0;
 			for (Order order2 : response.getListOrdersResult().getOrders()) {
-				if (currentOrders.contains(order2.getSellerOrderId())) {
+				String amazonOrderId = order2.getAmazonOrderId();
+				if (currentOrders.contains(amazonOrderId)) {
 					log.debug("Order is already imported in the system, skipping to next Order.");
 					continue;
 				}
@@ -210,12 +300,13 @@ public class AmazonOrderImport implements IOrderImport {
 						.getOrderTotal().getAmount()));
 				oimOrders.setPayMethod(order2.getPaymentMethod());
 				oimOrders.setShippingDetails(order2.getShipServiceLevel());
-				oimOrders.setStoreOrderId(order2.getSellerOrderId());
+
+				oimOrders.setStoreOrderId(amazonOrderId);
 				m_dbSession.save(oimOrders);
 				ListOrderItemsRequest itemsRequest = new ListOrderItemsRequest();
 				itemsRequest.setSellerId(sellerId);
 				itemsRequest.setMWSAuthToken(mwsAuthToken);
-				String amazonOrderId = order2.getAmazonOrderId();
+
 				itemsRequest.setAmazonOrderId(amazonOrderId);
 
 				ListOrderItemsResponse listOrderResponse = client
@@ -262,52 +353,6 @@ public class AmazonOrderImport implements IOrderImport {
 			return false;
 		}
 
-	}
-
-	public boolean init(int channelID, Session dbSession, OimLogStream logStream) {
-		m_dbSession = dbSession;
-		if (logStream != null)
-			this.logStream = logStream;
-		else
-			this.logStream = new OimLogStream();
-
-		Transaction tx = m_dbSession.beginTransaction();
-		Query query = m_dbSession
-				.createQuery("from salesmachine.hibernatedb.OimChannels as c where c.channelId=:channelID");
-		query.setInteger("channelID", channelID);
-		tx.commit();
-		if (!query.iterate().hasNext()) {
-			System.out.println("No channel found for channel id: " + channelID);
-			return false;
-		}
-
-		m_channel = (OimChannels) query.iterate().next();
-		System.out.println("Channel name : " + m_channel.getChannelName());
-		sellerId = StringHandle.removeNull(PojoHelper
-				.getChannelAccessDetailValue(m_channel,
-						OimConstants.CHANNEL_ACCESSDETAIL_AMAZON_SELLERID));
-		mwsAuthToken = StringHandle
-				.removeNull(PojoHelper
-						.getChannelAccessDetailValue(
-								m_channel,
-								OimConstants.CHANNEL_ACCESSDETAIL_AMAZON_MWS_AUTH_TOKEN));
-		String marketPlaceIds = StringHandle
-				.removeNull(PojoHelper
-						.getChannelAccessDetailValue(
-								m_channel,
-								OimConstants.CHANNEL_ACCESSDETAIL_AMAZON_MWS_MARKETPLACE_ID));
-		String[] split = marketPlaceIds.split(",");
-		marketPlaceIdList = new ArrayList<String>();
-		for (int i = 0; i < split.length; i++) {
-			marketPlaceIdList.add(split[i]);
-		}
-		if (sellerId.length() == 0 || mwsAuthToken.length() == 0) {
-			log.error("Channel setup is not correct. Please provide this details.");
-			this.logStream
-					.println("Channel setup is not correct. Please provide this details.");
-			return false;
-		}
-		return true;
 	}
 
 	public ArrayList getCurrentOrders() {

@@ -6,7 +6,7 @@
 //
 
 
-package com.is.cm.core.domain.shop;
+package salesmachine.oim.stores.modal.shop.order;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
@@ -25,8 +25,7 @@ import javax.xml.bind.annotation.XmlType;
  *   &lt;complexContent>
  *     &lt;restriction base="{http://www.w3.org/2001/XMLSchema}anyType">
  *       &lt;sequence>
- *         &lt;element ref="{}DISCOUNT_CODE"/>
- *         &lt;element ref="{}DISCOUNT_AMOUNT"/>
+ *         &lt;element ref="{}ACCOUNT_HOLDER_NAME"/>
  *       &lt;/sequence>
  *     &lt;/restriction>
  *   &lt;/complexContent>
@@ -37,63 +36,36 @@ import javax.xml.bind.annotation.XmlType;
  */
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "", propOrder = {
-    "discountcode",
-    "discountamount"
+    "accountholdername"
 })
-@XmlRootElement(name = "CC_DISCOUNT")
-public class CCDISCOUNT {
+@XmlRootElement(name = "COD")
+public class COD {
 
-    @XmlElement(name = "DISCOUNT_CODE", required = true)
-    protected String discountcode;
-    @XmlElement(name = "DISCOUNT_AMOUNT", required = true)
-    protected String discountamount;
+    @XmlElement(name = "ACCOUNT_HOLDER_NAME", required = true)
+    protected String accountholdername;
 
     /**
-     * Gets the value of the discountcode property.
+     * Gets the value of the accountholdername property.
      * 
      * @return
      *     possible object is
      *     {@link String }
      *     
      */
-    public String getDISCOUNTCODE() {
-        return discountcode;
+    public String getACCOUNTHOLDERNAME() {
+        return accountholdername;
     }
 
     /**
-     * Sets the value of the discountcode property.
+     * Sets the value of the accountholdername property.
      * 
      * @param value
      *     allowed object is
      *     {@link String }
      *     
      */
-    public void setDISCOUNTCODE(String value) {
-        this.discountcode = value;
-    }
-
-    /**
-     * Gets the value of the discountamount property.
-     * 
-     * @return
-     *     possible object is
-     *     {@link String }
-     *     
-     */
-    public String getDISCOUNTAMOUNT() {
-        return discountamount;
-    }
-
-    /**
-     * Sets the value of the discountamount property.
-     * 
-     * @param value
-     *     allowed object is
-     *     {@link String }
-     *     
-     */
-    public void setDISCOUNTAMOUNT(String value) {
-        this.discountamount = value;
+    public void setACCOUNTHOLDERNAME(String value) {
+        this.accountholdername = value;
     }
 
 }

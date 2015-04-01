@@ -6,11 +6,11 @@
 //
 
 
-package com.is.cm.core.domain.shop;
+package salesmachine.oim.stores.modal.shop.order;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
 
@@ -24,10 +24,8 @@ import javax.xml.bind.annotation.XmlType;
  * &lt;complexType>
  *   &lt;complexContent>
  *     &lt;restriction base="{http://www.w3.org/2001/XMLSchema}anyType">
- *       &lt;sequence>
- *         &lt;element ref="{}ORDER"/>
- *         &lt;element ref="{}STATUS"/>
- *       &lt;/sequence>
+ *       &lt;attribute name="STATUS_CODE" use="required" type="{http://www.w3.org/2001/XMLSchema}string" />
+ *       &lt;attribute name="MESSAGE" use="required" type="{http://www.w3.org/2001/XMLSchema}string" />
  *     &lt;/restriction>
  *   &lt;/complexContent>
  * &lt;/complexType>
@@ -36,64 +34,61 @@ import javax.xml.bind.annotation.XmlType;
  * 
  */
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "", propOrder = {
-    "order",
-    "status"
-})
-@XmlRootElement(name = "CC_TRANSMISSION_RESPONSE")
-public class CCTRANSMISSIONRESPONSE {
+@XmlType(name = "")
+@XmlRootElement(name = "STATUS")
+public class STATUS {
 
-    @XmlElement(name = "ORDER", required = true)
-    protected ORDER order;
-    @XmlElement(name = "STATUS", required = true)
-    protected STATUS status;
+    @XmlAttribute(name = "STATUS_CODE", required = true)
+    protected String statuscode;
+    @XmlAttribute(name = "MESSAGE", required = true)
+    protected String message;
 
     /**
-     * Gets the value of the order property.
+     * Gets the value of the statuscode property.
      * 
      * @return
      *     possible object is
-     *     {@link ORDER }
+     *     {@link String }
      *     
      */
-    public ORDER getORDER() {
-        return order;
+    public String getSTATUSCODE() {
+        return statuscode;
     }
 
     /**
-     * Sets the value of the order property.
+     * Sets the value of the statuscode property.
      * 
      * @param value
      *     allowed object is
-     *     {@link ORDER }
+     *     {@link String }
      *     
      */
-    public void setORDER(ORDER value) {
-        this.order = value;
+    public void setSTATUSCODE(String value) {
+        this.statuscode = value;
     }
 
     /**
-     * Gets the value of the status property.
+     * Gets the value of the message property.
      * 
      * @return
      *     possible object is
-     *     {@link STATUS }
+     *     {@link String }
      *     
      */
-    public STATUS getSTATUS() {
-        return status;
+    public String getMESSAGE() {
+        return message;
     }
 
     /**
-     * Sets the value of the status property.
+     * Sets the value of the message property.
      * 
      * @param value
      *     allowed object is
-     *     {@link STATUS }
+     *     {@link String }
      *     
      */
-    public void setSTATUS(STATUS value) {
-        this.status = value;
+    public void setMESSAGE(String value) {
+        this.message = value;
     }
 
 }

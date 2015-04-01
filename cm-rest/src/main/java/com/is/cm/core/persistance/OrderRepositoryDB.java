@@ -32,14 +32,14 @@ import salesmachine.hibernatedb.OimSuppliers;
 import salesmachine.hibernatedb.OimVendorsuppOrderhistory;
 import salesmachine.hibernatehelper.SessionManager;
 import salesmachine.oim.api.OimConstants;
+import salesmachine.oim.stores.modal.shop.order.CCORDER;
+import salesmachine.oim.stores.modal.shop.order.CCTRANSMISSION;
+import salesmachine.oim.stores.modal.shop.order.ITEMS;
 import salesmachine.oim.suppliers.OimSupplierOrderPlacement;
 import salesmachine.util.StringHandle;
 
 import com.is.cm.core.domain.Order;
 import com.is.cm.core.domain.OrderDetail;
-import com.is.cm.core.domain.shop.CCORDER;
-import com.is.cm.core.domain.shop.CCTRANSMISSION;
-import com.is.cm.core.domain.shop.ITEMS;
 
 public class OrderRepositoryDB extends RepositoryBase implements
 		OrderRepository {

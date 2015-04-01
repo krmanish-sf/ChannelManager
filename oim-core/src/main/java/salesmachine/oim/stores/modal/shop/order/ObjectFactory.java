@@ -6,7 +6,7 @@
 //
 
 
-package com.is.cm.core.domain.shop;
+package salesmachine.oim.stores.modal.shop.order;
 
 import javax.xml.bind.annotation.XmlRegistry;
 

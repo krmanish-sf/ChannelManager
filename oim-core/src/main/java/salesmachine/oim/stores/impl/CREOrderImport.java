@@ -91,7 +91,13 @@ public class CREOrderImport implements IOrderImport {
 			log.println("Channel is not yet setup for automation. Script not found.");
 			return false;
 		}
-
+		query = m_dbSession
+				.createQuery("select opr from salesmachine.hibernatedb.OimOrderProcessingRule opr where opr.deleteTm is null and opr.oimChannels=:chan");
+		query.setEntity("chan", m_channel);
+		Iterator iter = query.iterate();
+		if (iter.hasNext()) {
+			m_orderProcessingRule = (OimOrderProcessingRule) iter.next();
+		}
 		Regex scriptMatch = Regex.perlCode("/https?:\\/\\/(.+?)\\/(.+)/i");
 		if (scriptMatch.search(scriptPath)) {
 			m_storeURL = scriptMatch.stringMatched(1);
@@ -492,18 +498,12 @@ public class CREOrderImport implements IOrderImport {
 		formData.put("XML_INPUT_VALUE", pingXML);
 
 		if (pingXML.indexOf("<requestType>GetOrders</requestType>") != -1) {
-			Query query = m_dbSession
-					.createQuery("select opr from salesmachine.hibernatedb.OimOrderProcessingRule opr where opr.deleteTm is null and opr.oimChannels=:chan");
-			query.setEntity("chan", m_channel);
-			Iterator iter = query.iterate();
-			if (iter.hasNext()) {
-				m_orderProcessingRule = (OimOrderProcessingRule) iter.next();
-				if (StringHandle.isNullOrEmpty(m_orderProcessingRule
-						.getPullWithStatus())) {
-					String status = m_orderProcessingRule.getPullWithStatus();
-					LOG.info("Pull orders with status :" + status);
-					formData.put("orderpulltype", status);
-				}
+
+			if (StringHandle.isNullOrEmpty(m_orderProcessingRule
+					.getPullWithStatus())) {
+				String status = m_orderProcessingRule.getPullWithStatus();
+				LOG.info("Pull orders with status :" + status);
+				formData.put("orderpulltype", status);
 			}
 		}
 
@@ -594,7 +594,8 @@ public class CREOrderImport implements IOrderImport {
 			xmlrequest.append("<order_id>" + order.getStoreOrderId()
 					+ "</order_id>");
 			xmlrequest.append("<order_status>" + status + "</order_status>");
-			xmlrequest.append("<order_tracking>Imported to InventorySource Channel Manager</order_tracking>");
+			xmlrequest
+					.append("<order_tracking>Imported to InventorySource Channel Manager</order_tracking>");
 			xmlrequest.append("</xml_order>\n");
 		}
 		xmlrequest.append("</xmlPopulate>");

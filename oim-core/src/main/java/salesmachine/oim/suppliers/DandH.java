@@ -26,28 +26,35 @@ import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
 
-import org.hibernate.Query;
+import org.hibernate.HibernateException;
 import org.hibernate.Session;
+import org.hibernate.criterion.Restrictions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
 
 import salesmachine.email.EmailUtil;
+import salesmachine.hibernatedb.OimChannels;
 import salesmachine.hibernatedb.OimFields;
 import salesmachine.hibernatedb.OimFileFieldMap;
 import salesmachine.hibernatedb.OimOrderDetails;
+import salesmachine.hibernatedb.OimOrderProcessingRule;
 import salesmachine.hibernatedb.OimOrders;
 import salesmachine.hibernatedb.OimVendorSuppliers;
 import salesmachine.hibernatedb.Reps;
 import salesmachine.hibernatedb.Vendors;
 import salesmachine.hibernatehelper.SessionManager;
+import salesmachine.oim.stores.api.IOrderImport;
+import salesmachine.oim.stores.impl.OrderImportManager;
 import salesmachine.oim.suppliers.modal.dh.XMLRESPONSE;
+import salesmachine.util.OimLogStream;
 import salesmachine.util.StringHandle;
 
 public class DandH extends Supplier implements HasTracking {
 	private static final String SERVICE_URL = "https://www.dandh.com/dhXML/xmlDispatch";
 	private static final Logger log = LoggerFactory.getLogger(DandH.class);
+	private Reps r = null;
 
 	/***
 	 * @Requirement for Integration 1) Username : login ID 2) Password :
@@ -59,6 +66,7 @@ public class DandH extends Supplier implements HasTracking {
 	 * @param orders
 	 *            list of orders containing order info.
 	 */
+
 	public void sendOrders(Integer vendorId, OimVendorSuppliers ovs, List orders) {
 		logStream.println("Started sending orders to DandH");
 		orderSkuPrefixMap = setSkuPrefixForOrders(ovs); // populate
@@ -69,20 +77,18 @@ public class DandH extends Supplier implements HasTracking {
 														// supplier.
 
 		Session session = SessionManager.currentSession();
-		Query query = session
-				.createQuery("select r from salesmachine.hibernatedb.Reps r where r.vendorId = "
-						+ vendorId);
-		Reps r = new Reps();
-		Iterator repsIt = query.iterate();
-		if (repsIt.hasNext()) {
-			r = (Reps) repsIt.next();
-		}
-		Vendors v = new Vendors();
-		v.setVendorId(r.getVendorId());
+
 		try {
+			r = (Reps) session.createCriteria(Reps.class)
+					.add(Restrictions.eq("vendorId", vendorId)).uniqueResult();
+			Vendors v = new Vendors();
+			v.setVendorId(r.getVendorId());
 			createAndPostXMLRequest(orders, getFileFieldMap(),
 					new StandardFileSpecificsProvider(session, ovs, v), ovs,
 					vendorId, r);
+		} catch (HibernateException e) {
+			log.error(e.getLocalizedMessage(), e);
+
 		} catch (Exception e1) {
 			log.error("Error in sending orders", e1);
 
@@ -91,8 +97,8 @@ public class DandH extends Supplier implements HasTracking {
 		}
 	}
 
-	private List getFileFieldMap() {
-		List fileFieldMaps = new ArrayList();
+	private List<OimFileFieldMap> getFileFieldMap() {
+		List<OimFileFieldMap> fileFieldMaps = new ArrayList<OimFileFieldMap>();
 		// For blank headers, header values will be append to next header value
 		// which is not blank.
 		// In this case headers after "Description" are all blank so they will
@@ -116,7 +122,8 @@ public class DandH extends Supplier implements HasTracking {
 		return fileFieldMaps;
 	}
 
-	private void createAndPostXMLRequest(List orders, List fileFieldMaps,
+	private void createAndPostXMLRequest(List orders,
+			List<OimFileFieldMap> fileFieldMaps,
 			IFileSpecificsProvider fileSpecifics, OimVendorSuppliers ovs,
 			Integer vendorId, Reps r) throws Exception {
 		String USERID = ovs.getLogin();
@@ -133,149 +140,117 @@ public class DandH extends Supplier implements HasTracking {
 			OimOrders order = (OimOrders) orders.get(i);
 
 			boolean addShippingDetails = true;
-			String val = "";
+			StringBuilder xmlOrder = new StringBuilder();
 
 			for (Iterator detailIt = order.getOimOrderDetailses().iterator(); detailIt
 					.hasNext();) {
 
 				OimOrderDetails detail = (OimOrderDetails) detailIt.next();
 				try { // for all the order details
-					for (Iterator it = fileFieldMaps.iterator(); it.hasNext();) {
-						OimFileFieldMap map = (OimFileFieldMap) it.next();
+					for (OimFileFieldMap map : fileFieldMaps) {
 						String fieldValue = StringHandle
 								.removeNull(fileSpecifics
 										.getFieldValueFromOrder(detail, map));
-						if ("SHIPTONAME".equals(StringHandle.removeNull(map
-								.getMappedFieldName())) && addShippingDetails) {
-							val += "<" + map.getMappedFieldName()
-									+ "><![CDATA["
-									+ StringHandle.removeNull(fieldValue)
-									+ "]]></" + map.getMappedFieldName()
-									+ ">\n";
-						} else if ("SHIPTOATTN".equals(StringHandle
-								.removeNull(map.getMappedFieldName()))
-								&& addShippingDetails) {
-							val += "<" + map.getMappedFieldName() + "></"
-									+ map.getMappedFieldName() + ">\n";
-						} else if ("SHIPTOADDRESS".equals(StringHandle
-								.removeNull(map.getMappedFieldName()))
-								&& addShippingDetails) {
-							val += "<" + map.getMappedFieldName()
-									+ "><![CDATA["
-									+ StringHandle.removeNull(fieldValue)
-									+ "]]></" + map.getMappedFieldName()
-									+ ">\n";
-						} else if ("SHIPTOADDRESS2".equals(StringHandle
-								.removeNull(map.getMappedFieldName()))
-								&& addShippingDetails) {
-							val += "<" + map.getMappedFieldName()
-									+ "><![CDATA["
-									+ StringHandle.removeNull(fieldValue)
-									+ "]]></" + map.getMappedFieldName()
-									+ ">\n";
-						} else if ("SHIPTOCITY".equals(StringHandle
-								.removeNull(map.getMappedFieldName()))
-								&& addShippingDetails) {
-							val += "<" + map.getMappedFieldName()
-									+ "><![CDATA["
-									+ StringHandle.removeNull(fieldValue)
-									+ "]]></" + map.getMappedFieldName()
-									+ ">\n";
-						} else if ("SHIPTOSTATE".equals(StringHandle
-								.removeNull(map.getMappedFieldName()))
-								&& addShippingDetails) {
-							val += "<" + map.getMappedFieldName()
-									+ "><![CDATA["
-									+ StringHandle.removeNull(fieldValue)
-									+ "]]></" + map.getMappedFieldName()
-									+ ">\n";
-						} else if ("SHIPTOZIP".equals(StringHandle
-								.removeNull(map.getMappedFieldName()))
-								&& addShippingDetails) {
-							val += "<" + map.getMappedFieldName()
-									+ "><![CDATA["
-									+ StringHandle.removeNull(fieldValue)
-									+ "]]></" + map.getMappedFieldName()
-									+ ">\n";
-						} else if ("SHIPCARRIER".equals(StringHandle
-								.removeNull(map.getMappedFieldName()))
-								&& addShippingDetails) {
-							val += "<" + map.getMappedFieldName()
-									+ "><![CDATA["
-									+ StringHandle.removeNull(fieldValue)
-									+ "]]></" + map.getMappedFieldName()
-									+ ">\n";
-							// val += "<" + map.getMappedFieldName()
-							// + "><![CDATA[UPS]]></"
-							// + map.getMappedFieldName() + ">\n";
-						} else if ("SHIPSERVICE".equals(StringHandle
-								.removeNull(map.getMappedFieldName()))
-								&& addShippingDetails) {
-							val += "<" + map.getMappedFieldName()
-									+ "><![CDATA["
-									+ StringHandle.removeNull(fieldValue)
-									+ "]]></" + map.getMappedFieldName()
-									+ ">\n";
-							// val += "<" + map.getMappedFieldName()
-							// + "><![CDATA[Ground]]></"
-							// + map.getMappedFieldName() + ">\n";
-						} else if ("PONUM".equals(StringHandle.removeNull(map
-								.getMappedFieldName())) && addShippingDetails) {
-							val += "<" + map.getMappedFieldName()
-									+ "><![CDATA[DH"
-									+ StringHandle.removeNull(fieldValue)
-									+ "]]></" + map.getMappedFieldName()
-									+ ">\n";
-						} else if ("/ORDERHEADER".equals(StringHandle
-								.removeNull(map.getMappedFieldName()))
-								&& addShippingDetails) {
-							val += "<" + map.getMappedFieldName() + ">\n";
-						} else if ("ORDERITEMS".equals(StringHandle
-								.removeNull(map.getMappedFieldName()))
-								&& addShippingDetails) {
-							val += "<" + map.getMappedFieldName() + ">\n";
-							addShippingDetails = false;
-						} else if ("ITEM".equals(StringHandle.removeNull(map
-								.getMappedFieldName())) && !addShippingDetails) {
-							val += "<" + map.getMappedFieldName() + ">\n";
-						} else if ("PARTNUM".equals(StringHandle.removeNull(map
-								.getMappedFieldName())) && !addShippingDetails) {
-							val += "<" + map.getMappedFieldName()
-									+ "><![CDATA["
-									+ StringHandle.removeNull(fieldValue)
-									+ "]]></" + map.getMappedFieldName()
-									+ ">\n";
-						} else if ("QTY".equals(StringHandle.removeNull(map
-								.getMappedFieldName())) && !addShippingDetails) {
-							val += "<" + map.getMappedFieldName()
-									+ "><![CDATA["
-									+ StringHandle.removeNull(fieldValue)
-									+ "]]></" + map.getMappedFieldName()
-									+ ">\n";
-						} else if ("/ITEM".equals(StringHandle.removeNull(map
-								.getMappedFieldName())) && !addShippingDetails) {
-							val += "<" + map.getMappedFieldName() + ">\n";
+						String mappedFieldName = StringHandle.removeNull(map
+								.getMappedFieldName());
+						if (addShippingDetails) {
+							switch (mappedFieldName) {
+							case "SHIPTONAME":
+								xmlOrder.append("<SHIPTONAME><![CDATA[")
+										.append(fieldValue)
+										.append("]]></SHIPTONAME>");
+								break;
+							case "SHIPTOATTN":
+								xmlOrder.append("<SHIPTOATTN></SHIPTOATTN>");
+								break;
+							case "SHIPTOADDRESS":
+								xmlOrder.append("<SHIPTOADDRESS><![CDATA[")
+										.append(fieldValue)
+										.append("]]></SHIPTOADDRESS>");
+								break;
+							case "SHIPTOADDRESS2":
+								xmlOrder.append("<SHIPTOADDRESS2><![CDATA[")
+										.append(fieldValue)
+										.append("]]></SHIPTOADDRESS2>");
+								break;
+							case "SHIPTOCITY":
+								xmlOrder.append("<SHIPTOCITY><![CDATA[")
+										.append(fieldValue)
+										.append("]]></SHIPTOCITY>");
+								break;
+							case "SHIPTOSTATE":
+								xmlOrder.append("<SHIPTOSTATE><![CDATA[")
+										.append(fieldValue)
+										.append("]]></SHIPTOSTATE>");
+								break;
+							case "SHIPTOZIP":
+								xmlOrder.append("<SHIPTOZIP><![CDATA[")
+										.append(fieldValue)
+										.append("]]></SHIPTOZIP>");
+								break;
+							case "SHIPCARRIER":
+								xmlOrder.append("<SHIPCARRIER><![CDATA[")
+										.append(fieldValue)
+										.append("]]></SHIPCARRIER>");
+								break;
+							case "SHIPSERVICE":
+								xmlOrder.append("<SHIPSERVICE><![CDATA[")
+										.append(fieldValue)
+										.append("]]></SHIPSERVICE>");
+								break;
+							case "PONUM":
+								xmlOrder.append("<PONUM><![CDATA[DH-")
+										.append(vendorId).append("-")
+										.append(fieldValue)
+										.append("]]></PONUM>");
+								break;
+							case "/ORDERHEADER":
+								xmlOrder.append("</ORDERHEADER>");
+								break;
+							case "ORDERITEMS":
+								xmlOrder.append("<ORDERITEMS>");
+								addShippingDetails = false;
+								break;
+							}
+						} else {
+							switch (mappedFieldName) {
+							case "ITEM":
+								xmlOrder.append("<ITEM>");
+								break;
+							case "PARTNUM":
+								xmlOrder.append("<PARTNUM><![CDATA[")
+										.append(fieldValue)
+										.append("]]></PARTNUM>");
+								break;
+							case "QTY":
+								xmlOrder.append("<QTY><![CDATA[")
+										.append(fieldValue).append("]]></QTY>");
+								break;
+							case "/ITEM":
+								xmlOrder.append("</ITEM>");
+								break;
+							}
 						}
 					}
-
 				} catch (RuntimeException e) {
+					log.error(e.getMessage(), e);
 					String message = "Error in posting order";
 					updateVendorSupplierOrderHistory(vendorId, ovs, message);
 					failedOrders.add(detail.getDetailId());
 					detail.setSupplierOrderStatus(message);
 					Session session = SessionManager.currentSession();
 					session.update(detail);
-					val = "";
+					xmlOrder = new StringBuilder();
 				}
 			}
-			if (val.length() == 0)
+			if (xmlOrder.length() == 0)
 				return;
 			String xmlRequest = "<XMLFORMPOST>\n"
 					+ "<REQUEST>orderEntry</REQUEST>\n" + "<LOGIN>\n"
 					+ "<USERID>" + USERID + "</USERID>\n" + "<PASSWORD>"
 					+ PASSWORD + "</PASSWORD>\n" + "</LOGIN>\n"
 					+ "<ORDERHEADER>\n"
-					+ "<BACKORDERALLOW>N</BACKORDERALLOW>\n" + val
+					+ "<BACKORDERALLOW>N</BACKORDERALLOW>\n" + xmlOrder
 					+ "</ORDERITEMS>\n" + "</XMLFORMPOST>";
 
 			log.debug("Post Request : {}", xmlRequest);
@@ -300,6 +275,33 @@ public class DandH extends Supplier implements HasTracking {
 					Session session = SessionManager.currentSession();
 					session.update(detail);
 					successfulOrders.add(detail.getDetailId());
+
+					OimChannels oimChannels = order.getOimOrderBatches()
+							.getOimChannels();
+					Integer channelId = oimChannels.getChannelId();
+					IOrderImport iOrderImport = OrderImportManager
+							.getIOrderImport(channelId);
+					OimLogStream stream = new OimLogStream();
+					if (iOrderImport != null) {
+						log.debug("Created the iorderimport object");
+						if (!iOrderImport.init(channelId,
+								SessionManager.currentSession(), stream)) {
+							log.debug(
+									"Failed initializing the channel with Id:{}",
+									channelId);
+						} else {
+							iOrderImport.updateStoreOrder(order
+									.getStoreOrderId(),
+									((OimOrderProcessingRule) oimChannels
+											.getOimOrderProcessingRules()
+											.iterator().next())
+											.getProcessedStatus(),
+									"Sent to supplier.");
+						}
+					} else {
+						log.error("Could not find a bean to work with this Channel.");
+						stream.println("This Channel type is not supported for pushing order updates.");
+					}
 				}
 			} else {
 				for (Iterator detailIt = order.getOimOrderDetailses()
@@ -314,6 +316,32 @@ public class DandH extends Supplier implements HasTracking {
 					Session session = SessionManager.currentSession();
 					session.update(detail);
 					failedOrders.add(detail.getDetailId());
+
+					OimChannels oimChannels = order.getOimOrderBatches()
+							.getOimChannels();
+					Integer channelId = oimChannels.getChannelId();
+					IOrderImport iOrderImport = OrderImportManager
+							.getIOrderImport(channelId);
+					OimLogStream stream = new OimLogStream();
+					if (iOrderImport != null) {
+						log.debug("Created the iorderimport object");
+						if (!iOrderImport.init(channelId,
+								SessionManager.currentSession(), stream)) {
+							log.debug(
+									"Failed initializing the channel with Id:{}",
+									channelId);
+						} else {
+							iOrderImport.updateStoreOrder(order
+									.getStoreOrderId(),
+									((OimOrderProcessingRule) oimChannels
+											.getOimOrderProcessingRules()
+											.iterator().next())
+											.getFailedStatus(), orderMessage);
+						}
+					} else {
+						log.error("Could not find a bean to work with this Channel.");
+						stream.println("This Channel type is not supported for pushing order updates.");
+					}
 				}
 				updateVendorSupplierOrderHistory(vendorId, ovs, orderMessage);
 			}
@@ -368,7 +396,7 @@ public class DandH extends Supplier implements HasTracking {
 		}
 	}
 
-	public String postOrder(String request, Reps r) {
+	private String postOrder(String request, Reps r) {
 		URL url;
 		HttpsURLConnection connection = null;
 		String response = "";
@@ -427,78 +455,52 @@ public class DandH extends Supplier implements HasTracking {
 		if (!(trackingMeta instanceof String))
 			throw new IllegalArgumentException(
 					"trackingMeta is expected to be a String value containing PO number.");
-		URL url;
-		HttpsURLConnection connection = null;
-		String response = "";
+		Session session = SessionManager.currentSession();
+		r = (Reps) session
+				.createCriteria(Reps.class)
+				.add(Restrictions.eq("vendorId", oimVendorSuppliers
+						.getVendors().getVendorId())).uniqueResult();
+		String response;
 		String requestData = "<XMLFORMPOST>" + "<REQUEST>orderStatus</REQUEST>"
 				+ "<LOGIN><USERID>" + oimVendorSuppliers.getLogin()
 				+ "</USERID>" + "<PASSWORD>" + oimVendorSuppliers.getPassword()
 				+ "</PASSWORD></LOGIN>" + "<STATUSREQUEST><ORDERNUM>"
 				+ trackingMeta + "</ORDERNUM></STATUSREQUEST></XMLFORMPOST>";
+		response = postOrder(requestData, r);
+		JAXBContext jaxbContext;
 		try {
-			// Create connection
-			url = new URL(SERVICE_URL);
-			connection = (HttpsURLConnection) url.openConnection();
-			connection.setRequestMethod("POST");
+			jaxbContext = JAXBContext.newInstance(XMLRESPONSE.class);
+			Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
 
-			byte[] req = requestData.getBytes();
-
-			connection.setRequestProperty("Content-Type", "text/xml");
-			connection.setUseCaches(false);
-			connection.setDoInput(true);
-			connection.setDoOutput(true);
-
-			OutputStream out = connection.getOutputStream();
-			out.write(req);
-			out.close();
-			connection.connect();
-			BufferedReader rd = new BufferedReader(new InputStreamReader(
-					connection.getInputStream()));
-			StringBuilder sb = new StringBuilder();
-			String line;
-			while ((line = rd.readLine()) != null) {
-				sb.append(line + '\n');
-			}
-			response = sb.toString();
-			JAXBContext jaxbContext;
-			try {
-				jaxbContext = JAXBContext.newInstance(XMLRESPONSE.class);
-				Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
-
-				StringReader reader = new StringReader(response);
-				XMLRESPONSE orderStatusResponse = (XMLRESPONSE) unmarshaller
-						.unmarshal(reader);
-				log.debug(orderStatusResponse.getSTATUS());
-			} catch (JAXBException e) {
-				log.error(e.getMessage(), e);
-			}
-			String invoice = getXPath(response,
-					"/XMLRESPONSE/ORDERSTATUS/INVOICE/text()");
-			if ("In Process".equalsIgnoreCase(invoice)) {
-				response = invoice;
-			} else {
-
-				String carrier = getXPath(response,
-						"/XMLRESPONSE/ORDERSTATUS/PACKAGE/CARRIER/text()");
-				String service = getXPath(response,
-						"/XMLRESPONSE/ORDERSTATUS/PACKAGE/SERVICE/text()");
-				String shipped = getXPath(response,
-						"/XMLRESPONSE/ORDERSTATUS/PACKAGE/SHIPPED/text()");
-				String trackNum = getXPath(response,
-						"/XMLRESPONSE/ORDERSTATUS/PACKAGE/TRACKNUM/text()");
-				if ("no".equalsIgnoreCase(shipped)) {
-					response = "Not shipped yet.";
-				} else {
-					response = carrier + service + ":" + trackNum;
-				}
-			}
-		} catch (IOException e) {
-			log.error("Error occured when cheking order status for PO No. :"
-					+ trackingMeta);
-		} finally {
-			if (connection != null)
-				connection.disconnect();
+			StringReader reader = new StringReader(response);
+			XMLRESPONSE orderStatusResponse = (XMLRESPONSE) unmarshaller
+					.unmarshal(reader);
+			log.info(orderStatusResponse.getSTATUS());
+		} catch (JAXBException e) {
+			log.error(e.getMessage(), e);
 		}
+		String invoice = getXPath(response,
+				"/XMLRESPONSE/ORDERSTATUS/INVOICE/text()");
+		if ("In Process".equalsIgnoreCase(invoice)) {
+			response = invoice;
+		} else {
+
+			String carrier = getXPath(response,
+					"/XMLRESPONSE/ORDERSTATUS/PACKAGE/CARRIER/text()");
+			String service = getXPath(response,
+					"/XMLRESPONSE/ORDERSTATUS/PACKAGE/SERVICE/text()");
+			String shipped = getXPath(response,
+					"/XMLRESPONSE/ORDERSTATUS/PACKAGE/SHIPPED/text()");
+			String trackNum = getXPath(response,
+					"/XMLRESPONSE/ORDERSTATUS/PACKAGE/TRACKNUM/text()");
+			if ("no".equalsIgnoreCase(shipped)) {
+				response = "Not shipped yet.";
+			} else {
+				response = String
+						.format("%1 %2 %3", carrier, service, trackNum);
+			}
+		}
+
 		return response;
 	}
 

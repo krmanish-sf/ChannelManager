@@ -6,7 +6,7 @@
 //
 
 
-package com.is.cm.core.domain.shop;
+package salesmachine.oim.stores.modal.shop.order;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
@@ -25,9 +25,9 @@ import javax.xml.bind.annotation.XmlType;
  *   &lt;complexContent>
  *     &lt;restriction base="{http://www.w3.org/2001/XMLSchema}anyType">
  *       &lt;sequence>
- *         &lt;element ref="{}ACCOUNT_HOLDER_NAME" minOccurs="0"/>
- *         &lt;element ref="{}ACCOUNT_NUMBER" minOccurs="0"/>
- *         &lt;element ref="{}CC_ISSUING_BANK" minOccurs="0"/>
+ *         &lt;element ref="{}SI_TYPE"/>
+ *         &lt;element ref="{}SI_PROMPT"/>
+ *         &lt;element ref="{}SI_VALUE"/>
  *       &lt;/sequence>
  *     &lt;/restriction>
  *   &lt;/complexContent>
@@ -38,90 +38,90 @@ import javax.xml.bind.annotation.XmlType;
  */
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "", propOrder = {
-    "accountholdername",
-    "accountnumber",
-    "ccissuingbank"
+    "sitype",
+    "siprompt",
+    "sivalue"
 })
-@XmlRootElement(name = "BANK_ACCOUNT")
-public class BANKACCOUNT {
+@XmlRootElement(name = "SPECIAL_INSTRUCTION")
+public class SPECIALINSTRUCTION {
 
-    @XmlElement(name = "ACCOUNT_HOLDER_NAME")
-    protected String accountholdername;
-    @XmlElement(name = "ACCOUNT_NUMBER")
-    protected String accountnumber;
-    @XmlElement(name = "CC_ISSUING_BANK")
-    protected String ccissuingbank;
+    @XmlElement(name = "SI_TYPE", required = true)
+    protected String sitype;
+    @XmlElement(name = "SI_PROMPT", required = true)
+    protected String siprompt;
+    @XmlElement(name = "SI_VALUE", required = true)
+    protected String sivalue;
 
     /**
-     * Gets the value of the accountholdername property.
+     * Gets the value of the sitype property.
      * 
      * @return
      *     possible object is
      *     {@link String }
      *     
      */
-    public String getACCOUNTHOLDERNAME() {
-        return accountholdername;
+    public String getSITYPE() {
+        return sitype;
     }
 
     /**
-     * Sets the value of the accountholdername property.
+     * Sets the value of the sitype property.
      * 
      * @param value
      *     allowed object is
      *     {@link String }
      *     
      */
-    public void setACCOUNTHOLDERNAME(String value) {
-        this.accountholdername = value;
+    public void setSITYPE(String value) {
+        this.sitype = value;
     }
 
     /**
-     * Gets the value of the accountnumber property.
+     * Gets the value of the siprompt property.
      * 
      * @return
      *     possible object is
      *     {@link String }
      *     
      */
-    public String getACCOUNTNUMBER() {
-        return accountnumber;
+    public String getSIPROMPT() {
+        return siprompt;
     }
 
     /**
-     * Sets the value of the accountnumber property.
+     * Sets the value of the siprompt property.
      * 
      * @param value
      *     allowed object is
      *     {@link String }
      *     
      */
-    public void setACCOUNTNUMBER(String value) {
-        this.accountnumber = value;
+    public void setSIPROMPT(String value) {
+        this.siprompt = value;
     }
 
     /**
-     * Gets the value of the ccissuingbank property.
+     * Gets the value of the sivalue property.
      * 
      * @return
      *     possible object is
      *     {@link String }
      *     
      */
-    public String getCCISSUINGBANK() {
-        return ccissuingbank;
+    public String getSIVALUE() {
+        return sivalue;
     }
 
     /**
-     * Sets the value of the ccissuingbank property.
+     * Sets the value of the sivalue property.
      * 
      * @param value
      *     allowed object is
      *     {@link String }
      *     
      */
-    public void setCCISSUINGBANK(String value) {
-        this.ccissuingbank = value;
+    public void setSIVALUE(String value) {
+        this.sivalue = value;
     }
 
 }

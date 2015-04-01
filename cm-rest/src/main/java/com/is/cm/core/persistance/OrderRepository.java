@@ -5,10 +5,10 @@ import java.util.Map;
 
 import salesmachine.hibernatedb.OimOrderDetails;
 import salesmachine.hibernatedb.OimOrders;
+import salesmachine.oim.stores.modal.shop.order.CCTRANSMISSION;
 
 import com.is.cm.core.domain.Order;
 import com.is.cm.core.domain.OrderDetail;
-import com.is.cm.core.domain.shop.CCTRANSMISSION;
 
 public interface OrderRepository {
 

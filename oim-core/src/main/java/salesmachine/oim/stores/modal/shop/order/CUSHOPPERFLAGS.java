@@ -6,7 +6,7 @@
 //
 
 
-package com.is.cm.core.domain.shop;
+package salesmachine.oim.stores.modal.shop.order;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
@@ -25,7 +25,7 @@ import javax.xml.bind.annotation.XmlType;
  *   &lt;complexContent>
  *     &lt;restriction base="{http://www.w3.org/2001/XMLSchema}anyType">
  *       &lt;sequence>
- *         &lt;element ref="{}ITEM"/>
+ *         &lt;element ref="{}CU_SHOPPER_FLAG" minOccurs="0"/>
  *       &lt;/sequence>
  *     &lt;/restriction>
  *   &lt;/complexContent>
@@ -36,36 +36,36 @@ import javax.xml.bind.annotation.XmlType;
  */
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "", propOrder = {
-    "item"
+    "cushopperflag"
 })
-@XmlRootElement(name = "ITEMS")
-public class ITEMS {
+@XmlRootElement(name = "CU_SHOPPER_FLAGS")
+public class CUSHOPPERFLAGS {
 
-    @XmlElement(name = "ITEM", required = true)
-    protected ITEM item;
+    @XmlElement(name = "CU_SHOPPER_FLAG")
+    protected CUSHOPPERFLAG cushopperflag;
 
     /**
-     * Gets the value of the item property.
+     * Gets the value of the cushopperflag property.
      * 
      * @return
      *     possible object is
-     *     {@link ITEM }
+     *     {@link CUSHOPPERFLAG }
      *     
      */
-    public ITEM getITEM() {
-        return item;
+    public CUSHOPPERFLAG getCUSHOPPERFLAG() {
+        return cushopperflag;
     }
 
     /**
-     * Sets the value of the item property.
+     * Sets the value of the cushopperflag property.
      * 
      * @param value
      *     allowed object is
-     *     {@link ITEM }
+     *     {@link CUSHOPPERFLAG }
      *     
      */
-    public void setITEM(ITEM value) {
-        this.item = value;
+    public void setCUSHOPPERFLAG(CUSHOPPERFLAG value) {
+        this.cushopperflag = value;
     }
 
 }

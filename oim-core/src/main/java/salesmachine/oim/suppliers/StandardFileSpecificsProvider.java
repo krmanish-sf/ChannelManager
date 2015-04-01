@@ -5,6 +5,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.hibernate.Session;
@@ -21,8 +22,8 @@ import salesmachine.hibernatedb.Vendors;
 import salesmachine.util.StringHandle;
 
 public class StandardFileSpecificsProvider implements IFileSpecificsProvider {
-	OimVendorSuppliers m_ovs;
-	HashMap m_supplierMaps = new HashMap();
+	private final OimVendorSuppliers m_ovs;
+	private final Map m_supplierMaps = new HashMap();
 	private final List<OimSupplierShippingMethod> shipMap;
 
 	public StandardFileSpecificsProvider(Session dbSession,

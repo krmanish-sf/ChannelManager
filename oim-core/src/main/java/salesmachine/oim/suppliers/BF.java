@@ -3,32 +3,50 @@ package salesmachine.oim.suppliers;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.io.StringReader;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
 import javax.net.ssl.HttpsURLConnection;
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBException;
+import javax.xml.bind.Marshaller;
+import javax.xml.bind.Unmarshaller;
 
+import org.apache.axis.utils.ByteArrayOutputStream;
 import org.hibernate.Session;
 import org.hibernate.criterion.Restrictions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import salesmachine.email.EmailUtil;
+import salesmachine.hibernatedb.OimChannels;
 import salesmachine.hibernatedb.OimFields;
 import salesmachine.hibernatedb.OimFileFieldMap;
 import salesmachine.hibernatedb.OimOrderDetails;
+import salesmachine.hibernatedb.OimOrderProcessingRule;
 import salesmachine.hibernatedb.OimOrders;
 import salesmachine.hibernatedb.OimSupplierShippingMethod;
 import salesmachine.hibernatedb.OimVendorSuppliers;
 import salesmachine.hibernatedb.Reps;
 import salesmachine.hibernatedb.Vendors;
 import salesmachine.hibernatehelper.SessionManager;
+import salesmachine.oim.stores.api.IOrderImport;
+import salesmachine.oim.stores.impl.OrderImportManager;
+import salesmachine.oim.suppliers.modal.bf.OrderXMLresp;
+import salesmachine.oim.suppliers.modal.bf.OrderXMLresp.Items.Item;
+import salesmachine.oim.suppliers.modal.bf.StatusResponse;
+import salesmachine.oim.suppliers.modal.bf.StatusXML;
+import salesmachine.oim.suppliers.modal.bf.StatusXML.AccessRequest;
+import salesmachine.util.OimLogStream;
 import salesmachine.util.StringHandle;
 
-public class BF extends Supplier {
+public class BF extends Supplier implements HasTracking {
 	private static final Logger log = LoggerFactory.getLogger(BF.class);
 
 	/***
@@ -42,13 +60,16 @@ public class BF extends Supplier {
 	 * @param orders
 	 *            list of orders containing order info.
 	 */
+	private Reps r;
+
+	@Override
 	public void sendOrders(Integer vendorId, OimVendorSuppliers ovs, List orders) {
 		log.info("Started sending orders to BnF USA");
 		// populate orderSkuPrefixMap with channel id and the prefix to be used
 		// for the given supplier.
 		orderSkuPrefixMap = setSkuPrefixForOrders(ovs);
 		Session session = SessionManager.currentSession();
-		Reps r = (Reps) session.createCriteria(Reps.class)
+		r = (Reps) session.createCriteria(Reps.class)
 				.add(Restrictions.eq("vendorId", vendorId)).uniqueResult();
 		Vendors v = new Vendors();
 		v.setVendorId(r.getVendorId());
@@ -61,8 +82,8 @@ public class BF extends Supplier {
 		}
 	}
 
-	private List getFileFieldMap() {
-		List fileFieldMaps = new ArrayList();
+	private List<OimFileFieldMap> getFileFieldMap() {
+		List<OimFileFieldMap> fileFieldMaps = new ArrayList<OimFileFieldMap>();
 		// For blank headers, header values will be append to next header value
 		// which is not blank.
 		// In this case headers after "Description" are all blank so they will
@@ -87,9 +108,9 @@ public class BF extends Supplier {
 		return fileFieldMaps;
 	}
 
-	private void createAndPostXMLRequest(List orders, List fileFieldMaps,
-			IFileSpecificsProvider fileSpecifics, OimVendorSuppliers ovs,
-			Integer vendorId, Reps r) throws Exception {
+	private void createAndPostXMLRequest(List<OimOrders> orders,
+			List fileFieldMaps, IFileSpecificsProvider fileSpecifics,
+			OimVendorSuppliers ovs, Integer vendorId, Reps r) throws Exception {
 		String USERID = ovs.getLogin();
 		String PASSWORD = ovs.getPassword();
 		String lincenceKey = ovs.getAccountNumber();
@@ -104,8 +125,7 @@ public class BF extends Supplier {
 		List<OimSupplierShippingMethod> shippingMethods = loadSupplierShippingMap(
 				ovs.getOimSuppliers(), v);
 		// Write the data now
-		for (int i = 0; i < orders.size(); i++) {
-			OimOrders order = (OimOrders) orders.get(i);
+		for (OimOrders order : orders) {
 			String shippingDetails = StringHandle.removeNull(order
 					.getShippingDetails());
 			String shippingMethodCode;
@@ -195,9 +215,6 @@ public class BF extends Supplier {
 								+ map.getMappedFieldName() + ">\n";
 					} else if ("ship_via".equals(StringHandle.removeNull(map
 							.getMappedFieldName())) && addShippingDetails) {
-						// val += "<" + map.getMappedFieldName()
-						// + "><![CDATA[1]]></" + map.getMappedFieldName()
-						// + ">\n";
 						val += "<" + map.getMappedFieldName() + "><![CDATA["
 								+ StringHandle.removeNull(fieldValue) + "]]></"
 								+ map.getMappedFieldName() + ">\n";
@@ -249,14 +266,13 @@ public class BF extends Supplier {
 			}// END for (Iterator
 				// detailIt=order.getOimOrderDetailses().iterator();
 				// detailIt.hasNext();) {
-			String xmlRequest = "<orderxml>\n" + "<AccessRequest>\n"
-					+ "<XMLlickey>" + lincenceKey + "</XMLlickey>\n"
-					+ "<UserId>" + USERID + "</UserId>\n" + "<Password>"
-					+ PASSWORD + "</Password>\n" + "<Version>1.1</Version>\n"
-					+
-					// "<xml_action>TEST</xml_action>\n" +
-					"<xml_action>PROCESS</xml_action>\n" + "</AccessRequest>\n"
-					+ val + "</items>\n" + "</orderxml>";
+			String action = ovs.getTestMode() == 1 ? "TEST" : "PROCESS";
+			String xmlRequest = "<orderxml><AccessRequest>\n" + "<XMLlickey>"
+					+ lincenceKey + "</XMLlickey>\n" + "<UserId>" + USERID
+					+ "</UserId>\n" + "<Password>" + PASSWORD + "</Password>\n"
+					+ "<Version>1.1</Version>\n" + "<xml_action>" + action
+					+ "</xml_action>\n" + "</AccessRequest>" + val
+					+ "</items></orderxml>";
 			// System.out.println("Post Request : "+xmlRequest);
 			String xmlResponse = null;
 			try {
@@ -265,12 +281,69 @@ public class BF extends Supplier {
 				log.error(e.getMessage(), e);
 			}
 			// Output the response
-			if (xmlResponse != null
-					&& xmlResponse.indexOf("<xml_action>PROCESS</xml_action>") != -1) {
-				for (Iterator detailIt = order.getOimOrderDetailses()
-						.iterator(); detailIt.hasNext();) {
-					OimOrderDetails detail = (OimOrderDetails) detailIt.next();
-					successfulOrders.add(detail.getDetailId());
+			JAXBContext jaxbContext;
+			jaxbContext = JAXBContext.newInstance(OrderXMLresp.class);
+			Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
+			Marshaller marshaller = jaxbContext.createMarshaller();
+			Object unmarshal = unmarshaller.unmarshal(new StringReader(
+					xmlResponse));
+			Set<String> failedStatus = new HashSet<String>();
+			failedStatus.add("Not Available");
+			failedStatus.add("Invalid Part Number");
+			if (unmarshal instanceof OrderXMLresp
+					&& ((OrderXMLresp) unmarshal).getOrder() != null) {
+				OrderXMLresp orderXMLresp = (OrderXMLresp) unmarshal;
+				log.info("Recieved order submit reponse for Order# {}",
+						orderXMLresp.getOrder().getId());
+				for (Item item : orderXMLresp.getItems().getItem()) {
+					String itemId = item.getItemId();
+					String status = item.getAction();
+					for (Iterator detailIt = order.getOimOrderDetailses()
+							.iterator(); detailIt.hasNext();) {
+						OimOrderDetails detail = (OimOrderDetails) detailIt
+								.next();
+						if (detail.getSku().contains(itemId)) {
+							detail.setSupplierOrderStatus(status);
+							detail.setSupplierOrderNumber(String
+									.valueOf(orderXMLresp.getOrder()
+											.getProcessing().getInvNum()));
+							if (failedStatus.contains(status)) {
+								failedOrders.add(detail.getDetailId());
+							} else {
+								successfulOrders.add(detail.getDetailId());
+							}
+							Session session = SessionManager.currentSession();
+							session.update(detail);
+
+							OimChannels oimChannels = order
+									.getOimOrderBatches().getOimChannels();
+							Integer channelId = oimChannels.getChannelId();
+							IOrderImport iOrderImport = OrderImportManager
+									.getIOrderImport(channelId);
+							OimLogStream stream = new OimLogStream();
+							if (iOrderImport != null) {
+								log.debug("Created the iorderimport object");
+								if (!iOrderImport.init(channelId, session,
+										stream)) {
+									log.debug(
+											"Failed initializing the channel with Id:{}",
+											channelId);
+								} else {
+									iOrderImport
+											.updateStoreOrder(
+													order.getStoreOrderId(),
+													((OimOrderProcessingRule) oimChannels
+															.getOimOrderProcessingRules()
+															.iterator().next())
+															.getProcessedStatus(),
+													"Sent to supplier.");
+								}
+							} else {
+								log.error("Could not find a bean to work with this Channel.");
+								stream.println("This Channel type is not supported for pushing order updates.");
+							}
+						}
+					}
 				}
 			} else {
 				for (Iterator detailIt = order.getOimOrderDetailses()
@@ -287,7 +360,7 @@ public class BF extends Supplier {
 					.getEmailNotifications() == 1) {
 				emailNotification = true;
 				String orderStatus = (xmlResponse != null && xmlResponse
-						.indexOf("<xml_action>PROCESS</xml_action>") != -1) == true ? "Successfully Places"
+						.indexOf("<xml_action>" + action + "</xml_action>") != -1) == true ? "Successfully Places"
 						: "Failed to place order";
 				emailContent += "<b>Store Order ID " + order.getStoreOrderId()
 						+ "</b> -> " + orderStatus + " ";
@@ -316,7 +389,7 @@ public class BF extends Supplier {
 				logEmailContent += "--------------------------------------------------";
 			}
 			EmailUtil.sendEmail(
-					"oim@inventorysource.com",
+					"orders@inventorysource.com",
 					"support@inventorysource.com",
 					"",
 					"Logs of order processing for order : "
@@ -329,7 +402,7 @@ public class BF extends Supplier {
 		}
 	}
 
-	public String postOrder(String request, Reps r) {
+	private String postOrder(String request, Reps r) {
 		URL url;
 		HttpsURLConnection connection = null;
 		String response = "";
@@ -375,7 +448,7 @@ public class BF extends Supplier {
 			String emailSubject = "Order failed for Vendor : "
 					+ r.getFirstName() + " " + r.getLastName() + " VID : "
 					+ r.getVendorId();
-			EmailUtil.sendEmail("oim@inventorysource.com",
+			EmailUtil.sendEmail("orders@inventorysource.com",
 					"support@inventorysource.com", "", emailSubject,
 					logEmailContent);
 		} finally {
@@ -384,5 +457,48 @@ public class BF extends Supplier {
 			}
 		}
 		return response;
+	}
+
+	@Override
+	public String getOrderStatus(OimVendorSuppliers oimVendorSuppliers,
+			Object trackingMeta) {
+
+		if (!(trackingMeta instanceof String))
+			throw new IllegalArgumentException(
+					"trackingMeta is expected to be a String value containing PO number.");
+		Session session = SessionManager.currentSession();
+		r = (Reps) session
+				.createCriteria(Reps.class)
+				.add(Restrictions.eq("vendorId", oimVendorSuppliers
+						.getVendors().getVendorId())).uniqueResult();
+		StatusXML requestObject = new StatusXML();
+		StatusResponse statusResponse;
+		AccessRequest accessRequest = new AccessRequest();
+		accessRequest.setUserId(oimVendorSuppliers.getLogin());
+		accessRequest.setPassword(oimVendorSuppliers.getPassword());
+		accessRequest.setXMLlickey(oimVendorSuppliers.getAccountNumber());
+		accessRequest.setVersion(1.1F);
+		requestObject.setAccessRequest(accessRequest);
+		String responseData, requestData;
+		try {
+			JAXBContext jaxbContext;
+			jaxbContext = JAXBContext.newInstance(StatusXML.class,
+					StatusResponse.class);
+			Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
+			Marshaller marshaller = jaxbContext.createMarshaller();
+			OutputStream os = new ByteArrayOutputStream();
+			marshaller.marshal(requestObject, os);
+			requestData = os.toString();
+			responseData = postOrder(requestData, r);
+			Object unmarshal = unmarshaller.unmarshal(new StringReader(
+					responseData));
+			if (unmarshal instanceof StatusResponse) {
+				statusResponse = (StatusResponse) unmarshal;
+				return statusResponse.getStatusInfo().getOrder().getStatus();
+			}
+		} catch (JAXBException e) {
+			log.error(e.getMessage(), e);
+		}
+		return null;
 	}
 }

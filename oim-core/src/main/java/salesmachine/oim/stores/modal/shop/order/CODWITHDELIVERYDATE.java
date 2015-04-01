@@ -6,7 +6,7 @@
 //
 
 
-package com.is.cm.core.domain.shop;
+package salesmachine.oim.stores.modal.shop.order;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
@@ -25,7 +25,8 @@ import javax.xml.bind.annotation.XmlType;
  *   &lt;complexContent>
  *     &lt;restriction base="{http://www.w3.org/2001/XMLSchema}anyType">
  *       &lt;sequence>
- *         &lt;element ref="{}ACCOUNT_HOLDER_NAME"/>
+ *         &lt;element ref="{}ACCOUNT_HOLDER_NAME" minOccurs="0"/>
+ *         &lt;element ref="{}DELIVERY_DATE" minOccurs="0"/>
  *       &lt;/sequence>
  *     &lt;/restriction>
  *   &lt;/complexContent>
@@ -36,13 +37,16 @@ import javax.xml.bind.annotation.XmlType;
  */
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "", propOrder = {
-    "accountholdername"
+    "accountholdername",
+    "deliverydate"
 })
-@XmlRootElement(name = "COD")
-public class COD {
+@XmlRootElement(name = "COD_WITH_DELIVERY_DATE")
+public class CODWITHDELIVERYDATE {
 
-    @XmlElement(name = "ACCOUNT_HOLDER_NAME", required = true)
+    @XmlElement(name = "ACCOUNT_HOLDER_NAME")
     protected String accountholdername;
+    @XmlElement(name = "DELIVERY_DATE")
+    protected String deliverydate;
 
     /**
      * Gets the value of the accountholdername property.
@@ -66,6 +70,30 @@ public class COD {
      */
     public void setACCOUNTHOLDERNAME(String value) {
         this.accountholdername = value;
+    }
+
+    /**
+     * Gets the value of the deliverydate property.
+     * 
+     * @return
+     *     possible object is
+     *     {@link String }
+     *     
+     */
+    public String getDELIVERYDATE() {
+        return deliverydate;
+    }
+
+    /**
+     * Sets the value of the deliverydate property.
+     * 
+     * @param value
+     *     allowed object is
+     *     {@link String }
+     *     
+     */
+    public void setDELIVERYDATE(String value) {
+        this.deliverydate = value;
     }
 
 }

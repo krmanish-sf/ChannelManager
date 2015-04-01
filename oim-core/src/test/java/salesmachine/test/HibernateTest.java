@@ -1,5 +1,7 @@
 package salesmachine.test;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -44,6 +46,7 @@ import salesmachine.util.Filter;
 import com.stevesoft.pat.Regex;
 
 public class HibernateTest {
+
 	private static List<OimChannelAccessDetails> list;
 
 	@Test
@@ -494,11 +497,14 @@ public class HibernateTest {
 	}
 
 	public static void main(String args[]) {
+		DateFormat df = new SimpleDateFormat("M/d/yyyy h:mm:ss a");
+		System.out.println(df.format(new Date()));
 		try {
 			Regex scriptMatch = Regex.perlCode("/https?:\\/\\/(.+?)\\/(.+)/i");
-			if (scriptMatch.search("http://amitytest.authsafe.com/zencart-oim.php")) {
-				System.out.println( scriptMatch.stringMatched(1));
-				System.out.println( "/" + scriptMatch.stringMatched(2));
+			if (scriptMatch
+					.search("http://amitytest.authsafe.com/zencart-oim.php")) {
+				System.out.println(scriptMatch.stringMatched(1));
+				System.out.println("/" + scriptMatch.stringMatched(2));
 				System.exit(0);
 			}
 			System.exit(0);

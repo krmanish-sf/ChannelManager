@@ -6,7 +6,7 @@
 //
 
 
-package com.is.cm.core.domain.shop;
+package salesmachine.oim.stores.modal.shop.order;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
@@ -25,8 +25,7 @@ import javax.xml.bind.annotation.XmlType;
  *   &lt;complexContent>
  *     &lt;restriction base="{http://www.w3.org/2001/XMLSchema}anyType">
  *       &lt;sequence>
- *         &lt;element ref="{}CUSTOMER"/>
- *         &lt;element ref="{}ADDRESS"/>
+ *         &lt;element ref="{}ITEM"/>
  *       &lt;/sequence>
  *     &lt;/restriction>
  *   &lt;/complexContent>
@@ -37,63 +36,36 @@ import javax.xml.bind.annotation.XmlType;
  */
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "", propOrder = {
-    "customer",
-    "address"
+    "item"
 })
-@XmlRootElement(name = "BILLING_LABEL")
-public class BILLINGLABEL {
+@XmlRootElement(name = "ITEMS")
+public class ITEMS {
 
-    @XmlElement(name = "CUSTOMER", required = true)
-    protected CUSTOMER customer;
-    @XmlElement(name = "ADDRESS", required = true)
-    protected ADDRESS address;
+    @XmlElement(name = "ITEM", required = true)
+    protected ITEM item;
 
     /**
-     * Gets the value of the customer property.
+     * Gets the value of the item property.
      * 
      * @return
      *     possible object is
-     *     {@link CUSTOMER }
+     *     {@link ITEM }
      *     
      */
-    public CUSTOMER getCUSTOMER() {
-        return customer;
+    public ITEM getITEM() {
+        return item;
     }
 
     /**
-     * Sets the value of the customer property.
+     * Sets the value of the item property.
      * 
      * @param value
      *     allowed object is
-     *     {@link CUSTOMER }
+     *     {@link ITEM }
      *     
      */
-    public void setCUSTOMER(CUSTOMER value) {
-        this.customer = value;
-    }
-
-    /**
-     * Gets the value of the address property.
-     * 
-     * @return
-     *     possible object is
-     *     {@link ADDRESS }
-     *     
-     */
-    public ADDRESS getADDRESS() {
-        return address;
-    }
-
-    /**
-     * Sets the value of the address property.
-     * 
-     * @param value
-     *     allowed object is
-     *     {@link ADDRESS }
-     *     
-     */
-    public void setADDRESS(ADDRESS value) {
-        this.address = value;
+    public void setITEM(ITEM value) {
+        this.item = value;
     }
 
 }

@@ -1,14 +1,24 @@
 package salesmachine.oim.suppliers;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.StringReader;
+import java.io.UnsupportedEncodingException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBException;
+import javax.xml.bind.Unmarshaller;
 
 import org.hibernate.Session;
 import org.hibernate.criterion.Restrictions;
@@ -16,17 +26,24 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import salesmachine.email.EmailUtil;
+import salesmachine.hibernatedb.OimChannels;
 import salesmachine.hibernatedb.OimOrderDetails;
+import salesmachine.hibernatedb.OimOrderProcessingRule;
 import salesmachine.hibernatedb.OimOrders;
 import salesmachine.hibernatedb.OimVendorSuppliers;
 import salesmachine.hibernatedb.Reps;
 import salesmachine.hibernatedb.Vendors;
 import salesmachine.hibernatehelper.SessionManager;
+import salesmachine.oim.stores.api.IOrderImport;
+import salesmachine.oim.stores.impl.OrderImportManager;
+import salesmachine.oim.suppliers.modal.hg.TrackingData;
+import salesmachine.util.OimLogStream;
 import salesmachine.util.StringHandle;
 
 import com.enterprisedt.net.ftp.FTPClient;
 
-public class HonestGreen extends Supplier {
+public class HonestGreen extends Supplier implements HasTracking {
+	private static final String ASCII_CHARSET = "ASCII";
 	private static final Logger log = LoggerFactory
 			.getLogger(HonestGreen.class);
 	// private static final byte BLANK_SPACE = ' ';
@@ -72,6 +89,53 @@ public class HonestGreen extends Supplier {
 					ftp.login(ovs.getLogin(), ovs.getPassword());
 					ftp.setTimeout(60 * 1000 * 60 * 5);
 					ftp.put(fileName, fileName);
+					ftp.chdir("/confirmations/");
+					for (String confirmationFile : ftp.dir()) {
+						byte[] confirmationFileData = ftp.get(confirmationFile);
+						Map<Integer, String> orderDataMap = parseFileData(confirmationFileData);
+						Map<String, String> orderData = parseOrderConfirmation(orderDataMap);
+						if (orderData.get("PONUM").equalsIgnoreCase(
+								order.getStoreOrderId())) {
+							log.debug("Order Invoice Data Found");
+							String unfiOrderNo = orderData.get("UNFIORDERNO");
+							for (Object object2 : order.getOimOrderDetailses()) {
+								OimOrderDetails detail = (OimOrderDetails) object2;
+								detail.setSupplierOrderNumber(unfiOrderNo);
+								detail.setSupplierOrderStatus("Sent to supplier");
+								session.update(detail);
+							}
+							OimChannels oimChannels = order
+									.getOimOrderBatches().getOimChannels();
+							Integer channelId = oimChannels.getChannelId();
+							IOrderImport iOrderImport = OrderImportManager
+									.getIOrderImport(channelId);
+							OimLogStream stream = new OimLogStream();
+							if (iOrderImport != null) {
+								log.debug("Created the iorderimport object");
+								if (!iOrderImport.init(channelId, session,
+										stream)) {
+									log.debug(
+											"Failed initializing the channel with Id:{}",
+											channelId);
+								} else {
+									iOrderImport
+											.updateStoreOrder(
+													order.getStoreOrderId(),
+													((OimOrderProcessingRule) oimChannels
+															.getOimOrderProcessingRules()
+															.iterator().next())
+															.getProcessedStatus(),
+													"Sent to supplier.");
+								}
+							} else {
+								log.error("Could not find a bean to work with this Channel.");
+								stream.println("This Channel type is not supported for pushing order updates.");
+							}
+							break;
+						}
+						log.debug("Order Invoice Data Not Found");
+					}
+
 					ftp.quit();
 
 					String emailBody = "Account Number : "
@@ -120,6 +184,49 @@ public class HonestGreen extends Supplier {
 		}
 	}
 
+	private Map<String, String> parseOrderConfirmation(
+			Map<Integer, String> orderConfirmationMap) {
+		String[] lineArray1 = orderConfirmationMap.get(1).split(",");
+		Map<String, String> orderData = new HashMap<String, String>();
+		orderData.put("PONUM", lineArray1[6]);
+		orderData.put("UNFIORDERNO", lineArray1[0]);
+		return orderData;
+	}
+
+	/**
+	 * Parses and returns the file data in a Map with line number as keys.
+	 * 
+	 * @param confirmationFileData
+	 * @return file data in a Map with line number as keys.
+	 */
+	private Map<Integer, String> parseFileData(byte[] confirmationFileData) {
+		Map<Integer, String> fileData = null;
+		try {
+			fileData = new HashMap<Integer, String>();
+			InputStreamReader r = new InputStreamReader(
+					new ByteArrayInputStream(confirmationFileData),
+					ASCII_CHARSET);
+			int i = -1, lineNum = 1;
+			char c;
+			StringBuilder sb = new StringBuilder();
+			while ((i = r.read()) != -1) {
+				c = (char) i;
+				if (c != '\n') {
+					sb.append(c);
+					fileData.put(lineNum, sb.toString());
+					lineNum++;
+				} else {
+					sb = new StringBuilder();
+				}
+			}
+		} catch (UnsupportedEncodingException e) {
+			log.error(e.getMessage(), e);
+		} catch (IOException e) {
+			log.error(e.getMessage(), e);
+		}
+		return null;
+	}
+
 	private String createOrderFile(OimOrders order, OimVendorSuppliers ovs) {
 		SimpleDateFormat sdf = new SimpleDateFormat("yyMMddHHmm");
 		String uploadfilename = "HG_" + ovs.getAccountNumber() + "_"
@@ -129,13 +236,13 @@ public class HonestGreen extends Supplier {
 		try {
 			FileOutputStream fOut = new FileOutputStream(f);
 			// Integer orderSize = order.getOimOrderDetailses().size();
-			fOut.write("1".getBytes("ASCII"));
+			fOut.write("1".getBytes(ASCII_CHARSET));
 			fOut.write(NEW_LINE);
-			fOut.write(ovs.getAccountNumber().getBytes("ASCII"));
+			fOut.write(ovs.getAccountNumber().getBytes(ASCII_CHARSET));
 			fOut.write(COMMA);
 			// fOut.write(BLANK_SPACE);
 			fOut.write(COMMA);
-			fOut.write(order.getStoreOrderId().getBytes("ASCII"));
+			fOut.write(order.getStoreOrderId().getBytes(ASCII_CHARSET));
 			fOut.write(COMMA);
 			// fOut.write(BLANK_SPACE);
 			fOut.write(COMMA);
@@ -144,30 +251,30 @@ public class HonestGreen extends Supplier {
 			// fOut.write(BLANK_SPACE);
 			fOut.write(NEW_LINE);
 			fOut.write(StringHandle.removeNull(order.getDeliveryName())
-					.toUpperCase().getBytes("ASCII"));
+					.toUpperCase().getBytes(ASCII_CHARSET));
 			fOut.write(COMMA);
 			fOut.write(StringHandle
 					.removeNull(order.getDeliveryStreetAddress()).toUpperCase()
-					.getBytes("ASCII"));
+					.getBytes(ASCII_CHARSET));
 			fOut.write(COMMA);
 			fOut.write(StringHandle.removeNull(order.getDeliverySuburb())
-					.toUpperCase().getBytes("ASCII"));
+					.toUpperCase().getBytes(ASCII_CHARSET));
 			fOut.write(COMMA);
 			fOut.write(StringHandle.removeNull(order.getDeliveryCity())
-					.toUpperCase().getBytes("ASCII"));
+					.toUpperCase().getBytes(ASCII_CHARSET));
 			fOut.write(COMMA);
 			fOut.write(StringHandle.removeNull(order.getDeliveryState())
-					.toUpperCase().getBytes("ASCII"));
+					.toUpperCase().getBytes(ASCII_CHARSET));
 			fOut.write(COMMA);
 			fOut.write(StringHandle.removeNull(order.getDeliveryZip())
-					.toUpperCase().getBytes("ASCII"));
+					.toUpperCase().getBytes(ASCII_CHARSET));
 			fOut.write(COMMA);
 			fOut.write(StringHandle.removeNull(order.getDeliveryPhone())
-					.toUpperCase().getBytes("ASCII"));
+					.toUpperCase().getBytes(ASCII_CHARSET));
 			fOut.write(COMMA);
 			fOut.write('A');
 			fOut.write(COMMA);
-			fOut.write("5001".getBytes("ASCII"));
+			fOut.write("5001".getBytes(ASCII_CHARSET));
 			fOut.write(NEW_LINE);
 			for (OimOrderDetails od : ((Set<OimOrderDetails>) order
 					.getOimOrderDetailses())) {
@@ -180,11 +287,11 @@ public class HonestGreen extends Supplier {
 				if (sku.startsWith(skuPrefix)) {
 					sku = sku.substring(skuPrefix.length());
 				}
-				fOut.write(sku.getBytes("ASCII"));
+				fOut.write(sku.getBytes(ASCII_CHARSET));
 				fOut.write(COMMA);
 				// fOut.write(BLANK_SPACE);
 				fOut.write(COMMA);
-				fOut.write(od.getQuantity().toString().getBytes("ASCII"));
+				fOut.write(od.getQuantity().toString().getBytes(ASCII_CHARSET));
 				fOut.write(COMMA);
 				// fOut.write(BLANK_SPACE);
 				fOut.write(COMMA);
@@ -204,5 +311,95 @@ public class HonestGreen extends Supplier {
 			log.error(e.getMessage(), e);
 		}
 		return uploadfilename;
+	}
+
+	private static final String ORDER_CONFIRMATION_FILE_PATH_TEMPLATE = "confirmations/%1.O%2A.txt";
+	private static final String ORDER_SHIPPING_FILE_PATH_TEMPLATE = "shipping/%1.S%2A.txt";
+	private static final String ORDER_TRACKING_FILE_PATH_TEMPLATE = "tracking/%1.T%2S.txt";
+
+	private String getShippingFilePath(String account, String unfiOrderNo) {
+		return getFilePath(ORDER_SHIPPING_FILE_PATH_TEMPLATE, account,
+				unfiOrderNo);
+	}
+
+	private String getConfirmationFilePath(String account, String unfiOrderNo) {
+		return getFilePath(ORDER_CONFIRMATION_FILE_PATH_TEMPLATE, account,
+				unfiOrderNo);
+	}
+
+	private String getTrackingFilePath(String account, String unfiOrderNo) {
+		return getFilePath(ORDER_TRACKING_FILE_PATH_TEMPLATE, account,
+				unfiOrderNo);
+	}
+
+	private String getFilePath(String template, String account,
+			String unfiOrderNo) {
+		return String.format(template, account, unfiOrderNo);
+	}
+
+	@Override
+	public String getOrderStatus(OimVendorSuppliers ovs, Object trackingMeta) {
+		if (!(trackingMeta instanceof String))
+			throw new IllegalArgumentException(
+					"trackingMeta is expected to be a String value containing UNFI Order number.");
+		try {
+			FTPClient ftp = new FTPClient();
+			ftp.setRemoteHost("ftp1.unfi.com");
+			ftp.setDetectTransferMode(true);
+			ftp.connect();
+			ftp.login(ovs.getLogin(), ovs.getPassword());
+			ftp.setTimeout(60 * 1000 * 60 * 5);
+			byte[] confirmationFileData = ftp.get(getConfirmationFilePath(
+					ovs.getAccountNumber(), trackingMeta.toString()));
+			Map<Integer, String> confirmationDataMap = parseFileData(confirmationFileData);
+			byte[] shippingFileData = ftp.get(getShippingFilePath(
+					ovs.getAccountNumber(), trackingMeta.toString()));
+			Map<Integer, String> shippingDataMap = parseFileData(shippingFileData);
+
+			byte[] trackingFileData = ftp.get(getTrackingFilePath(
+					ovs.getAccountNumber(), trackingMeta.toString()));
+
+			JAXBContext jaxbContext;
+			try {
+				jaxbContext = JAXBContext.newInstance(TrackingData.class);
+				Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
+
+				StringReader reader = new StringReader(new String(
+						trackingFileData));
+				TrackingData orderTrackingResponse = (TrackingData) unmarshaller
+						.unmarshal(reader);
+				String trackingInfo = orderTrackingResponse.getPO()
+						.getShipVia()
+						+ ":"
+						+ orderTrackingResponse.getPOTracking()
+								.getTrackingNumber();
+				log.info("Tracking:{}", trackingInfo);
+				return trackingInfo;
+			} catch (JAXBException e) {
+				log.error(e.getMessage(), e);
+			}
+			ftp.quit();
+		} catch (Exception e) {
+			log.error(e.getMessage(), e);
+		}
+		return "";
+	}
+
+	public static void main(String[] args) {
+		JAXBContext jaxbContext;
+		try {
+			jaxbContext = JAXBContext.newInstance(TrackingData.class);
+			Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
+			File f = new File("/tmp/37984.T19559757X.txt");
+			TrackingData orderTrackingResponse = (TrackingData) unmarshaller
+					.unmarshal(f);
+			String trackingInfo = orderTrackingResponse.getPO().getShipVia()
+					+ ":"
+					+ orderTrackingResponse.getPOTracking().getTrackingNumber();
+			log.info("Tracking:{}", trackingInfo);
+
+		} catch (JAXBException e) {
+			log.error(e.getMessage(), e);
+		}
 	}
 }

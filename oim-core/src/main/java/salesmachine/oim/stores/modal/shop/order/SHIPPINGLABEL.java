@@ -6,7 +6,7 @@
 //
 
 
-package com.is.cm.core.domain.shop;
+package salesmachine.oim.stores.modal.shop.order;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
@@ -25,9 +25,9 @@ import javax.xml.bind.annotation.XmlType;
  *   &lt;complexContent>
  *     &lt;restriction base="{http://www.w3.org/2001/XMLSchema}anyType">
  *       &lt;sequence>
- *         &lt;element ref="{}ACCOUNT_HOLDER_NAME" minOccurs="0"/>
- *         &lt;element ref="{}ACCOUNT_NUMBER" minOccurs="0"/>
- *         &lt;element ref="{}CC_ISSUING_BANK" minOccurs="0"/>
+ *         &lt;element ref="{}CUSTOMER"/>
+ *         &lt;element ref="{}ADDRESS"/>
+ *         &lt;element ref="{}SL_METHOD"/>
  *       &lt;/sequence>
  *     &lt;/restriction>
  *   &lt;/complexContent>
@@ -38,90 +38,90 @@ import javax.xml.bind.annotation.XmlType;
  */
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "", propOrder = {
-    "accountholdername",
-    "accountnumber",
-    "ccissuingbank"
+    "customer",
+    "address",
+    "slmethod"
 })
-@XmlRootElement(name = "BANK_TRANSFER")
-public class BANKTRANSFER {
+@XmlRootElement(name = "SHIPPING_LABEL")
+public class SHIPPINGLABEL {
 
-    @XmlElement(name = "ACCOUNT_HOLDER_NAME")
-    protected String accountholdername;
-    @XmlElement(name = "ACCOUNT_NUMBER")
-    protected String accountnumber;
-    @XmlElement(name = "CC_ISSUING_BANK")
-    protected String ccissuingbank;
+    @XmlElement(name = "CUSTOMER", required = true)
+    protected CUSTOMER customer;
+    @XmlElement(name = "ADDRESS", required = true)
+    protected ADDRESS address;
+    @XmlElement(name = "SL_METHOD", required = true)
+    protected String slmethod;
 
     /**
-     * Gets the value of the accountholdername property.
+     * Gets the value of the customer property.
+     * 
+     * @return
+     *     possible object is
+     *     {@link CUSTOMER }
+     *     
+     */
+    public CUSTOMER getCUSTOMER() {
+        return customer;
+    }
+
+    /**
+     * Sets the value of the customer property.
+     * 
+     * @param value
+     *     allowed object is
+     *     {@link CUSTOMER }
+     *     
+     */
+    public void setCUSTOMER(CUSTOMER value) {
+        this.customer = value;
+    }
+
+    /**
+     * Gets the value of the address property.
+     * 
+     * @return
+     *     possible object is
+     *     {@link ADDRESS }
+     *     
+     */
+    public ADDRESS getADDRESS() {
+        return address;
+    }
+
+    /**
+     * Sets the value of the address property.
+     * 
+     * @param value
+     *     allowed object is
+     *     {@link ADDRESS }
+     *     
+     */
+    public void setADDRESS(ADDRESS value) {
+        this.address = value;
+    }
+
+    /**
+     * Gets the value of the slmethod property.
      * 
      * @return
      *     possible object is
      *     {@link String }
      *     
      */
-    public String getACCOUNTHOLDERNAME() {
-        return accountholdername;
+    public String getSLMETHOD() {
+        return slmethod;
     }
 
     /**
-     * Sets the value of the accountholdername property.
+     * Sets the value of the slmethod property.
      * 
      * @param value
      *     allowed object is
      *     {@link String }
      *     
      */
-    public void setACCOUNTHOLDERNAME(String value) {
-        this.accountholdername = value;
-    }
-
-    /**
-     * Gets the value of the accountnumber property.
-     * 
-     * @return
-     *     possible object is
-     *     {@link String }
-     *     
-     */
-    public String getACCOUNTNUMBER() {
-        return accountnumber;
-    }
-
-    /**
-     * Sets the value of the accountnumber property.
-     * 
-     * @param value
-     *     allowed object is
-     *     {@link String }
-     *     
-     */
-    public void setACCOUNTNUMBER(String value) {
-        this.accountnumber = value;
-    }
-
-    /**
-     * Gets the value of the ccissuingbank property.
-     * 
-     * @return
-     *     possible object is
-     *     {@link String }
-     *     
-     */
-    public String getCCISSUINGBANK() {
-        return ccissuingbank;
-    }
-
-    /**
-     * Sets the value of the ccissuingbank property.
-     * 
-     * @param value
-     *     allowed object is
-     *     {@link String }
-     *     
-     */
-    public void setCCISSUINGBANK(String value) {
-        this.ccissuingbank = value;
+    public void setSLMETHOD(String value) {
+        this.slmethod = value;
     }
 
 }

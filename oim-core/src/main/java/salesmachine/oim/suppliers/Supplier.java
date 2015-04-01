@@ -3,8 +3,11 @@ package salesmachine.oim.suppliers;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.StringTokenizer;
 
 import org.hibernate.Query;
@@ -29,11 +32,11 @@ import com.suppliers.pcs.OrderReturnInfo;
 
 public abstract class Supplier {
 	private static final Logger log = LoggerFactory.getLogger(Supplier.class);
-	protected ArrayList successfulOrders = new ArrayList();
-	protected ArrayList failedOrders = new ArrayList();
-	protected HashMap stateCodeMapping = new HashMap();
-	protected HashMap countryCodeMapping = new HashMap();
-	protected HashMap orderSkuPrefixMap = new HashMap();
+	protected final Set<Integer> successfulOrders = new HashSet<Integer>();
+	protected final Set<Integer> failedOrders = new HashSet<Integer>();
+	protected Map stateCodeMapping = new HashMap();
+	protected Map countryCodeMapping = new HashMap();
+	protected Map<Integer, String> orderSkuPrefixMap;
 	@Deprecated
 	protected OimLogStream logStream = new OimLogStream();
 	protected static final Integer ERROR_ORDER_PROCESSING = new Integer(3);
@@ -89,8 +92,8 @@ public abstract class Supplier {
 	 * @return hashmap containing the channelids and sku prefix mentioned in the
 	 *         channel supplier map
 	 */
-	protected HashMap setSkuPrefixForOrders(OimVendorSuppliers ovs) {
-		HashMap prefixChannelsSupplier = new HashMap();
+	protected Map<Integer, String> setSkuPrefixForOrders(OimVendorSuppliers ovs) {
+		Map<Integer, String> prefixChannelsSupplier = new HashMap<Integer, String>();
 		Session session = SessionManager.currentSession();
 		Query query = session
 				.createQuery("select ocs.oimChannels, ocs.supplierPrefix from salesmachine.hibernatedb.OimChannelSupplierMap ocs where ocs.oimSuppliers=:supp ");
@@ -249,11 +252,11 @@ public abstract class Supplier {
 		return shippingMethodCode;
 	}
 
-	public ArrayList getSuccessfulOrders() {
+	public Set<Integer> getSuccessfulOrders() {
 		return successfulOrders;
 	}
 
-	public ArrayList getFailedOrders() {
+	public Set<Integer> getFailedOrders() {
 		return failedOrders;
 	}
 
