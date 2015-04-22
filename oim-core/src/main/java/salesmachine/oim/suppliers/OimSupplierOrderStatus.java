@@ -30,7 +30,7 @@ import salesmachine.util.ExcHandle;
 
 import com.enterprisedt.net.ftp.FTPClient;
 import com.enterprisedt.net.ftp.FTPTransferType;
-
+@Deprecated
 public class OimSupplierOrderStatus {
 	Session 			m_dbSession;
 	OimSuppliers		m_supplier;

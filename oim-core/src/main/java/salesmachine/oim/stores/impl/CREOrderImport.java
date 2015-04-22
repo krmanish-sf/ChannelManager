@@ -63,6 +63,7 @@ public class CREOrderImport implements IOrderImport {
 	private OimChannels m_channel;
 	private OimOrderProcessingRule m_orderProcessingRule;
 	private OimLogStream logStream;
+	private Map<String, OimSuppliers> supplierMap;
 
 	public boolean init(int channelID, Session dbSession, OimLogStream log) {
 		m_dbSession = dbSession;
@@ -108,6 +109,21 @@ public class CREOrderImport implements IOrderImport {
 			log.println("Failed to parse script location.");
 			return false;
 		}
+
+		Set suppliers = m_channel.getOimChannelSupplierMaps();
+		supplierMap = new HashMap<String, OimSuppliers>();
+		Iterator itr = suppliers.iterator();
+		while (itr.hasNext()) {
+			OimChannelSupplierMap map = (OimChannelSupplierMap) itr.next();
+			if (map.getDeleteTm() != null)
+				continue;
+
+			String prefix = map.getSupplierPrefix();
+			OimSuppliers supplier = map.getOimSuppliers();
+			LOG.info("Supplier Prefix: {} ID: {}", prefix,
+					supplier.getSupplierId());
+			supplierMap.put(prefix, supplier);
+		}
 		return true;
 	}
 
@@ -121,28 +137,13 @@ public class CREOrderImport implements IOrderImport {
 				return false;
 			}
 
-			Set suppliers = m_channel.getOimChannelSupplierMaps();
-			Map<String, OimSuppliers> supplierMap = new HashMap<String, OimSuppliers>();
-			Iterator itr = suppliers.iterator();
-			while (itr.hasNext()) {
-				OimChannelSupplierMap map = (OimChannelSupplierMap) itr.next();
-				if (map.getDeleteTm() != null)
-					continue;
-
-				String prefix = map.getSupplierPrefix();
-				OimSuppliers supplier = map.getOimSuppliers();
-				LOG.info("Supplier Prefix: {} ID: {}", prefix,
-						supplier.getSupplierId());
-				supplierMap.put(prefix, supplier);
-			}
-
 			OimOrderBatches batch = null;
 			long start = System.currentTimeMillis();
 			String response = sendGetOrdersRequest();
 			LOG.debug(response);
 			if (!"".equals(response)) {
 				StringReader str = new StringReader(response);
-				batch = parseGetProdResponse(str, supplierMap);
+				batch = parseGetProdResponse(str);
 			} else {
 				LOG.error("FAILURE_GETPRODUCT_NULL_RESPONSE");
 				logStream
@@ -324,8 +325,7 @@ public class CREOrderImport implements IOrderImport {
 		return getprod_response.trim();
 	}
 
-	private OimOrderBatches parseGetProdResponse(StringReader xml_toparse,
-			Map supplierMap) {
+	private OimOrderBatches parseGetProdResponse(StringReader xml_toparse) {
 		try {
 			DecimalFormat df = new DecimalFormat("#.##");
 			OimOrderBatches batch = new OimOrderBatches();
@@ -434,16 +434,22 @@ public class CREOrderImport implements IOrderImport {
 							LOG.info("SKU: {} Qty: {} Price each: {}", sku,
 									qty, priceEach);
 
-							String prefix = "";
-							if (sku.length() > 2) {
-								prefix = sku.substring(0, 2);
-							}
+							/*
+							 * String prefix = ""; if (sku.length() > 2) {
+							 * prefix = sku.substring(0, 2); }
+							 */
 							OimSuppliers supplier = null;
-							if (supplierMap.containsKey(prefix)) {
+							for (String prefix : supplierMap.keySet()) {
+								if (sku.startsWith(prefix)) {
+									supplier = supplierMap.get(prefix);
+									break;
+								}
+							}
+						/*	if (supplierMap.containsKey(prefix)) {
 								supplier = (OimSuppliers) supplierMap
 										.get(prefix);
 							}
-
+*/
 							double cost = 0;
 							try {
 								cost = Double.parseDouble(productCost);
