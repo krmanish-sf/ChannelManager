@@ -11,6 +11,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.Iterator;
 import java.util.List;
 
@@ -47,7 +48,11 @@ import salesmachine.hibernatedb.Vendors;
 import salesmachine.hibernatehelper.SessionManager;
 import salesmachine.oim.stores.api.IOrderImport;
 import salesmachine.oim.stores.impl.OrderImportManager;
+import salesmachine.oim.suppliers.modal.OrderStatus;
+import salesmachine.oim.suppliers.modal.TrackingData;
 import salesmachine.oim.suppliers.modal.dh.XMLRESPONSE;
+import salesmachine.oim.suppliers.modal.dh.XMLRESPONSE.ORDERSTATUS;
+import salesmachine.oim.suppliers.modal.dh.XMLRESPONSE.ORDERSTATUS.PACKAGE;
 import salesmachine.util.OimLogStream;
 import salesmachine.util.StringHandle;
 
@@ -144,8 +149,10 @@ public class DandH extends Supplier implements HasTracking {
 
 			for (Iterator detailIt = order.getOimOrderDetailses().iterator(); detailIt
 					.hasNext();) {
-
 				OimOrderDetails detail = (OimOrderDetails) detailIt.next();
+				if (!detail.getOimSuppliers().getSupplierId()
+						.equals(ovs.getOimSuppliers().getSupplierId()))
+					continue;
 				try { // for all the order details
 					for (OimFileFieldMap map : fileFieldMaps) {
 						String fieldValue = StringHandle
@@ -200,7 +207,6 @@ public class DandH extends Supplier implements HasTracking {
 								break;
 							case "PONUM":
 								xmlOrder.append("<PONUM><![CDATA[DH-")
-										.append(vendorId).append("-")
 										.append(fieldValue)
 										.append("]]></PONUM>");
 								break;
@@ -256,9 +262,9 @@ public class DandH extends Supplier implements HasTracking {
 			log.debug("Post Request : {}", xmlRequest);
 			String xmlResponse = null;
 			try {
-				xmlResponse = postOrder(xmlRequest, r);
+				xmlResponse = postRequest(xmlRequest, r);
 			} catch (Exception e) {
-				e.printStackTrace();
+				log.error(e.getMessage(), e);
 			}
 			String orderMessage = "";
 			if (xmlResponse == null) {
@@ -268,6 +274,9 @@ public class DandH extends Supplier implements HasTracking {
 				for (Iterator detailIt = order.getOimOrderDetailses()
 						.iterator(); detailIt.hasNext();) {
 					OimOrderDetails detail = (OimOrderDetails) detailIt.next();
+					if (!detail.getOimSuppliers().getSupplierId()
+							.equals(ovs.getOimSuppliers().getSupplierId()))
+						continue;
 					orderMessage = getXPath(xmlResponse,
 							"/XMLRESPONSE/ORDERNUM/text()");
 					detail.setSupplierOrderNumber(orderMessage);
@@ -290,13 +299,13 @@ public class DandH extends Supplier implements HasTracking {
 									"Failed initializing the channel with Id:{}",
 									channelId);
 						} else {
-							iOrderImport.updateStoreOrder(order
-									.getStoreOrderId(),
-									((OimOrderProcessingRule) oimChannels
+							OrderStatus orderStatus = new OrderStatus();
+							orderStatus
+									.setStatus(((OimOrderProcessingRule) oimChannels
 											.getOimOrderProcessingRules()
 											.iterator().next())
-											.getProcessedStatus(),
-									"Sent to supplier.");
+											.getProcessedStatus());
+							iOrderImport.updateStoreOrder(detail, orderStatus);
 						}
 					} else {
 						log.error("Could not find a bean to work with this Channel.");
@@ -307,6 +316,9 @@ public class DandH extends Supplier implements HasTracking {
 				for (Iterator detailIt = order.getOimOrderDetailses()
 						.iterator(); detailIt.hasNext();) {
 					OimOrderDetails detail = (OimOrderDetails) detailIt.next();
+					if (!detail.getOimSuppliers().getSupplierId()
+							.equals(ovs.getOimSuppliers().getSupplierId()))
+						continue;
 					// <?xml version="1.0" encoding="UTF-8" ?>
 					// <XMLRESPONSE><STATUS>failure</STATUS><MESSAGE>Duplicate
 					// PO Number</MESSAGE></XMLRESPONSE>
@@ -331,12 +343,13 @@ public class DandH extends Supplier implements HasTracking {
 									"Failed initializing the channel with Id:{}",
 									channelId);
 						} else {
-							iOrderImport.updateStoreOrder(order
-									.getStoreOrderId(),
-									((OimOrderProcessingRule) oimChannels
+							OrderStatus orderStatus = new OrderStatus();
+							orderStatus
+									.setStatus(((OimOrderProcessingRule) oimChannels
 											.getOimOrderProcessingRules()
 											.iterator().next())
-											.getFailedStatus(), orderMessage);
+											.getFailedStatus());
+							iOrderImport.updateStoreOrder(detail, orderStatus);
 						}
 					} else {
 						log.error("Could not find a bean to work with this Channel.");
@@ -396,7 +409,7 @@ public class DandH extends Supplier implements HasTracking {
 		}
 	}
 
-	private String postOrder(String request, Reps r) {
+	private String postRequest(String request, Reps r) {
 		URL url;
 		HttpsURLConnection connection = null;
 		String response = "";
@@ -407,7 +420,7 @@ public class DandH extends Supplier implements HasTracking {
 			connection.setRequestMethod("POST");
 
 			byte[] req = request.getBytes();
-
+			log.info("Request: {}", request);
 			connection.setRequestProperty("Content-Type", "text/xml");
 			connection.setUseCaches(false);
 			connection.setDoInput(true);
@@ -425,8 +438,9 @@ public class DandH extends Supplier implements HasTracking {
 				sb.append(line + '\n');
 			}
 			response = sb.toString();
+			log.info("Response: {}", response);
 		} catch (Exception e) {
-			log.error("Failed to post orders ...", e);
+			log.error("Failed to send request ...", e);
 			String logEmailContent = "-------------- Order failed with Exception -------------\n";
 			logEmailContent += "-------------- XML SOAP REQUEST SENT -------------\n";
 			logEmailContent += request + "\n";
@@ -438,7 +452,7 @@ public class DandH extends Supplier implements HasTracking {
 			String emailSubject = "Order failed for Vendor : "
 					+ r.getFirstName() + " " + r.getLastName() + " VID : "
 					+ r.getVendorId();
-			EmailUtil.sendEmail("oim@inventorysource.com",
+			EmailUtil.sendEmail("orders@inventorysource.com",
 					"support@inventorysource.com", "", emailSubject,
 					logEmailContent);
 		} finally {
@@ -450,11 +464,12 @@ public class DandH extends Supplier implements HasTracking {
 	}
 
 	@Override
-	public String getOrderStatus(OimVendorSuppliers oimVendorSuppliers,
+	public OrderStatus getOrderStatus(OimVendorSuppliers oimVendorSuppliers,
 			Object trackingMeta) {
 		if (!(trackingMeta instanceof String))
 			throw new IllegalArgumentException(
-					"trackingMeta is expected to be a String value containing PO number.");
+					"trackingMeta is expected to be a String value containing D&H ORDERNUM.");
+		OrderStatus orderStatus = new OrderStatus();
 		Session session = SessionManager.currentSession();
 		r = (Reps) session
 				.createCriteria(Reps.class)
@@ -466,7 +481,7 @@ public class DandH extends Supplier implements HasTracking {
 				+ "</USERID>" + "<PASSWORD>" + oimVendorSuppliers.getPassword()
 				+ "</PASSWORD></LOGIN>" + "<STATUSREQUEST><ORDERNUM>"
 				+ trackingMeta + "</ORDERNUM></STATUSREQUEST></XMLFORMPOST>";
-		response = postOrder(requestData, r);
+		response = postRequest(requestData, r);
 		JAXBContext jaxbContext;
 		try {
 			jaxbContext = JAXBContext.newInstance(XMLRESPONSE.class);
@@ -476,32 +491,73 @@ public class DandH extends Supplier implements HasTracking {
 			XMLRESPONSE orderStatusResponse = (XMLRESPONSE) unmarshaller
 					.unmarshal(reader);
 			log.info(orderStatusResponse.getSTATUS());
+			if ("success".equalsIgnoreCase(orderStatusResponse.getSTATUS())) {
+				log.info("Invoice:{}", orderStatusResponse.getORDERSTATUS()
+						.get(0).getINVOICE());
+
+				for (ORDERSTATUS orderstatus2 : orderStatusResponse
+						.getORDERSTATUS()) {
+					if (!trackingMeta.toString().equals(
+							orderstatus2.getORDERNUM()))
+						continue;
+					String invoice = orderstatus2.getINVOICE();
+					if ("In Process".equalsIgnoreCase(invoice)) {
+						response = invoice;
+						orderStatus.setStatus(response);
+					} else {
+						log.info("Package Size: {}", orderstatus2.getPACKAGE()
+								.size());
+						for (PACKAGE package1 : orderstatus2.getPACKAGE()) {
+							String shipped = package1.getSHIPPED();
+							if ("no".equalsIgnoreCase(shipped)) {
+								response = "UnShipped";
+								orderStatus.setStatus(response);
+							} else {
+
+								orderStatus.setStatus("Shipped");
+								TrackingData trackingData = new TrackingData();
+								trackingData.setCarrierCode(package1
+										.getCARRIER());
+								trackingData.setCarrierName(package1
+										.getCARRIER());
+								trackingData.setShippingMethod(package1
+										.getSERVICE());
+								trackingData.setShipperTrackingNumber(package1
+										.getTRACKNUM());
+								String dateshipped = package1.getDateshipped();
+								GregorianCalendar cal;
+								if (StringHandle.isNullOrEmpty(dateshipped)) {
+									cal = new GregorianCalendar();
+								} else {
+									// Date Format: 04/16/15
+									int year = 2000 + Integer
+											.parseInt(dateshipped.substring(6,
+													8));
+									int month = Integer.parseInt(dateshipped
+											.substring(0, 2));
+									int dayOfMonth = Integer
+											.parseInt(dateshipped.substring(3,
+													5));
+									cal = new GregorianCalendar(year, month,
+											dayOfMonth);
+								}
+								trackingData.setShipDate(cal);
+								orderStatus.setTrackingData(trackingData);
+							}
+
+						}
+					}
+				}
+			} else {
+				orderStatus.setStatus(orderStatusResponse.getMESSAGE());
+			}
 		} catch (JAXBException e) {
 			log.error(e.getMessage(), e);
-		}
-		String invoice = getXPath(response,
-				"/XMLRESPONSE/ORDERSTATUS/INVOICE/text()");
-		if ("In Process".equalsIgnoreCase(invoice)) {
-			response = invoice;
-		} else {
-
-			String carrier = getXPath(response,
-					"/XMLRESPONSE/ORDERSTATUS/PACKAGE/CARRIER/text()");
-			String service = getXPath(response,
-					"/XMLRESPONSE/ORDERSTATUS/PACKAGE/SERVICE/text()");
-			String shipped = getXPath(response,
-					"/XMLRESPONSE/ORDERSTATUS/PACKAGE/SHIPPED/text()");
-			String trackNum = getXPath(response,
-					"/XMLRESPONSE/ORDERSTATUS/PACKAGE/TRACKNUM/text()");
-			if ("no".equalsIgnoreCase(shipped)) {
-				response = "Not shipped yet.";
-			} else {
-				response = String
-						.format("%1 %2 %3", carrier, service, trackNum);
-			}
+		} catch (Exception e) {
+			log.error(e.getMessage(), e);
 		}
 
-		return response;
+		return orderStatus;
 	}
 
 	public static String getXPath(String xmlString, String xPath) {

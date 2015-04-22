@@ -30,7 +30,6 @@ import salesmachine.hibernatedb.OimFields;
 import salesmachine.hibernatedb.OimFileFieldMap;
 import salesmachine.hibernatedb.OimFiletypes;
 import salesmachine.hibernatedb.OimOrderDetails;
-import salesmachine.hibernatedb.OimOrderProcessingRule;
 import salesmachine.hibernatedb.OimOrderStatuses;
 import salesmachine.hibernatedb.OimOrders;
 import salesmachine.hibernatedb.OimSupplierMethods;
@@ -44,6 +43,7 @@ import salesmachine.hibernatehelper.SessionManager;
 import salesmachine.oim.api.OimConstants;
 import salesmachine.oim.stores.api.IOrderImport;
 import salesmachine.oim.stores.impl.OrderImportManager;
+import salesmachine.oim.suppliers.modal.OrderStatus;
 import salesmachine.orderfile.DatabaseFile;
 import salesmachine.orderfile.DefaultCsvFile;
 import salesmachine.orderfile.DefaultXlsFile;
@@ -1310,7 +1310,7 @@ public class OimSupplierOrderPlacement {
 	public String trackOrder(Integer vendorId, Integer orderDetailId) {
 		Session session = m_dbSession;
 		Transaction tx = null;
-		String orderStatus, trackingDetail = "Not shipped yet";
+		OrderStatus orderStatus;
 		tx = session.beginTransaction();
 		OimOrderDetails oimOrderDetails = (OimOrderDetails) session.get(
 				OimOrderDetails.class, orderDetailId);
@@ -1328,13 +1328,28 @@ public class OimSupplierOrderPlacement {
 			s = new DandH();
 			orderStatus = s.getOrderStatus(oimVendorSuppliers,
 					oimOrderDetails.getSupplierOrderNumber());
-			oimOrderDetails.setSupplierOrderStatus(orderStatus);
+			oimOrderDetails.setSupplierOrderStatus(orderStatus.toString());
+			session.update(oimOrderDetails);
+			break;
+		case BnF:
+			s = new BF();
+			orderStatus = s.getOrderStatus(oimVendorSuppliers,
+					oimOrderDetails.getSupplierOrderNumber());
+			oimOrderDetails.setSupplierOrderStatus(orderStatus.toString());
+			session.update(oimOrderDetails);
+			break;
+		case HONESTGREEN:
+			s = new HonestGreen();
+			orderStatus = s.getOrderStatus(oimVendorSuppliers,
+					oimOrderDetails.getSupplierOrderNumber());
+			oimOrderDetails.setSupplierOrderStatus(orderStatus.toString());
 			session.update(oimOrderDetails);
 			break;
 		default:
-			orderStatus = "Tracking orders for "
+			orderStatus = new OrderStatus();
+			orderStatus.setStatus("Tracking orders for "
 					+ oimOrderDetails.getOimSuppliers().getSupplierName()
-					+ " is not suported.";
+					+ " is not suported.");
 			break;
 		}
 		tx.commit();
@@ -1353,18 +1368,13 @@ public class OimSupplierOrderPlacement {
 				log.debug("Failed initializing the channel with Id:{}",
 						channelId);
 			} else {
-				iOrderImport
-						.updateStoreOrder(oimOrders.getStoreOrderId(),
-								((OimOrderProcessingRule) oimChannels
-										.getOimOrderProcessingRules()
-										.iterator().next())
-										.getProcessedStatus(), trackingDetail);
+				iOrderImport.updateStoreOrder(oimOrderDetails, orderStatus);
 			}
 		} else {
 			log.error("Could not find a bean to work with this Channel.");
 			stream.println("This Channel type is not supported for pushing order updates.");
 		}
 
-		return orderStatus;
+		return orderStatus.toString();
 	}
 }

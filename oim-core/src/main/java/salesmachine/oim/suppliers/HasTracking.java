@@ -1,9 +1,10 @@
 package salesmachine.oim.suppliers;
 
 import salesmachine.hibernatedb.OimVendorSuppliers;
+import salesmachine.oim.suppliers.modal.OrderStatus;
 
 public interface HasTracking {
 
-	String getOrderStatus(OimVendorSuppliers oimVendorSuppliers,
+	OrderStatus getOrderStatus(OimVendorSuppliers oimVendorSuppliers,
 			Object trackingMeta);
 }

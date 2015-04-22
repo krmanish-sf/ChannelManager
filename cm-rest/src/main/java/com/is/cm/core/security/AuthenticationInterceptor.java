@@ -39,7 +39,7 @@ public class AuthenticationInterceptor implements HandlerInterceptor {
 				LOG.info(req.getParameter("data"));
 			return true;
 		}
-		LOG.info(
+		LOG.debug(
 				"Checking request header for auth parameters to access resource path {}",
 				req.getServletPath());
 		Cookie[] cookies = req.getCookies();
@@ -61,8 +61,8 @@ public class AuthenticationInterceptor implements HandlerInterceptor {
 		HttpHeaders headers = template.headForHeaders(
 				"http://localhost:8080/admin/login?sessionid={sessionid}",
 				params);
-		Integer valueOf = Integer.valueOf(headers.get("vid").get(0));
-		if (valueOf > 0) {
+		Integer vendorId = Integer.valueOf(headers.get("vid").get(0));
+		if (vendorId > 0) {
 			LOG.debug("Authenticated successfully to access resource path {}",
 					req.getServletPath());
 		} else {
@@ -71,7 +71,7 @@ public class AuthenticationInterceptor implements HandlerInterceptor {
 			res.setStatus(401);
 			return false;
 		}
-		MyThreadLocal.set(valueOf);
+		MyThreadLocal.set(vendorId);
 		SessionManager.currentSession();
 		LOG.debug("Setting vendorId# {} in ThreadLocal ", MyThreadLocal.get());
 		return true;
@@ -81,7 +81,6 @@ public class AuthenticationInterceptor implements HandlerInterceptor {
 	public void afterCompletion(HttpServletRequest arg0,
 			HttpServletResponse arg1, Object arg2, Exception arg3)
 			throws Exception {
-		// DO NOTHING
 		LOG.debug("Removing vendorId# {} from ThreadLocal ",
 				MyThreadLocal.get());
 		SessionManager.closeSession();

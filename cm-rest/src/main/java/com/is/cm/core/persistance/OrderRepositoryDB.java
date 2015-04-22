@@ -21,6 +21,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import salesmachine.hibernatedb.OimChannelAccessDetails;
+import salesmachine.hibernatedb.OimChannelShippingMap;
 import salesmachine.hibernatedb.OimChannelSupplierMap;
 import salesmachine.hibernatedb.OimChannels;
 import salesmachine.hibernatedb.OimOrderBatches;
@@ -944,8 +945,32 @@ public class OrderRepositoryDB extends RepositoryBase implements
 				order.setInsertionTm(new Date());
 				order.setOrderFetchTm(new Date());
 				order.setStoreOrderId(ccorder.getINVOICENO());
-				order.setShippingDetails(ccorder.getSHIPPINGLABEL()
-						.getSLMETHOD());
+				String shippingDetails = ccorder.getSHIPPINGLABEL()
+						.getSLMETHOD();
+				order.setShippingDetails(shippingDetails);
+				// FIXME:: Get Channel reference and find supported channel ID
+				// from there
+				Integer supportedChannelId = 7;
+				Criteria findCriteria = m_dbSession
+						.createCriteria(OimChannelShippingMap.class);
+				findCriteria.add(Restrictions.eq(
+						"oimSupportedChannel.supportedChannelId",
+						supportedChannelId));
+				List<OimChannelShippingMap> list = findCriteria.list();
+				for (OimChannelShippingMap shippingMap : list) {
+					String shippingRegEx = shippingMap.getShippingRegEx();
+					if (shippingDetails.equalsIgnoreCase(shippingRegEx)) {
+						order.setOimShippingMethod(shippingMap
+								.getOimShippingMethod());
+						LOG.info("Shipping set to {}",
+								shippingMap.getOimShippingMethod());
+						break;
+					}
+				}
+
+				if (order.getOimShippingMethod() == null)
+					LOG.warn("Shipping can't be mapped for order {}",
+							order.getStoreOrderId());
 				order.setOrderTm(new Date());
 				String paymentMethod = "";
 				if (ccorder.getPAYMENTMETHOD().getBANKACCOUNT() != null) {
@@ -985,6 +1010,8 @@ public class OrderRepositoryDB extends RepositoryBase implements
 					if (oimSuppliers != null) {
 						details.setOimSuppliers(oimSuppliers);
 					}
+					details.setStoreOrderItemId(items.getITEM()
+							.getITPURCHASEID());
 					details.setOimOrders(order);
 					m_dbSession.saveOrUpdate(details);
 					detailSet.add(details);

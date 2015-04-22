@@ -101,7 +101,7 @@ If you have not yet configured your supplier, click "Add Supplier" to do it now.
                            <div class="form-group">
                             <div class="col-sm-5">
                               <label
-															class="col-sm-offset-8 control-label no-padding-right">UserName</label>
+															class="col-sm-offset-8 control-label no-padding-right">Username</label>
 													</div>
                               <div class="col-sm-7">
                               <input class="width-70" name='login'

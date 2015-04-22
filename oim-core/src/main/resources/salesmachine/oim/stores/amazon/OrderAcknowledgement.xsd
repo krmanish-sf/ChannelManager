@@ -10,7 +10,7 @@
     to list products for sale on the www.amazon.com web site pursuant to an agreement 
     with Amazon.com.
     -->
-	<xsd:include schemaLocation="./amzn-base.xsd"/>
+	<xsd:include schemaLocation="amzn-base.xsd"/>
 	<xsd:element name="OrderAcknowledgement">
 		<xsd:complexType>
 			<xsd:sequence>

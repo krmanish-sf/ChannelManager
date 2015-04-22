@@ -5,13 +5,14 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.Reader;
 import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -36,14 +37,18 @@ import salesmachine.hibernatedb.Vendors;
 import salesmachine.hibernatehelper.SessionManager;
 import salesmachine.oim.stores.api.IOrderImport;
 import salesmachine.oim.stores.impl.OrderImportManager;
+import salesmachine.oim.suppliers.modal.OrderStatus;
 import salesmachine.oim.suppliers.modal.hg.TrackingData;
 import salesmachine.util.OimLogStream;
 import salesmachine.util.StringHandle;
 
 import com.enterprisedt.net.ftp.FTPClient;
+import com.enterprisedt.net.ftp.FTPException;
 
 public class HonestGreen extends Supplier implements HasTracking {
-	private static final String ASCII_CHARSET = "ASCII";
+	private static final String UNFIORDERNO = "UNFIORDERNO";
+	private static final String PONUM = "PONUM";
+	private static final String ASCII = "ASCII";
 	private static final Logger log = LoggerFactory
 			.getLogger(HonestGreen.class);
 	// private static final byte BLANK_SPACE = ' ';
@@ -52,6 +57,15 @@ public class HonestGreen extends Supplier implements HasTracking {
 			'F', '*', '*', '*' };
 	private static final byte[] FIL = new byte[] { 'F', 'I', 'L' };
 	private static final byte[] COMMA = new byte[] { ',' };
+	private static JAXBContext jaxbContext;
+
+	static {
+		try {
+			jaxbContext = JAXBContext.newInstance(TrackingData.class);
+		} catch (JAXBException e) {
+			log.error(e.getMessage(), e);
+		}
+	}
 
 	@Override
 	public void sendOrders(Integer vendorId, OimVendorSuppliers ovs, List orders) {
@@ -89,74 +103,16 @@ public class HonestGreen extends Supplier implements HasTracking {
 					ftp.login(ovs.getLogin(), ovs.getPassword());
 					ftp.setTimeout(60 * 1000 * 60 * 5);
 					ftp.put(fileName, fileName);
-					ftp.chdir("/confirmations/");
-					for (String confirmationFile : ftp.dir()) {
-						byte[] confirmationFileData = ftp.get(confirmationFile);
-						Map<Integer, String> orderDataMap = parseFileData(confirmationFileData);
-						Map<String, String> orderData = parseOrderConfirmation(orderDataMap);
-						if (orderData.get("PONUM").equalsIgnoreCase(
-								order.getStoreOrderId())) {
-							log.debug("Order Invoice Data Found");
-							String unfiOrderNo = orderData.get("UNFIORDERNO");
-							for (Object object2 : order.getOimOrderDetailses()) {
-								OimOrderDetails detail = (OimOrderDetails) object2;
-								detail.setSupplierOrderNumber(unfiOrderNo);
-								detail.setSupplierOrderStatus("Sent to supplier");
-								session.update(detail);
-							}
-							OimChannels oimChannels = order
-									.getOimOrderBatches().getOimChannels();
-							Integer channelId = oimChannels.getChannelId();
-							IOrderImport iOrderImport = OrderImportManager
-									.getIOrderImport(channelId);
-							OimLogStream stream = new OimLogStream();
-							if (iOrderImport != null) {
-								log.debug("Created the iorderimport object");
-								if (!iOrderImport.init(channelId, session,
-										stream)) {
-									log.debug(
-											"Failed initializing the channel with Id:{}",
-											channelId);
-								} else {
-									iOrderImport
-											.updateStoreOrder(
-													order.getStoreOrderId(),
-													((OimOrderProcessingRule) oimChannels
-															.getOimOrderProcessingRules()
-															.iterator().next())
-															.getProcessedStatus(),
-													"Sent to supplier.");
-								}
-							} else {
-								log.error("Could not find a bean to work with this Channel.");
-								stream.println("This Channel type is not supported for pushing order updates.");
-							}
-							break;
-						}
-						log.debug("Order Invoice Data Not Found");
-					}
-
 					ftp.quit();
 
 					String emailBody = "Account Number : "
 							+ accountNumber
 							+ "\n Find attached order file for the orders from my store.";
 					String emailSubject = fileName;
-					EmailUtil
-							.sendEmailWithAttachmentAndBCC(
-									r.getLogin(),
-									"support@inventorysource.com",
-									null,
-									null,
-									"oim@inventorysource.com,aruppar@inventorysource.com",
-									emailSubject, emailBody, fileName, "");
-
-					for (Iterator detailIt = order.getOimOrderDetailses()
-							.iterator(); detailIt.hasNext();) {
-						OimOrderDetails detail = (OimOrderDetails) detailIt
-								.next();
-						successfulOrders.add(detail.getDetailId());
-					}
+					EmailUtil.sendEmailWithAttachment(
+							"orders@inventorysource.com",
+							"support@inventorysource.com", null, emailSubject,
+							emailBody, fileName);
 
 					if (order.getOimOrderBatches().getOimChannels()
 							.getEmailNotifications() == 1) {
@@ -188,8 +144,8 @@ public class HonestGreen extends Supplier implements HasTracking {
 			Map<Integer, String> orderConfirmationMap) {
 		String[] lineArray1 = orderConfirmationMap.get(1).split(",");
 		Map<String, String> orderData = new HashMap<String, String>();
-		orderData.put("PONUM", lineArray1[6]);
-		orderData.put("UNFIORDERNO", lineArray1[0]);
+		orderData.put(PONUM, lineArray1[6]);
+		orderData.put(UNFIORDERNO, lineArray1[0]);
 		return orderData;
 	}
 
@@ -203,19 +159,22 @@ public class HonestGreen extends Supplier implements HasTracking {
 		Map<Integer, String> fileData = null;
 		try {
 			fileData = new HashMap<Integer, String>();
-			InputStreamReader r = new InputStreamReader(
-					new ByteArrayInputStream(confirmationFileData),
-					ASCII_CHARSET);
+			InputStream inputStream = new ByteArrayInputStream(
+					confirmationFileData);
+			Reader r = new InputStreamReader(inputStream, ASCII);
+
 			int i = -1, lineNum = 1;
 			char c;
 			StringBuilder sb = new StringBuilder();
 			while ((i = r.read()) != -1) {
 				c = (char) i;
+				if (c == '"')
+					continue;
 				if (c != '\n') {
 					sb.append(c);
+				} else {
 					fileData.put(lineNum, sb.toString());
 					lineNum++;
-				} else {
 					sb = new StringBuilder();
 				}
 			}
@@ -224,7 +183,7 @@ public class HonestGreen extends Supplier implements HasTracking {
 		} catch (IOException e) {
 			log.error(e.getMessage(), e);
 		}
-		return null;
+		return fileData;
 	}
 
 	private String createOrderFile(OimOrders order, OimVendorSuppliers ovs) {
@@ -236,13 +195,15 @@ public class HonestGreen extends Supplier implements HasTracking {
 		try {
 			FileOutputStream fOut = new FileOutputStream(f);
 			// Integer orderSize = order.getOimOrderDetailses().size();
-			fOut.write("1".getBytes(ASCII_CHARSET));
+			fOut.write("1".getBytes(ASCII));
 			fOut.write(NEW_LINE);
-			fOut.write(ovs.getAccountNumber().getBytes(ASCII_CHARSET));
+			fOut.write(ovs.getAccountNumber().getBytes(ASCII));
 			fOut.write(COMMA);
 			// fOut.write(BLANK_SPACE);
 			fOut.write(COMMA);
-			fOut.write(order.getStoreOrderId().getBytes(ASCII_CHARSET));
+			String poNum = ovs.getVendors().getVendorId() + "-"
+					+ order.getStoreOrderId();
+			fOut.write(poNum.getBytes(ASCII));
 			fOut.write(COMMA);
 			// fOut.write(BLANK_SPACE);
 			fOut.write(COMMA);
@@ -251,33 +212,36 @@ public class HonestGreen extends Supplier implements HasTracking {
 			// fOut.write(BLANK_SPACE);
 			fOut.write(NEW_LINE);
 			fOut.write(StringHandle.removeNull(order.getDeliveryName())
-					.toUpperCase().getBytes(ASCII_CHARSET));
+					.toUpperCase().getBytes(ASCII));
 			fOut.write(COMMA);
 			fOut.write(StringHandle
 					.removeNull(order.getDeliveryStreetAddress()).toUpperCase()
-					.getBytes(ASCII_CHARSET));
+					.getBytes(ASCII));
 			fOut.write(COMMA);
 			fOut.write(StringHandle.removeNull(order.getDeliverySuburb())
-					.toUpperCase().getBytes(ASCII_CHARSET));
+					.toUpperCase().getBytes(ASCII));
 			fOut.write(COMMA);
 			fOut.write(StringHandle.removeNull(order.getDeliveryCity())
-					.toUpperCase().getBytes(ASCII_CHARSET));
+					.toUpperCase().getBytes(ASCII));
 			fOut.write(COMMA);
 			fOut.write(StringHandle.removeNull(order.getDeliveryState())
-					.toUpperCase().getBytes(ASCII_CHARSET));
+					.toUpperCase().getBytes(ASCII));
 			fOut.write(COMMA);
 			fOut.write(StringHandle.removeNull(order.getDeliveryZip())
-					.toUpperCase().getBytes(ASCII_CHARSET));
+					.toUpperCase().getBytes(ASCII));
 			fOut.write(COMMA);
 			fOut.write(StringHandle.removeNull(order.getDeliveryPhone())
-					.toUpperCase().getBytes(ASCII_CHARSET));
+					.toUpperCase().getBytes(ASCII));
 			fOut.write(COMMA);
 			fOut.write('A');
 			fOut.write(COMMA);
-			fOut.write("5001".getBytes(ASCII_CHARSET));
+			fOut.write("5001".getBytes(ASCII));
 			fOut.write(NEW_LINE);
 			for (OimOrderDetails od : ((Set<OimOrderDetails>) order
 					.getOimOrderDetailses())) {
+				if (!od.getOimSuppliers().getSupplierId()
+						.equals(ovs.getOimSuppliers().getSupplierId()))
+					continue;
 				String skuPrefix = null, sku = od.getSku();
 				if (!orderSkuPrefixMap.isEmpty()) {
 					skuPrefix = orderSkuPrefixMap.values().toArray()[0]
@@ -287,11 +251,11 @@ public class HonestGreen extends Supplier implements HasTracking {
 				if (sku.startsWith(skuPrefix)) {
 					sku = sku.substring(skuPrefix.length());
 				}
-				fOut.write(sku.getBytes(ASCII_CHARSET));
+				fOut.write(sku.getBytes(ASCII));
 				fOut.write(COMMA);
 				// fOut.write(BLANK_SPACE);
 				fOut.write(COMMA);
-				fOut.write(od.getQuantity().toString().getBytes(ASCII_CHARSET));
+				fOut.write(od.getQuantity().toString().getBytes(ASCII));
 				fOut.write(COMMA);
 				// fOut.write(BLANK_SPACE);
 				fOut.write(COMMA);
@@ -300,6 +264,36 @@ public class HonestGreen extends Supplier implements HasTracking {
 				// fOut.write(BLANK_SPACE);
 				// fOut.write(COMMA);
 				fOut.write(NEW_LINE);
+				od.setSupplierOrderNumber(poNum);
+				od.setSupplierOrderStatus("Sent to supplier.");
+				Session session = SessionManager.currentSession();
+				session.update(od);
+				successfulOrders.add(od.getDetailId());
+				OimChannels oimChannels = order.getOimOrderBatches()
+						.getOimChannels();
+				Integer channelId = oimChannels.getChannelId();
+				IOrderImport iOrderImport = OrderImportManager
+						.getIOrderImport(channelId);
+				OimLogStream stream = new OimLogStream();
+				if (iOrderImport != null) {
+					log.debug("Created the iorderimport object");
+					if (!iOrderImport.init(channelId,
+							SessionManager.currentSession(), stream)) {
+						log.debug("Failed initializing the channel with Id:{}",
+								channelId);
+					} else {
+						OrderStatus orderStatus = new OrderStatus();
+						orderStatus
+								.setStatus(((OimOrderProcessingRule) oimChannels
+										.getOimOrderProcessingRules()
+										.iterator().next())
+										.getProcessedStatus());
+						iOrderImport.updateStoreOrder(od, orderStatus);
+					}
+				} else {
+					log.error("Could not find a bean to work with this Channel.");
+					stream.println("This Channel type is not supported for pushing order updates.");
+				}
 			}
 			fOut.write(HG_EOF);
 			fOut.write(NEW_LINE);
@@ -313,9 +307,9 @@ public class HonestGreen extends Supplier implements HasTracking {
 		return uploadfilename;
 	}
 
-	private static final String ORDER_CONFIRMATION_FILE_PATH_TEMPLATE = "confirmations/%1.O%2A.txt";
-	private static final String ORDER_SHIPPING_FILE_PATH_TEMPLATE = "shipping/%1.S%2A.txt";
-	private static final String ORDER_TRACKING_FILE_PATH_TEMPLATE = "tracking/%1.T%2S.txt";
+	private static final String ORDER_CONFIRMATION_FILE_PATH_TEMPLATE = "confirmations/%s.O%sA.txt";
+	private static final String ORDER_SHIPPING_FILE_PATH_TEMPLATE = "shipping/%s.S%sA.txt";
+	private static final String ORDER_TRACKING_FILE_PATH_TEMPLATE = "%s.T%sX.txt";
 
 	private String getShippingFilePath(String account, String unfiOrderNo) {
 		return getFilePath(ORDER_SHIPPING_FILE_PATH_TEMPLATE, account,
@@ -338,10 +332,13 @@ public class HonestGreen extends Supplier implements HasTracking {
 	}
 
 	@Override
-	public String getOrderStatus(OimVendorSuppliers ovs, Object trackingMeta) {
+	public OrderStatus getOrderStatus(OimVendorSuppliers ovs,
+			Object trackingMeta) {
+		log.info("Tracking request for PONUM: {}", trackingMeta);
 		if (!(trackingMeta instanceof String))
 			throw new IllegalArgumentException(
 					"trackingMeta is expected to be a String value containing UNFI Order number.");
+		OrderStatus orderStatus = new OrderStatus();
 		try {
 			FTPClient ftp = new FTPClient();
 			ftp.setRemoteHost("ftp1.unfi.com");
@@ -349,40 +346,83 @@ public class HonestGreen extends Supplier implements HasTracking {
 			ftp.connect();
 			ftp.login(ovs.getLogin(), ovs.getPassword());
 			ftp.setTimeout(60 * 1000 * 60 * 5);
-			byte[] confirmationFileData = ftp.get(getConfirmationFilePath(
-					ovs.getAccountNumber(), trackingMeta.toString()));
-			Map<Integer, String> confirmationDataMap = parseFileData(confirmationFileData);
-			byte[] shippingFileData = ftp.get(getShippingFilePath(
-					ovs.getAccountNumber(), trackingMeta.toString()));
-			Map<Integer, String> shippingDataMap = parseFileData(shippingFileData);
+			ftp.chdir("confirmations");
+			for (String confirmationFile : ftp.dir()) {
+				byte[] confirmationFileData = ftp.get(confirmationFile);
+				Map<Integer, String> orderDataMap = parseFileData(confirmationFileData);
+				Map<String, String> orderData = parseOrderConfirmation(orderDataMap);
+				log.info("Order Confirmation details found for {}", orderData);
+				if (trackingMeta.toString().equals(orderData.get(PONUM))) {
+					log.debug("Order Invoice Data Found");
+					String unfiOrderNo = orderData.get(UNFIORDERNO);
+					// String shippingFilePath = getShippingFilePath(
+					// ovs.getAccountNumber(), unfiOrderNo);
+					ftp.cdup();
+					ftp.chdir("tracking");
+					String trackingFilePath = getTrackingFilePath(
+							ovs.getAccountNumber(), unfiOrderNo);
+					orderStatus.setStatus("In-Process");
+					// byte[] shippingFileData = ftp.get(shippingFilePath);
+					// Map<Integer, String> shippingDataMap =
+					// parseFileData(shippingFileData);
+					try {
+						byte[] trackingFileData = ftp.get(trackingFilePath);
+						Unmarshaller unmarshaller = jaxbContext
+								.createUnmarshaller();
+						String s = new String(trackingFileData);
+						StringReader reader = new StringReader(s);
+						log.info(s);
+						TrackingData orderTrackingResponse = (TrackingData) unmarshaller
+								.unmarshal(reader);
+						orderStatus.setStatus("Shipped");
+						salesmachine.oim.suppliers.modal.TrackingData trackingData = new salesmachine.oim.suppliers.modal.TrackingData();
+						if ("A".equals(orderTrackingResponse.getPO()
+								.getShipVia())) {
+							trackingData.setCarrierCode("UPS");
+							trackingData.setCarrierName("UPS");
+							trackingData.setShippingMethod("Ground");
 
-			byte[] trackingFileData = ftp.get(getTrackingFilePath(
-					ovs.getAccountNumber(), trackingMeta.toString()));
+						} else {
+							trackingData.setCarrierCode(orderTrackingResponse
+									.getPO().getShipVia());
+						}
+						trackingData
+								.setShipperTrackingNumber(orderTrackingResponse
+										.getPOTracking().getTrackingNumber());
+						orderStatus.setTrackingData(trackingData);
+						log.info("Tracking details: {} {}",
+								orderTrackingResponse.getPO().getShipVia(),
+								orderTrackingResponse.getPOTracking()
+										.getTrackingNumber());
 
-			JAXBContext jaxbContext;
-			try {
-				jaxbContext = JAXBContext.newInstance(TrackingData.class);
-				Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
-
-				StringReader reader = new StringReader(new String(
-						trackingFileData));
-				TrackingData orderTrackingResponse = (TrackingData) unmarshaller
-						.unmarshal(reader);
-				String trackingInfo = orderTrackingResponse.getPO()
-						.getShipVia()
-						+ ":"
-						+ orderTrackingResponse.getPOTracking()
-								.getTrackingNumber();
-				log.info("Tracking:{}", trackingInfo);
-				return trackingInfo;
-			} catch (JAXBException e) {
-				log.error(e.getMessage(), e);
+					} catch (JAXBException e) {
+						log.error(
+								"Tracking XML recieved from server could not be parsed.",
+								e);
+					} catch (FTPException e) {
+						log.error(e.getMessage());
+						orderStatus.setStatus("Not shipped yet.");
+					} finally {
+						ftp.cdup();
+						ftp.chdir("confirmations");
+					}
+					break;
+				}
+				orderStatus.setStatus("Not shipped yet.");
 			}
+			// byte[] confirmationFileData = ftp.get(getConfirmationFilePath(
+			// ovs.getAccountNumber(), trackingMeta.toString()));
+			// Map<Integer, String> confirmationDataMap =
+			// parseFileData(confirmationFileData);
+			// Map<String, String> orderConfirmationMap =
+			// parseOrderConfirmation(confirmationDataMap);
+			// log.info("Confirmation File Data Map: {}", confirmationDataMap);
+			// log.info("Order Confirmation Data: {}", orderConfirmationMap);
 			ftp.quit();
 		} catch (Exception e) {
 			log.error(e.getMessage(), e);
 		}
-		return "";
+		return orderStatus;
 	}
 
 	public static void main(String[] args) {

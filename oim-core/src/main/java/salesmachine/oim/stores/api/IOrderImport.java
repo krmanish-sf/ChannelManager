@@ -2,6 +2,8 @@ package salesmachine.oim.stores.api;
 
 import org.hibernate.Session;
 
+import salesmachine.hibernatedb.OimOrderDetails;
+import salesmachine.oim.suppliers.modal.OrderStatus;
 import salesmachine.util.OimLogStream;
 
 public interface IOrderImport {
@@ -9,6 +11,5 @@ public interface IOrderImport {
 
 	boolean getVendorOrders();
 
-	boolean updateStoreOrder(String storeOrderId, String orderStatus,
-			String trackingDetail);
+	boolean updateStoreOrder(OimOrderDetails oimOrderDetails, OrderStatus orderStatus);
 }

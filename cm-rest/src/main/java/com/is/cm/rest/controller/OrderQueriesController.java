@@ -48,7 +48,6 @@ public class OrderQueriesController {
 	@ResponseBody
 	public Collection<Order> getAllOrders(@PathVariable String orderStatus) {
 		LOG.debug("Getting {} orders...", orderStatus);
-		LOG.info("Getting vendorId# {} from ThreadLocal", MyThreadLocal.get());
 		ReadCollectionEvent<Order> details = orderService
 				.findOrderByStatus(new RequestReadEvent<String>(orderStatus));
 		return details.getEntity();

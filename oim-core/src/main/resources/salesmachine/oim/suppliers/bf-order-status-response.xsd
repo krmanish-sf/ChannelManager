@@ -4,6 +4,13 @@
 	<xs:element name="StatusResponse">
 		<xs:complexType>
 			<xs:sequence>
+				<xs:element name="ErrorResponse">
+					<xs:complexType>
+						<xs:sequence>
+							<xs:element type="xs:string" name="MSG" />
+						</xs:sequence>
+					</xs:complexType>
+				</xs:element>
 				<xs:element name="StatusInfo">
 					<xs:complexType>
 						<xs:sequence>

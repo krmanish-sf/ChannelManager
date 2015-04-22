@@ -52,5 +52,8 @@
          <property name="supplierOrderNumber" type="string">
             <column name="SUPPLIER_ORDER_NUMBER" length="50" />
         </property>
+        <property name="storeOrderItemId" type="string">
+            <column name="STORE_ORDER_ITEM_ID" length="50" />
+        </property>
     </class>
 </hibernate-mapping>

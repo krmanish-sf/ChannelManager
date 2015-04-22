@@ -93,6 +93,7 @@
 					</xs:complexType>
 				</xs:element>
 				<xs:element type="xs:string" name="STATUS" />
+				<xs:element type="xs:string" name="MESSAGE" />
 			</xs:sequence>
 		</xs:complexType>
 	</xs:element>

@@ -12,7 +12,7 @@
     with Amazon.com.
     -->
 
-    <xsd:include schemaLocation="./amzn-base.xsd"/>
+    <xsd:include schemaLocation="amzn-base.xsd"/>
 
     <xsd:element name="OrderFulfillment">
         <xsd:complexType>
@@ -36,14 +36,6 @@
                     </xsd:complexType>
                 </xsd:element>
 
-                <xsd:element name="CODCollectionMethod" minOccurs="0">
-                    <xsd:simpleType>
-                        <xsd:restriction base="xsd:string">
-                            <xsd:enumeration value="DirectPayment"/>
-                        </xsd:restriction>
-                    </xsd:simpleType>
-                </xsd:element>
-
                 <xsd:element name="Item" minOccurs="0" maxOccurs="unbounded">
                     <xsd:complexType>
                         <xsd:sequence>
@@ -51,8 +43,7 @@
                                 <xsd:element ref="AmazonOrderItemCode"/>
                                 <xsd:element ref="MerchantOrderItemID"/>
                             </xsd:choice>
-                            <xsd:element name="MerchantFulfillmentItemID" type="IDNumber"
-                                minOccurs="0"/>
+                            <xsd:element name="MerchantFulfillmentItemID" type="IDNumber" minOccurs="0"/>
                             <xsd:element name="Quantity" type="xsd:positiveInteger" minOccurs="0"/>
                         </xsd:sequence>
                     </xsd:complexType>
@@ -63,3 +54,4 @@
     </xsd:element>
 
 </xsd:schema>
+

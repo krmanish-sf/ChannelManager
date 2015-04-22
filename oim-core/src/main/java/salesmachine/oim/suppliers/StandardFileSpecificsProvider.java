@@ -9,6 +9,8 @@ import java.util.Map;
 import java.util.Set;
 
 import org.hibernate.Session;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import salesmachine.hibernatedb.OimChannelSupplierMap;
 import salesmachine.hibernatedb.OimFields;
@@ -22,6 +24,8 @@ import salesmachine.hibernatedb.Vendors;
 import salesmachine.util.StringHandle;
 
 public class StandardFileSpecificsProvider implements IFileSpecificsProvider {
+	private static final Logger log = LoggerFactory
+			.getLogger(StandardFileSpecificsProvider.class);
 	private final OimVendorSuppliers m_ovs;
 	private final Map m_supplierMaps = new HashMap();
 	private final List<OimSupplierShippingMethod> shipMap;
@@ -72,8 +76,8 @@ public class StandardFileSpecificsProvider implements IFileSpecificsProvider {
 
 					String prefix = map.getSupplierPrefix();
 					OimSuppliers supplier = map.getOimSuppliers();
-					System.out.println("Prefix: " + prefix + " -- "
-							+ supplier.getSupplierName());
+					log.info("Prefix: {} - {}", prefix,
+							supplier.getSupplierName());
 
 					if (detail.getOimSuppliers().getSupplierId()
 							.equals(supplier.getSupplierId())) {
@@ -86,7 +90,8 @@ public class StandardFileSpecificsProvider implements IFileSpecificsProvider {
 			}
 			return sku;
 		case 2:// ProductOrderNumber
-			return order.getStoreOrderId();
+			return String.format("%s-%s", order.getStoreOrderId(), m_ovs
+					.getVendors().getVendorId());
 		case 3:// CustomerName
 			return order.getDeliveryName();
 		case 4:// StreetAddress

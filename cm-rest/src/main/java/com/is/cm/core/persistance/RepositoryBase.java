@@ -10,7 +10,7 @@ public class RepositoryBase {
 			.getLogger(RepositoryBase.class);
 
 	protected Integer getVendorId() {
-		LOG.info("Accessing vendorId# {} thread locale...", MyThreadLocal.get());
+		LOG.debug("Accessing vendorId# {} thread locale...", MyThreadLocal.get());
 		return MyThreadLocal.get();
 	}
 }

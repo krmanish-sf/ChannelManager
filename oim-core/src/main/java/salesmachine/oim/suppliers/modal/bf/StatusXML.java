@@ -5,7 +5,6 @@
 // Generated on: 2015.03.31 at 04:12:45 PM IST 
 //
 
-
 package salesmachine.oim.suppliers.modal.bf;
 
 import javax.xml.bind.annotation.XmlAccessType;
@@ -14,11 +13,13 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
 
-
 /**
- * <p>Java class for anonymous complex type.
+ * <p>
+ * Java class for anonymous complex type.
  * 
- * <p>The following schema fragment specifies the expected content contained within this class.
+ * <p>
+ * The following schema fragment specifies the expected content contained within
+ * this class.
  * 
  * <pre>
  * &lt;complexType>
@@ -61,289 +62,264 @@ import javax.xml.bind.annotation.XmlType;
  * 
  */
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "", propOrder = {
-    "accessRequest",
-    "status"
-})
+@XmlType(name = "", propOrder = { "accessRequest", "status" })
 @XmlRootElement(name = "StatusXML")
 public class StatusXML {
 
-    @XmlElement(name = "AccessRequest", required = true)
-    protected StatusXML.AccessRequest accessRequest;
-    @XmlElement(name = "Status", required = true)
-    protected StatusXML.Status status;
+	@XmlElement(name = "AccessRequest", required = true)
+	protected StatusXML.AccessRequest accessRequest;
+	@XmlElement(name = "Status", required = true)
+	protected StatusXML.Status status;
 
-    /**
-     * Gets the value of the accessRequest property.
-     * 
-     * @return
-     *     possible object is
-     *     {@link StatusXML.AccessRequest }
-     *     
-     */
-    public StatusXML.AccessRequest getAccessRequest() {
-        return accessRequest;
-    }
+	/**
+	 * Gets the value of the accessRequest property.
+	 * 
+	 * @return possible object is {@link StatusXML.AccessRequest }
+	 * 
+	 */
+	public StatusXML.AccessRequest getAccessRequest() {
+		return accessRequest;
+	}
 
-    /**
-     * Sets the value of the accessRequest property.
-     * 
-     * @param value
-     *     allowed object is
-     *     {@link StatusXML.AccessRequest }
-     *     
-     */
-    public void setAccessRequest(StatusXML.AccessRequest value) {
-        this.accessRequest = value;
-    }
+	/**
+	 * Sets the value of the accessRequest property.
+	 * 
+	 * @param value
+	 *            allowed object is {@link StatusXML.AccessRequest }
+	 * 
+	 */
+	public void setAccessRequest(StatusXML.AccessRequest value) {
+		this.accessRequest = value;
+	}
 
-    /**
-     * Gets the value of the status property.
-     * 
-     * @return
-     *     possible object is
-     *     {@link StatusXML.Status }
-     *     
-     */
-    public StatusXML.Status getStatus() {
-        return status;
-    }
+	/**
+	 * Gets the value of the status property.
+	 * 
+	 * @return possible object is {@link StatusXML.Status }
+	 * 
+	 */
+	public StatusXML.Status getStatus() {
+		return status;
+	}
 
-    /**
-     * Sets the value of the status property.
-     * 
-     * @param value
-     *     allowed object is
-     *     {@link StatusXML.Status }
-     *     
-     */
-    public void setStatus(StatusXML.Status value) {
-        this.status = value;
-    }
+	/**
+	 * Sets the value of the status property.
+	 * 
+	 * @param value
+	 *            allowed object is {@link StatusXML.Status }
+	 * 
+	 */
+	public void setStatus(StatusXML.Status value) {
+		this.status = value;
+	}
 
+	/**
+	 * <p>
+	 * Java class for anonymous complex type.
+	 * 
+	 * <p>
+	 * The following schema fragment specifies the expected content contained
+	 * within this class.
+	 * 
+	 * <pre>
+	 * &lt;complexType>
+	 *   &lt;complexContent>
+	 *     &lt;restriction base="{http://www.w3.org/2001/XMLSchema}anyType">
+	 *       &lt;sequence>
+	 *         &lt;element name="XMLlickey" type="{http://www.w3.org/2001/XMLSchema}string"/>
+	 *         &lt;element name="UserId" type="{http://www.w3.org/2001/XMLSchema}string"/>
+	 *         &lt;element name="Password" type="{http://www.w3.org/2001/XMLSchema}string"/>
+	 *         &lt;element name="version" type="{http://www.w3.org/2001/XMLSchema}float"/>
+	 *       &lt;/sequence>
+	 *     &lt;/restriction>
+	 *   &lt;/complexContent>
+	 * &lt;/complexType>
+	 * </pre>
+	 * 
+	 * 
+	 */
+	@XmlAccessorType(XmlAccessType.FIELD)
+	@XmlType(name = "", propOrder = { "xmLlickey", "userId", "password",
+			"version" })
+	public static class AccessRequest {
 
-    /**
-     * <p>Java class for anonymous complex type.
-     * 
-     * <p>The following schema fragment specifies the expected content contained within this class.
-     * 
-     * <pre>
-     * &lt;complexType>
-     *   &lt;complexContent>
-     *     &lt;restriction base="{http://www.w3.org/2001/XMLSchema}anyType">
-     *       &lt;sequence>
-     *         &lt;element name="XMLlickey" type="{http://www.w3.org/2001/XMLSchema}string"/>
-     *         &lt;element name="UserId" type="{http://www.w3.org/2001/XMLSchema}string"/>
-     *         &lt;element name="Password" type="{http://www.w3.org/2001/XMLSchema}string"/>
-     *         &lt;element name="version" type="{http://www.w3.org/2001/XMLSchema}float"/>
-     *       &lt;/sequence>
-     *     &lt;/restriction>
-     *   &lt;/complexContent>
-     * &lt;/complexType>
-     * </pre>
-     * 
-     * 
-     */
-    @XmlAccessorType(XmlAccessType.FIELD)
-    @XmlType(name = "", propOrder = {
-        "xmLlickey",
-        "userId",
-        "password",
-        "version"
-    })
-    public static class AccessRequest {
+		@XmlElement(name = "XMLlickey", required = true)
+		protected String xmLlickey;
+		@XmlElement(name = "UserId", required = true)
+		protected String userId;
+		@XmlElement(name = "Password", required = true)
+		protected String password;
+		protected float version;
 
-        @XmlElement(name = "XMLlickey", required = true)
-        protected String xmLlickey;
-        @XmlElement(name = "UserId", required = true)
-        protected String userId;
-        @XmlElement(name = "Password", required = true)
-        protected String password;
-        protected float version;
+		/**
+		 * Gets the value of the xmLlickey property.
+		 * 
+		 * @return possible object is {@link String }
+		 * 
+		 */
+		public String getXMLlickey() {
+			return xmLlickey;
+		}
 
-        /**
-         * Gets the value of the xmLlickey property.
-         * 
-         * @return
-         *     possible object is
-         *     {@link String }
-         *     
-         */
-        public String getXMLlickey() {
-            return xmLlickey;
-        }
+		/**
+		 * Sets the value of the xmLlickey property.
+		 * 
+		 * @param value
+		 *            allowed object is {@link String }
+		 * 
+		 */
+		public void setXMLlickey(String value) {
+			this.xmLlickey = value;
+		}
 
-        /**
-         * Sets the value of the xmLlickey property.
-         * 
-         * @param value
-         *     allowed object is
-         *     {@link String }
-         *     
-         */
-        public void setXMLlickey(String value) {
-            this.xmLlickey = value;
-        }
+		/**
+		 * Gets the value of the userId property.
+		 * 
+		 * @return possible object is {@link String }
+		 * 
+		 */
+		public String getUserId() {
+			return userId;
+		}
 
-        /**
-         * Gets the value of the userId property.
-         * 
-         * @return
-         *     possible object is
-         *     {@link String }
-         *     
-         */
-        public String getUserId() {
-            return userId;
-        }
+		/**
+		 * Sets the value of the userId property.
+		 * 
+		 * @param value
+		 *            allowed object is {@link String }
+		 * 
+		 */
+		public void setUserId(String value) {
+			this.userId = value;
+		}
 
-        /**
-         * Sets the value of the userId property.
-         * 
-         * @param value
-         *     allowed object is
-         *     {@link String }
-         *     
-         */
-        public void setUserId(String value) {
-            this.userId = value;
-        }
+		/**
+		 * Gets the value of the password property.
+		 * 
+		 * @return possible object is {@link String }
+		 * 
+		 */
+		public String getPassword() {
+			return password;
+		}
 
-        /**
-         * Gets the value of the password property.
-         * 
-         * @return
-         *     possible object is
-         *     {@link String }
-         *     
-         */
-        public String getPassword() {
-            return password;
-        }
+		/**
+		 * Sets the value of the password property.
+		 * 
+		 * @param value
+		 *            allowed object is {@link String }
+		 * 
+		 */
+		public void setPassword(String value) {
+			this.password = value;
+		}
 
-        /**
-         * Sets the value of the password property.
-         * 
-         * @param value
-         *     allowed object is
-         *     {@link String }
-         *     
-         */
-        public void setPassword(String value) {
-            this.password = value;
-        }
+		/**
+		 * Gets the value of the version property.
+		 * 
+		 */
+		public float getVersion() {
+			return version;
+		}
 
-        /**
-         * Gets the value of the version property.
-         * 
-         */
-        public float getVersion() {
-            return version;
-        }
+		/**
+		 * Sets the value of the version property.
+		 * 
+		 */
+		public void setVersion(float value) {
+			this.version = value;
+		}
 
-        /**
-         * Sets the value of the version property.
-         * 
-         */
-        public void setVersion(float value) {
-            this.version = value;
-        }
+	}
 
-    }
+	/**
+	 * <p>
+	 * Java class for anonymous complex type.
+	 * 
+	 * <p>
+	 * The following schema fragment specifies the expected content contained
+	 * within this class.
+	 * 
+	 * <pre>
+	 * &lt;complexType>
+	 *   &lt;complexContent>
+	 *     &lt;restriction base="{http://www.w3.org/2001/XMLSchema}anyType">
+	 *       &lt;sequence>
+	 *         &lt;element name="user_po" type="{http://www.w3.org/2001/XMLSchema}string"/>
+	 *         &lt;element name="web_id" type="{http://www.w3.org/2001/XMLSchema}short"/>
+	 *         &lt;element name="order_id" type="{http://www.w3.org/2001/XMLSchema}int"/>
+	 *       &lt;/sequence>
+	 *     &lt;/restriction>
+	 *   &lt;/complexContent>
+	 * &lt;/complexType>
+	 * </pre>
+	 * 
+	 * 
+	 */
+	@XmlAccessorType(XmlAccessType.FIELD)
+	@XmlType(name = "", propOrder = { "userPo", "webId", "orderId" })
+	public static class Status {
 
+		@XmlElement(name = "user_po", required = true)
+		protected String userPo;
+		@XmlElement(name = "web_id")
+		protected String webId;
+		@XmlElement(name = "order_id")
+		protected String orderId;
 
-    /**
-     * <p>Java class for anonymous complex type.
-     * 
-     * <p>The following schema fragment specifies the expected content contained within this class.
-     * 
-     * <pre>
-     * &lt;complexType>
-     *   &lt;complexContent>
-     *     &lt;restriction base="{http://www.w3.org/2001/XMLSchema}anyType">
-     *       &lt;sequence>
-     *         &lt;element name="user_po" type="{http://www.w3.org/2001/XMLSchema}string"/>
-     *         &lt;element name="web_id" type="{http://www.w3.org/2001/XMLSchema}short"/>
-     *         &lt;element name="order_id" type="{http://www.w3.org/2001/XMLSchema}int"/>
-     *       &lt;/sequence>
-     *     &lt;/restriction>
-     *   &lt;/complexContent>
-     * &lt;/complexType>
-     * </pre>
-     * 
-     * 
-     */
-    @XmlAccessorType(XmlAccessType.FIELD)
-    @XmlType(name = "", propOrder = {
-        "userPo",
-        "webId",
-        "orderId"
-    })
-    public static class Status {
+		/**
+		 * Gets the value of the userPo property.
+		 * 
+		 * @return possible object is {@link String }
+		 * 
+		 */
+		public String getUserPo() {
+			return userPo;
+		}
 
-        @XmlElement(name = "user_po", required = true)
-        protected String userPo;
-        @XmlElement(name = "web_id")
-        protected short webId;
-        @XmlElement(name = "order_id")
-        protected int orderId;
+		/**
+		 * Sets the value of the userPo property.
+		 * 
+		 * @param value
+		 *            allowed object is {@link String }
+		 * 
+		 */
+		public void setUserPo(String value) {
+			this.userPo = value;
+		}
 
-        /**
-         * Gets the value of the userPo property.
-         * 
-         * @return
-         *     possible object is
-         *     {@link String }
-         *     
-         */
-        public String getUserPo() {
-            return userPo;
-        }
+		/**
+		 * Gets the value of the webId property.
+		 * 
+		 */
+		public String getWebId() {
+			return webId;
+		}
 
-        /**
-         * Sets the value of the userPo property.
-         * 
-         * @param value
-         *     allowed object is
-         *     {@link String }
-         *     
-         */
-        public void setUserPo(String value) {
-            this.userPo = value;
-        }
+		/**
+		 * Sets the value of the webId property.
+		 * 
+		 */
+		public void setWebId(String value) {
+			this.webId = value;
+		}
 
-        /**
-         * Gets the value of the webId property.
-         * 
-         */
-        public short getWebId() {
-            return webId;
-        }
+		/**
+		 * Gets the value of the orderId property.
+		 * 
+		 */
+		public String getOrderId() {
+			return orderId;
+		}
 
-        /**
-         * Sets the value of the webId property.
-         * 
-         */
-        public void setWebId(short value) {
-            this.webId = value;
-        }
+		/**
+		 * Sets the value of the orderId property.
+		 * 
+		 */
+		public void setOrderId(String value) {
+			this.orderId = value;
+		}
 
-        /**
-         * Gets the value of the orderId property.
-         * 
-         */
-        public int getOrderId() {
-            return orderId;
-        }
-
-        /**
-         * Sets the value of the orderId property.
-         * 
-         */
-        public void setOrderId(int value) {
-            this.orderId = value;
-        }
-
-    }
+	}
 
 }

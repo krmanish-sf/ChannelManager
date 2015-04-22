@@ -7,6 +7,7 @@ import java.io.StringReader;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -38,17 +39,30 @@ import salesmachine.hibernatedb.Vendors;
 import salesmachine.hibernatehelper.SessionManager;
 import salesmachine.oim.stores.api.IOrderImport;
 import salesmachine.oim.stores.impl.OrderImportManager;
+import salesmachine.oim.suppliers.modal.TrackingData;
 import salesmachine.oim.suppliers.modal.bf.OrderXMLresp;
 import salesmachine.oim.suppliers.modal.bf.OrderXMLresp.Items.Item;
 import salesmachine.oim.suppliers.modal.bf.StatusResponse;
 import salesmachine.oim.suppliers.modal.bf.StatusXML;
 import salesmachine.oim.suppliers.modal.bf.StatusXML.AccessRequest;
+import salesmachine.oim.suppliers.modal.bf.StatusXML.Status;
+import salesmachine.oim.suppliers.modal.bf.Trackxml;
+import salesmachine.oim.suppliers.modal.bf.Trackxml.Tracking;
+import salesmachine.oim.suppliers.modal.bf.Trackxmlresp;
 import salesmachine.util.OimLogStream;
 import salesmachine.util.StringHandle;
 
 public class BF extends Supplier implements HasTracking {
 	private static final Logger log = LoggerFactory.getLogger(BF.class);
 
+	/*
+	 * public enum OrderStatus { Pending("Pending"), In_Progress("In-Progress"),
+	 * Shipped("Shipped"); private final String value;
+	 * 
+	 * OrderStatus(String status) { this.value = status; }
+	 * 
+	 * public String getValue() { return value; } }
+	 */
 	/***
 	 * @Requirement for Integration 1) Username : login ID 2) Password :
 	 *              password 3) Account : lincenceKey This method send orders to
@@ -141,13 +155,16 @@ public class BF extends Supplier implements HasTracking {
 				log.info("Shipping method code found : " + shippingMethod);
 				shippingMethodCode = shippingMethod.toString();
 			}
-			order.setShippingDetails(shippingMethodCode);
+			// order.setShippingDetails(shippingMethodCode);
 
 			boolean addShippingDetails = true;
 			String val = "";
 			for (Iterator detailIt = order.getOimOrderDetailses().iterator(); detailIt
 					.hasNext();) {
 				OimOrderDetails detail = (OimOrderDetails) detailIt.next();
+				if (!detail.getOimSuppliers().getSupplierId()
+						.equals(ovs.getOimSuppliers().getSupplierId()))
+					continue;
 				// for all the order details
 				for (Iterator it = fileFieldMaps.iterator(); it.hasNext();) {
 					OimFileFieldMap map = (OimFileFieldMap) it.next();
@@ -276,7 +293,7 @@ public class BF extends Supplier implements HasTracking {
 			// System.out.println("Post Request : "+xmlRequest);
 			String xmlResponse = null;
 			try {
-				xmlResponse = postOrder(xmlRequest, r);
+				xmlResponse = postRequest(xmlRequest, r, "cart");
 			} catch (Exception e) {
 				log.error(e.getMessage(), e);
 			}
@@ -329,14 +346,14 @@ public class BF extends Supplier implements HasTracking {
 											"Failed initializing the channel with Id:{}",
 											channelId);
 								} else {
-									iOrderImport
-											.updateStoreOrder(
-													order.getStoreOrderId(),
-													((OimOrderProcessingRule) oimChannels
-															.getOimOrderProcessingRules()
-															.iterator().next())
-															.getProcessedStatus(),
-													"Sent to supplier.");
+									salesmachine.oim.suppliers.modal.OrderStatus orderStatus = new salesmachine.oim.suppliers.modal.OrderStatus();
+									orderStatus
+											.setStatus(((OimOrderProcessingRule) oimChannels
+													.getOimOrderProcessingRules()
+													.iterator().next())
+													.getProcessedStatus());
+									iOrderImport.updateStoreOrder(detail,
+											orderStatus);
 								}
 							} else {
 								log.error("Could not find a bean to work with this Channel.");
@@ -402,13 +419,17 @@ public class BF extends Supplier implements HasTracking {
 		}
 	}
 
-	private String postOrder(String request, Reps r) {
+	private String postRequest(String request, Reps r, String service) {
 		URL url;
 		HttpsURLConnection connection = null;
 		String response = "";
 		try {
+			if (StringHandle.isNullOrEmpty(service)) {
+				service = "cart";
+			}
 			// Create connection
-			url = new URL("https://www.bnfusa.com/xml_xchange/cart/post.lasso");
+			url = new URL("https://www.bnfusa.com/xml_xchange/" + service
+					+ "/post.lasso");
 			connection = (HttpsURLConnection) url.openConnection();
 			connection.setRequestMethod("POST");
 
@@ -422,6 +443,7 @@ public class BF extends Supplier implements HasTracking {
 			OutputStream out = connection.getOutputStream();
 			out.write(req);
 			out.close();
+			log.info("Sending request with data{}", request);
 			connection.connect();
 			// System.out.print(connection.getContentLength());
 
@@ -434,7 +456,7 @@ public class BF extends Supplier implements HasTracking {
 			}
 			// System.out.println(sb.toString());
 			response = sb.toString();
-
+			log.info("Response: {}", response);
 		} catch (Exception e) {
 			log.error(e.getMessage(), e);
 			String logEmailContent = "-------------- Order failed with Exception -------------\n";
@@ -460,9 +482,9 @@ public class BF extends Supplier implements HasTracking {
 	}
 
 	@Override
-	public String getOrderStatus(OimVendorSuppliers oimVendorSuppliers,
-			Object trackingMeta) {
-
+	public salesmachine.oim.suppliers.modal.OrderStatus getOrderStatus(
+			OimVendorSuppliers oimVendorSuppliers, Object trackingMeta) {
+		salesmachine.oim.suppliers.modal.OrderStatus orderStatus = new salesmachine.oim.suppliers.modal.OrderStatus();
 		if (!(trackingMeta instanceof String))
 			throw new IllegalArgumentException(
 					"trackingMeta is expected to be a String value containing PO number.");
@@ -471,6 +493,7 @@ public class BF extends Supplier implements HasTracking {
 				.createCriteria(Reps.class)
 				.add(Restrictions.eq("vendorId", oimVendorSuppliers
 						.getVendors().getVendorId())).uniqueResult();
+
 		StatusXML requestObject = new StatusXML();
 		StatusResponse statusResponse;
 		AccessRequest accessRequest = new AccessRequest();
@@ -479,26 +502,96 @@ public class BF extends Supplier implements HasTracking {
 		accessRequest.setXMLlickey(oimVendorSuppliers.getAccountNumber());
 		accessRequest.setVersion(1.1F);
 		requestObject.setAccessRequest(accessRequest);
-		String responseData, requestData;
+		Status status = new Status();
+		status.setWebId(trackingMeta.toString());
+		requestObject.setStatus(status);
+		String trackResponseData, trackRequestData, statusResponseData, statusRequestData;
 		try {
 			JAXBContext jaxbContext;
 			jaxbContext = JAXBContext.newInstance(StatusXML.class,
-					StatusResponse.class);
+					StatusResponse.class, Trackxml.class, Trackxmlresp.class);
 			Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
 			Marshaller marshaller = jaxbContext.createMarshaller();
-			OutputStream os = new ByteArrayOutputStream();
-			marshaller.marshal(requestObject, os);
-			requestData = os.toString();
-			responseData = postOrder(requestData, r);
-			Object unmarshal = unmarshaller.unmarshal(new StringReader(
-					responseData));
-			if (unmarshal instanceof StatusResponse) {
-				statusResponse = (StatusResponse) unmarshal;
-				return statusResponse.getStatusInfo().getOrder().getStatus();
+			OutputStream os2 = new ByteArrayOutputStream();
+			marshaller.marshal(requestObject, os2);
+			statusRequestData = os2.toString();
+			statusResponseData = postRequest(statusRequestData, r, "stat");
+			Trackxmlresp trackResponse;
+			Object unmarshal2 = unmarshaller.unmarshal(new StringReader(
+					statusResponseData));
+			String supplierStatus;
+			if (unmarshal2 instanceof StatusResponse) {
+				statusResponse = (StatusResponse) unmarshal2;
+				if (statusResponse.getErrorResponse() != null) {
+					supplierStatus = statusResponse.getErrorResponse().getMSG();
+				} else
+					supplierStatus = statusResponse.getStatusInfo().getOrder()
+							.getStatus();
+				switch (supplierStatus) {
+				case "Pending":
+				case "In-Progress":
+				default:
+					orderStatus.setStatus(supplierStatus);
+					break;
+				case "Shipped":
+					orderStatus.setStatus(supplierStatus);
+					Trackxml trackRequest = new Trackxml();
+					salesmachine.oim.suppliers.modal.bf.Trackxml.AccessRequest value = new salesmachine.oim.suppliers.modal.bf.Trackxml.AccessRequest();
+					value.setUserId(oimVendorSuppliers.getLogin());
+					value.setPassword(oimVendorSuppliers.getPassword());
+					value.setXMLlickey(oimVendorSuppliers.getAccountNumber());
+					value.setVersion(1.1F);
+					trackRequest.setAccessRequest(value);
+
+					Tracking tracking = new Tracking();
+					tracking.setUserPo(statusResponse.getStatusInfo()
+							.getOrder().getUserPo());
+					trackRequest.setTracking(tracking);
+
+					OutputStream os = new ByteArrayOutputStream();
+					marshaller.marshal(trackRequest, os);
+					trackRequestData = os.toString();
+					trackResponseData = postRequest(trackRequestData, r,
+							"track");
+					Object unmarshal = unmarshaller.unmarshal(new StringReader(
+							trackResponseData));
+					if (unmarshal instanceof Trackxmlresp) {
+						trackResponse = (Trackxmlresp) unmarshal;
+						TrackingData trackingData;
+						if (trackResponse.getTrackingInfo() != null) {
+							trackingData = new TrackingData();
+							trackingData.setCarrierCode(trackResponse
+									.getTrackingInfo().getCarrier());
+							trackingData.setCarrierName(trackResponse
+									.getTrackingInfo().getCarrier());
+							trackingData.setShipperTrackingNumber(trackResponse
+									.getTrackingInfo().getTrackingNumber());
+							trackingData.setShippingMethod(trackResponse
+									.getTrackingInfo().getService());
+							String shipDate = trackResponse.getTrackingInfo()
+									.getShipDate();// YYYYMMDD
+
+							int year = Integer.parseInt(shipDate
+									.substring(0, 4));
+							int month = Integer.parseInt(shipDate.substring(4,
+									6));
+							int dayOfMonth = Integer.parseInt(shipDate
+									.substring(6, 8));
+							GregorianCalendar cal = new GregorianCalendar(year,
+									month, dayOfMonth);
+							trackingData.setShipDate(cal);
+							orderStatus.setTrackingData(trackingData);
+						} else
+							orderStatus
+									.setStatus("No tracking info available.");
+						break;
+					}
+
+				}
 			}
 		} catch (JAXBException e) {
 			log.error(e.getMessage(), e);
 		}
-		return null;
+		return orderStatus;
 	}
 }

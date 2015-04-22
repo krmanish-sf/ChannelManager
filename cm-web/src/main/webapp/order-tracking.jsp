@@ -109,14 +109,14 @@
 														text += "<b>"
 																+ orderDetail.sku
 																+ "</b>";
-														text += ':<span id="orderStatus'+orderDetail.detailId+'">';
+														text += '&nbsp;<span id="orderStatus'+orderDetail.detailId+'">';
 														text += orderDetail.supplierOrderStatus
 																+ '</span>';
 													}
 													if (orderDetail.supplierOrderNumber)
 														text += '<br><a style="cursor:pointer;" onclick="$.CM.trackOrder('
 																+ orderDetail.detailId
-																+ ');">Refresh</a>';
+																+ ');">Refresh</a><br/>';
 												}
 												return text;
 											},

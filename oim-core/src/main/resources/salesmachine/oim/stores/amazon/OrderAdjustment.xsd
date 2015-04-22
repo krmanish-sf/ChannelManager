@@ -12,7 +12,7 @@
     with Amazon.com.
     -->
 
-    <xsd:include schemaLocation="./amzn-base.xsd"/>
+    <xsd:include schemaLocation="amzn-base.xsd"/>
 
     <xsd:element name="OrderAdjustment">
         <xsd:complexType>

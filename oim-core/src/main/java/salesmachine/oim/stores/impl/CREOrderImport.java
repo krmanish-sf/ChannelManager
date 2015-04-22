@@ -46,6 +46,7 @@ import salesmachine.hibernatehelper.PojoHelper;
 import salesmachine.hibernatehelper.SessionManager;
 import salesmachine.oim.api.OimConstants;
 import salesmachine.oim.stores.api.IOrderImport;
+import salesmachine.oim.suppliers.modal.OrderStatus;
 import salesmachine.util.FormObject;
 import salesmachine.util.OimLogStream;
 import salesmachine.util.StringHandle;
@@ -110,6 +111,7 @@ public class CREOrderImport implements IOrderImport {
 		return true;
 	}
 
+	@Override
 	public boolean getVendorOrders() {
 		boolean success = true;
 
@@ -306,7 +308,7 @@ public class CREOrderImport implements IOrderImport {
 		return false;
 	}
 
-	public String sendGetOrdersRequest() {
+	private String sendGetOrdersRequest() {
 		String getprod_xml = "<xmlPopulate>"
 				+ "<header>"
 				+ "<requestType>GetOrders</requestType><orderStatus>"
@@ -462,6 +464,7 @@ public class CREOrderImport implements IOrderImport {
 							detail.setSalePrice(new Double(df.format(saleprice)));
 							detail.setQuantity(new Integer(quantity));
 							detail.setSku(sku);
+							detail.setStoreOrderItemId(sku);
 							detail.setOimSuppliers(supplier);
 							if (cost > 0)
 								detail.setCostPrice(cost);
@@ -499,7 +502,7 @@ public class CREOrderImport implements IOrderImport {
 
 		if (pingXML.indexOf("<requestType>GetOrders</requestType>") != -1) {
 
-			if (StringHandle.isNullOrEmpty(m_orderProcessingRule
+			if (!StringHandle.isNullOrEmpty(m_orderProcessingRule
 					.getPullWithStatus())) {
 				String status = m_orderProcessingRule.getPullWithStatus();
 				LOG.info("Pull orders with status :" + status);
@@ -687,13 +690,15 @@ public class CREOrderImport implements IOrderImport {
 	}
 
 	@Override
-	public boolean updateStoreOrder(String storeOrderId, String orderStatus,
-			String trackingDetail) {
-
+	public boolean updateStoreOrder(OimOrderDetails oimOrderDetails,
+			OrderStatus orderStatus) {
+		if (!orderStatus.isShipped()) {
+			return true;
+		}
 		StringBuffer xmlrequest = new StringBuffer("<xmlPopulate>"
 				+ "<header>"
 				+ "<requestType>updateorders</requestType><orderStatus>"
-				+ orderStatus
+				+ orderStatus.getStatus()
 				+ "</orderStatus>"
 				+ "<passkey>"
 				+ PojoHelper.getChannelAccessDetailValue(m_channel,
@@ -701,9 +706,14 @@ public class CREOrderImport implements IOrderImport {
 				+ "</passkey></header>");
 
 		xmlrequest.append("<xml_order>\n");
-		xmlrequest.append("<order_id>" + storeOrderId + "</order_id>");
-		xmlrequest.append("<order_status>" + orderStatus + "</order_status>");
-		xmlrequest.append("<order_tracking>" + trackingDetail
+		xmlrequest.append("<order_id>"
+				+ oimOrderDetails.getOimOrders().getStoreOrderId()
+				+ "</order_id>");
+		xmlrequest.append("<order_status>" + orderStatus.getStatus()
+				+ "</order_status>");
+		xmlrequest.append("<order_tracking>"
+				+ (orderStatus.isShipped() ? orderStatus.getTrackingData()
+						.toString() : "Order not shipped.")
 				+ "</order_tracking>");
 		xmlrequest.append("</xml_order>\n");
 
