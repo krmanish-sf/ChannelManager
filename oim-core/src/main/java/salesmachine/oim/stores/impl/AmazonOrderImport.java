@@ -8,11 +8,9 @@ import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import javax.xml.bind.JAXBContext;
@@ -31,7 +29,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import salesmachine.hibernatedb.OimChannelShippingMap;
-import salesmachine.hibernatedb.OimChannelSupplierMap;
 import salesmachine.hibernatedb.OimOrderBatches;
 import salesmachine.hibernatedb.OimOrderBatchesTypes;
 import salesmachine.hibernatedb.OimOrderDetails;
@@ -134,28 +131,11 @@ public class AmazonOrderImport extends ChannelBase implements IOrderImport {
 	}
 
 	@Override
-	public boolean getVendorOrders() {
+	public OimOrderBatches getVendorOrders() {
 		Transaction tx = null;
-
+		OimOrderBatches batch = new OimOrderBatches();
 		try {
-			Set suppliers = m_channel.getOimChannelSupplierMaps();
-			Map<String, OimSuppliers> supplierMap = new HashMap<String, OimSuppliers>();
-			Iterator itr = suppliers.iterator();
-			while (itr.hasNext()) {
-				OimChannelSupplierMap map = (OimChannelSupplierMap) itr.next();
-				if (map.getDeleteTm() != null)
-					continue;
 
-				String prefix = map.getSupplierPrefix();
-				OimSuppliers supplier = map.getOimSuppliers();
-				log.info("Supplier Prefix: {} ID: {}", prefix,
-						supplier.getSupplierId());
-				supplierMap.put(prefix, supplier);
-			}
-
-			boolean ordersSaved = false;
-
-			OimOrderBatches batch = new OimOrderBatches();
 			batch.setOimChannels(m_channel);
 			batch.setOimOrderBatchesTypes(new OimOrderBatchesTypes(
 					OimConstants.ORDERBATCH_TYPE_ID_AUTOMATED));
@@ -385,46 +365,47 @@ public class AmazonOrderImport extends ChannelBase implements IOrderImport {
 					oimOrders.setOimOrderDetailses(detailSet);
 					m_dbSession.saveOrUpdate(oimOrders);
 					numOrdersSaved++;
+
+					AmazonEnvelope envelope = new AmazonEnvelope();
+					Header header = new Header();
+					header.setDocumentVersion("1.01");
+					header.setMerchantIdentifier(sellerId);
+					envelope.setHeader(header);
+					envelope.setMessageType("OrderAcknowledgement");
+					Message message = new Message();
+					message.setMessageID(BigInteger.ONE);
+
+					envelope.getMessage().add(message);
+					OrderAcknowledgement acknowledgement = new OrderAcknowledgement();
+					message.setOrderAcknowledgement(acknowledgement);
+					acknowledgement.setAmazonOrderID(amazonOrderId);
+					acknowledgement.setMerchantOrderID(oimOrders.getOrderId()
+							.toString());
+					acknowledgement.setStatusCode(m_orderProcessingRule
+							.getConfirmedStatus());
+					ByteArrayOutputStream os = new ByteArrayOutputStream();
+					marshaller.marshal(envelope, os);
+					InputStream orderAcknowledgement = new ByteArrayInputStream(
+							os.toByteArray());
+					submitFeedRequest.setFeedContent(orderAcknowledgement);
+
+					submitFeedRequest.setContentMD5(Base64
+							.encode((MessageDigest.getInstance("MD5").digest(os
+									.toByteArray()))));
+					service.submitFeed(submitFeedRequest);
 				}
-				AmazonEnvelope envelope = new AmazonEnvelope();
-				Header header = new Header();
-				header.setDocumentVersion("1.01");
-				header.setMerchantIdentifier(sellerId);
-				envelope.setHeader(header);
-				envelope.setMessageType("OrderAcknowledgement");
-				Message message = new Message();
-				message.setMessageID(BigInteger.ONE);
-
-				envelope.getMessage().add(message);
-				OrderAcknowledgement acknowledgement = new OrderAcknowledgement();
-				message.setOrderAcknowledgement(acknowledgement);
-				acknowledgement.setAmazonOrderID(amazonOrderId);
-				acknowledgement.setMerchantOrderID(oimOrders.getOrderId()
-						.toString());
-				acknowledgement.setStatusCode(m_orderProcessingRule
-						.getConfirmedStatus());
-				ByteArrayOutputStream os = new ByteArrayOutputStream();
-				marshaller.marshal(envelope, os);
-				InputStream orderAcknowledgement = new ByteArrayInputStream(
-						os.toByteArray());
-				submitFeedRequest.setFeedContent(orderAcknowledgement);
-
-				submitFeedRequest.setContentMD5(Base64.encode((MessageDigest
-						.getInstance("MD5").digest(os.toByteArray()))));
-				service.submitFeed(submitFeedRequest);
 			}
 			tx.commit();
 			logStream.println("Imported " + numOrdersSaved + " Orders");
 			log.debug("Finished importing orders...");
-			return true;
 		} catch (Exception e) {
 			if (tx != null && tx.isActive())
 				tx.rollback();
 			log.error(e.getMessage(), e);
 			logStream.println("Import Orders failed (" + e.getMessage() + ")");
-			return false;
-		}
 
+		}
+		return batch;
 	}
 
 	@Override
@@ -484,7 +465,6 @@ public class AmazonOrderImport extends ChannelBase implements IOrderImport {
 			log.info("SubmitFeedRequest: {}", os.toString());
 			SubmitFeedResponse submitFeed = service
 					.submitFeed(submitFeedRequest);
-
 			log.info(submitFeed.toXML());
 			return true;
 		} catch (JAXBException | NoSuchAlgorithmException e) {

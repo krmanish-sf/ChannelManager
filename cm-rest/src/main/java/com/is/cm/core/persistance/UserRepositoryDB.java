@@ -2,7 +2,7 @@ package com.is.cm.core.persistance;
 
 import org.hibernate.Criteria;
 import org.hibernate.Session;
-import org.hibernate.criterion.Expression;
+import org.hibernate.criterion.Restrictions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,8 +30,8 @@ public class UserRepositoryDB implements UserRepository {
 		try {
 			Criteria createCriteria = dbSession
 					.createCriteria(salesmachine.hibernatedb.Reps.class);
-			createCriteria.add(Expression.eq("login", login).ignoreCase());
-			createCriteria.add(Expression.eq("password", password));
+			createCriteria.add(Restrictions.eq("login", login).ignoreCase());
+			createCriteria.add(Restrictions.eq("password", password));
 			r = (salesmachine.hibernatedb.Reps) createCriteria.uniqueResult();
 			LOG.info("User {} {} authenticated.", login, r != null ? "is"
 					: "not");

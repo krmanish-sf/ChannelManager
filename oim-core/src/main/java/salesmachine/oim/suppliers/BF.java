@@ -92,7 +92,8 @@ public class BF extends Supplier implements HasTracking {
 					new StandardFileSpecificsProvider(session, ovs, v), ovs,
 					vendorId, r);
 		} catch (Exception e1) {
-			e1.printStackTrace();
+			log.error("Error in sending order ", e1);
+			throw new RuntimeException(e1);
 		}
 	}
 
@@ -307,60 +308,75 @@ public class BF extends Supplier implements HasTracking {
 			Set<String> failedStatus = new HashSet<String>();
 			failedStatus.add("Not Available");
 			failedStatus.add("Invalid Part Number");
-			if (unmarshal instanceof OrderXMLresp
-					&& ((OrderXMLresp) unmarshal).getOrder() != null) {
+			if (unmarshal instanceof OrderXMLresp) {
 				OrderXMLresp orderXMLresp = (OrderXMLresp) unmarshal;
-				log.info("Recieved order submit reponse for Order# {}",
-						orderXMLresp.getOrder().getId());
-				for (Item item : orderXMLresp.getItems().getItem()) {
-					String itemId = item.getItemId();
-					String status = item.getAction();
+				if (orderXMLresp.getOrder() != null) {
+					log.info("Recieved order submit reponse for Order# {}",
+							orderXMLresp.getOrder().getId());
+					for (Item item : orderXMLresp.getItems().getItem()) {
+						String itemId = item.getItemId();
+						String status = item.getAction();
+						for (Iterator detailIt = order.getOimOrderDetailses()
+								.iterator(); detailIt.hasNext();) {
+							OimOrderDetails detail = (OimOrderDetails) detailIt
+									.next();
+							if (detail.getSku().contains(itemId)) {
+								detail.setSupplierOrderStatus(status);
+								detail.setSupplierOrderNumber(String
+										.valueOf(orderXMLresp.getOrder()
+												.getProcessing().getInvNum()));
+								if (failedStatus.contains(status)) {
+									failedOrders.add(detail.getDetailId());
+								} else {
+									successfulOrders.add(detail.getDetailId());
+								}
+								Session session = SessionManager
+										.currentSession();
+								session.update(detail);
+
+								OimChannels oimChannels = order
+										.getOimOrderBatches().getOimChannels();
+								Integer channelId = oimChannels.getChannelId();
+								IOrderImport iOrderImport = OrderImportManager
+										.getIOrderImport(channelId);
+								OimLogStream stream = new OimLogStream();
+								if (iOrderImport != null) {
+									log.debug("Created the iorderimport object");
+									if (!iOrderImport.init(channelId, session,
+											stream)) {
+										log.debug(
+												"Failed initializing the channel with Id:{}",
+												channelId);
+									} else {
+										salesmachine.oim.suppliers.modal.OrderStatus orderStatus = new salesmachine.oim.suppliers.modal.OrderStatus();
+										orderStatus
+												.setStatus(((OimOrderProcessingRule) oimChannels
+														.getOimOrderProcessingRules()
+														.iterator().next())
+														.getProcessedStatus());
+										iOrderImport.updateStoreOrder(detail,
+												orderStatus);
+									}
+								} else {
+									log.error("Could not find a bean to work with this Channel.");
+									stream.println("This Channel type is not supported for pushing order updates.");
+								}
+							}
+						}
+
+					}
+				} else if (orderXMLresp.getErrorResponse() != null) {
+
 					for (Iterator detailIt = order.getOimOrderDetailses()
 							.iterator(); detailIt.hasNext();) {
 						OimOrderDetails detail = (OimOrderDetails) detailIt
 								.next();
-						if (detail.getSku().contains(itemId)) {
-							detail.setSupplierOrderStatus(status);
-							detail.setSupplierOrderNumber(String
-									.valueOf(orderXMLresp.getOrder()
-											.getProcessing().getInvNum()));
-							if (failedStatus.contains(status)) {
-								failedOrders.add(detail.getDetailId());
-							} else {
-								successfulOrders.add(detail.getDetailId());
-							}
-							Session session = SessionManager.currentSession();
-							session.update(detail);
-
-							OimChannels oimChannels = order
-									.getOimOrderBatches().getOimChannels();
-							Integer channelId = oimChannels.getChannelId();
-							IOrderImport iOrderImport = OrderImportManager
-									.getIOrderImport(channelId);
-							OimLogStream stream = new OimLogStream();
-							if (iOrderImport != null) {
-								log.debug("Created the iorderimport object");
-								if (!iOrderImport.init(channelId, session,
-										stream)) {
-									log.debug(
-											"Failed initializing the channel with Id:{}",
-											channelId);
-								} else {
-									salesmachine.oim.suppliers.modal.OrderStatus orderStatus = new salesmachine.oim.suppliers.modal.OrderStatus();
-									orderStatus
-											.setStatus(((OimOrderProcessingRule) oimChannels
-													.getOimOrderProcessingRules()
-													.iterator().next())
-													.getProcessedStatus());
-									iOrderImport.updateStoreOrder(detail,
-											orderStatus);
-								}
-							} else {
-								log.error("Could not find a bean to work with this Channel.");
-								stream.println("This Channel type is not supported for pushing order updates.");
-							}
-						}
+						detail.setSupplierOrderStatus(orderXMLresp
+								.getErrorResponse().getMSG().get(0));
+						failedOrders.add(detail.getDetailId());
 					}
+					updateVendorSupplierOrderHistory(vendorId, ovs,
+							orderXMLresp.getErrorResponse().getMSG().get(0));
 				}
 			} else {
 				for (Iterator detailIt = order.getOimOrderDetailses()

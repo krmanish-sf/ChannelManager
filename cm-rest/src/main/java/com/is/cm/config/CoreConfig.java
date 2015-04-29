@@ -16,6 +16,8 @@ import com.is.cm.core.persistance.OrderRepository;
 import com.is.cm.core.persistance.OrderRepositoryDB;
 import com.is.cm.core.persistance.ReportRepository;
 import com.is.cm.core.persistance.ReportRepositoryDB;
+import com.is.cm.core.persistance.ShippingRepository;
+import com.is.cm.core.persistance.ShippingRepositoryDB;
 import com.is.cm.core.persistance.SupplierRepository;
 import com.is.cm.core.persistance.SupplierRepositoryDB;
 import com.is.cm.core.persistance.UserRepository;
@@ -26,6 +28,8 @@ import com.is.cm.core.service.OrderEventHandler;
 import com.is.cm.core.service.OrderService;
 import com.is.cm.core.service.ReportEventHandler;
 import com.is.cm.core.service.ReportService;
+import com.is.cm.core.service.ShippingEventHandler;
+import com.is.cm.core.service.ShippingService;
 import com.is.cm.core.service.SupplierEventHandler;
 import com.is.cm.core.service.SupplierService;
 import com.is.cm.core.service.UserEventHandler;
@@ -116,9 +120,18 @@ public class CoreConfig {
 		Filter filter = new CommonsRequestLoggingFilter();
 		return filter;
 	}
+
 	/*
 	 * @Bean public CommonsMultipartResolver multipartResolver( ServletContext
 	 * servletContext) { return new CommonsMultipartResolver(servletContext); }
 	 */
+	@Bean
+	ShippingService createShippingService(ShippingRepository shippingRepository) {
+		return new ShippingEventHandler(shippingRepository);
+	}
 
+	@Bean
+	ShippingRepository createShippingRepository() {
+		return new ShippingRepositoryDB();
+	}
 }

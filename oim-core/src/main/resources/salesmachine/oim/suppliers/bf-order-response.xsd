@@ -4,6 +4,14 @@
 	<xs:element name="orderxmlresp">
 		<xs:complexType>
 			<xs:sequence>
+				<xs:element name="ErrorResponse">
+					<xs:complexType>
+						<xs:sequence>
+							<xs:element type="xs:string" name="MSG" maxOccurs="unbounded"
+								minOccurs="0" />
+						</xs:sequence>
+					</xs:complexType>
+				</xs:element>
 				<xs:element name="order">
 					<xs:complexType>
 						<xs:sequence>

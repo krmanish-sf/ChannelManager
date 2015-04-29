@@ -8,12 +8,10 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -33,8 +31,6 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import salesmachine.hibernatedb.OimChannelShippingMap;
-import salesmachine.hibernatedb.OimChannelSupplierMap;
-import salesmachine.hibernatedb.OimChannels;
 import salesmachine.hibernatedb.OimOrderBatches;
 import salesmachine.hibernatedb.OimOrderBatchesTypes;
 import salesmachine.hibernatedb.OimOrderDetails;
@@ -45,6 +41,7 @@ import salesmachine.hibernatedb.OimSuppliers;
 import salesmachine.hibernatehelper.PojoHelper;
 import salesmachine.hibernatehelper.SessionManager;
 import salesmachine.oim.api.OimConstants;
+import salesmachine.oim.stores.api.ChannelBase;
 import salesmachine.oim.stores.api.IOrderImport;
 import salesmachine.oim.suppliers.modal.OrderStatus;
 import salesmachine.util.FormObject;
@@ -54,37 +51,15 @@ import HTTPClient.CookieModule;
 
 import com.stevesoft.pat.Regex;
 
-public class CREOrderImport implements IOrderImport {
+public class CREOrderImport extends ChannelBase implements IOrderImport {
 	private static final Logger LOG = LoggerFactory
 			.getLogger(CREOrderImport.class);
 	private String m_storeURL = ""; // Base store URL
 	private String m_filePath = ""; // Script path on top of the base URL
-	private Session m_dbSession;
-	private OimChannels m_channel;
-	private OimOrderProcessingRule m_orderProcessingRule;
-	private OimLogStream logStream;
-	private Map<String, OimSuppliers> supplierMap;
+	
 
 	public boolean init(int channelID, Session dbSession, OimLogStream log) {
-		m_dbSession = dbSession;
-
-		if (log != null)
-			logStream = log;
-		else
-			logStream = new OimLogStream();
-
-		Transaction tx = m_dbSession.beginTransaction();
-		Query query = m_dbSession
-				.createQuery("from salesmachine.hibernatedb.OimChannels as c where c.channelId=:channelID");
-		query.setInteger("channelID", channelID);
-		tx.commit();
-		if (!query.iterate().hasNext()) {
-			LOG.warn("No channel found for channel id: {}", channelID);
-			log.println("No channel found for channel id: " + channelID);
-			return false;
-		}
-
-		m_channel = (OimChannels) query.iterate().next();
+		super.init(channelID, dbSession, log);
 		String scriptPath = PojoHelper.getChannelAccessDetailValue(m_channel,
 				OimConstants.CHANNEL_ACCESSDETAIL_SCRIPT_PATH);
 		LOG.info("Checking the script path");
@@ -93,13 +68,7 @@ public class CREOrderImport implements IOrderImport {
 			log.println("Channel is not yet setup for automation. Script not found.");
 			return false;
 		}
-		query = m_dbSession
-				.createQuery("select opr from salesmachine.hibernatedb.OimOrderProcessingRule opr where opr.deleteTm is null and opr.oimChannels=:chan");
-		query.setEntity("chan", m_channel);
-		Iterator iter = query.iterate();
-		if (iter.hasNext()) {
-			m_orderProcessingRule = (OimOrderProcessingRule) iter.next();
-		}
+	
 		Regex scriptMatch = Regex.perlCode("/https?:\\/\\/(.+?)\\/(.+)/i");
 		if (scriptMatch.search(scriptPath)) {
 			m_storeURL = scriptMatch.stringMatched(1);
@@ -109,35 +78,19 @@ public class CREOrderImport implements IOrderImport {
 			log.println("Failed to parse script location.");
 			return false;
 		}
-
-		Set suppliers = m_channel.getOimChannelSupplierMaps();
-		supplierMap = new HashMap<String, OimSuppliers>();
-		Iterator itr = suppliers.iterator();
-		while (itr.hasNext()) {
-			OimChannelSupplierMap map = (OimChannelSupplierMap) itr.next();
-			if (map.getDeleteTm() != null)
-				continue;
-
-			String prefix = map.getSupplierPrefix();
-			OimSuppliers supplier = map.getOimSuppliers();
-			LOG.info("Supplier Prefix: {} ID: {}", prefix,
-					supplier.getSupplierId());
-			supplierMap.put(prefix, supplier);
-		}
 		return true;
 	}
 
 	@Override
-	public boolean getVendorOrders() {
-		boolean success = true;
+	public OimOrderBatches getVendorOrders() {
+		OimOrderBatches batch = null;
 
 		try {
 			if (!pingTest()) {
 				logStream.println("Channel ping failed.");
-				return false;
+				return batch;
 			}
 
-			OimOrderBatches batch = null;
 			long start = System.currentTimeMillis();
 			String response = sendGetOrdersRequest();
 			LOG.debug(response);
@@ -148,7 +101,7 @@ public class CREOrderImport implements IOrderImport {
 				LOG.error("FAILURE_GETPRODUCT_NULL_RESPONSE");
 				logStream
 						.println("Channel returned null in response to fetch Orders.");
-				return false;
+				return batch;
 			}
 
 			long time = (System.currentTimeMillis() - start);
@@ -157,7 +110,7 @@ public class CREOrderImport implements IOrderImport {
 			if (batch.getOimOrderses().size() == 0) {
 				logStream
 						.println("Order Import Process Complete. No new orders found on the store.");
-				return true;
+				return batch;
 			}
 
 			// Update status
@@ -192,7 +145,7 @@ public class CREOrderImport implements IOrderImport {
 				LOG.debug("Saved batch id: {}", batch.getBatchId());
 
 				// Get all the orders for the current channel
-				ArrayList currentOrders = getCurrentOrders();
+				List<String> currentOrders = getCurrentOrders();
 				boolean ordersSaved = false;
 				int importCount = 0;
 				for (Iterator oit = batch.getOimOrderses().iterator(); oit
@@ -265,22 +218,7 @@ public class CREOrderImport implements IOrderImport {
 		} catch (Exception e) {
 			LOG.info(e.getMessage(), e);
 		}
-		return success;
-	}
-
-	public ArrayList getCurrentOrders() {
-		ArrayList orders = new ArrayList();
-
-		Query query = m_dbSession
-				.createQuery("select o from salesmachine.hibernatedb.OimOrders o where o.oimOrderBatches.oimChannels=:chan");
-		query.setEntity("chan", m_channel);
-		Iterator iter = query.iterate();
-		while (iter.hasNext()) {
-			OimOrders o = (OimOrders) iter.next();
-			orders.add(o.getStoreOrderId());
-		}
-
-		return orders;
+		return batch;
 	}
 
 	public boolean pingTest() {
@@ -445,11 +383,10 @@ public class CREOrderImport implements IOrderImport {
 									break;
 								}
 							}
-						/*	if (supplierMap.containsKey(prefix)) {
-								supplier = (OimSuppliers) supplierMap
-										.get(prefix);
-							}
-*/
+							/*
+							 * if (supplierMap.containsKey(prefix)) { supplier =
+							 * (OimSuppliers) supplierMap .get(prefix); }
+							 */
 							double cost = 0;
 							try {
 								cost = Double.parseDouble(productCost);

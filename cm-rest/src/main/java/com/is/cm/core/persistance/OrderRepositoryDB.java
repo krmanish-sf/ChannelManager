@@ -779,6 +779,7 @@ public class OrderRepositoryDB extends RepositoryBase implements
 		Session session = SessionManager.currentSession();
 		OimSupplierOrderPlacement osop = new OimSupplierOrderPlacement(session);
 		return osop.trackOrder(getVendorId(), entity);
+		
 	}
 
 	@Override

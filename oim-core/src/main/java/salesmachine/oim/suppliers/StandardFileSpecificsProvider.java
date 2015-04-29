@@ -111,7 +111,7 @@ public class StandardFileSpecificsProvider implements IFileSpecificsProvider {
 				OimSupplierShippingMethod code = Supplier
 						.findShippingCodeFromUserMapping(shipMap,
 								order.getOimShippingMethod());
-				return code.getName();
+				return code.getOverride()==null? code.getName():code.getOverride().getShippingMethod();
 			} else
 				return order.getShippingDetails();
 		case 11:// CustomerCompany
