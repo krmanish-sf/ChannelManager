@@ -245,7 +245,20 @@
 		<!-- <dependency> <groupId>com.sun.xml.bind</groupId> <artifactId>jaxb-impl</artifactId> 
 			<version>2.2.11</version> </dependency> -->
 	</dependencies>
-	<!-- <repositories> <repository> <id>apache.snapshots</id> <name>Apache 
-		Snapshot Repository</name> <url>http://repository.apache.org/</url> <releases> 
-		<enabled>false</enabled> </releases> </repository> </repositories> -->
+	<repositories>
+		<repository>
+			<id>apache.snapshots</id>
+			<name>Apache 
+		Snapshot Repository</name>
+			<url>http://repository.apache.org/</url>
+			<releases>
+				<enabled>false</enabled>
+			</releases>
+		</repository>
+		<repository>
+			<id>backup-server</id>
+			<name>backup-server-releases</name>
+			<url>http://192.168.1.28:8081/artifactory/jcenter</url>
+		</repository>
+	</repositories>
 </project>

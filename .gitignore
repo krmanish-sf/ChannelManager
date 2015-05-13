@@ -1,3 +1,4 @@
 .source.jam
 .settings
 .classpath
+cm-web/.settings/org.eclipse.wst.common.component
