@@ -17,5 +17,6 @@ public class OrderPostHandler {
 	public void handleOrderPull(OimOrderBatches orderBatches) {
 		log.info("Order Recieved with BatchSize:{}", orderBatches
 				.getOimOrderses().size());
+		orderBatches.getOimOrderses();
 	}
 }
