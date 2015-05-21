@@ -32,7 +32,7 @@
 					<p>
 						<strong>2.2</strong> Any claims for refunds or other adjustments to charges on your account must be submitted in writing. Any claim must be submitted within 30 days of the date such charges are placed on your account.</p>
 					<p>
-						<strong>2.3</strong> Users who do not complete the registration and agree to the terms directly through the website can agree to the Inventory Source Order Management Utility Fee Schedule and Payment Terms directly by downloading the User Terms & Agreement document provided by Inventory Source, LLC and submitting their agreement via fax back to Inventory Source, LLC.</p>
+						<strong>2.3</strong> Users who do not complete the registration and agree to the terms directly through the website can agree to the Inventory Source Order Management Utility Fee Schedule and Payment Terms directly by downloading the User Terms &amp; Agreement document provided by Inventory Source, LLC and submitting their agreement via fax back to Inventory Source, LLC.</p>
 					<h2>3. User Conduct.</h2>
 					<p>
 						<strong>3.1</strong> You agree to comply with all applicable laws, statutes, ordinances and regulations related to use of the Services. You may not use our Services to engage in fraud or other illegal activity, or to infringe the intellectual property rights of others.</p>

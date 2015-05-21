@@ -998,11 +998,20 @@ function evalArray(obj, expr) {
 					function(i, e) {
 						if ($(this).hasClass('amazon-store')
 								|| $(this).hasClass('yahoo-store')
-								|| $(this).hasClass('shop-store'))
+								|| $(this).hasClass('shop-store')
+								|| $(this).hasClass('shopify-store'))
 							$(this).hide();
 						else
 							$(this).show();
 					});
+			break;
+		case "8":
+			$(".store-info").each(function(i, e) {
+				if ($(this).hasClass('shopify-store'))
+					$(this).show();
+				else
+					$(this).hide();
+			});
 			break;
 		case "7":
 			$(".store-info").each(function(i, e) {

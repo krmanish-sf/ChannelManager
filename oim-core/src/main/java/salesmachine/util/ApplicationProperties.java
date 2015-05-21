@@ -16,6 +16,11 @@ public class ApplicationProperties {
 	public static final String AUTOMATION_THREAD_POOL_SIZE = "cm.service.poolsize";
 	public static final String AUTOMATION_ORDER_PULL_INTERVAL = "cm.service.pullinterval";
 	public static final String AUTOMATION_ORDER_TRACK_INTERVAL = "cm.service.trackinginterval";
+	
+	//Shopify
+	public static final String SHOPIFY_API_KEY="cm.shopify.apiKey";
+	public static final String SHOPIFY_SECRET_KEY = "cm.shopify.secretKey";
+	
 	private static final Logger log = LoggerFactory
 			.getLogger(ApplicationProperties.class);
 	private static final Properties prop = new Properties();

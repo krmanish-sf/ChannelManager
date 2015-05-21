@@ -177,6 +177,16 @@
 														data-bind-channel="customMapper:oimChannelAccessDetailses[oimChannelAccessFields.fieldId=13].detailFieldValue" />
 												</div>
 											</div>
+											<div class="form-group store-info shopify-store">
+												<label for="catalog-id"
+													class="col-sm-5 control-label no-padding-right">Auth Token</label>
+												<div class="col-sm-7">
+													<input type="text" name="catalog-id" class="width-70"
+														placeholder="Auth Token"
+														required="required"
+														data-bind-channel="customMapper:oimChannelAccessDetailses[oimChannelAccessFields.fieldId=19].detailFieldValue" />
+												</div><button class="btn btn-xs">Auth</button>button>
+											</div>
 											<div class="form-group center">
 												<!-- <input type="button"
 															class="btn btn-success btn-sm" value="Test Settings" /> -->
