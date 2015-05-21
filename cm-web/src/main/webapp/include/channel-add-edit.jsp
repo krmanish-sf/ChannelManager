@@ -42,6 +42,7 @@
 														<!-- <option value="3">Inventory Source - Hosted</option> -->
 														<!-- <option value="2">Magento</option> -->
 														<option value="7">Shop.com</option>
+														<option value="8">Shopify</option>
 														<!-- <option value="5">Yahoo Store</option> -->
 														<option value="6">Zen Cart</option>
 														<option value="0">Custom Channel</option>
