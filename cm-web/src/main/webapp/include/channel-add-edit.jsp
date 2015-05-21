@@ -36,16 +36,7 @@
 													<select name="supportedChannelId" required="required"
 														data-bind-channel="oimSupportedChannels.supportedChannelId"
 														id="channelselect" class="width-70 pull-left">
-														<option value="" selected>Select channel</option>
-														<option value="4">Amazon Seller Central</option>
-														<!-- <option value="1">CRE Loaded</option> -->
-														<!-- <option value="3">Inventory Source - Hosted</option> -->
-														<!-- <option value="2">Magento</option> -->
-														<option value="7">Shop.com</option>
-														<option value="8">Shopify</option>
-														<!-- <option value="5">Yahoo Store</option> -->
-														<option value="6">Zen Cart</option>
-														<option value="0">Custom Channel</option>
+														<option selected>Please wait...</option>
 													</select>
 												</div>
 											</div>

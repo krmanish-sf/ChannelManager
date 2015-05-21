@@ -1,4 +1,9 @@
-.source.jam
-.settings
-.classpath
-cm-web/.settings/org.eclipse.wst.common.component
+#ignore all source jammer association files from previous version control
+**/.source.jam
+# ignore all settings file
+**/.settings
+#ignore .classpath and .project Eclipse files
+**/.classpath
+**/.project
+**/logs/*
+#cm-web/.settings/org.eclipse.wst.common.component

@@ -23,7 +23,7 @@
             <column name="ERROR_CODE" precision="22" scale="0" />
         </property>
         <property name="description" type="string">
-            <column name="DESCRIPTION" length="500" />
+            <column name="DESCRIPTION" length="1000" />
         </property>
     </class>
 </hibernate-mapping>

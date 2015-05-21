@@ -53,6 +53,7 @@ import HTTPClient.CookieModule;
 
 import com.stevesoft.pat.Regex;
 
+@Deprecated
 public class ImportVendorOrders {
 	private static final Logger log = LoggerFactory
 			.getLogger(ImportVendorOrders.class);
@@ -156,7 +157,8 @@ public class ImportVendorOrders {
 								+ channelId);
 			} else {
 				log.debug("Pulling orders for channel id: " + channelId);
-				coi.getVendorOrders();
+				coi.getVendorOrders(new OimOrderBatchesTypes(
+						OimConstants.ORDERBATCH_TYPE_ID_MANUAL));
 				getVendorOrders(channel, session);
 			}
 		} else {

@@ -6,8 +6,9 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import salesmachine.hibernatedb.OimChannelShippingMap;
+import salesmachine.hibernatedb.OimOrderBatchesTypes;
 import salesmachine.hibernatehelper.SessionManager;
+import salesmachine.oim.api.OimConstants;
 import salesmachine.oim.stores.api.IOrderImport;
 import salesmachine.util.OimLogStream;
 
@@ -142,7 +143,8 @@ public class ChannelEventHandler implements ChannelService {
 			} else {
 				LOG.debug("Pulling orders for channel id: {}", channelId);
 				try {
-					coi.getVendorOrders();
+					coi.getVendorOrders(new OimOrderBatchesTypes(
+							OimConstants.ORDERBATCH_TYPE_ID_MANUAL));
 				} catch (Throwable e) {
 					LOG.error("Error in pulling orders for channel id: {}",
 							channelId, e);

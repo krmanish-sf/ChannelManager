@@ -3,6 +3,7 @@ package salesmachine.oim.stores.impl;
 import org.hibernate.Session;
 
 import salesmachine.hibernatedb.OimOrderBatches;
+import salesmachine.hibernatedb.OimOrderBatchesTypes;
 import salesmachine.hibernatedb.OimOrderDetails;
 import salesmachine.oim.stores.api.ChannelBase;
 import salesmachine.oim.stores.api.IOrderImport;
@@ -26,7 +27,7 @@ public class EbayOrderImport extends ChannelBase implements IOrderImport {
 	}
 
 	@Override
-	public OimOrderBatches getVendorOrders() {
+	public OimOrderBatches getVendorOrders(OimOrderBatchesTypes batchesTypes) {
 		// Provide the Order pulling logic form Ebay API.
 		return null;
 	}

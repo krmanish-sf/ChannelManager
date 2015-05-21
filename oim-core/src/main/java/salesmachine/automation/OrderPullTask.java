@@ -1,5 +1,6 @@
 package salesmachine.automation;
 
+import java.util.List;
 import java.util.TimerTask;
 
 import org.hibernate.Query;
@@ -9,6 +10,9 @@ import org.slf4j.LoggerFactory;
 
 import salesmachine.hibernatedb.OimChannels;
 import salesmachine.hibernatedb.OimOrderBatches;
+import salesmachine.hibernatedb.OimOrderBatchesTypes;
+import salesmachine.hibernatedb.Reps;
+import salesmachine.oim.api.OimConstants;
 import salesmachine.oim.stores.api.IOrderImport;
 
 import com.google.common.eventbus.EventBus;
@@ -27,33 +31,37 @@ public class OrderPullTask extends TimerTask {
 	@Override
 	public void run() {
 		log.info("Order Pull Task Running...");
-		// Query vendorQuery =
-		// session.createQuery("from salesmachine.hibernatedb.Reps r where r.cmAllowed=:cmAllowed");
-
-		Query channelQuery = session
-				.createQuery("select distinct c from salesmachine.hibernatedb.OimChannels c "
-						+ "inner join c.oimSupportedChannels "
-						+ "inner join c.oimOrderProcessingRules r "
-						+ "left join c.oimChannelAccessDetailses d "
-						+ "where c.vendors.vendorId=:vid");
-		channelQuery.setInteger("vid", 441325);
-		for (Object object : channelQuery.list()) {
-			OimChannels channel = (OimChannels) object;
-			log.info("Channel Type: {}", channel.getOimSupportedChannels()
-					.getChannelName());
-			String orderFetchBean = channel.getOimSupportedChannels()
-					.getOrderFetchBean();
-			IOrderImport iOrderImport = null;
-			if (orderFetchBean != null && orderFetchBean.length() > 0) {
-				try {
-					Class theClass = Class.forName(orderFetchBean);
-					iOrderImport = (IOrderImport) theClass.newInstance();
-				} catch (Exception e) {
-					log.error("CONFIG ERROR: Error in initializing Channel Bean.");
-					iOrderImport = null;
-				}
+		Query vendorQuery = session
+				.createQuery("from salesmachine.hibernatedb.Reps r where r.cmAllowed=1");
+		List<Reps> list = vendorQuery.list();
+		log.info("Found {} active vendors.", list.size());
+		for (Reps r : list) {
+			Query channelQuery = session
+					.createQuery("select distinct c from salesmachine.hibernatedb.OimChannels c "
+							+ "inner join c.oimSupportedChannels "
+							+ "inner join c.oimOrderProcessingRules r "
+							+ "left join c.oimChannelAccessDetailses d "
+							+ "where c.vendors.vendorId=:vid");
+			channelQuery.setInteger("vid", r.getVendorId());
+			for (Object object : channelQuery.list()) {
+				OimChannels channel = (OimChannels) object;
+				pullChannelOrders(channel);
 			}
-			if (iOrderImport != null) {
+		}
+	}
+
+	private void pullChannelOrders(OimChannels channel) {
+		log.info("Channel Type: [{}], Name:[{}]", channel
+				.getOimSupportedChannels().getChannelName(), channel
+				.getChannelName());
+		String orderFetchBean = channel.getOimSupportedChannels()
+				.getOrderFetchBean();
+		IOrderImport iOrderImport = null;
+		if (orderFetchBean != null && orderFetchBean.length() > 0) {
+			try {
+				Class<?> theClass = Class.forName(orderFetchBean);
+				iOrderImport = (IOrderImport) theClass.newInstance();
+
 				log.debug("Created the orderimport object");
 				if (!iOrderImport.init(channel.getChannelId(), session, null)) {
 					log.error(
@@ -63,13 +71,18 @@ public class OrderPullTask extends TimerTask {
 					log.info("Pulling orders for channel id: {}",
 							channel.getChannelId());
 					OimOrderBatches vendorOrders = iOrderImport
-							.getVendorOrders();
+							.getVendorOrders(new OimOrderBatchesTypes(
+									OimConstants.ORDERBATCH_TYPE_ID_AUTOMATED));
 					if (vendorOrders != null)
 						eventBus.post(vendorOrders);
 				}
-			} else {
-				log.error("CONFIG ERROR : Could not find a bean to work with this market. ");
+
+			} catch (InstantiationException | IllegalAccessException e) {
+				log.error("CONFIG ERROR: Error in Instantiating Channel Bean.");
+			} catch (Exception e) {
+				log.error(e.getMessage(), e);
 			}
 		}
+
 	}
 }

@@ -24,7 +24,7 @@ public class OimConstants {
 	
 	public static final Integer ORDERBATCH_TYPE_ID_AUTOMATED = new Integer(1);
 	public static final Integer ORDERBATCH_TYPE_ID_MANUAL = new Integer(2);
-	
+	public static final Integer ORDER_STATUS_SHIPPED = new Integer(7);
 	public static final Integer ORDER_STATUS_UNPROCESSED = new Integer(0);
 	public static final Integer ORDER_STATUS_PLACED = new Integer(1);
 	public static final Integer ORDER_STATUS_PROCESSED_SUCCESS = new Integer(2);

@@ -16,6 +16,8 @@ import org.apache.commons.httpclient.auth.AuthenticationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import salesmachine.hibernatedb.Reps;
+
 public class LoginFilter implements javax.servlet.Filter {
 
 	private String errorPage;
@@ -50,6 +52,10 @@ public class LoginFilter implements javax.servlet.Filter {
 		} else if (session == null || session.getAttribute("reps") == null) {
 			response.sendRedirect("login");
 		} else {
+			Reps reps = (Reps) session.getAttribute("reps");
+			if (reps.getCmAllowed().intValue() != 1) {
+				URI = request.getContextPath() + "/payment.jsp";
+			}
 			RequestDispatcher rd = request.getServletContext()
 					.getRequestDispatcher(
 							URI.replace(request.getContextPath(), ""));

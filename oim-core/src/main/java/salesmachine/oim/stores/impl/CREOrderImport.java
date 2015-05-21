@@ -39,7 +39,6 @@ import salesmachine.hibernatedb.OimOrderStatuses;
 import salesmachine.hibernatedb.OimOrders;
 import salesmachine.hibernatedb.OimSuppliers;
 import salesmachine.hibernatehelper.PojoHelper;
-import salesmachine.hibernatehelper.SessionManager;
 import salesmachine.oim.api.OimConstants;
 import salesmachine.oim.stores.api.ChannelBase;
 import salesmachine.oim.stores.api.IOrderImport;
@@ -56,7 +55,6 @@ public class CREOrderImport extends ChannelBase implements IOrderImport {
 			.getLogger(CREOrderImport.class);
 	private String m_storeURL = ""; // Base store URL
 	private String m_filePath = ""; // Script path on top of the base URL
-	
 
 	public boolean init(int channelID, Session dbSession, OimLogStream log) {
 		super.init(channelID, dbSession, log);
@@ -68,7 +66,7 @@ public class CREOrderImport extends ChannelBase implements IOrderImport {
 			log.println("Channel is not yet setup for automation. Script not found.");
 			return false;
 		}
-	
+
 		Regex scriptMatch = Regex.perlCode("/https?:\\/\\/(.+?)\\/(.+)/i");
 		if (scriptMatch.search(scriptPath)) {
 			m_storeURL = scriptMatch.stringMatched(1);
@@ -82,7 +80,7 @@ public class CREOrderImport extends ChannelBase implements IOrderImport {
 	}
 
 	@Override
-	public OimOrderBatches getVendorOrders() {
+	public OimOrderBatches getVendorOrders(OimOrderBatchesTypes batchesTypes) {
 		OimOrderBatches batch = null;
 
 		try {
@@ -96,7 +94,7 @@ public class CREOrderImport extends ChannelBase implements IOrderImport {
 			LOG.debug(response);
 			if (!"".equals(response)) {
 				StringReader str = new StringReader(response);
-				batch = parseGetProdResponse(str);
+				batch = parseGetProdResponse(str, batchesTypes);
 			} else {
 				LOG.error("FAILURE_GETPRODUCT_NULL_RESPONSE");
 				logStream
@@ -263,7 +261,8 @@ public class CREOrderImport extends ChannelBase implements IOrderImport {
 		return getprod_response.trim();
 	}
 
-	private OimOrderBatches parseGetProdResponse(StringReader xml_toparse) {
+	private OimOrderBatches parseGetProdResponse(StringReader xml_toparse,
+			OimOrderBatchesTypes batchesTypes) {
 		try {
 			DecimalFormat df = new DecimalFormat("#.##");
 			OimOrderBatches batch = new OimOrderBatches();
@@ -609,27 +608,6 @@ public class CREOrderImport extends ChannelBase implements IOrderImport {
 		xmlrequest.append("</xmlPopulate>");
 		LOG.info(xmlrequest.toString());
 		String getprod_response = sendRequest(xmlrequest.toString());
-	}
-
-	public static void main(String args[]) {
-		Session session = SessionManager.currentSession();
-		OimLogStream logStream = new OimLogStream();
-		CREOrderImport coi = new CREOrderImport();
-		int channelId = Integer.parseInt(args[1]);
-		if (!coi.init(channelId, session, logStream)) {
-			LOG.info("Failed initializing the channel.");
-			System.exit(0);
-		}
-
-		if ("pull".equalsIgnoreCase(args[0])) {
-			LOG.info("Pulling orders for channel id: " + channelId);
-			coi.getVendorOrders();
-		} else if ("push".equalsIgnoreCase(args[0])) {
-			LOG.info("Pushing order statuses for channel id: " + channelId);
-			coi.updateProcessedOrders();
-		}
-		SessionManager.closeSession();
-		System.exit(0);
 	}
 
 	@Override

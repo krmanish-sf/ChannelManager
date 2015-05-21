@@ -3,7 +3,7 @@
 <div class="widget-box transparent">
 	<div class="widget-header widget-header-flat">
 		<h4 class="lighter">
-			<i class="icon-signal"></i>${param.chartTitle }
+			<i class="icon-signal"></i>&nbsp;${param.chartTitle }
 		</h4>
 		<div class="widget-toolbar">
 			<select class="select2-drop select-time-range" id="chartselecttime">

@@ -17,6 +17,7 @@ public class OimOrderBatches implements java.io.Serializable {
 	private Date creationTm;
 	private Date insertionTm;
 	private Date deleteTm;
+	private String description;
 	private Set oimUploadedFileses = new HashSet(0);
 	private Set oimOrderses = new HashSet(0);
 
@@ -98,6 +99,14 @@ public class OimOrderBatches implements java.io.Serializable {
 
 	public void setOimOrderses(Set oimOrderses) {
 		this.oimOrderses = oimOrderses;
+	}
+
+	public String getDescription() {
+		return description;
+	}
+
+	public void setDescription(String description) {
+		this.description = description;
 	}
 
 }

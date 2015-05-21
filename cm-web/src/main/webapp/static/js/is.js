@@ -245,7 +245,7 @@ function evalArray(obj, expr) {
 							widget
 									.find('.start')
 									.val(
-											new Date("2000-01-01")
+											new Date("2010-01-01")
 													.getMonthRange().sStartDate);
 							widget.find('.end').val(
 									new Date().getWeekRange().sEndDate);
@@ -341,13 +341,13 @@ function evalArray(obj, expr) {
 	$.fn.drawBarChart = function(placeholder, data, data_formatter) {
 		var options = {
 			hoverable : true,
-			shadowSize : 0,
+			shadowSize : 1,
 			series : {
 				lines : {
 					show : true
 				},
 				points : {
-					show : true
+					show : false
 				}
 			},
 			xaxes : [ {

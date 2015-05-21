@@ -1329,6 +1329,9 @@ public class OimSupplierOrderPlacement {
 			orderStatus = s.getOrderStatus(oimVendorSuppliers,
 					oimOrderDetails.getSupplierOrderNumber());
 			oimOrderDetails.setSupplierOrderStatus(orderStatus.toString());
+			if (orderStatus.isShipped())
+				oimOrderDetails.setOimOrderStatuses(new OimOrderStatuses(
+						OimConstants.ORDER_STATUS_SHIPPED));
 			session.update(oimOrderDetails);
 			break;
 		case BnF:
@@ -1336,6 +1339,9 @@ public class OimSupplierOrderPlacement {
 			orderStatus = s.getOrderStatus(oimVendorSuppliers,
 					oimOrderDetails.getSupplierOrderNumber());
 			oimOrderDetails.setSupplierOrderStatus(orderStatus.toString());
+			if (orderStatus.isShipped())
+				oimOrderDetails.setOimOrderStatuses(new OimOrderStatuses(
+						OimConstants.ORDER_STATUS_SHIPPED));
 			session.update(oimOrderDetails);
 			break;
 		case HONESTGREEN:
@@ -1343,6 +1349,9 @@ public class OimSupplierOrderPlacement {
 			orderStatus = s.getOrderStatus(oimVendorSuppliers,
 					oimOrderDetails.getSupplierOrderNumber());
 			oimOrderDetails.setSupplierOrderStatus(orderStatus.toString());
+			if (orderStatus.isShipped())
+				oimOrderDetails.setOimOrderStatuses(new OimOrderStatuses(
+						OimConstants.ORDER_STATUS_SHIPPED));
 			session.update(oimOrderDetails);
 			break;
 		default:

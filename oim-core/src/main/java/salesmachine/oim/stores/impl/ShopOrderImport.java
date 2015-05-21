@@ -24,6 +24,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import salesmachine.hibernatedb.OimOrderBatches;
+import salesmachine.hibernatedb.OimOrderBatchesTypes;
 import salesmachine.hibernatedb.OimOrderDetails;
 import salesmachine.hibernatehelper.PojoHelper;
 import salesmachine.oim.api.OimConstants;
@@ -63,7 +64,7 @@ public class ShopOrderImport extends ChannelBase implements IOrderImport {
 	 * real time by shop.com to our listener url.
 	 * */
 	@Override
-	public OimOrderBatches getVendorOrders() {
+	public OimOrderBatches getVendorOrders(OimOrderBatchesTypes batchesTypes) {
 		return null;
 	}
 

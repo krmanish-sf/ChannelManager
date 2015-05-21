@@ -213,6 +213,23 @@
 						$(this).closest('li').removeClass('selected');
 				});
 		$.CM.updateOrderSummary();
+		$(this).CRUD(
+				{
+					url : "aggregators/channels/supported-channels",
+					method : "GET",
+					success : function(data) {
+						debugger;
+						$('#channelselect').empty();
+						$("<option/>").val("").html("Select Channel")
+								.appendTo($('#channelselect'));
+						$.each(data, function() {
+							$("<option/>").val(this.supportedChannelId)
+									.html(this.channelName).appendTo(
+											$('#channelselect'));
+						});
+					}
+				});
+		
 		tableimportchannel = $.CM.bindChannels('#tablechannels');
 		$('#tablesuppliers')
 				.dataTable(

@@ -131,14 +131,13 @@ public class AmazonOrderImport extends ChannelBase implements IOrderImport {
 	}
 
 	@Override
-	public OimOrderBatches getVendorOrders() {
+	public OimOrderBatches getVendorOrders(OimOrderBatchesTypes batchesTypes) {
 		Transaction tx = null;
 		OimOrderBatches batch = new OimOrderBatches();
 		try {
 
 			batch.setOimChannels(m_channel);
-			batch.setOimOrderBatchesTypes(new OimOrderBatchesTypes(
-					OimConstants.ORDERBATCH_TYPE_ID_AUTOMATED));
+			batch.setOimOrderBatchesTypes(batchesTypes);
 
 			// Save Batch..
 			tx = m_dbSession.beginTransaction();

@@ -27,11 +27,11 @@ public class AutomationManager {
 		TimerTask orderPullTask = new OrderPullTask(eventBus, session);
 		timer.schedule(orderPullTask, 1000L,
 				ApplicationProperties.getOrderPullInterval());
-		TimerTask orderTrackingTask = new OrderTrackingTask(eventBus);
+		TimerTask orderTrackingTask = new OrderTrackingTask(eventBus, session);
 		timer.schedule(orderTrackingTask, 1000L,
 				ApplicationProperties.getOrderTrackingInterval());
 
-		OrderPostHandler orderPostHandler = new OrderPostHandler();
+		OrderHandler orderPostHandler = new OrderHandler(session);
 		eventBus.register(orderPostHandler);
 	}
 

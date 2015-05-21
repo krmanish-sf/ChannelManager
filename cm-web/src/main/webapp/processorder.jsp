@@ -666,7 +666,10 @@
 	}, {
 		"statusId" : 6,
 		"statusValue" : "Canceled"
-	} ];
+	}, {
+		"statusId" : 7,
+		"statusValue" : "Shipped"
+	}  ];
 	function showResolve(e) {
 		var order = table_xy.fnGetData(e[0]);
 		$('#order-form').hide();

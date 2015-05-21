@@ -511,7 +511,10 @@
 		}, {
 			"statusId" : 6,
 			"statusValue" : "Canceled"
-		} ];
+		}, {
+			"statusId" : 7,
+			"statusValue" : "Shipped"
+		}  ];
 		function a(e) {
 			console.log(e[0]);
 			var order = table_xy.row(e[0]).data();

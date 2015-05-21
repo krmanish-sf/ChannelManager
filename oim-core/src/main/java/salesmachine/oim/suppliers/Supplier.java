@@ -267,6 +267,7 @@ public abstract class Supplier {
 	/***
 	 * US states mapping with 2 digit codes.
 	 */
+	@Deprecated
 	protected void createStateNameMapping() {
 		stateCodeMapping.put("AL", "Alabama");
 		stateCodeMapping.put("AK", "Alaska");
@@ -332,6 +333,7 @@ public abstract class Supplier {
 	/***
 	 * creates the country mapping with 2 digit country code.
 	 */
+	@Deprecated
 	protected void createCountryCodeMapping() {
 		countryCodeMapping.put("Afghanistan", "AF");
 		countryCodeMapping.put("Aland Islands", "AX");

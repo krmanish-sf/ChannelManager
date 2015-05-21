@@ -69,15 +69,15 @@ public class LoginHandlerServlet extends HttpServlet {
 				return;
 			}
 
+			session = req.getSession(true);
+			session.setAttribute("reps", r);
+			session.setAttribute("REST_URL",
+					ApplicationProperties.getRestServiceUrl());
+			Cookie cookie = new Cookie("SESSIONID", session.getId());
+			cookie.setPath("/");
+			resp.addCookie(cookie);
+			req.setAttribute("reps", r);
 			if (r.getCmAllowed().intValue() == 1) {
-				session = req.getSession(true);
-				session.setAttribute("reps", r);
-				session.setAttribute("REST_URL",
-						ApplicationProperties.getRestServiceUrl());
-				Cookie cookie = new Cookie("SESSIONID", session.getId());
-				cookie.setPath("/");
-				resp.addCookie(cookie);
-				req.setAttribute("reps", r);
 				if (StringHandle.isNullOrEmpty(done))
 					done = "index.jsp";
 				resp.sendRedirect(done);

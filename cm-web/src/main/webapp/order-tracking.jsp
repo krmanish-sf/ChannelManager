@@ -75,6 +75,9 @@
 		}, {
 			"statusId" : 6,
 			"statusValue" : "Canceled"
+		} , {
+			"statusId" : 7,
+			"statusValue" : "Shipped"
 		} ];
 
 		jQuery(function($) {
