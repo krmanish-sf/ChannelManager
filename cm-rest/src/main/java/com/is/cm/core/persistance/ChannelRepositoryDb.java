@@ -73,7 +73,15 @@ public class ChannelRepositoryDb extends RepositoryBase implements
 			updateChannelWithRequest(c, channelDetails);
 			dbSession.saveOrUpdate(c);
 			LOG.debug("Saved channel");
-			if (c.getOimSupportedChannels().getSupportedChannelId() == 4) {
+			if (c.getOimSupportedChannels().getSupportedChannelId() == 8) {
+				addChannelAccessDetail(dbSession, c,
+						OimConstants.CHANNEL_ACCESSDETAIL_CHANNEL_URL,
+						StringHandle.removeNull(getParameter("storeurl")));
+				addChannelAccessDetail(dbSession, c,
+						OimConstants.CHANNEL_ACCESSDETAIL_SHOPIFY_ACCESS_CODE,
+						StringHandle.removeNull(getParameter("shopifyAuth-id")));
+				LOG.debug("Saved Shopify channel access details");
+			} else if (c.getOimSupportedChannels().getSupportedChannelId() == 4) {
 				addChannelAccessDetail(dbSession, c,
 						OimConstants.CHANNEL_ACCESSDETAIL_CHANNEL_URL,
 						StringHandle.removeNull(getParameter("storeurl")));

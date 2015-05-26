@@ -187,7 +187,7 @@
 													<input type="text" id="shopifyAuthId" name="shopifyAuth-id"
 														class="width-70" placeholder="Auth Token"
 														required="required"
-														data-bind-channel="customMapper:oimChannelAccessDetailses[oimChannelAccessFields.fieldId=19].detailFieldValue"
+														data-bind-channel="customMapper:oimChannelAccessDetailses[oimChannelAccessFields.fieldId=17].detailFieldValue"
 														readonly />
 													<button type="button" class="btn btn-info btn-xs"
 														onclick="openUrl()">Auth</button>
