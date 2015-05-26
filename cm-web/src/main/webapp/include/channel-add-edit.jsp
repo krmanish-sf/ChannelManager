@@ -66,7 +66,7 @@
 													URL</label>
 												<div class="col-sm-7">
 													<input type="url" name="storeurl" class="width-70"
-														placeholder="http://www.example.com" required="required"
+														placeholder="http://www.example.com" required="required" 
 														data-bind-channel="customMapper:oimChannelAccessDetailses[oimChannelAccessFields.fieldId=1].detailFieldValue" />
 												</div>
 											</div>
@@ -181,11 +181,12 @@
 												<label for="catalog-id"
 													class="col-sm-5 control-label no-padding-right">Auth Token</label>
 												<div class="col-sm-7">
-													<input type="text" name="catalog-id" class="width-70"
+													<input type="text" id="shopifyAuthId" name="shopifyAuth-id" class="width-70"
 														placeholder="Auth Token"
 														required="required"
-														data-bind-channel="customMapper:oimChannelAccessDetailses[oimChannelAccessFields.fieldId=19].detailFieldValue" />
-												</div><button class="btn btn-xs">Auth</button>button>
+														data-bind-channel="customMapper:oimChannelAccessDetailses[oimChannelAccessFields.fieldId=19].detailFieldValue" readonly/>
+														<button type="button" class="btn btn-info btn-xs" onclick="openUrl()">Auth</button>
+												</div>
 											</div>
 											<div class="form-group center">
 												<!-- <input type="button"
@@ -303,3 +304,21 @@
 		</div>
 	</div>
 </div>
+<script>
+function openUrl(){
+var strUrl = document.getElementsByName('storeurl')[0].value;
+document.location=strUrl+'/admin/oauth/authorize?client_id=04eca9fa303fd59d3d96d3eb2a09aa53&scope=read_content,write_content,read_products,write_products,read_customers,write_customers,read_orders,write_orders,read_shipping,write_shipping,read_fulfillments,write_fulfillments';
+if(strUrl){
+	//var m = window.open(strUrl+'/admin/oauth/authorize?client_id=04eca9fa303fd59d3d96d3eb2a09aa53&scope=read_content,write_content,read_products,write_products,read_customers,write_customers,read_orders,write_orders,read_shipping,write_shipping,read_fulfillments,write_fulfillments', 'shopify Access Permission',
+	//'height=600,width=600,toolbar=no,directories=no,status=no,menubar=no,scrollbars=no,location=no,resizable=yes,modal=yes');
+}
+else{
+	alert('Please enter Store url');
+	}
+}
+
+function put(val){
+	alert(val);
+	$('#shopifyAuthId').val(val);
+}
+</script>

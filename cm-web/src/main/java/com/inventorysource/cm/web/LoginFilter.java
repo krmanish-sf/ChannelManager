@@ -47,7 +47,8 @@ public class LoginFilter implements javax.servlet.Filter {
 		HttpSession session = request.getSession(false);
 		if (URI.endsWith("login") || URI.endsWith("logout")
 				|| URI.contains("/static/") || URI.endsWith("signup.jsp")
-				|| URI.endsWith("signup")) {
+				|| URI.endsWith("signup")
+				|| URI.contains("shopifyRedirect.jsp")) {
 			chain.doFilter(request, response);
 		} else if (session == null || session.getAttribute("reps") == null) {
 			response.sendRedirect("login");
