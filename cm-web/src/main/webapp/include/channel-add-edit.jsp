@@ -1,3 +1,5 @@
+<%@page import="salesmachine.util.ApplicationProperties"%>
+<%@page import="com.inventorysource.cm.web.config.ApplicationProperties"%>
 <%@ page language="java" contentType="text/html; charset=UTF-8"
 	pageEncoding="UTF-8" session="false"%>
 <div class="modal fade" id="mychanneledit" tabindex="-1" role="dialog"
@@ -307,10 +309,9 @@
 <script>
 function openUrl(){
 var strUrl = document.getElementsByName('storeurl')[0].value;
-document.location=strUrl+'/admin/oauth/authorize?client_id=04eca9fa303fd59d3d96d3eb2a09aa53&scope=read_content,write_content,read_products,write_products,read_customers,write_customers,read_orders,write_orders,read_shipping,write_shipping,read_fulfillments,write_fulfillments';
 if(strUrl){
-	//var m = window.open(strUrl+'/admin/oauth/authorize?client_id=04eca9fa303fd59d3d96d3eb2a09aa53&scope=read_content,write_content,read_products,write_products,read_customers,write_customers,read_orders,write_orders,read_shipping,write_shipping,read_fulfillments,write_fulfillments', 'shopify Access Permission',
-	//'height=600,width=600,toolbar=no,directories=no,status=no,menubar=no,scrollbars=no,location=no,resizable=yes,modal=yes');
+	var m = window.open(strUrl+'/admin/oauth/authorize?client_id=<%=ApplicationProperties.getProperty(ApplicationProperties.SHOPIFY_API_KEY)%>&scope=read_content,write_content,read_products,write_products,read_customers,write_customers,read_orders,write_orders,read_shipping,write_shipping,read_fulfillments,write_fulfillments', 'shopify Access Permission',
+	'height=600,width=600,toolbar=no,directories=no,status=no,menubar=no,scrollbars=no,location=no,resizable=yes,modal=yes');
 }
 else{
 	alert('Please enter Store url');
@@ -318,7 +319,6 @@ else{
 }
 
 function put(val){
-	alert(val);
 	$('#shopifyAuthId').val(val);
 }
 </script>
