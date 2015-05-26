@@ -68,7 +68,7 @@
 													URL</label>
 												<div class="col-sm-7">
 													<input type="url" name="storeurl" class="width-70"
-														placeholder="http://www.example.com" required="required" 
+														placeholder="http://www.example.com" required="required"
 														data-bind-channel="customMapper:oimChannelAccessDetailses[oimChannelAccessFields.fieldId=1].detailFieldValue" />
 												</div>
 											</div>
@@ -181,13 +181,16 @@
 											</div>
 											<div class="form-group store-info shopify-store">
 												<label for="catalog-id"
-													class="col-sm-5 control-label no-padding-right">Auth Token</label>
+													class="col-sm-5 control-label no-padding-right">Auth
+													Token</label>
 												<div class="col-sm-7">
-													<input type="text" id="shopifyAuthId" name="shopifyAuth-id" class="width-70"
-														placeholder="Auth Token"
+													<input type="text" id="shopifyAuthId" name="shopifyAuth-id"
+														class="width-70" placeholder="Auth Token"
 														required="required"
-														data-bind-channel="customMapper:oimChannelAccessDetailses[oimChannelAccessFields.fieldId=19].detailFieldValue" readonly/>
-														<button type="button" class="btn btn-info btn-xs" onclick="openUrl()">Auth</button>
+														data-bind-channel="customMapper:oimChannelAccessDetailses[oimChannelAccessFields.fieldId=19].detailFieldValue"
+														readonly />
+													<button type="button" class="btn btn-info btn-xs"
+														onclick="openUrl()">Auth</button>
 												</div>
 											</div>
 											<div class="form-group center">

@@ -344,15 +344,23 @@ function evalArray(obj, expr) {
 			shadowSize : 1,
 			series : {
 				lines : {
-					show : true
-				},
+					show : true,
+					color:'#3e3e3e'
+				}/*,
+				bars : {
+					show : true,
+					barWidth : 0.5,
+					align : "center"
+				}*/,
 				points : {
-					show : false
+					show : true
 				}
 			},
 			xaxes : [ {
-				mode : "time",
-				timeformat : "%m/%d",
+				mode : "categories",
+				tickLength : 0,
+				// mode : "time",
+				// timeformat : "%m/%d",
 				tickPadding : 0,
 				// tickSize : 'auto',
 				/*
@@ -368,7 +376,7 @@ function evalArray(obj, expr) {
 				axisLabelPadding : 10
 			} ],
 			yaxes : [ {
-				axisLabel : "Total sale(USD)",
+				axisLabel : "",
 				min : 0,
 				axisLabelUseCanvas : true,
 				axisLabelFontSizePixels : 12,
@@ -382,6 +390,8 @@ function evalArray(obj, expr) {
 				}
 			} ],
 			grid : {
+				hoverable : true,
+				clickable : true,
 				backgroundColor : {
 					colors : [ "#fff", "#fff" ]
 				},
@@ -433,27 +443,30 @@ function evalArray(obj, expr) {
 					data : data
 				} ], options);
 			}
-			$(document).on(
+
+			$("<div id='tooltip'></div>").css({
+				position : "absolute",
+				display : "none",
+				border : "1px solid #fdd",
+				padding : "2px",
+				"background-color" : "#fee",
+				opacity : 0.80
+			}).appendTo("body");
+			$(placeholder).bind(
 					'plothover',
-					placeholder,
 					function(event, pos, item) {
 						// debugger;
+						console.log(item)
 						if (item) {
-							if (previousPoint != item.seriesIndex) {
-								previousPoint = item.seriesIndex;
-								var tip = item.series['label'] + " : "
-										+ item.series['percent'].toFixed(2)
-										+ '%';
-								console.log(tip);
-								$tooltip.show().children(0).text(tip);
-							}
-							$tooltip.css({
-								top : pos.pageY + 10,
-								left : pos.pageX + 10
-							});
+							var x = item.datapoint[0], y = item.datapoint[1]
+									.toFixed(2);
+							$("#tooltip").html(item.series.label + ": " + y)
+									.css({
+										top : item.pageY + 5,
+										left : item.pageX + 5
+									}).fadeIn(200);
 						} else {
-							$tooltip.hide();
-							previousPoint = null;
+							$("#tooltip").hide();
 						}
 					});
 		}

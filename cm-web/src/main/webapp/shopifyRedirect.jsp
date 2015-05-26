@@ -51,7 +51,7 @@
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <title>Shopify Access Token</title>
-<script src="http://code.jquery.com/jquery-2.0.3.min.js"
+<script src="//code.jquery.com/jquery-2.0.3.min.js"
 	type="text/javascript"></script>
 <script type="text/javascript">
 	var tokenObj =<%=responseText%>;

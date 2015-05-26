@@ -218,12 +218,16 @@ public class ReportRepositoryDB extends RepositoryBase implements
 							+ "d.deleteTm is null and d.salePrice is not null "
 							+ "and c.deleteTm is null "
 							+ dateSubQuery
-							+ " and o.oimOrderBatches.oimChannels.vendors.vendorId =:vid "
+							// +
+							// " and o.oimOrderBatches.oimChannels.vendors.vendorId =:vid "
 							// + "and d.oimOrderStatuses.statusId = 0"
 							+ " group by "
 							+ "c.channelId, c.channelName order by sum(d.salePrice*d.quantity) desc");
-			Iterator iter = query.setInteger("vid", vendorId).setFirstResult(0)
-					.setMaxResults(10).iterate();
+			Iterator iter = query/*
+								 * .setInteger("vid",
+								 * vendorId).setFirstResult(0)
+								 * .setMaxResults(10)
+								 */.iterate();
 			while (iter.hasNext()) {
 				Object[] row = (Object[]) iter.next();
 				final int channelId = (Integer) row[0];
@@ -301,32 +305,36 @@ public class ReportRepositoryDB extends RepositoryBase implements
 						.createQuery("select s.supplierId, s.supplierName, sum(od.salePrice*od.quantity) "
 								+ " from salesmachine.hibernatedb.OimOrderDetails od "
 								+ " inner join od.oimSuppliers s "
-								+ " where od.oimOrders.oimOrderBatches.oimChannels.vendors.vendorId =:vid "
-								+ " and od.deleteTm is null "
+								+ " where od.deleteTm is null "
+								// +
+								// " and od.oimOrders.oimOrderBatches.oimChannels.vendors.vendorId =:vid "
 								+ " and od.oimSuppliers.deleteTm is null and od.salePrice is not null "
 								+ dateSubQuery
 								// + " and od.oimOrderStatuses.statusId = 0 "
 								+ " group by s.supplierId, s.supplierName "
 								+ " order by sum(od.salePrice*od.quantity) desc");
-				query.setInteger("vid", vendorId);
+				// query.setInteger("vid", vendorId);
 			} else {
 
 				query = dbSession
 						.createQuery("select s.supplierId, s.supplierName, sum(od.salePrice*od.quantity) "
 								+ " from salesmachine.hibernatedb.OimOrderDetails od "
 								+ " inner join od.oimSuppliers s "
-								+ " where od.oimOrders.oimOrderBatches.oimChannels.vendors.vendorId =:vid "
-								+ " and od.deleteTm is null and od.salePrice is not null and "
+								+ " where od.deleteTm is null "
+								// +
+								// " and od.oimOrders.oimOrderBatches.oimChannels.vendors.vendorId =:vid "
+								+ " and od.salePrice is not null and "
 								+ " od.oimOrders.deleteTm is null and "
 								+ " od.oimSuppliers.deleteTm is null "
 								+ dateSubQuery
 								// + " and od.oimOrderStatuses.statusId = 0 "
-								//+ " and od.oimOrders.oimOrderBatches.oimChannels.channelId=:cid"
+								// +
+								// " and od.oimOrders.oimOrderBatches.oimChannels.channelId=:cid"
 								+ " group by s.supplierId, s.supplierName "
 								+ " order by sum(od.salePrice*od.quantity) desc");
 
-				query.setInteger("vid", vendorId);
-				//query.setInteger("cid", channelid);
+				// query.setInteger("vid", vendorId);
+				// query.setInteger("cid", channelid);
 			}
 			// System.out.println(query.getQueryString());
 			Iterator iter = query.setFirstResult(0).setMaxResults(10).iterate();

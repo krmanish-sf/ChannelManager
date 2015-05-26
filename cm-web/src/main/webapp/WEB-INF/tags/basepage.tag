@@ -393,6 +393,7 @@
 		src="static/js/jquery.numberformatter-1.2.4.min.js"></script>
 	<script src="static/js/flot/jquery.flot.pie.min.js"></script>
 	<script src="static/js/flot/jquery.flot.resize.min.js"></script>
+	<script src="static/js/flot/jquery.flot.categories.js"></script>
 	<script type="text/javascript"
 		src="//cdn.datatables.net/1.10.3/js/jquery.dataTables.min.js"></script>
 	<script type="text/javascript"

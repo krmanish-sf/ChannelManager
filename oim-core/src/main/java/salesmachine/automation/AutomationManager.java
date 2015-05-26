@@ -31,8 +31,8 @@ public class AutomationManager {
 		timer.schedule(orderTrackingTask, 1000L,
 				ApplicationProperties.getOrderTrackingInterval());
 
-		OrderHandler orderPostHandler = new OrderHandler(session);
-		eventBus.register(orderPostHandler);
+		OrderHandler orderHandler = new OrderHandler(session, eventBus);
+		eventBus.register(orderHandler);
 	}
 
 }
