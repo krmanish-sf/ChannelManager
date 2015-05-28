@@ -86,24 +86,14 @@
 			<version>${spring.version}</version>
 		</dependency>
 		<dependency>
-			<groupId>org.springframework.security</groupId>
-			<artifactId>spring-security-web</artifactId>
-			<version>${spring.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>org.springframework.security</groupId>
-			<artifactId>spring-security-core</artifactId>
-			<version>${spring.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>org.springframework.security</groupId>
-			<artifactId>spring-security-config</artifactId>
+			<groupId>org.springframework.integration</groupId>
+			<artifactId>spring-integration-security</artifactId>
 			<version>${spring.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.hibernate</groupId>
 			<artifactId>hibernate-core</artifactId>
-			<version>3.6.10.Final</version>
+			<version>${hibernate.version}</version>
 			<exclusions>
 				<exclusion>
 					<groupId>commons-logging</groupId>
@@ -114,7 +104,7 @@
 		<dependency>
 			<groupId>org.hibernate</groupId>
 			<artifactId>hibernate-c3p0</artifactId>
-			<version>3.6.10.Final</version>
+			<version>${hibernate.version}</version>
 			<exclusions>
 				<exclusion>
 					<groupId>commons-logging</groupId>
@@ -259,8 +249,9 @@
 		</dependency>
 	</dependencies>
 	<properties>
-		<spring.version>3.2.0.RELEASE</spring.version>
-		<java.version>1.7</java.version>
+		<spring.version>4.1.4.RELEASE</spring.version>
+		<java.version>1.8</java.version>
+		<hibernate.version>4.3.10.Final</hibernate.version>
 	</properties>
 	<repositories>
 		<repository>
@@ -271,7 +262,7 @@
 		<repository>
 			<id>bonecp-repo</id>
 			<name>BoneCP Repository</name>
-			<url>http://jolbox.com/bonecp/downloads/maven</url>
+			<url>http://mvnrepository.com/artifact</url>
 		</repository>
 	</repositories>
 	<pluginRepositories>

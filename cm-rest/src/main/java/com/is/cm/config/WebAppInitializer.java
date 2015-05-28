@@ -29,8 +29,11 @@ public class WebAppInitializer implements WebApplicationInitializer {
 		AnnotationConfigWebApplicationContext rootContext = new AnnotationConfigWebApplicationContext();
 		rootContext.setDisplayName("InventorySource Channel Manager Rest API");
 		rootContext.register(CoreConfig.class);
-		rootContext.refresh();
-
+		try {
+			rootContext.refresh();
+		} catch (java.lang.IllegalArgumentException e) {
+			LOG.error("Error in refreshing application context.F", e);
+		}
 		servletContext.addListener(new ContextLoaderListener(rootContext));
 		servletContext.setInitParameter("defaultHtmlEscape", "true");
 

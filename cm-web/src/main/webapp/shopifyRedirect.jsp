@@ -50,17 +50,21 @@
 <html>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-<title>Shopify Access Token</title>
-<script src="//code.jquery.com/jquery-2.0.3.min.js"
-	type="text/javascript"></script>
+<title>Inventorysource Channel Manager: Shopify Access Token</title>
 <script type="text/javascript">
 	var tokenObj =<%=responseText%>;
-	window.opener.put(tokenObj.access_token);
-	window.close();
+	function load() {
+		if (tokenObj) {
+			window.opener.put(tokenObj.access_token);
+		} else {
+			alert('Auth token not recieved. Please Retry.');
+		}
+		window.close();
+	}
 </script>
 
 </head>
-<body>
+<body onload="load()">
 
 </body>
 </html>
