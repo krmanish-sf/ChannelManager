@@ -184,13 +184,16 @@
 													Token</label>
 												<div class="col-sm-7">
 													<input type="text" id="shopifyAuthId" name="shopifyAuth-id"
-														class="width-70" placeholder="Auth Token"
+														class="width-70" placeholder="Access Token"
 														required="required"
 														data-bind-channel="customMapper:oimChannelAccessDetailses[oimChannelAccessFields.fieldId=17].detailFieldValue"
 														readonly />
-													<button type="button" class="btn btn-info btn-xs"
-														onclick="openUrl()">Auth</button>
 												</div>
+											</div>
+											<div class="form-group">
+												<div class="col-sm-5"></div>
+												<div class="col-sm-7"><a style=" cursor: pointer;"
+															onclick="openUrl()">Get Access Token</a></div>
 											</div>
 											<div class="form-group center">
 												<!-- <input type="button"

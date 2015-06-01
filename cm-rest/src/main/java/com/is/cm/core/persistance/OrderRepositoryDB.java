@@ -1,7 +1,5 @@
 package com.is.cm.core.persistance;
 
-import java.text.DecimalFormat;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -779,7 +777,7 @@ public class OrderRepositoryDB extends RepositoryBase implements
 		Session session = SessionManager.currentSession();
 		OimSupplierOrderPlacement osop = new OimSupplierOrderPlacement(session);
 		return osop.trackOrder(getVendorId(), entity);
-		
+
 	}
 
 	@Override
@@ -835,12 +833,11 @@ public class OrderRepositoryDB extends RepositoryBase implements
 		OimChannels oimChannel = getOimChannel(catalogid);
 		Session m_dbSession = SessionManager.currentSession();
 		Transaction tx = null;
-		List<Order> orderList = new ArrayList<Order>();
+		Map<String, OimSuppliers> supplierMap = new HashMap<String, OimSuppliers>();
 		try {
-			DecimalFormat df = new DecimalFormat("#.##");
-			SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+			
 			Set suppliers = oimChannel.getOimChannelSupplierMaps();
-			Map supplierMap = new HashMap();
+
 			Iterator itr = suppliers.iterator();
 			while (itr.hasNext()) {
 				OimChannelSupplierMap map = (OimChannelSupplierMap) itr.next();
@@ -853,8 +850,6 @@ public class OrderRepositoryDB extends RepositoryBase implements
 						+ supplier.getSupplierId());
 				supplierMap.put(prefix, supplier);
 			}
-
-			boolean ordersSaved = false;
 
 			OimOrderBatches batch = new OimOrderBatches();
 			batch.setOimChannels(oimChannel);
@@ -1004,10 +999,14 @@ public class OrderRepositoryDB extends RepositoryBase implements
 					details.setProductName(items.getITEM().getITDESCRIPTION());
 					String quantity = items.getITEM().getITQUANTITY();
 					details.setQuantity(Integer.valueOf(quantity));
-					String skuPrefix = items.getITEM().getITSKU()
-							.substring(0, 2);
-					OimSuppliers oimSuppliers = (OimSuppliers) supplierMap
-							.get(skuPrefix);
+					String sku = items.getITEM().getITSKU();
+					OimSuppliers oimSuppliers = null;
+					for (String prefix : supplierMap.keySet()) {
+						if (sku.startsWith(prefix)) {
+							oimSuppliers = supplierMap.get(prefix);
+							break;
+						}
+					}
 					if (oimSuppliers != null) {
 						details.setOimSuppliers(oimSuppliers);
 					}

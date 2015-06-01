@@ -342,10 +342,14 @@ public class AmazonOrderImport extends ChannelBase implements IOrderImport {
 						details.setInsertionTm(new Date());
 						details.setOimOrderStatuses(new OimOrderStatuses(
 								OimConstants.ORDER_STATUS_UNPROCESSED));
-						String skuPrefix = orderItem.getSellerSKU().substring(
-								0, 2);
-						OimSuppliers oimSuppliers = (OimSuppliers) supplierMap
-								.get(skuPrefix);
+						String sku = orderItem.getSellerSKU();
+						OimSuppliers oimSuppliers = null;
+						for (String prefix : supplierMap.keySet()) {
+							if (sku.startsWith(prefix)) {
+								oimSuppliers = supplierMap.get(prefix);
+								break;
+							}
+						}
 						if (oimSuppliers != null) {
 							details.setOimSuppliers(oimSuppliers);
 						}
