@@ -74,6 +74,8 @@ public class ShopifyOrderImport extends ChannelBase implements IOrderImport {
 		// this method is implemented for tracking purpose
 		//log.info("order status is - {}",orderStatus.g);
 		log.info("order id is - {}",oimOrderDetails.getOimOrders().getOrderId());
+		log.info("tracking number - {}",orderStatus.getTrackingData().getShipperTrackingNumber());
+		log.info("tracking_company - {}",orderStatus.getTrackingData().getCarrierName());
 		//		if (!orderStatus.isShipped()) {
 		//			return true;
 		//		}
@@ -101,8 +103,8 @@ public class ShopifyOrderImport extends ChannelBase implements IOrderImport {
 		postMethod.addRequestHeader("X-Shopify-Access-Token", shopifyToken);
 		JSONObject jsonObject = new JSONObject();
 		JSONObject jsonObjVal = new JSONObject();
-		jsonObjVal.put("tracking_number", "123456789"); // what is tracking number???
-		jsonObjVal.put("tracking_company","TestCompany");
+		jsonObjVal.put("tracking_number", orderStatus.getTrackingData().getShipperTrackingNumber());
+		jsonObjVal.put("tracking_company",orderStatus.getTrackingData().getCarrierName());
 		jsonObjVal.put("notify_customer", true);
 		jsonObject.put("fulfillment", jsonObjVal);
 
