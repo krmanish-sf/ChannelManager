@@ -72,58 +72,43 @@ public class ShopifyOrderImport extends ChannelBase implements IOrderImport {
 	public boolean updateStoreOrder(OimOrderDetails oimOrderDetails,
 			OrderStatus orderStatus) {
 		// this method is implemented for tracking purpose
-		//log.info("order status is - {}",orderStatus.g);
-		log.info("order id is - {}",oimOrderDetails.getOimOrders().getOrderId());
-		log.info("tracking number - {}",orderStatus.getTrackingData().getShipperTrackingNumber());
-		log.info("tracking_company - {}",orderStatus.getTrackingData().getCarrierName());
-		//		if (!orderStatus.isShipped()) {
-		//			return true;
-		//		}
-		String requestUrl = storeUrl + "/admin/orders/"+oimOrderDetails.getOimOrders().getStoreOrderId()+"/fulfillments.json";
+		log.info("order id is - {}", oimOrderDetails.getOimOrders()
+				.getOrderId());
+		if (!orderStatus.isShipped()) {
+			return true;
+		}
+		String requestUrl = storeUrl + "/admin/orders/"
+				+ oimOrderDetails.getOimOrders().getStoreOrderId()
+				+ "/fulfillments.json";
 		HttpClient client = new HttpClient();
-		//		GetMethod getOrderJson = new GetMethod(requestUrl);
-		//		getOrderJson.addRequestHeader("X-Shopify-Access-Token", shopifyToken);
-		//		int responseCode = 0;
-		//		String jsonString=null;
-		//		try {
-		//			responseCode = client.executeMethod(getOrderJson);
-		//			if(responseCode==200){
-		//				jsonString = getOrderJson.getResponseBodyAsString();
-		//				if(jsonString!=null)
-		//					log.info("fullfillment json  - {}",jsonString);
-		//			}
-		//		} catch (HttpException e) {
-		//			// TODO Auto-generated catch block
-		//			e.printStackTrace();
-		//		} catch (IOException e) {
-		//			// TODO Auto-generated catch block
-		//			e.printStackTrace();
-		//		}
 		PostMethod postMethod = new PostMethod(requestUrl);
 		postMethod.addRequestHeader("X-Shopify-Access-Token", shopifyToken);
 		JSONObject jsonObject = new JSONObject();
 		JSONObject jsonObjVal = new JSONObject();
-		jsonObjVal.put("tracking_number", orderStatus.getTrackingData().getShipperTrackingNumber());
-		jsonObjVal.put("tracking_company",orderStatus.getTrackingData().getCarrierName());
+		jsonObjVal.put("tracking_number", orderStatus.getTrackingData()
+				.getShipperTrackingNumber());
+		jsonObjVal.put("tracking_company", orderStatus.getTrackingData()
+				.getCarrierName());
+
 		jsonObjVal.put("notify_customer", true);
 		jsonObject.put("fulfillment", jsonObjVal);
 
-		StringRequestEntity requestEntity=null;
+		StringRequestEntity requestEntity = null;
 		try {
-			requestEntity = new StringRequestEntity(jsonObject.toJSONString(),"application/json","UTF-8");
+			requestEntity = new StringRequestEntity(jsonObject.toJSONString(),
+					"application/json", "UTF-8");
 		} catch (UnsupportedEncodingException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			log.error("error in parsing json request payload {}", e);
 		}
 		postMethod.setRequestEntity(requestEntity);
-		int statusCode=0;
+		int statusCode = 0;
 		try {
 			statusCode = client.executeMethod(postMethod);
-			log.info("statusCode is - {}",statusCode);
-			
-				String responseString = postMethod.getResponseBodyAsString();
-				log.info("response string - {}",responseString);
-			
+			log.info("statusCode is - {}", statusCode);
+
+			String responseString = postMethod.getResponseBodyAsString();
+			log.info("response string - {}", responseString);
+
 		} catch (HttpException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
