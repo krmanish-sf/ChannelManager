@@ -73,6 +73,7 @@ public class OimSupplierOrderPlacement {
 	public static final int DandH = 421;
 	public static final int BRADLEYCALDWELL = 581;
 	public static final int HONESTGREEN = 1822;
+	public static final int GREENSUPPLY = 1981;
 
 	// public boolean m_RunModePlaceOrders = true;
 	// public boolean m_RunModeUpdateOrdersStatus = true;
@@ -555,6 +556,10 @@ public class OimSupplierOrderPlacement {
 				case HONESTGREEN:
 					log.debug("SENDING ORDERS TO HONEST GREEN");
 					s = new HonestGreen();
+					break;
+				case GREENSUPPLY:
+					log.debug("SENDING ORDERS TO GREENSUPPLY");
+					s = new GreenSupply();
 					break;
 				}
 				if (s != null) {
