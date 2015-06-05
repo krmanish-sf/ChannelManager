@@ -75,9 +75,9 @@ public class ShopifyOrderImport extends ChannelBase implements IOrderImport {
 		log.info("order id is - {}", oimOrderDetails.getOimOrders()
 				.getOrderId());
 		log.info("order status is - {}", orderStatus);
-//		if (!orderStatus.isShipped()) {
-//			return true;
-//		}
+		if (!orderStatus.isShipped()) {
+			return true;
+		}
 		// post fullfillment
 		String requestUrl = storeUrl + "/admin/orders/"
 				+ oimOrderDetails.getOimOrders().getStoreOrderId()
@@ -118,54 +118,9 @@ public class ShopifyOrderImport extends ChannelBase implements IOrderImport {
 			log.error("error in parsing json response payload {}", e);
 			return false;
 		}
-			boolean isSuccess = postTransactionStatus(oimOrderDetails);
-			if(isSuccess)
-				return false;
-		
 		return true;
 	}
 
-	private boolean postTransactionStatus(OimOrderDetails oimOrderDetails){
-		String requestUrl = storeUrl + "/admin/orders/"
-				+ oimOrderDetails.getOimOrders().getStoreOrderId()
-				+ "/transactions.json";
-		
-		HttpClient client = new HttpClient();
-		PostMethod postMethod = new PostMethod(requestUrl);
-		postMethod.addRequestHeader("X-Shopify-Access-Token", shopifyToken);
-		JSONObject jsonObject = new JSONObject();
-		JSONObject jsonObjVal = new JSONObject();
-//		jsonObjVal.put("amount", "37.70");
-//		jsonObjVal.put("kind", "capture");
-		jsonObjVal.put("amount", oimOrderDetails.getCostPrice().doubleValue()+"");
-		jsonObjVal.put("kind", oimOrderDetails.getOimOrderStatuses().getStatusValue());
-		jsonObject.put("transaction", jsonObjVal);
-
-		StringRequestEntity requestEntity = null;
-		try {
-			requestEntity = new StringRequestEntity(jsonObject.toJSONString(),
-					"application/json", "UTF-8");
-		} catch (UnsupportedEncodingException e) {
-			log.error("error in parsing json request payload {}", e);
-		}
-		postMethod.setRequestEntity(requestEntity);
-		int statusCode = 0;
-		try {
-			statusCode = client.executeMethod(postMethod);
-			log.info("statusCode is - {}", statusCode);
-
-			String responseString = postMethod.getResponseBodyAsString();
-			log.info("response string - {}", responseString);
-
-		} catch (HttpException e) {
-			log.error("error in posting request for transaction {}", e);
-			return false;
-		} catch (IOException e) {
-			log.error("error in parsing json response payload {}", e);
-			return false;
-		}
-		return true;	
-	}
 
 	@Override
 	public OimOrderBatches getVendorOrders(OimOrderBatchesTypes batchesTypes) {
