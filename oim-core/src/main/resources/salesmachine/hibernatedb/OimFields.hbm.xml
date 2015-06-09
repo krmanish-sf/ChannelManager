@@ -16,10 +16,10 @@
         <property name="fieldDesc" type="string">
             <column name="FIELD_DESC" length="100" />
         </property>
-        <property name="insertionTm" type="date">
+        <property name="insertionTm" type="java.util.Date">
             <column name="INSERTION_TM" length="7" />
         </property>
-        <property name="deleteTm" type="date">
+        <property name="deleteTm" type="java.util.Date">
             <column name="DELETE_TM" length="7" />
         </property>
         <set name="oimFileFieldMaps" inverse="true" lazy="true" table="OIM_FILE_FIELD_MAP" fetch="select">

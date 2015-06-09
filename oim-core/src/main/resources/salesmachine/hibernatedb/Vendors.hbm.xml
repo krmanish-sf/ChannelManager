@@ -17,7 +17,7 @@
         <property name="company" type="string">
             <column name="COMPANY" length="50" />
         </property>
-        <property name="nextChargeDate" type="date">
+        <property name="nextChargeDate" type="java.util.Date">
             <column name="NEXT_CHARGE_DATE" length="7" />
         </property>
         <property name="creditAvailable" type="java.lang.Double">
@@ -41,10 +41,10 @@
         <property name="istorePassword" type="string">
             <column name="ISTORE_PASSWORD" length="50" />
         </property>
-        <property name="istoreCreationDate" type="date">
+        <property name="istoreCreationDate" type="java.util.Date">
             <column name="ISTORE_CREATION_DATE" length="7" />
         </property>
-        <property name="istoreEmailDate" type="date">
+        <property name="istoreEmailDate" type="java.util.Date">
             <column name="ISTORE_EMAIL_DATE" length="7" />
         </property>
         <property name="istoreCount" type="java.lang.Integer">

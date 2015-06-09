@@ -16,10 +16,10 @@
         <many-to-one name="oimChannelAccessFields" class="salesmachine.hibernatedb.OimChannelAccessFields" fetch="select">
             <column name="DETAIL_FIELD_ID" precision="22" scale="0" />
         </many-to-one>
-        <property name="insertionTm" type="date">
+        <property name="insertionTm" type="java.util.Date">
             <column name="INSERTION_TM" length="7" />
         </property>
-        <property name="deleteTm" type="date">
+        <property name="deleteTm" type="java.util.Date">
             <column name="DELETE_TM" length="7" />
         </property>
         <property name="detailFieldValue" type="string">

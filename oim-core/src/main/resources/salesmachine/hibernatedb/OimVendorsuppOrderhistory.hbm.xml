@@ -16,7 +16,7 @@
         <many-to-one name="oimSuppliers" class="salesmachine.hibernatedb.OimSuppliers" fetch="select">
             <column name="SUPPLIER_ID" precision="22" scale="0" />
         </many-to-one>
-        <property name="processingTm" type="date">
+        <property name="processingTm" type="java.util.Date">
             <column name="PROCESSING_TM" length="7" />
         </property>
         <property name="errorCode" type="java.lang.Integer">

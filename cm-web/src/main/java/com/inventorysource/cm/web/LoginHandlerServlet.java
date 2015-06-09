@@ -58,7 +58,7 @@ public class LoginHandlerServlet extends HttpServlet {
 			RestTemplate template = new RestTemplate();
 			ResponseEntity<Reps> entity = template.postForEntity(
 					ApplicationProperties.getRestServiceUrl() + "login",
-					loginDetails, salesmachine.hibernatedb.Reps.class);
+					loginDetails,Reps.class);
 			Reps r = entity.getBody();
 			if (r == null) {
 				req.setAttribute("error",

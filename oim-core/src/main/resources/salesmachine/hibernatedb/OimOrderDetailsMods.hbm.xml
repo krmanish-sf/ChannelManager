@@ -29,10 +29,10 @@
         <property name="supplierId" type="java.lang.Integer">
             <column name="SUPPLIER_ID" precision="22" scale="0" />
         </property>
-        <property name="processingTm" type="date">
+        <property name="processingTm" type="java.util.Date">
             <column name="PROCESSING_TM" length="7" />
         </property>
-        <property name="insertionTm" type="date">
+        <property name="insertionTm" type="java.util.Date">
             <column name="INSERTION_TM" length="7" />
         </property>
         <property name="statusId" type="java.lang.Integer">

@@ -32,13 +32,13 @@
         <property name="vendorId" type="java.lang.Integer">
             <column name="VENDOR_ID" precision="22" scale="0" />
         </property>
-        <property name="lastLoginTm" type="date">
+        <property name="lastLoginTm" type="java.util.Date">
             <column name="LAST_LOGIN_TM" length="7" />
         </property>
-        <property name="registrationTm" type="date">
+        <property name="registrationTm" type="java.util.Date">
             <column name="REGISTRATION_TM" length="7" />
         </property>
-        <property name="verifyTm" type="date">
+        <property name="verifyTm" type="java.util.Date">
             <column name="VERIFY_TM" length="7" />
         </property>
         <property name="referralTrackingId" type="java.lang.Integer">
@@ -65,7 +65,7 @@
         <property name="autoActivation" type="java.lang.Integer">
             <column name="AUTO_ACTIVATION" precision="22" scale="0" />
         </property>
-        <property name="activationTm" type="date">
+        <property name="activationTm" type="java.util.Date">
             <column name="ACTIVATION_TM" length="7" />
         </property>
         <property name="activationKey" type="string">

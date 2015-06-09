@@ -13,20 +13,20 @@
         <many-to-one name="oimOrderBatches" class="salesmachine.hibernatedb.OimOrderBatches" fetch="select">
             <column name="BATCH_ID" precision="22" scale="0" />
         </many-to-one>
-        <property name="orderTm" type="date">
+        <property name="orderTm" type="java.util.Date">
             <column name="ORDER_TM" length="7" />
         </property>
-        <property name="orderFetchTm" type="date">
+        <property name="orderFetchTm" type="java.util.Date">
             <column name="ORDER_FETCH_TM" length="7" />
         </property>
         <property name="orderTotalAmount" type="java.lang.Double">
             <column name="ORDER_TOTAL_AMOUNT" precision="12" />
         </property>
-        <property name="insertionTm" type="date">
+        <property name="insertionTm" type="java.util.Date">
             <column name="INSERTION_TM" length="7" />
         </property>
-        <property name="deleteTm" type="date">
-            <column name="DELETE_TM" length="7" />
+        <property name="deleteTm" type="java.util.Date">
+            <column name="DELETE_TM" />
         </property>
         <property name="deliveryName" type="string">
             <column name="DELIVERY_NAME" length="200" />

@@ -28,13 +28,13 @@
         <property name="salePrice" type="java.lang.Double">
             <column name="SALE_PRICE" precision="12" />
         </property>
-        <property name="processingTm" type="date">
+        <property name="processingTm" type="java.util.Date">
             <column name="PROCESSING_TM" length="7" />
         </property>
-        <property name="insertionTm" type="date">
+        <property name="insertionTm" type="java.util.Date">
             <column name="INSERTION_TM" length="7" />
         </property>
-        <property name="deleteTm" type="date">
+        <property name="deleteTm" type="java.util.Date">
             <column name="DELETE_TM" length="7" />
         </property>
         <property name="quantity" type="java.lang.Integer">

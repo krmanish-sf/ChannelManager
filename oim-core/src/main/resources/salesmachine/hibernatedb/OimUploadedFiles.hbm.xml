@@ -25,10 +25,10 @@
         <property name="fileSz" type="java.lang.Double">
             <column name="FILE_SZ" precision="12" />
         </property>
-        <property name="insertionTm" type="date">
+        <property name="insertionTm" type="java.util.Date">
             <column name="INSERTION_TM" length="7" />
         </property>
-        <property name="deleteTm" type="date">
+        <property name="deleteTm" type="java.util.Date">
             <column name="DELETE_TM" length="7" />
         </property>
     </class>

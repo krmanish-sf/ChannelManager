@@ -19,10 +19,10 @@
         <property name="mappedFieldName" type="string">
             <column name="MAPPED_FIELD_NAME" length="20" />
         </property>
-        <property name="insertionTm" type="date">
+        <property name="insertionTm" type="java.util.Date">
             <column name="INSERTION_TM" length="7" />
         </property>
-        <property name="deleteTm" type="date">
+        <property name="deleteTm" type="java.util.Date">
             <column name="DELETE_TM" length="7" />
         </property>
         <property name="mappedFieldModifierRuleRd" type="string">

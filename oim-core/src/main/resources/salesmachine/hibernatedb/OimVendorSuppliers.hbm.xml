@@ -28,10 +28,10 @@
         <property name="defShippingMethodCode" type="string">
             <column name="DEF_SHIPPING_METHOD_CODE" length="10" />
         </property>
-        <property name="insertionTm" type="date">
+        <property name="insertionTm" type="java.util.Date">
             <column name="INSERTION_TM" length="7" />
         </property>
-        <property name="deleteTm" type="date">
+        <property name="deleteTm" type="java.util.Date">
             <column name="DELETE_TM" length="7" />
         </property>
 		<property name="testMode" type="java.lang.Integer">

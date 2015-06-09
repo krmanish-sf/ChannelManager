@@ -16,10 +16,10 @@
         <property name="fileTypeName" type="string">
             <column name="FILE_TYPE_NAME" length="100" />
         </property>
-        <property name="insertionTm" type="date">
+        <property name="insertionTm" type="java.util.Date">
             <column name="INSERTION_TM" length="7" />
         </property>
-        <property name="deleteTm" type="date">
+        <property name="deleteTm" type="java.util.Date">
             <column name="DELETE_TM" length="7" />
         </property>
         <set name="oimUploadedFileses" inverse="true" lazy="true" table="OIM_UPLOADED_FILES" fetch="select">

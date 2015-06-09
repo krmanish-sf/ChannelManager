@@ -19,10 +19,10 @@
         <property name="attributeValue" type="string">
             <column name="ATTRIBUTE_VALUE" length="100" />
         </property>
-        <property name="insertionTm" type="date">
+        <property name="insertionTm" type="java.util.Date">
             <column name="INSERTION_TM" length="7" />
         </property>
-        <property name="deleteTm" type="date">
+        <property name="deleteTm" type="java.util.Date">
             <column name="DELETE_TM" length="7" />
         </property>
     </class>

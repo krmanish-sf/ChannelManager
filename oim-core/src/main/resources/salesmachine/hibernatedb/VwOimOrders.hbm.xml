@@ -23,7 +23,7 @@
             <key-property name="statusId" type="java.lang.Integer">
                 <column name="STATUS_ID" precision="22" scale="0" />
             </key-property>
-            <key-property name="processingTm" type="date">
+            <key-property name="processingTm" type="java.util.Date">
                 <column name="PROCESSING_TM" length="7" />
             </key-property>
             <key-property name="quantity" type="java.lang.Integer">
@@ -137,7 +137,7 @@
             <key-property name="salePrice" type="java.lang.Double">
                 <column name="SALE_PRICE" precision="12" />
             </key-property>
-            <key-property name="creationTm" type="date">
+            <key-property name="creationTm" type="java.util.Date">
                 <column name="CREATION_TM" length="7" />
             </key-property>
             <key-property name="batchId" type="java.lang.Integer">

@@ -19,13 +19,13 @@
 			fetch="select">
 			<column name="CHANNEL_ID" precision="22" scale="0" />
 		</many-to-one>
-		<property name="creationTm" type="date">
+		<property name="creationTm" type="java.util.Date">
 			<column name="CREATION_TM" length="7" />
 		</property>
-		<property name="insertionTm" type="date">
+		<property name="insertionTm" type="java.util.Date">
 			<column name="INSERTION_TM" length="7" />
 		</property>
-		<property name="deleteTm" type="date">
+		<property name="deleteTm" type="java.util.Date">
 			<column name="DELETE_TM" length="7" />
 		</property>
 		<property name="description" type="string">

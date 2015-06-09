@@ -59,4 +59,8 @@ public class WebAppInitializer implements WebApplicationInitializer {
 					"Servlet 'webservice' cannot be mapped to " + SERVLET_URL);
 		}
 	}
+	@Override
+	public String toString() {
+		return "InventorySource Channel Manager Rest API";
+	}
 }

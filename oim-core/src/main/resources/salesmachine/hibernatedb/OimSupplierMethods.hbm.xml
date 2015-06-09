@@ -19,10 +19,10 @@
         <many-to-one name="oimSuppliers" class="salesmachine.hibernatedb.OimSuppliers" fetch="select">
             <column name="SUPPLIER_ID" precision="22" scale="0" />
         </many-to-one>
-        <property name="insertionTm" type="date">
+        <property name="insertionTm" type="java.util.Date">
             <column name="INSERTION_TM" length="7" />
         </property>
-        <property name="deleteTm" type="date">
+        <property name="deleteTm" type="java.util.Date">
             <column name="DELETE_TM" length="7" />
         </property>
         <set name="oimSupplierMethodattrValueses" inverse="true" lazy="true" table="OIM_SUPPLIER_METHODATTR_VALUES" fetch="select">

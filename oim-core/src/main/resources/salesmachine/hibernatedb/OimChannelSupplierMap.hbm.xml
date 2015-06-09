@@ -22,10 +22,10 @@
         <property name="enableOrderAutomation" type="java.lang.Integer">
             <column name="ENABLE_ORDER_AUTOMATION" precision="22" scale="0" />
         </property>
-        <property name="insertionTm" type="date">
+        <property name="insertionTm" type="java.util.Date">
             <column name="INSERTION_TM" length="7" />
         </property>
-        <property name="deleteTm" type="date">
+        <property name="deleteTm" type="java.util.Date">
             <column name="DELETE_TM" length="7" />
         </property>
     </class>
