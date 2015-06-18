@@ -55,4 +55,13 @@ public class ReportEventHandler implements ReportService {
 				.getAlertAndErrors(vendorId);
 		return new ReadEvent<Map<String, Map>>(0, alertAndErrors);
 	}
+
+	@Override
+	public ReadEvent<ReportDataWrapper> getSystemReportData(
+			RequestDownloadReportEvent event) {
+		ReportDataWrapper data = reportRepository
+				.getSystemReportData(event.getReportType(),
+						event.getStartDate(), event.getEndDate());
+		return new ReadEvent<ReportDataWrapper>(0, data);
+	}
 }

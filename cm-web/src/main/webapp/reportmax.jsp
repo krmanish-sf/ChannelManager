@@ -184,7 +184,7 @@ div.flot-x-axis>div.flot-tick-label {
 											data.overAllSales[i].totalSales ]);
 								}
 								//chart1load(chartData, null);
-								$(this).drawBarChart('sales-charts', chartData);
+								$(this).drawLineChart('sales-charts', chartData);
 								for (var i = 0; i < channelsales.length; i++) {
 									var row = '<li class="item-orange clearfix"><label class="inline"> <span>'
 											+ channelsales[i].name

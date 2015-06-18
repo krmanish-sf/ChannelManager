@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.hibernate.Query;
+import org.hibernate.SQLQuery;
 import org.hibernate.Session;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -1064,4 +1065,68 @@ public class ReportRepositoryDB extends RepositoryBase implements
 		return returnMap;
 	}
 
+	@Override
+	public ReportDataWrapper getSystemReportData(String reportType,
+			Date startDate, Date endDate) {
+		reportDataWrapper = new ReportDataWrapper();
+		m_startDate = startDate;
+		m_endDate = endDate;
+		Session dbSession = SessionManager.currentSession();
+		if (reportType == null)
+			reportType = "";
+		if ("channel-import".equalsIgnoreCase(reportType)) {
+			List supplierSales = getOrderImportData(dbSession);
+			reportDataWrapper.put("order_import", supplierSales);
+		} else if (reportType.equalsIgnoreCase("supplier-processing")) {
+			List productSales = getOrderProcessingData(dbSession);
+			reportDataWrapper.put("order_processing", productSales);
+		} else if (reportType.equalsIgnoreCase("order-tracking")) {
+			List channelSales = getOrderTrackingData(dbSession);
+			reportDataWrapper.put("order_tracking", channelSales);
+		} else {
+			List channelSales = getOrderImportData(dbSession);
+			List supplierSales = getOrderProcessingData(dbSession);
+			List productSales = getOrderTrackingData(dbSession);
+
+			reportDataWrapper.put("channel_import", channelSales);
+			reportDataWrapper.put("supplier_processing", supplierSales);
+			reportDataWrapper.put("order_tracking", productSales);
+		}
+		return reportDataWrapper;
+	}
+
+	private List getOrderTrackingData(Session dbSession) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	private List getOrderProcessingData(Session dbSession) {
+		StringBuilder sb = new StringBuilder();
+		sb.append(
+				"select count(distinct o.order_id),os.supplier_name,s.status_value,od.status_id from oim_orders o inner join oim_order_details od on o.order_id=od.order_id ")
+				.append("inner join oim_suppliers os on od.supplier_id = os.supplier_id and os.delete_tm is null ")
+				.append("inner join oim_order_statuses s on od.status_id = s.status_id ")
+				.append("where o.delete_tm is null and o.insertion_tm between :startDate and :endDate ")
+				.append("group by od.supplier_id,os.supplier_name,od.status_id,s.status_value ");
+		SQLQuery reportQuery = dbSession.createSQLQuery(sb.toString());
+		reportQuery.setTime("startDate", m_startDate);
+		reportQuery.setTime("endDate", m_endDate);
+		List list = reportQuery.list();
+		return list;
+	}
+
+	private List getOrderImportData(Session dbSession) {
+		StringBuilder sb = new StringBuilder();
+		sb.append(
+				"select count(order_id) order_count,oc.supported_channel_id,sc.channel_name,ob.batch_type_id from oim_orders o inner join oim_order_batches ob on o.batch_id = ob.batch_id ")
+				.append("inner join oim_channels oc on ob.channel_id = oc.channel_id ")
+				.append("inner join oim_supported_channels sc on oc.supported_channel_id = sc.supported_channel_id ")
+				.append("where sc.delete_tm is null and o.delete_tm is null and o.insertion_tm between :startDate and :endDate ")
+				.append("group by oc.supported_channel_id , sc.channel_name,ob.batch_type_id");
+		SQLQuery reportQuery = dbSession.createSQLQuery(sb.toString());
+		reportQuery.setTime("startDate", m_startDate);
+		reportQuery.setTime("endDate", m_endDate);
+		List list = reportQuery.list();
+		return list;
+	}
 }

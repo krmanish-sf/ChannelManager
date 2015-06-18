@@ -21,4 +21,7 @@ public interface ReportRepository {
 
 	List<OverAllSalesData> getOverallSalesData(Integer vendorId,
 			int supplierId, int channelId, Date startDate, Date endDate);
+
+	ReportDataWrapper getSystemReportData(String reportType, Date startDate,
+			Date endDate);
 }

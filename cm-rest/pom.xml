@@ -161,24 +161,24 @@
 		<dependency>
 			<groupId>com.fasterxml.jackson.core</groupId>
 			<artifactId>jackson-core</artifactId>
-			<version>2.3.0-rc1</version>
+			<version>2.5.3</version>
 			<scope>compile</scope>
 		</dependency>
 		<dependency>
 			<groupId>com.fasterxml.jackson.core</groupId>
 			<artifactId>jackson-databind</artifactId>
-			<version>2.3.0-rc1</version>
+			<version>2.5.3</version>
 			<scope>compile</scope>
 		</dependency>
 		<dependency>
 			<groupId>com.fasterxml.jackson.core</groupId>
 			<artifactId>jackson-annotations</artifactId>
-			<version>2.3.0-rc1</version>
+			<version>2.5.3</version>
 		</dependency>
 		<dependency>
 			<groupId>com.fasterxml.jackson.datatype</groupId>
 			<artifactId>jackson-datatype-hibernate3</artifactId>
-			<version>2.2.3</version>
+			<version>2.5.3</version>
 		</dependency>
 		<dependency>
 			<groupId>jstl</groupId>
@@ -202,11 +202,11 @@
 			<artifactId>javassist</artifactId>
 			<version>3.17.1-GA</version>
 		</dependency>
-		<dependency>
+		<!-- <dependency>
 			<groupId>com.stevesoft.pat</groupId>
 			<artifactId>pat</artifactId>
 			<version>1.5.3</version>
-		</dependency>
+		</dependency> -->
 		<!-- Apache Commons file upload -->
 		<dependency>
 			<groupId>commons-fileupload</groupId>

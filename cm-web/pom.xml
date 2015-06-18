@@ -32,17 +32,6 @@
 			<scope>compile</scope>
 		</dependency>
 		<dependency>
-			<groupId>com.is.salesmachine</groupId>
-			<artifactId>salesmachine-core</artifactId>
-			<version>1.0.0</version>
-			<exclusions>
-				<exclusion>
-					<artifactId>servlet-api</artifactId>
-					<groupId>javax.servlet</groupId>
-				</exclusion>
-			</exclusions>
-		</dependency>
-		<dependency>
 			<groupId>com.fasterxml.jackson.core</groupId>
 			<artifactId>jackson-core</artifactId>
 			<version>2.3.0-rc1</version>
@@ -82,11 +71,18 @@
 			<version>1.7.5</version>
 			<scope>runtime</scope>
 		</dependency>
-		<dependency>
+		<!-- <dependency>
 			<groupId>log4j</groupId>
 			<artifactId>log4j</artifactId>
 			<version>1.2.17</version>
 			<scope>runtime</scope>
+		</dependency> -->
+		<dependency>
+			<groupId>com.is.salesmachine</groupId>
+			<artifactId>salesmachine-core</artifactId>
+			<version>1.0.0</version>
+			<scope>compile</scope>
+			<type>jar</type>
 		</dependency>
 	</dependencies>
 	<properties>
@@ -189,4 +185,11 @@
 		<!-- <pluginRepository> <name>oss.sonatype.org</name> <id>oss.sonatype.org</id> 
 			<url>http://oss.sonatype.org/content/groups/public</url> </pluginRepository> -->
 	</pluginRepositories>
+	<organization>
+		<name>InventorySource</name>
+		<url>http://www.inventorysource.com</url>
+	</organization>
+	<scm>
+		<url>https://github.com/sourcefuse/isource-cm</url>
+	</scm>
 </project>

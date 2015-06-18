@@ -23,7 +23,6 @@ import org.springframework.web.client.RestTemplate;
 import salesmachine.email.EmailUtil;
 import salesmachine.hibernatedb.Reps;
 import salesmachine.hibernatehelper.SessionManager;
-import salesmachine.util.FormObject;
 
 import com.inventorysource.cm.web.config.ApplicationProperties;
 
@@ -159,14 +158,7 @@ public class SignUpHandlerServlet extends HttpServlet {
 						cc.exp_month, "ccExpYear", cc.exp_year, "nameOnCard",
 						cc.name_on_card, "amount", amountToCharge + "",
 						"cmRegistrationForm", "true" };
-				FormObject formObj = new FormObject("www.inventorysource.com",
-						80, "/KBlistener", "", "", false, false, false);
-				if (params != null && params.length > 0) {
-					formObj.addData(params);
-				}
-				formObj.setTimeOut(60 * 1000 * 15);
-				formObj.hitForm("Post", null);
-				pageResponseString = formObj.page;
+
 				login = contact.email;
 				password = (String) session.getAttribute("password");
 			} else {
@@ -176,14 +168,7 @@ public class SignUpHandlerServlet extends HttpServlet {
 						cc.card_num, "ccExpMonth", cc.exp_month, "ccExpYear",
 						cc.exp_year, "nameOnCard", cc.name_on_card, "amount",
 						amountToCharge + "", "cmActivationForm", "true" };
-				FormObject formObj = new FormObject("www.inventorysource.com",
-						80, "/KBlistener", "", "", false, false, false);
-				if (params != null && params.length > 0) {
-					formObj.addData(params);
-				}
-				formObj.setTimeOut(60 * 1000 * 15);
-				formObj.hitForm("Post", null);
-				pageResponseString = formObj.page;
+
 				login = r.getLogin();
 				password = r.getPassword();
 			}

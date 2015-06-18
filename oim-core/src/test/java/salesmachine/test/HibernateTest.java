@@ -14,7 +14,6 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import salesmachine.hibernatedb.OimChannelAccessDetails;
 import salesmachine.hibernatedb.OimChannelShippingMap;
 import salesmachine.hibernatedb.OimOrders;
 import salesmachine.hibernatedb.OimShippingCarrier;
@@ -26,7 +25,6 @@ public class HibernateTest {
 
 	private static final Logger log = LoggerFactory
 			.getLogger(HibernateTest.class);
-	private static List<OimChannelAccessDetails> list;
 
 	@Test
 	public void selectExamples() {
@@ -81,15 +79,17 @@ public class HibernateTest {
 	}
 
 	@Test
-	public void testOrderDateFileds() {
+	public void testOrderDateFields() {
 		log.debug("Test Start");
 		Date deleteTm = new Date();
 		Session session = SessionManager.currentSession();
 		Transaction tx = session.beginTransaction();
 		OimOrders order = (OimOrders) session.get(OimOrders.class, 3035);
 		log.debug(deleteTm.toString());
-		log.debug(order.getDeleteTm().getClass().getTypeName());
-		log.debug(order.getDeleteTm().toString());
+		if (order.getDeleteTm() != null) {
+			log.debug(order.getDeleteTm().getClass().getTypeName());
+			log.debug(order.getDeleteTm().toString());
+		}
 		order.setDeleteTm(deleteTm);
 		session.saveOrUpdate(order);
 		tx.commit();

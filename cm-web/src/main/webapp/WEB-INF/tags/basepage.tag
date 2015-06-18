@@ -385,6 +385,7 @@
 	<!-- <script src="static/js/jquery.easy-pie-chart.min.js"></script>
 	<script src="static/js/jquery.sparkline.min.js"></script> -->
 	<script src="static/js/flot/jquery.flot.min.js"></script>
+	<!-- <script src="static/js/flot/jquery.flot.orderBars.js"></script> -->
 	<script type="text/javascript"
 		src="static/js/flot/jquery.flot.time.min.js"></script>
 	<script src="static/js/flot/jquery.flot.axislabels.min.js"></script>

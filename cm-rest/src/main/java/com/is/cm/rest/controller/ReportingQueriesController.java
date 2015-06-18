@@ -82,6 +82,20 @@ public class ReportingQueriesController {
 		return event.getEntity();
 	}
 
+	@RequestMapping(value = "/system/{reportType}", method = RequestMethod.POST)
+	@ResponseBody
+	public ReportDataWrapper getSystemReportData(
+			@PathVariable String reportType,
+			@RequestBody Map<String, Date> dateRange) {
+		LOG.debug("Getting {} Report Data ...", reportType);
+		Date st = dateRange.get("startDate");
+		Date ed = dateRange.get("endDate");
+		ReadEvent<ReportDataWrapper> event = reportService
+				.getSystemReportData(new RequestDownloadReportEvent(st, ed,
+						reportType));
+		return event.getEntity();
+	}
+
 	@RequestMapping(value = "/notifications", method = RequestMethod.GET)
 	@ResponseBody
 	public Map<String, Map> getNotifications() {

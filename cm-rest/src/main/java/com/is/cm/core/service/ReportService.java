@@ -19,4 +19,7 @@ public interface ReportService {
 			RequestReadEvent<Map<String, Map>> requestReadEvent);
 
 	ReadEvent<ReportDataWrapper> getReportData(RequestDownloadReportEvent event);
+
+	ReadEvent<ReportDataWrapper> getSystemReportData(
+			RequestDownloadReportEvent event);
 }

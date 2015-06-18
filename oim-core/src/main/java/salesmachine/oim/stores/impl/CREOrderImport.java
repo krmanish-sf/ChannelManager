@@ -1,20 +1,24 @@
 package salesmachine.oim.stores.impl;
 
+import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
-import java.io.PrintWriter;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.io.StringReader;
+import java.net.URL;
 import java.text.DecimalFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
-import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import javax.net.ssl.HttpsURLConnection;
 
 import oracle.xml.parser.v2.DOMParser;
 import oracle.xml.parser.v2.XMLDocument;
@@ -43,18 +47,15 @@ import salesmachine.oim.api.OimConstants;
 import salesmachine.oim.stores.api.ChannelBase;
 import salesmachine.oim.stores.api.IOrderImport;
 import salesmachine.oim.suppliers.modal.OrderStatus;
-import salesmachine.util.FormObject;
 import salesmachine.util.OimLogStream;
 import salesmachine.util.StringHandle;
-import HTTPClient.CookieModule;
 
 import com.stevesoft.pat.Regex;
 
 public class CREOrderImport extends ChannelBase implements IOrderImport {
 	private static final Logger LOG = LoggerFactory
 			.getLogger(CREOrderImport.class);
-	private String m_storeURL = ""; // Base store URL
-	private String m_filePath = ""; // Script path on top of the base URL
+	private String m_storeURL;
 
 	public boolean init(int channelID, Session dbSession, OimLogStream log) {
 		super.init(channelID, dbSession, log);
@@ -68,14 +69,12 @@ public class CREOrderImport extends ChannelBase implements IOrderImport {
 		}
 
 		Regex scriptMatch = Regex.perlCode("/https?:\\/\\/(.+?)\\/(.+)/i");
-		if (scriptMatch.search(scriptPath)) {
-			m_storeURL = scriptMatch.stringMatched(1);
-			m_filePath = "/" + scriptMatch.stringMatched(2);
-		} else {
+		if (!scriptMatch.search(scriptPath)) {
 			LOG.error("FAILED TO PARSE SCRIPT LOCATION");
 			log.println("Failed to parse script location.");
 			return false;
 		}
+		m_storeURL = scriptPath;
 		return true;
 	}
 
@@ -267,8 +266,7 @@ public class CREOrderImport extends ChannelBase implements IOrderImport {
 			DecimalFormat df = new DecimalFormat("#.##");
 			OimOrderBatches batch = new OimOrderBatches();
 			batch.setOimChannels(m_channel);
-			batch.setOimOrderBatchesTypes(new OimOrderBatchesTypes(
-					OimConstants.ORDERBATCH_TYPE_ID_AUTOMATED));
+			batch.setOimOrderBatchesTypes(batchesTypes);
 
 			ByteArrayOutputStream baos = new ByteArrayOutputStream(1000);
 			DOMParser parser = new DOMParser();
@@ -430,53 +428,49 @@ public class CREOrderImport extends ChannelBase implements IOrderImport {
 		return null;
 	}
 
-	public String sendRequest(String pingXML) {
-		LOG.info("Sending request to " + m_storeURL + m_filePath);
+	private String sendRequest(String pingXML) {
+		LOG.info("Sending request to {}", m_storeURL);
+		pingXML = "XML_INPUT_VALUE=" + pingXML;
+		URL url;
+		HttpsURLConnection connection = null;
+		String response = "";
+		try {
+			// Create connection
+			url = new URL(m_storeURL);
+			connection = (HttpsURLConnection) url.openConnection();
+			connection.setRequestMethod("POST");
 
-		PrintWriter out = new PrintWriter(System.out);
-		FormObject formObj = new FormObject(m_storeURL, m_filePath, "", "",
-				false, false, false, out, "");
+			byte[] req = pingXML.getBytes();
+			LOG.info("Request: {}", pingXML);
+			connection.setRequestProperty("Content-Type",
+					"application/x-www-form-urlencoded");
+			connection.setUseCaches(false);
+			connection.setDoInput(true);
+			connection.setDoOutput(true);
 
-		// Find which orders to pull from the store if the pingXML is for order
-		// pulling
-		Hashtable formData = new Hashtable();
-		formData.put("XML_INPUT_VALUE", pingXML);
+			OutputStream outputStream = connection.getOutputStream();
+			outputStream.write(req);
+			outputStream.close();
+			connection.connect();
+			BufferedReader rd = new BufferedReader(new InputStreamReader(
+					connection.getInputStream()));
+			StringBuilder sb = new StringBuilder();
+			String line;
+			while ((line = rd.readLine()) != null) {
+				sb.append(line + '\n');
+			}
+			response = sb.toString();
+			LOG.info("Response: {}", response);
+		} catch (Exception e) {
+			LOG.error("Failed to send request ...", e);
 
-		if (pingXML.indexOf("<requestType>GetOrders</requestType>") != -1) {
-
-			if (!StringHandle.isNullOrEmpty(m_orderProcessingRule
-					.getPullWithStatus())) {
-				String status = m_orderProcessingRule.getPullWithStatus();
-				LOG.info("Pull orders with status :" + status);
-				formData.put("orderpulltype", status);
+		} finally {
+			if (connection != null) {
+				connection.disconnect();
 			}
 		}
+		return response;
 
-		formObj.addData(formData);
-		formObj.handleRedirects();
-		formObj.setTimeOut(60 * 1000 * 30);
-		CookieModule.setCookiePolicyHandler(null);
-		try {
-			formObj.hitForm("Post", null);
-		} catch (Exception e) {
-			StringBuffer buffer = new StringBuffer(1024);
-			buffer.append("Exception occurred during sending XML Request for VID '");
-			// buffer.append(market.vendor_id);
-			buffer.append("' & VMMID '");
-			// buffer.append(market.vendor_market_map_id);
-			buffer.append("'\nRequest: ----------> ");
-			buffer.append(pingXML);
-			buffer.append("\nException during hitting the FO ------------> ");
-			buffer.append(e.getMessage());
-			LOG.error(buffer.toString(), e);
-		}
-
-		if (formObj.okay) {
-			return formObj.page;
-		} else {
-			LOG.info("Ping Failure. Page Contents:\n" + formObj.page);
-		}
-		return "";
 	}
 
 	private boolean parsePingResponse(StringReader xml_toparse, String tag_name) {

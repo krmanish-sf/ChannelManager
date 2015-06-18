@@ -23,7 +23,7 @@
 			placeholder="mm/dd/yyyy" /> <span>&nbsp;To&nbsp;</span> <input
 			type="text" class="width-25 datepicker end" placeholder="mm/dd/yyyy" />
 		<a href="javascript:;"
-			onclick="$(this).drawBarChart('${param.targetId }','${param.reportUrl }','${param.dataFormatter }');"
+			onclick="$(this).${empty param.fnChart?'drawLineChart': param.fnChart}('${param.targetId }','${param.reportUrl }','${param.dataFormatter }');"
 			class="btn btn-info btn-sm pull-right">Generate</a>
 	</div>
 </div>

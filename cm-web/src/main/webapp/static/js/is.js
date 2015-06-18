@@ -338,28 +338,23 @@ function evalArray(obj, expr) {
 			}
 		});
 	};
-	$.fn.drawBarChart = function(placeholder, data, data_formatter) {
+	$.fn.drawLineChart = function(placeholder, data, data_formatter) {
 		var options = {
 			hoverable : true,
 			shadowSize : 1,
 			series : {
 				lines : {
 					show : true,
-					color:'#3e3e3e'
-				}/*,
-				bars : {
-					show : true,
-					barWidth : 0.5,
-					align : "center"
-				}*/,
+					color : '#3e3e3e'
+				},
 				points : {
 					show : true
 				}
 			},
 			xaxes : [ {
-				mode : "categories",
+				// mode : "categories",
 				tickLength : 0,
-				// mode : "time",
+				mode : "time",
 				// timeformat : "%m/%d",
 				tickPadding : 0,
 				// tickSize : 'auto',
@@ -469,6 +464,115 @@ function evalArray(obj, expr) {
 							$("#tooltip").hide();
 						}
 					});
+		}
+	};
+
+	$.fn.drawBarChart = function(placeholder, data, data_formatter) {
+		var options = {
+			hoverable : true,
+			shadowSize : 1,
+			series : {
+				multipleBars : true,
+				bars : {
+					show : true,
+					barWidth : 0.2,
+					align : "center"
+				}
+			},
+			xaxes : [ {
+				mode : "categories",
+				tickLength : 1,
+				tickPadding : 20,
+				tickSize : 'auto',
+				color : "black",
+				axisLabel : "",
+				position : "bottom",
+				axisLabelUseCanvas : false,
+				axisLabelFontSizePixels : 12,
+				axisLabelFontFamily : 'Verdana, Arial',
+				axisLabelPadding : 10
+			} ],
+			yaxes : [ {
+				axisLabel : "",
+				tickDecimals : 0,
+				min : 0,
+				axisLabelUseCanvas : true,
+				axisLabelFontSizePixels : 12,
+				axisLabelFontFamily : 'Verdana, Arial',
+				axisLabelPadding : 3
+			} ],
+			grid : {
+				hoverable : true,
+				clickable : true,
+				backgroundColor : {
+					colors : [ "#fff", "#fff" ]
+				},
+				borderWidth : 1,
+				borderColor : '#555'
+			}
+		};
+
+		if (typeof placeholder == 'string')
+			placeholder = $('#' + placeholder);
+		var widget = placeholder.parent().parent();
+		if (typeof data == 'string') {
+			$(this).CRUD({
+				url : data,
+				method : "POST",
+				data : JSON.stringify({
+					startDate : Date.parse(widget.find('.start').val()),
+					endDate : Date.parse(widget.find('.end').val())
+				}),
+				success : function(data, textStatus, jqXHR) {
+					var formatted_data = [];
+					if (typeof data_formatter === 'string') {
+						eval(data_formatter + '(data, formatted_data)');
+						plotInternal(formatted_data, options);
+					} else {
+						console.log('data format provider not defined.');
+					}
+				}
+			});
+		} else {
+			if (typeof data_formatter === 'string') {
+				var formatted_data = [];
+				eval(data_formatter + '(data, formatted_data)');
+				data = formatted_data;
+			}
+			plotInternal(data, options);
+		}
+		function plotInternal(data, options) {
+			if (!data || !data.length) {
+				placeholder.text('No Data to draw.');
+				return;
+			} else {
+				placeholder.empty().css({
+					'width' : '95%',
+					'min-height' : '400px',
+					'height' : 'auto'
+				});
+				$.plot(placeholder, data, options);
+			}
+
+			$("<div id='tooltip'></div>").css({
+				position : "absolute",
+				display : "none",
+				border : "1px solid #fdd",
+				padding : "2px",
+				"background-color" : "#fee",
+				opacity : 0.80
+			}).appendTo("body");
+			$(placeholder).bind('plothover', function(event, pos, item) {
+				if (item) {
+					var x = item.datapoint[0], y = item.datapoint[1];
+					$("#tooltip").html(item.series.label + ": " + y).css({
+						top : item.pageY + 5,
+						left : item.pageX + 5
+					}).fadeIn(200);
+				} else {
+					$("#tooltip").hide();
+				}
+			});
 		}
 	};
 
@@ -628,7 +732,7 @@ function evalArray(obj, expr) {
 														date.getTime(),
 														data.overAllSales[i].totalSales ]);
 									}
-									$(this).drawBarChart('sales-charts',
+									$(this).drawLineChart('sales-charts',
 											chartData);
 									for (var i = 0; i < channelsales.length; i++) {
 										var row = '<li class="item-orange clearfix"><label class="inline"> <span>'
@@ -705,6 +809,7 @@ function evalArray(obj, expr) {
 		$('#tableShippingMap').DataTable(
 				{
 					"bPaginate" : false,
+					"bDestroy" : true,
 					"bLengthChange" : false,
 					"sAjaxSource" : "/aggregators/channels/shipping/"
 							+ channel.oimSupportedChannels.supportedChannelId,

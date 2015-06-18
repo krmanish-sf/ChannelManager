@@ -5,7 +5,6 @@ import java.util.StringTokenizer;
 import salesmachine.email.EmailUtil;
 import salesmachine.util.ExcHandle;
 import salesmachine.util.Filter;
-import salesmachine.util.FormObject;
 import salesmachine.util.NumberFormat;
 import salesmachine.util.StringHandle;
 import HTTPClient.CookieModule;
@@ -346,16 +345,17 @@ public class Payments {
 				"xml-request",xml,
 				"authkey","MONKEYRULES"
 				};		
-		FormObject formObj = new FormObject(
+		/*FormObject formObj = new FormObject(
 				"app1.inventorysource.com",8081, 
 				"/is6/charge.action",
 				"","",false,false,false);
 		if(params != null && params.length > 0 ) {
 			formObj.addData(params);
-		}	       
-		formObj.setTimeOut(60*1000*15);
+		}	*/       
+		/*formObj.setTimeOut(60*1000*15);
 		formObj.hitForm("Post", null);
-		String pageResponseString = formObj.page;
+		*/
+		String pageResponseString = "";//formObj.page;
 		System.out.println("Gateway response: \n"+pageResponseString);		
 		return pageResponseString;
 	}
