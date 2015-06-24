@@ -15,6 +15,7 @@ import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.servlet.ModelAndView;
 
 import salesmachine.hibernatehelper.SessionManager;
+import salesmachine.util.ApplicationProperties;
 
 public class AuthenticationInterceptor implements HandlerInterceptor {
 	private static final Logger LOG = LoggerFactory
@@ -59,8 +60,8 @@ public class AuthenticationInterceptor implements HandlerInterceptor {
 		params.put("sessionid", sessionid);
 		RestTemplate template = new RestTemplate();
 		HttpHeaders headers = template.headForHeaders(
-				"http://localhost:8080/admin/login?sessionid={sessionid}",
-				params);
+				ApplicationProperties.getProperty("cm.auth.url")
+						+ "?sessionid={sessionid}", params);
 		Integer vendorId = Integer.valueOf(headers.get("vid").get(0));
 		if (vendorId > 0) {
 			LOG.debug("Authenticated successfully to access resource path {}",

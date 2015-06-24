@@ -44,16 +44,16 @@
              </jsp:include>
 			</div>
             <div class="space-2"></div>
-           <div class="row">
+           <%-- <div class="row">
          <jsp:include page="include/reportchart.jsp">
              <jsp:param value="Order Tracking Summary" name="chartTitle" /> 
               <jsp:param value="product-sales-piechart" name="targetId" />
               <jsp:param
 									value="aggregators/reports/system/order-tracking"
 									name="reportUrl" />
-			<jsp:param value="formatProductData" name="dataFormatter" />		
+			<jsp:param value="formatTrackingData" name="dataFormatter" />		
              </jsp:include>
-           </div>
+           </div> --%>
             <div class="space-2"></div>
             <div class="row">
          </div>
@@ -64,134 +64,49 @@
   
 </jsp:attribute>
 	<jsp:attribute name="pagejs">
-	<script type="text/javascript">
-		function formatImportData(data, salesData) {
-			var automation_series = {
-				label : "Auto pull",
-				data : [],
-				color : "#ccc"
-			};
-			var manual_series = {
-				label : "Manual pull",
-				data : [],
-				color : "#6fb3e0"
-			}
-			salesData.push(automation_series);
-			salesData.push(manual_series);
-			for (var i = 0; i < data.channel_import.length; i++) {
-				if (data.channel_import[i][3] == 1)
-					automation_series.data.push([ data.channel_import[i][2],
-							data.channel_import[i][0] ]);
-				else
-					manual_series.data.push([ data.channel_import[i][2],
-							data.channel_import[i][0] ]);
-			}
-		}
-		function formatOrderStatusData(data, supplierSalesData) {
-			var unprocessed = {
-				label : "Unprocessed",
-				data : [],
-				bars : {
-					show : true,
-					order : 1,
-					barWidth : 0.2
-				}
-			};
-			var processed = {
-				label : "Processed",
-				data : [],
-				bars : {
-					show : true,
-					order : 2,
-					barWidth : 0.2
-				}
-			};
-			var failed = {
-				label : "Failed",
-				data : [],
-				bars : {
-					show : true,
-					order : 3,
-					barWidth : 0.2
-				}
-			};
-			var manuallyProcessed = {
-				label : "Manually Processed",
-				data : [],
-				bars : {
-					show : true,
-					order : 4,
-					barWidth : 0.2
-				}
-			};
-			var canceled = {
-				label : "Canceled",
-				data : [],
-				bars : {
-					show : true,
-					order : 5,
-					barWidth : 0.2
-				}
-			};
-			var shipped = {
-				label : "Shipped",
-				data : [],
-				bars : {
-					show : true,
-					order : 6,
-					barWidth : 0.2
-				}
-			};
-			supplierSalesData.push(unprocessed);
-			supplierSalesData.push(processed);
-			supplierSalesData.push(failed);
-			supplierSalesData.push(manuallyProcessed);
-			supplierSalesData.push(canceled);
-			supplierSalesData.push(shipped);
+	 <script type="text/javascript" src="https://www.google.com/jsapi"></script>
+    <script type="text/javascript">
+					// Load the Visualization API and the piechart package.
+					google.load('visualization', '1.0', {
+						'packages' : [ 'bar' ]
+					});
 
-			for (var i = 0; i < data.supplier_processing.length; i++) {
-				var s;
-				switch (data.supplier_processing[i][3]) {
-				case 0://Unprocessed
-					s = unprocessed;
-					break;
-				case 2://Processed
-					s = processed;
-					break;
-				case 3://Failed
-					s = failed;
-					break;
-				case 4://
-					break;
-				case 5://Manually Processed
-					s = manuallyProcessed;
-					break;
-				case 6://Canceled
-					s = canceled;
-					break;
-				case 7://Shipped
-					s = shipped;
-					break;
-				}
-				s.data.push([ data.supplier_processing[i][1],
-						data.supplier_processing[i][0] ]);
-			}
-		}
+					// Set a callback to run when the Google Visualization API is loaded.
+					//google.setOnLoadCallback(drawChart);
 
-		function formatChannelData(data, channelSalesData) {
-			debugger;
-			for (var i = 0; i < data.channel_import.length; i++) {
-				channelSalesData.push([ data.channelsales[i].name,
-						data.channelsales[i].totalSales ]);
-			}
-		}
+					function formatImportData(data, salesData) {
+						salesData.push([ 'Channel Type', 'Automated Pull',
+								"Manual Pull" ]);
+						for (var i = 0; i < data.order_import.length; i++) {
+							salesData.push(data.order_import[i]);
+						}
+						console.log(salesData);
+					}
+					function formatOrderStatusData(data, supplierSalesData) {
+						supplierSalesData.push([ "Supplier Name",
+								'Unprocessed', 'Processed', 'Failed',
+								'Manually Processed', 'Canceled', 'Shipped' ]);
+						for (var i = 0; i < data.order_processing.length; i++) {
+							supplierSalesData.push(data.order_processing[i]);
+						}
+						console.log(supplierSalesData);
+					}
 
-		function formatProductData(data, prodSalesData) {
-			for (var i = 0; i < data.productsales.length; i++) {
-				prodSalesData.push([ data.productsales[i].sku,
-						data.productsales[i].totalSales ]);
-			}
-		}
-	</script>
+					function formatChannelData(data, channelSalesData) {
+						debugger;
+						for (var i = 0; i < data.channel_import.length; i++) {
+							channelSalesData.push([ data.channelsales[i].name,
+									data.channelsales[i].totalSales ]);
+						}
+					}
+
+					function formatTrackingData(data, trackingData) {
+
+						for (var i = 0; i < data.productsales.length; i++) {
+							trackingData.push([ data.productsales[i].sku,
+									data.productsales[i].totalSales ]);
+						}
+					}
+				</script>
 	</jsp:attribute>
 </t:basepage>

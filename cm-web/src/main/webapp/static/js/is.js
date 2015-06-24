@@ -57,50 +57,42 @@ function DataBinder(object_id, dataObject) {
 	// We expect a `data` element specifying the binding
 	// in the form: data-bind-<object_id>="<property_name>"
 	var data_attr = "bind-" + object_id, message = object_id + ":change";
-	$("[data-" + data_attr + "]").each(
-			function(e, i) {
-				var $bound = jQuery(this);
-				var attr_name = $bound.data(data_attr);
-				// console.log($bound.attr('name') + " : " + attr_name);
-				var i = attr_name.indexOf(':');
-				if (i > 0) {
-					var arr = attr_name.split(":");
-					if (eval('typeof ' + arr[0]) === 'function') {
-						// DO the recursive object binding
-						try {
-							attr_name = eval(arr[0] + '(dataObject,"' + arr[1]
-									+ '")');
-						} catch (e) {
-							console.log("Can't evaluate " + data_attr + " : "
-									+ attr_name + " on element"
-									+ $bound.attr('name'));
-
-						}
-					}
-				}
-				var val = '';
+	$("[data-" + data_attr + "]").each(function(e, i) {
+		var $bound = jQuery(this);
+		var attr_name = $bound.data(data_attr);
+		var i = attr_name.indexOf(':');
+		if (i > 0) {
+			var arr = attr_name.split(":");
+			if (eval('typeof ' + arr[0]) === 'function') {
+				// DO the recursive object binding
 				try {
-					val = eval('dataObject.' + attr_name);
+					attr_name = eval(arr[0] + '(dataObject,"' + arr[1] + '")');
 				} catch (e) {
-					console.log('Error in evaluating expression ' + attr_name);
 				}
-				if ($bound.is("input, textarea, select")) {
-					if ($bound.is(':radio')) {
-						if ($bound.val() == val)
-							$bound.prop('checked', true);
-						else
-							$bound.prop('checked', false);
-					} else if ($bound.is(':checkbox')) {
-						if ($bound.val() == val)
-							$bound.prop('checked', true);
-						else
-							$bound.prop('checked', false);
-					} else
-						$bound.val(val);
-				} else {
-					$bound.html(val);
-				}
-			});
+			}
+		}
+		var val = '';
+		try {
+			val = eval('dataObject.' + attr_name);
+		} catch (e) {
+		}
+		if ($bound.is("input, textarea, select")) {
+			if ($bound.is(':radio')) {
+				if ($bound.val() == val)
+					$bound.prop('checked', true);
+				else
+					$bound.prop('checked', false);
+			} else if ($bound.is(':checkbox')) {
+				if ($bound.val() == val)
+					$bound.prop('checked', true);
+				else
+					$bound.prop('checked', false);
+			} else
+				$bound.val(val);
+		} else {
+			$bound.html(val);
+		}
+	});
 	/*
 	 * Listen to change events on elements with the data-binding attribute and
 	 * proxy them to the PubSub, so that the change is "broadcasted" to all
@@ -114,9 +106,7 @@ function DataBinder(object_id, dataObject) {
 	// PubSub propagates changes to all bound elements, setting value of
 	// input tags or HTML content of other tags
 	pubSub.on(message, function(evt, prop_name, new_val) {
-		// debugger;
 		var attr_name = prop_name;
-		// console.log($bound.attr('name') + " : " + attr_name);
 		var i = attr_name.indexOf(':');
 		if (i > 0) {
 			var arr = attr_name.split(":");
@@ -125,9 +115,6 @@ function DataBinder(object_id, dataObject) {
 				try {
 					attr_name = eval(arr[0] + '(dataObject,"' + arr[1] + '")');
 				} catch (e) {
-					console.log("Can't evaluate " + prop_name + " : "
-							+ attr_name);
-
 				}
 			}
 		}
@@ -468,111 +455,37 @@ function evalArray(obj, expr) {
 	};
 
 	$.fn.drawBarChart = function(placeholder, data, data_formatter) {
+
 		var options = {
-			hoverable : true,
-			shadowSize : 1,
-			series : {
-				multipleBars : true,
-				bars : {
-					show : true,
-					barWidth : 0.2,
-					align : "center"
-				}
-			},
-			xaxes : [ {
-				mode : "categories",
-				tickLength : 1,
-				tickPadding : 20,
-				tickSize : 'auto',
-				color : "black",
-				axisLabel : "",
-				position : "bottom",
-				axisLabelUseCanvas : false,
-				axisLabelFontSizePixels : 12,
-				axisLabelFontFamily : 'Verdana, Arial',
-				axisLabelPadding : 10
-			} ],
-			yaxes : [ {
-				axisLabel : "",
-				tickDecimals : 0,
-				min : 0,
-				axisLabelUseCanvas : true,
-				axisLabelFontSizePixels : 12,
-				axisLabelFontFamily : 'Verdana, Arial',
-				axisLabelPadding : 3
-			} ],
-			grid : {
-				hoverable : true,
-				clickable : true,
-				backgroundColor : {
-					colors : [ "#fff", "#fff" ]
-				},
-				borderWidth : 1,
-				borderColor : '#555'
+			chart : {
+			// title : 'Company Performance',
+			// subtitle : 'Sales, Expenses, and Profit: 2014-2017',
 			}
 		};
-
-		if (typeof placeholder == 'string')
-			placeholder = $('#' + placeholder);
-		var widget = placeholder.parent().parent();
-		if (typeof data == 'string') {
-			$(this).CRUD({
-				url : data,
-				method : "POST",
-				data : JSON.stringify({
-					startDate : Date.parse(widget.find('.start').val()),
-					endDate : Date.parse(widget.find('.end').val())
-				}),
-				success : function(data, textStatus, jqXHR) {
-					var formatted_data = [];
-					if (typeof data_formatter === 'string') {
-						eval(data_formatter + '(data, formatted_data)');
-						plotInternal(formatted_data, options);
-					} else {
-						console.log('data format provider not defined.');
-					}
-				}
-			});
-		} else {
-			if (typeof data_formatter === 'string') {
+		var widget = $('#' + placeholder).parent().parent();
+		$(this).CRUD({
+			url : data,
+			method : "POST",
+			data : JSON.stringify({
+				startDate : Date.parse(widget.find('.start').val()),
+				endDate : Date.parse(widget.find('.end').val())
+			}),
+			success : function(data, textStatus, jqXHR) {
 				var formatted_data = [];
-				eval(data_formatter + '(data, formatted_data)');
-				data = formatted_data;
-			}
-			plotInternal(data, options);
-		}
-		function plotInternal(data, options) {
-			if (!data || !data.length) {
-				placeholder.text('No Data to draw.');
-				return;
-			} else {
-				placeholder.empty().css({
-					'width' : '95%',
-					'min-height' : '400px',
-					'height' : 'auto'
-				});
-				$.plot(placeholder, data, options);
-			}
-
-			$("<div id='tooltip'></div>").css({
-				position : "absolute",
-				display : "none",
-				border : "1px solid #fdd",
-				padding : "2px",
-				"background-color" : "#fee",
-				opacity : 0.80
-			}).appendTo("body");
-			$(placeholder).bind('plothover', function(event, pos, item) {
-				if (item) {
-					var x = item.datapoint[0], y = item.datapoint[1];
-					$("#tooltip").html(item.series.label + ": " + y).css({
-						top : item.pageY + 5,
-						left : item.pageX + 5
-					}).fadeIn(200);
+				if (typeof data_formatter === 'string') {
+					eval(data_formatter + '(data, formatted_data)');
+					plotInternal(formatted_data, options);
 				} else {
-					$("#tooltip").hide();
+					console.log('data format provider not defined.');
 				}
-			});
+			}
+		});
+
+		var chart = new google.charts.Bar(document.getElementById(placeholder));
+
+		function plotInternal(data, options) {
+			var d = google.visualization.arrayToDataTable(data);
+			chart.draw(d, options);
 		}
 	};
 

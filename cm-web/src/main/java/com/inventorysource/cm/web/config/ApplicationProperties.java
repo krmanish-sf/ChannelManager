@@ -22,11 +22,15 @@ public abstract class ApplicationProperties extends Properties {
 		}
 	}
 
-	public static String getRestServiceUrl() {
+	public static final String getRestServiceUrl() {
 		return instance.getProperty("com.is.cm.rest.url");
 	}
-	
-	public static String getVendorLogPath(){
+
+	public static final String getAdminUrl() {
+		return instance.getProperty("com.is.cm.ui.url");
+	}
+
+	public static String getVendorLogPath() {
 		return instance.getProperty("com.is.cm.logshomedir");
 	}
 
