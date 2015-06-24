@@ -1,6 +1,5 @@
 package com.is.cm.test.core.domain;
 
-import java.io.File;
 import java.io.IOException;
 
 import org.junit.Assert;
@@ -29,11 +28,9 @@ public class JsonDeserialisationTest {
 		Order order = null;
 		try {
 
-			order = mapper
-					.readValue(
-							new File(
-									"/home/amit-yadav/workspace/isource-cm/cm-rest/src/test/java/com/is/cm/test/core/domain/order.json"),
-							Order.class);
+			order = mapper.readValue(JsonDeserialisationTest.class
+					.getClassLoader().getResourceAsStream("order.json"),
+					Order.class);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

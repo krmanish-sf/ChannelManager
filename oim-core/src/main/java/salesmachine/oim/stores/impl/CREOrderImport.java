@@ -5,6 +5,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.StringReader;
+import java.net.HttpURLConnection;
 import java.net.URL;
 import java.text.DecimalFormat;
 import java.text.ParseException;
@@ -17,8 +18,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import javax.net.ssl.HttpsURLConnection;
 
 import oracle.xml.parser.v2.DOMParser;
 import oracle.xml.parser.v2.XMLDocument;
@@ -432,12 +431,12 @@ public class CREOrderImport extends ChannelBase implements IOrderImport {
 		LOG.info("Sending request to {}", m_storeURL);
 		pingXML = "XML_INPUT_VALUE=" + pingXML;
 		URL url;
-		HttpsURLConnection connection = null;
+		HttpURLConnection connection = null;
 		String response = "";
 		try {
 			// Create connection
 			url = new URL(m_storeURL);
-			connection = (HttpsURLConnection) url.openConnection();
+			connection = (HttpURLConnection) url.openConnection();
 			connection.setRequestMethod("POST");
 
 			byte[] req = pingXML.getBytes();

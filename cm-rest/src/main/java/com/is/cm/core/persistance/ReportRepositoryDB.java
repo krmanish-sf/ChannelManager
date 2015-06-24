@@ -1075,32 +1075,27 @@ public class ReportRepositoryDB extends RepositoryBase implements
 		if (reportType == null)
 			reportType = "";
 		if ("channel-import".equalsIgnoreCase(reportType)) {
-			List supplierSales = getOrderImportData(dbSession);
-			reportDataWrapper.put("order_import", supplierSales);
+			List orderImport = getOrderImportData(dbSession);
+			reportDataWrapper.put("order_import", orderImport);
 		} else if (reportType.equalsIgnoreCase("supplier-processing")) {
-			List productSales = getOrderProcessingData(dbSession);
-			reportDataWrapper.put("order_processing", productSales);
+			List orderProcessing = getOrderProcessingData(dbSession);
+			reportDataWrapper.put("order_processing", orderProcessing);
 		} else if (reportType.equalsIgnoreCase("order-tracking")) {
-			List channelSales = getOrderTrackingData(dbSession);
-			reportDataWrapper.put("order_tracking", channelSales);
+			List trackingData = getOrderTrackingData(dbSession);
+			reportDataWrapper.put("order_tracking", trackingData);
 		} else {
-			List channelSales = getOrderImportData(dbSession);
-			List supplierSales = getOrderProcessingData(dbSession);
-			List productSales = getOrderTrackingData(dbSession);
+			List orderImport = getOrderImportData(dbSession);
+			List orderProcesssing = getOrderProcessingData(dbSession);
+			List trackingData = getOrderTrackingData(dbSession);
 
-			reportDataWrapper.put("channel_import", channelSales);
-			reportDataWrapper.put("supplier_processing", supplierSales);
-			reportDataWrapper.put("order_tracking", productSales);
+			reportDataWrapper.put("order_import", orderImport);
+			reportDataWrapper.put("order_processing", orderProcesssing);
+			reportDataWrapper.put("order_tracking", trackingData);
 		}
 		return reportDataWrapper;
 	}
 
 	private List getOrderTrackingData(Session dbSession) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	private List getOrderProcessingData(Session dbSession) {
 		StringBuilder sb = new StringBuilder();
 		sb.append(
 				"select count(distinct o.order_id),os.supplier_name,s.status_value,od.status_id from oim_orders o inner join oim_order_details od on o.order_id=od.order_id ")
@@ -1115,14 +1110,30 @@ public class ReportRepositoryDB extends RepositoryBase implements
 		return list;
 	}
 
+	private List getOrderProcessingData(Session dbSession) {
+		StringBuilder sb = new StringBuilder();
+		sb.append(
+				"WITH pivot_data AS (select os.supplier_name,s.status_value, count(distinct o.order_id) order_count from oim_orders o inner join oim_order_details od on o.order_id=od.order_id ")
+				.append("inner join oim_suppliers os on od.supplier_id = os.supplier_id and os.delete_tm is null ")
+				.append("inner join oim_order_statuses s on od.status_id = s.status_id ")
+				.append("where o.delete_tm is null and o.insertion_tm between :startDate and :endDate ")
+				.append("group by od.supplier_id,os.supplier_name,s.status_value order by os.supplier_name , s.status_value) select * from pivot_data PIVOT ( sum(order_count) for status_value in ('Unprocessed','Processed','Failed','Manually Processed','Canceled','Shipped'))");
+		SQLQuery reportQuery = dbSession.createSQLQuery(sb.toString());
+		reportQuery.setTime("startDate", m_startDate);
+		reportQuery.setTime("endDate", m_endDate);
+		List list = reportQuery.list();
+		return list;
+	}
+
 	private List getOrderImportData(Session dbSession) {
 		StringBuilder sb = new StringBuilder();
 		sb.append(
-				"select count(order_id) order_count,oc.supported_channel_id,sc.channel_name,ob.batch_type_id from oim_orders o inner join oim_order_batches ob on o.batch_id = ob.batch_id ")
+				"WITH pivot_data AS (select sc.channel_name, bt.batch_type_name, count(order_id) order_count from oim_orders o inner join oim_order_batches ob on o.batch_id = ob.batch_id ")
+				.append("inner join oim_order_batches_types bt on ob.batch_type_id = bt.batch_type_id ")
 				.append("inner join oim_channels oc on ob.channel_id = oc.channel_id ")
 				.append("inner join oim_supported_channels sc on oc.supported_channel_id = sc.supported_channel_id ")
 				.append("where sc.delete_tm is null and o.delete_tm is null and o.insertion_tm between :startDate and :endDate ")
-				.append("group by oc.supported_channel_id , sc.channel_name,ob.batch_type_id");
+				.append("group by sc.channel_name,bt.batch_type_name) select * from pivot_data PIVOT ( sum(order_count) for  batch_type_name in ('Automated','Manual'))");
 		SQLQuery reportQuery = dbSession.createSQLQuery(sb.toString());
 		reportQuery.setTime("startDate", m_startDate);
 		reportQuery.setTime("endDate", m_endDate);
