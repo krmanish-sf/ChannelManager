@@ -1,5 +1,6 @@
 package salesmachine.oim.suppliers;
 
+import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Writer;
@@ -60,18 +61,21 @@ public class GreenSupply extends Supplier {
 		try {
 			String fileName = createOrderFile(orders, ovs, getFileFieldMap(), new StandardFileSpecificsProvider(session, ovs, v));
 			System.out.println(fileName);
-			// FTPClient ftp = new FTPClient();
-			// ftp.setRemoteHost("ftp1.unfi.com");
-			// ftp.setDetectTransferMode(true);
-			// ftp.connect();
-			// ftp.login(ovs.getLogin(), ovs.getPassword());
-			// ftp.setTimeout(60 * 1000 * 60 * 5);
-			// ftp.put(fileName, fileName);
-			// ftp.quit();
+			FTPClient ftp = new FTPClient();
+			ftp.setRemoteHost("datacenter.greensupply.com");
+			ftp.setDetectTransferMode(true);
+			ftp.connect();
+			log.info("ovs.getLogin() : {}",ovs.getLogin());
+			log.info("ovs.getPassword() : {}",ovs.getPassword());
+			ftp.login(ovs.getLogin(), ovs.getPassword());
+			ftp.setTimeout(60 * 1000 * 60 * 5);
+			ftp.chdir("orders/");
+			ftp.put(fileName, fileName);
+			ftp.quit();
 			// tx.commit();
 			String emailBody = "Account Number : " + accountNumber + "\n Find attached order file for the orders from my store.";
 			String emailSubject = fileName;
-			EmailUtil.sendEmailWithAttachment("nilesh@inventorysource.com", "support@inventorysource.com", "aruppar@inventorysource.com", emailSubject, emailBody, fileName);
+			EmailUtil.sendEmailWithAttachment("nilesh@inventorysource.com", "support@inventorysource.com", "aruppar@inventorysource.com", emailSubject, emailBody,fileName);
 		} catch (Exception e) {
 			// tx.rollback();
 			log.error(e.getMessage(), e);
