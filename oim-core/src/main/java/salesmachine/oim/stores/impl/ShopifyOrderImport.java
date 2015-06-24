@@ -14,6 +14,7 @@ import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpException;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.methods.PostMethod;
+import org.apache.commons.httpclient.methods.PutMethod;
 import org.apache.commons.httpclient.methods.StringRequestEntity;
 import org.hibernate.Criteria;
 import org.hibernate.Query;
@@ -31,6 +32,7 @@ import salesmachine.hibernatedb.OimChannelShippingMap;
 import salesmachine.hibernatedb.OimOrderBatches;
 import salesmachine.hibernatedb.OimOrderBatchesTypes;
 import salesmachine.hibernatedb.OimOrderDetails;
+import salesmachine.hibernatedb.OimOrderProcessingRule;
 import salesmachine.hibernatedb.OimOrderStatuses;
 import salesmachine.hibernatedb.OimOrders;
 import salesmachine.hibernatedb.OimSuppliers;
@@ -62,7 +64,7 @@ public class ShopifyOrderImport extends ChannelBase implements IOrderImport {
 		if (storeUrl.length() == 0 || shopifyToken.length() == 0) {
 			log.error("Channel setup is not correct. Please provide correct details.");
 			this.logStream
-					.println("Channel setup is not correct. Please provide correct details.");
+			.println("Channel setup is not correct. Please provide correct details.");
 			return false;
 		}
 		return true;
@@ -75,20 +77,26 @@ public class ShopifyOrderImport extends ChannelBase implements IOrderImport {
 		log.info("order id is - {}", oimOrderDetails.getOimOrders()
 				.getOrderId());
 		log.info("order status is - {}", orderStatus);
+
 		if (!orderStatus.isShipped()) {
 			return true;
 		}
-		// post fullfillment
 		String requestUrl = storeUrl + "/admin/orders/"
 				+ oimOrderDetails.getOimOrders().getStoreOrderId()
 				+ "/fulfillments.json";
+		//		if(orderStatus.getStatus().equalsIgnoreCase(m_orderProcessingRule.getFailedStatus())){
+		//			sendAcknowledgementToStore(requestUrl, Integer.parseInt(oimOrderDetails.getOimOrders().getStoreOrderId()), m_orderProcessingRule.getFailedStatus());
+		//			return true;
+		//		}
+		// post fullfillment
+
 		HttpClient client = new HttpClient();
 		PostMethod postMethod = new PostMethod(requestUrl);
 		postMethod.addRequestHeader("X-Shopify-Access-Token", shopifyToken);
 		JSONObject jsonObject = new JSONObject();
 		JSONObject jsonObjVal = new JSONObject();
-//		jsonObjVal.put("tracking_number", "987654321");
-//		jsonObjVal.put("tracking_company", "SourceFuse");
+		//	jsonObjVal.put("tracking_number", "987654320");
+		//	jsonObjVal.put("tracking_company", "SourceFuse");
 		jsonObjVal.put("tracking_number", orderStatus.getTrackingData().getShipperTrackingNumber());
 		jsonObjVal.put("tracking_company", orderStatus.getTrackingData().getCarrierName());
 
@@ -106,10 +114,7 @@ public class ShopifyOrderImport extends ChannelBase implements IOrderImport {
 		int statusCode = 0;
 		try {
 			statusCode = client.executeMethod(postMethod);
-			log.info("statusCode is - {}", statusCode);
-
-			String responseString = postMethod.getResponseBodyAsString();
-			log.info("response string - {}", responseString);
+			log.info("fullfilment statusCode is - {}", statusCode);
 
 		} catch (HttpException e) {
 			log.error("error in posting request for fullfillment {}", e);
@@ -118,9 +123,15 @@ public class ShopifyOrderImport extends ChannelBase implements IOrderImport {
 			log.error("error in parsing json response payload {}", e);
 			return false;
 		}
+
+		// closing the order
+		if(statusCode==200){
+			//send acknoledgement that order has been processed.
+			if(sendAcknowledgementToStore(requestUrl, Integer.parseInt(oimOrderDetails.getOimOrders().getStoreOrderId()), m_orderProcessingRule.getProcessedStatus()))
+				closeOrder(oimOrderDetails);
+		}
 		return true;
 	}
-
 
 	@Override
 	public OimOrderBatches getVendorOrders(OimOrderBatchesTypes batchesTypes) {
@@ -203,6 +214,8 @@ public class ShopifyOrderImport extends ChannelBase implements IOrderImport {
 									.get("last_name")));
 					oimOrders.setBillingPhone(StringHandle
 							.removeNull((String) billingObj.get("phone")));
+					oimOrders.setBillingState(StringHandle
+							.removeNull((String) billingObj.get("province")));
 				}
 				// setting delivery information
 				JSONObject deliveryObj = (JSONObject) orderObj
@@ -227,6 +240,8 @@ public class ShopifyOrderImport extends ChannelBase implements IOrderImport {
 							.removeNull((String) deliveryObj.get("address2")));
 					oimOrders.setDeliveryZip(StringHandle
 							.removeNull((String) deliveryObj.get("zip")));
+					oimOrders.setDeliveryState(StringHandle
+							.removeNull((String) deliveryObj.get("province")));
 				}
 				// setting customer information
 				JSONObject custInfo = (JSONObject) orderObj.get("customer");
@@ -239,13 +254,13 @@ public class ShopifyOrderImport extends ChannelBase implements IOrderImport {
 						oimOrders.setCustomerCity(StringHandle
 								.removeNull((String) customerObj.get("city")));
 						oimOrders
-								.setCustomerCompany(StringHandle
-										.removeNull((String) customerObj
-												.get("company")));
+						.setCustomerCompany(StringHandle
+								.removeNull((String) customerObj
+										.get("company")));
 						oimOrders
-								.setCustomerCountry(StringHandle
-										.removeNull((String) customerObj
-												.get("country")));
+						.setCustomerCountry(StringHandle
+								.removeNull((String) customerObj
+										.get("country")));
 						oimOrders.setCustomerName(StringHandle
 								.removeNull((String) customerObj.get("name")));
 						oimOrders.setCustomerPhone(StringHandle
@@ -258,6 +273,8 @@ public class ShopifyOrderImport extends ChannelBase implements IOrderImport {
 										.get("address2")));
 						oimOrders.setCustomerZip(StringHandle
 								.removeNull((String) customerObj.get("zip")));
+						oimOrders.setCustomerState(StringHandle
+								.removeNull((String) customerObj.get("province")));
 					}
 				}
 
@@ -272,7 +289,6 @@ public class ShopifyOrderImport extends ChannelBase implements IOrderImport {
 					String orderTmString = ((String) orderObj.get("created_at"));
 					orderTm = df.parse(orderTmString);
 				} catch (java.text.ParseException e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
 				oimOrders.setOrderTm(orderTm);
@@ -334,9 +350,7 @@ public class ShopifyOrderImport extends ChannelBase implements IOrderImport {
 					details.setProductName((String) item.get("name"));
 					details.setQuantity((int) (long) (item.get("quantity")));
 					details.setSalePrice(Double.parseDouble(StringHandle
-							.removeNull((String) item.get("price")))); // need
-					// to
-					// confirm
+							.removeNull((String) item.get("price"))));
 					details.setSku(sku);
 					details.setStoreOrderItemId(((long) item.get("id")) + "");
 					details.setOimOrders(oimOrders);
@@ -347,10 +361,15 @@ public class ShopifyOrderImport extends ChannelBase implements IOrderImport {
 				oimOrders.setOimOrderDetailses(detailSet);
 				m_dbSession.saveOrUpdate(oimOrders);
 				numOrdersSaved++;
+
+				//sending acknowledgement to shopify that we recived the order.
+				requestUrl = storeUrl + "/admin/orders/"+storeOrderId+".json"; //704264451
+				sendAcknowledgementToStore(requestUrl, storeOrderId, m_orderProcessingRule.getConfirmedStatus());
 			}
 			log.info("Fetched {} order(s)", orderArr.size());
 			tx.commit();
 			logStream.println("Imported " + numOrdersSaved + " Orders");
+
 			log.debug("Finished importing orders...");
 		} else {
 			log.error(
@@ -373,6 +392,82 @@ public class ShopifyOrderImport extends ChannelBase implements IOrderImport {
 			orders.add(o.getStoreOrderId());
 		}
 		return orders;
+	}
+
+	private boolean sendAcknowledgementToStore(String requestUrl,int storeOrderId,String status){
+		HttpClient httpclient = new HttpClient();
+		PutMethod postMethod = new PutMethod(requestUrl);
+		postMethod.addRequestHeader("X-Shopify-Access-Token", shopifyToken);
+		JSONObject jObject = new JSONObject();
+		JSONObject jsonObjVal = new JSONObject();
+		JSONArray attributeArray = new JSONArray();
+		JSONObject attributeObj = new JSONObject();
+		jsonObjVal.put("id", storeOrderId);
+		attributeObj.put("name", "Order Acknowledgement");
+		attributeObj.put("value",status);
+		attributeArray.add(attributeObj);
+		jsonObjVal.put("note_attributes", attributeArray);
+		jObject.put("order", jsonObjVal);
+		StringRequestEntity requestEntity = null;
+		try {
+			requestEntity = new StringRequestEntity(jObject.toJSONString(),
+					"application/json", "UTF-8");
+		} catch (UnsupportedEncodingException e) {
+			log.error("error in parsing json request payload {}", e);
+			return false;
+		}
+		postMethod.setRequestEntity(requestEntity);
+		int statusCode = 0;
+		try {
+			statusCode = httpclient.executeMethod(postMethod);
+			log.info("acknowledgement statusCode is - {}", statusCode);
+
+			String responseString = postMethod.getResponseBodyAsString();
+			log.info("acknowledgement response string - {}", responseString);
+			log.info("acknowledgement sent to store.");
+
+		} catch (HttpException e) {
+			log.error("error in posting acknowledgement {}", e);
+			return false;
+		} catch (IOException e) {
+			log.error("error in parsing json response payload {}", e);
+			return false;
+		}
+		return true;
+	}
+	private boolean closeOrder(OimOrderDetails oimOrderDetails) {
+
+		//POST /admin/orders/#{id}/close.json
+		String requestCloseUrl = storeUrl + "/admin/orders/"
+				+ oimOrderDetails.getOimOrders().getStoreOrderId()
+				+ "/close.json";
+		HttpClient client = new HttpClient();
+		PostMethod postMethod = new PostMethod(requestCloseUrl);
+		postMethod.addRequestHeader("X-Shopify-Access-Token", shopifyToken);
+		JSONObject orderCloseObject = new JSONObject();
+
+		StringRequestEntity requestEntity = null;
+		try {
+			requestEntity = new StringRequestEntity(orderCloseObject.toJSONString(),
+					"application/json", "UTF-8");
+		} catch (UnsupportedEncodingException e) {
+			log.error("error in parsing json request for order close {}", e);
+		}
+		postMethod.setRequestEntity(requestEntity);
+		int statusCode = 0;
+		try {
+			statusCode = client.executeMethod(postMethod);
+			log.info("fullfilment statusCode is - {}", statusCode);
+
+		} catch (HttpException e) {
+			log.error("error in posting request for fullfillment {}", e);
+			return false;
+		} catch (IOException e) {
+			log.error("error in parsing json response payload {}", e);
+			return false;
+		}
+		return true;
+
 	}
 
 }
