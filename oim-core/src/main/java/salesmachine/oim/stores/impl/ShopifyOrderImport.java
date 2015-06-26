@@ -4,6 +4,9 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -84,10 +87,10 @@ public class ShopifyOrderImport extends ChannelBase implements IOrderImport {
 		String requestUrl = storeUrl + "/admin/orders/"
 				+ oimOrderDetails.getOimOrders().getStoreOrderId()
 				+ "/fulfillments.json";
-		//		if(orderStatus.getStatus().equalsIgnoreCase(m_orderProcessingRule.getFailedStatus())){
-		//			sendAcknowledgementToStore(requestUrl, Integer.parseInt(oimOrderDetails.getOimOrders().getStoreOrderId()), m_orderProcessingRule.getFailedStatus());
-		//			return true;
-		//		}
+//				if(orderStatus.getStatus().equalsIgnoreCase(m_orderProcessingRule.getFailedStatus())){
+//					sendAcknowledgementToStore(requestUrl, Integer.parseInt(oimOrderDetails.getOimOrders().getStoreOrderId()), m_orderProcessingRule.getFailedStatus(),false,null);
+//					return true;
+//				}
 		// post fullfillment
 
 		HttpClient client = new HttpClient();
@@ -125,13 +128,15 @@ public class ShopifyOrderImport extends ChannelBase implements IOrderImport {
 		}
 
 		// closing the order
-		if(statusCode==200){
+		if(statusCode==200 || statusCode==201){
 			//send acknoledgement that order has been processed.
-			if(sendAcknowledgementToStore(requestUrl, Integer.parseInt(oimOrderDetails.getOimOrders().getStoreOrderId()), m_orderProcessingRule.getProcessedStatus()))
+			requestUrl = storeUrl + "/admin/orders/"+oimOrderDetails.getOimOrders().getStoreOrderId()+".json"; 
+			if(sendAcknowledgementToStore(requestUrl, Integer.parseInt(oimOrderDetails.getOimOrders().getStoreOrderId()), m_orderProcessingRule.getProcessedStatus(),true,orderStatus))
 				closeOrder(oimOrderDetails);
 		}
 		return true;
 	}
+
 
 	@Override
 	public OimOrderBatches getVendorOrders(OimOrderBatchesTypes batchesTypes) {
@@ -139,7 +144,8 @@ public class ShopifyOrderImport extends ChannelBase implements IOrderImport {
 		OimOrderBatches batch = new OimOrderBatches();
 		Transaction tx = null;
 		HttpClient client = new HttpClient();
-		String requestUrl = storeUrl + "/admin/orders.json";
+		//String requestUrl = storeUrl + "/admin/orders.json";
+		String requestUrl = storeUrl +"/admin/orders.json?since_id="+getMaxStoreOrderId();
 		String jsonString = null;
 		GetMethod getOrderJson = new GetMethod(requestUrl);
 		getOrderJson.addRequestHeader("X-Shopify-Access-Token", shopifyToken);
@@ -168,6 +174,7 @@ public class ShopifyOrderImport extends ChannelBase implements IOrderImport {
 			List currentOrders = getCurrentOrders();
 			try {
 				jsonString = getOrderJson.getResponseBodyAsString();
+				log.info("order json --- {}",jsonString);
 			} catch (IOException e) {
 				log.error(e.getMessage(), e);
 				return null;
@@ -364,7 +371,7 @@ public class ShopifyOrderImport extends ChannelBase implements IOrderImport {
 
 				//sending acknowledgement to shopify that we recived the order.
 				requestUrl = storeUrl + "/admin/orders/"+storeOrderId+".json"; //704264451
-				sendAcknowledgementToStore(requestUrl, storeOrderId, m_orderProcessingRule.getConfirmedStatus());
+				sendAcknowledgementToStore(requestUrl, storeOrderId, m_orderProcessingRule.getConfirmedStatus(),false,null);
 			}
 			log.info("Fetched {} order(s)", orderArr.size());
 			tx.commit();
@@ -380,9 +387,21 @@ public class ShopifyOrderImport extends ChannelBase implements IOrderImport {
 		return batch;
 	}
 
+	private int getMaxStoreOrderId(){
+		String maxStoreOrderId = null;
+		Query query = m_dbSession
+				.createQuery("select max(o.storeOrderId) from salesmachine.hibernatedb.OimOrders o where o.oimOrderBatches.oimChannels=:chan");
+		query.setEntity("chan", m_channel);
+		Iterator iter = query.iterate();
+		while (iter.hasNext()) {
+			maxStoreOrderId = (String) iter.next();	
+		}
+		log.info("Max store order id -- {}",maxStoreOrderId);
+		return Integer.parseInt(maxStoreOrderId);
+	
+	}
 	protected List<String> getCurrentOrders() {
 		List<String> orders = new ArrayList<String>();
-
 		Query query = m_dbSession
 				.createQuery("select o from salesmachine.hibernatedb.OimOrders o where o.oimOrderBatches.oimChannels=:chan");
 		query.setEntity("chan", m_channel);
@@ -394,18 +413,25 @@ public class ShopifyOrderImport extends ChannelBase implements IOrderImport {
 		return orders;
 	}
 
-	private boolean sendAcknowledgementToStore(String requestUrl,int storeOrderId,String status){
+	private boolean sendAcknowledgementToStore(String requestUrl,int storeOrderId,String status, boolean isSendTrackingDetails, OrderStatus orderStatus){
 		HttpClient httpclient = new HttpClient();
 		PutMethod postMethod = new PutMethod(requestUrl);
 		postMethod.addRequestHeader("X-Shopify-Access-Token", shopifyToken);
 		JSONObject jObject = new JSONObject();
 		JSONObject jsonObjVal = new JSONObject();
 		JSONArray attributeArray = new JSONArray();
-		JSONObject attributeObj = new JSONObject();
+		JSONObject attributeObj1 = new JSONObject();
 		jsonObjVal.put("id", storeOrderId);
-		attributeObj.put("name", "Order Acknowledgement");
-		attributeObj.put("value",status);
-		attributeArray.add(attributeObj);
+		attributeObj1.put("name", "Order Acknowledgement");
+		attributeObj1.put("value",status);
+		attributeArray.add(attributeObj1);
+		if(isSendTrackingDetails){
+			JSONObject attributeObj2 = new JSONObject();
+			attributeObj2.put("name", "Tracking Status");
+			attributeObj2.put("value",orderStatus.getTrackingData().getShippingMethod()+" : "+orderStatus.getTrackingData().getShipperTrackingNumber());
+			//attributeObj2.put("value","UPS Ground"+" : "+"987654320");
+			attributeArray.add(attributeObj2);
+		}
 		jsonObjVal.put("note_attributes", attributeArray);
 		jObject.put("order", jsonObjVal);
 		StringRequestEntity requestEntity = null;
@@ -420,14 +446,13 @@ public class ShopifyOrderImport extends ChannelBase implements IOrderImport {
 		int statusCode = 0;
 		try {
 			statusCode = httpclient.executeMethod(postMethod);
-			log.info("acknowledgement statusCode is - {}", statusCode);
-
+			log.info("acknowledgement/tracking statusCode is - {}", statusCode);
 			String responseString = postMethod.getResponseBodyAsString();
-			log.info("acknowledgement response string - {}", responseString);
-			log.info("acknowledgement sent to store.");
+			log.info("acknowledgement/tracking response string - {}", responseString);
+			log.info("acknowledgement/tracking sent to store.");
 
 		} catch (HttpException e) {
-			log.error("error in posting acknowledgement {}", e);
+			log.error("error in posting acknowledgement/tracking {}", e);
 			return false;
 		} catch (IOException e) {
 			log.error("error in parsing json response payload {}", e);

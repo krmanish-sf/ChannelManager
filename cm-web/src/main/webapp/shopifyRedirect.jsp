@@ -16,6 +16,8 @@
 		.getProperty(ApplicationProperties.SHOPIFY_API_KEY);
 		String secretKey = ApplicationProperties
 		.getProperty(ApplicationProperties.SHOPIFY_SECRET_KEY);
+		//clientId = "bc312f5e1bebb835d7a910516cd5c7b9";
+		//secretKey = "2c55ff6c8383d5bd8c40b8ac0fb53f98";
 		String code = request.getParameter("code");
 		String shop = request.getParameter("shop");
 		String strUrl = "https://" + shop + "/admin/oauth/access_token";
