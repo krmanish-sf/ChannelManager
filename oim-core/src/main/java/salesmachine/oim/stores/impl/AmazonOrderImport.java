@@ -201,15 +201,13 @@ public class AmazonOrderImport extends ChannelBase implements IOrderImport {
 			log.info("Total order(s) fetched: {}", response
 					.getListOrdersResult().getOrders().size());
 
-			// Get all the orders for the current channel
-			List currentOrders = getCurrentOrders();
 			boolean newOrder = false;
 			int numOrdersSaved = 0;
 			for (Order order2 : response.getListOrdersResult().getOrders()) {
 				String amazonOrderId = order2.getAmazonOrderId();
 				log.info("Order#{} fetched.", amazonOrderId);
 				OimOrders oimOrders = null;
-				if (currentOrders.contains(amazonOrderId)) {
+				if (orderAlreadyImported(amazonOrderId)) {
 					log.info(
 							"Order#{} is already imported in the system, updating Order.",
 							amazonOrderId);

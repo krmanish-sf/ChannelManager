@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.is.cm.core.domain.ReportDataWrapper;
+import com.is.cm.core.domain.VendorsuppOrderhistory;
 import com.is.cm.core.persistance.ReportRepositoryDB.OverAllSalesData;
 
 public interface ReportRepository {
@@ -24,4 +25,7 @@ public interface ReportRepository {
 
 	ReportDataWrapper getSystemReportData(String reportType, Date startDate,
 			Date endDate);
+
+	List<VendorsuppOrderhistory> getVendorSupplierHistory(int pageNum,
+			int recordCount);
 }

@@ -10,15 +10,19 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.hibernate.Criteria;
 import org.hibernate.Query;
 import org.hibernate.SQLQuery;
 import org.hibernate.Session;
+import org.hibernate.criterion.Order;
+import org.hibernate.criterion.Restrictions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import salesmachine.hibernatedb.OimOrderDetails;
 import salesmachine.hibernatedb.OimOrders;
 import salesmachine.hibernatedb.OimSuppliers;
+import salesmachine.hibernatedb.OimVendorsuppOrderhistory;
 import salesmachine.hibernatedb.Vendors;
 import salesmachine.hibernatehelper.SessionManager;
 import salesmachine.oim.api.OimConstants;
@@ -27,6 +31,7 @@ import salesmachine.util.StringHandle;
 
 import com.is.cm.core.domain.ProductSalesData;
 import com.is.cm.core.domain.ReportDataWrapper;
+import com.is.cm.core.domain.VendorsuppOrderhistory;
 
 public class ReportRepositoryDB extends RepositoryBase implements
 		ReportRepository {
@@ -963,7 +968,7 @@ public class ReportRepositoryDB extends RepositoryBase implements
 		String hql = "select history.oimSuppliers as suppliers,"
 				+ "history.processingTm,history.errorCode, history.description "
 				+ "from salesmachine.hibernatedb.OimVendorsuppOrderhistory history "
-				+ "where vendors=:v and processingTm is not null order by processingTm";
+				+ "where vendors=:v and processingTm is not null and deleteTm is null order by processingTm";
 		Session dbSession = SessionManager.currentSession();
 		Query query = dbSession.createQuery(hql);
 		Iterator iter = query.setEntity("v", vendor).iterate();
@@ -1083,14 +1088,20 @@ public class ReportRepositoryDB extends RepositoryBase implements
 		} else if (reportType.equalsIgnoreCase("order-tracking")) {
 			List trackingData = getOrderTrackingData(dbSession);
 			reportDataWrapper.put("order_tracking", trackingData);
+		} else if (reportType.equalsIgnoreCase("order-summary")) {
+			List orderSummaryData = getOrderImportSummary(dbSession);
+			reportDataWrapper.put("order_summary", orderSummaryData);
 		} else {
 			List orderImport = getOrderImportData(dbSession);
 			List orderProcesssing = getOrderProcessingData(dbSession);
 			List trackingData = getOrderTrackingData(dbSession);
+			List orderSummaryData = getOrderImportSummary(dbSession);
 
+			reportDataWrapper.put("order_summary", orderSummaryData);
 			reportDataWrapper.put("order_import", orderImport);
 			reportDataWrapper.put("order_processing", orderProcesssing);
 			reportDataWrapper.put("order_tracking", trackingData);
+
 		}
 		return reportDataWrapper;
 	}
@@ -1098,14 +1109,16 @@ public class ReportRepositoryDB extends RepositoryBase implements
 	private List getOrderTrackingData(Session dbSession) {
 		StringBuilder sb = new StringBuilder();
 		sb.append(
-				"select count(distinct o.order_id),os.supplier_name,s.status_value,od.status_id from oim_orders o inner join oim_order_details od on o.order_id=od.order_id ")
-				.append("inner join oim_suppliers os on od.supplier_id = os.supplier_id and os.delete_tm is null ")
+				"WITH pivot_data AS (select sc.channel_name,s.status_value, count(distinct o.order_id) order_count from oim_orders o inner join oim_order_details od on o.order_id=od.order_id ")
+				.append("inner join oim_order_batches ob on o.batch_id = ob.batch_id ")
+				.append("inner join oim_channels oc on ob.channel_id = oc.channel_id ")
+				.append("inner join oim_supported_channels sc on oc.supported_channel_id = sc.supported_channel_id ")
 				.append("inner join oim_order_statuses s on od.status_id = s.status_id ")
-				.append("where o.delete_tm is null and o.insertion_tm between :startDate and :endDate ")
-				.append("group by od.supplier_id,os.supplier_name,od.status_id,s.status_value ");
+				.append("where sc.delete_tm is null and o.delete_tm is null and o.insertion_tm between :startDate and :endDate ")
+				.append("group by sc.channel_name, s.status_value order by sc.channel_name , s.status_value) select * from pivot_data PIVOT (  sum(order_count)   for status_value in ('Unprocessed','Processed','Failed','Manually Processed','Canceled','Shipped'))");
 		SQLQuery reportQuery = dbSession.createSQLQuery(sb.toString());
-		reportQuery.setTime("startDate", m_startDate);
-		reportQuery.setTime("endDate", m_endDate);
+		reportQuery.setDate("startDate", m_startDate);
+		reportQuery.setDate("endDate", m_endDate);
 		List list = reportQuery.list();
 		return list;
 	}
@@ -1119,8 +1132,8 @@ public class ReportRepositoryDB extends RepositoryBase implements
 				.append("where o.delete_tm is null and o.insertion_tm between :startDate and :endDate ")
 				.append("group by od.supplier_id,os.supplier_name,s.status_value order by os.supplier_name , s.status_value) select * from pivot_data PIVOT ( sum(order_count) for status_value in ('Unprocessed','Processed','Failed','Manually Processed','Canceled','Shipped'))");
 		SQLQuery reportQuery = dbSession.createSQLQuery(sb.toString());
-		reportQuery.setTime("startDate", m_startDate);
-		reportQuery.setTime("endDate", m_endDate);
+		reportQuery.setDate("startDate", m_startDate);
+		reportQuery.setDate("endDate", m_endDate);
 		List list = reportQuery.list();
 		return list;
 	}
@@ -1135,9 +1148,39 @@ public class ReportRepositoryDB extends RepositoryBase implements
 				.append("where sc.delete_tm is null and o.delete_tm is null and o.insertion_tm between :startDate and :endDate ")
 				.append("group by sc.channel_name,bt.batch_type_name) select * from pivot_data PIVOT ( sum(order_count) for  batch_type_name in ('Automated','Manual'))");
 		SQLQuery reportQuery = dbSession.createSQLQuery(sb.toString());
-		reportQuery.setTime("startDate", m_startDate);
-		reportQuery.setTime("endDate", m_endDate);
+		reportQuery.setDate("startDate", m_startDate);
+		reportQuery.setDate("endDate", m_endDate);
 		List list = reportQuery.list();
+		return list;
+	}
+
+	private List getOrderImportSummary(Session dbSession) {
+		StringBuilder sb = new StringBuilder(
+				"select to_char(order_fetch_tm,'YYYY-MM-DD'), count(order_id) from oim_orders where order_fetch_tm between :startDate and :endDate  group by to_char(order_fetch_tm,'YYYY-MM-DD') order by to_char(order_fetch_tm,'YYYY-MM-DD')");
+		SQLQuery reportQuery = dbSession.createSQLQuery(sb.toString());
+		reportQuery.setDate("startDate", m_startDate);
+		reportQuery.setDate("endDate", m_endDate);
+		List list = reportQuery.list();
+		return list;
+	}
+
+	@Override
+	public List<VendorsuppOrderhistory> getVendorSupplierHistory(int pageNum,
+			int recordCount) {
+		Session dbSession = SessionManager.currentSession();
+		Criteria createCriteria = dbSession
+				.createCriteria(OimVendorsuppOrderhistory.class)
+				.setFirstResult(pageNum).setMaxResults(recordCount)
+				.add(Restrictions.isNotNull("description"))
+				.add(Restrictions.isNotNull("oimSuppliers"))
+				.addOrder(Order.desc("processingTm"));
+		List<VendorsuppOrderhistory> list = new ArrayList<VendorsuppOrderhistory>(
+				recordCount);
+		for (Object object : createCriteria.list()) {
+			VendorsuppOrderhistory e = new VendorsuppOrderhistory(
+					(OimVendorsuppOrderhistory) object);
+			list.add(e);
+		}
 		return list;
 	}
 }

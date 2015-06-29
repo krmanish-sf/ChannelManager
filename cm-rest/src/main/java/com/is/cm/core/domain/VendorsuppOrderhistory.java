@@ -2,6 +2,9 @@ package com.is.cm.core.domain;
 
 import java.util.Date;
 
+import salesmachine.hibernatedb.OimVendorsuppOrderhistory;
+import salesmachine.util.StringHandle;
+
 public class VendorsuppOrderhistory extends DomainBase {
 	private static final long serialVersionUID = 1416831662017531127L;
 	private Integer vsoHistoryId;
@@ -10,6 +13,15 @@ public class VendorsuppOrderhistory extends DomainBase {
 	private Date processingTm;
 	private Integer errorCode;
 	private String description;
+
+	public VendorsuppOrderhistory(OimVendorsuppOrderhistory source) {
+		this.description = StringHandle.removeNull(source.getDescription());
+		this.errorCode = source.getErrorCode();
+		this.oimSuppliers = Supplier.from(source.getOimSuppliers());
+		this.processingTm = source.getProcessingTm();
+		this.vendors = Vendor.from(source.getVendors());
+		this.vsoHistoryId = source.getVsoHistoryId();
+	}
 
 	public VendorsuppOrderhistory() {
 	}

@@ -13,7 +13,6 @@ import org.slf4j.LoggerFactory;
 
 import salesmachine.hibernatedb.OimOrderDetails;
 import salesmachine.hibernatedb.OimOrders;
-import salesmachine.oim.suppliers.OimSupplierOrderPlacement;
 
 import com.google.common.eventbus.EventBus;
 

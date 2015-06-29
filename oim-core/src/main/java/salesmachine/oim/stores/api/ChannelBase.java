@@ -9,7 +9,6 @@ import java.util.Set;
 
 import org.hibernate.Query;
 import org.hibernate.Session;
-import org.hibernate.Transaction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,19 +37,14 @@ public abstract class ChannelBase implements IOrderImport {
 		else
 			this.logStream = new OimLogStream();
 
-		Transaction tx = m_dbSession.beginTransaction();
-		Query query = m_dbSession
-				.createQuery("from salesmachine.hibernatedb.OimChannels as c where c.channelId=:channelID");
-		query.setInteger("channelID", channelID);
-		tx.commit();
-		if (!query.iterate().hasNext()) {
+		m_channel = (OimChannels) m_dbSession.get(OimChannels.class, channelID);
+
+		if (m_channel == null) {
 			log.error("No channel found with channel id: {}", channelID);
 			return false;
 		}
-
-		m_channel = (OimChannels) query.iterate().next();
 		log.info("Initializing Channel : {}", m_channel.getChannelName());
-		query = m_dbSession
+		Query query = m_dbSession
 				.createQuery("select opr from salesmachine.hibernatedb.OimOrderProcessingRule opr where opr.deleteTm is null and opr.oimChannels=:chan");
 		query.setEntity("chan", m_channel);
 		Iterator iter = query.iterate();
@@ -74,6 +68,7 @@ public abstract class ChannelBase implements IOrderImport {
 		return true;
 	}
 
+	@Deprecated
 	protected List<String> getCurrentOrders() {
 		List<String> orders = new ArrayList<String>();
 
@@ -86,6 +81,16 @@ public abstract class ChannelBase implements IOrderImport {
 			orders.add(o.getStoreOrderId());
 		}
 		return orders;
+	}
+
+	protected boolean orderAlreadyImported(String storeOrderId) {
+		Query query = m_dbSession
+				.createQuery("select o from salesmachine.hibernatedb.OimOrders o where o.oimOrderBatches.oimChannels=:chan and o.storeOrderId=:storeOrderId");
+		query.setEntity("chan", m_channel);
+		query.setString("storeOrderId", storeOrderId);
+		Object obj = query.uniqueResult();
+		return obj instanceof OimOrders;
+
 	}
 
 }

@@ -8,9 +8,11 @@ import salesmachine.hibernatedb.OimChannels;
 import salesmachine.hibernatedb.OimOrderBatches;
 import salesmachine.hibernatedb.OimOrderBatchesTypes;
 import salesmachine.hibernatedb.OimOrderDetails;
+import salesmachine.hibernatehelper.SessionManager;
 import salesmachine.oim.api.OimConstants;
 import salesmachine.oim.stores.api.IOrderImport;
 import salesmachine.oim.suppliers.OimSupplierOrderPlacement;
+import salesmachine.util.OimLogStream;
 
 import com.google.common.eventbus.AllowConcurrentEvents;
 import com.google.common.eventbus.EventBus;
@@ -28,18 +30,19 @@ public class OrderHandler {
 	}
 
 	@Subscribe
-	@AllowConcurrentEvents
+	//@AllowConcurrentEvents
 	public void handleOrderPull(OimOrderBatches orderBatches) {
 		log.info("Order Recieved with BatchSize:{}", orderBatches
 				.getOimOrderses().size());
-		orderBatches.getOimOrderses();
+		// orderBatches.getOimOrderses();
 	}
 
 	@Subscribe
-	@AllowConcurrentEvents
+	//@AllowConcurrentEvents
 	public void handleOrderTracking(OimOrderDetails orderDetails) {
 		log.info("Order Tracking :{}", orderDetails.getDetailId());
-		OimSupplierOrderPlacement osop = new OimSupplierOrderPlacement(session);
+		OimSupplierOrderPlacement osop = new OimSupplierOrderPlacement(
+				SessionManager.currentSession());
 		String trackOrder = osop.trackOrder(orderDetails.getOimOrders()
 				.getOimOrderBatches().getOimChannels().getVendors()
 				.getVendorId(), orderDetails.getDetailId());
@@ -49,7 +52,7 @@ public class OrderHandler {
 	}
 
 	@Subscribe
-	@AllowConcurrentEvents
+	//@AllowConcurrentEvents
 	public void handleOrderPull(OimChannels channel) {
 
 		log.info("Channel Type: [{}], Name:[{}]", channel
@@ -64,7 +67,8 @@ public class OrderHandler {
 				iOrderImport = (IOrderImport) theClass.newInstance();
 
 				log.debug("Created the orderimport object");
-				if (!iOrderImport.init(channel.getChannelId(), session, null)) {
+				if (!iOrderImport.init(channel.getChannelId(),
+						SessionManager.currentSession(), new OimLogStream())) {
 					log.error(
 							"Failed initializing the channel with channelId {},",
 							channel.getChannelId());

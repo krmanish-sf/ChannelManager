@@ -286,7 +286,8 @@ public class OrderRepositoryDB extends RepositoryBase implements
 					.add(Restrictions.eq("oimSuppliers.supplierId", orderDetail
 							.getOimSuppliers().getSupplierId())).list();
 			for (OimVendorsuppOrderhistory oimVendorsuppOrderhistory : list) {
-				dbSession.delete(oimVendorsuppOrderhistory);
+				oimVendorsuppOrderhistory.setDeleteTm(new Date());
+				dbSession.persist(oimVendorsuppOrderhistory);
 			}
 			tx.commit();
 			dbSession.flush();
@@ -323,7 +324,8 @@ public class OrderRepositoryDB extends RepositoryBase implements
 								orderDetail.getOimSuppliers().getSupplierId()))
 						.list();
 				for (OimVendorsuppOrderhistory oimVendorsuppOrderhistory : list) {
-					dbSession.delete(oimVendorsuppOrderhistory);
+					oimVendorsuppOrderhistory.setDeleteTm(new Date());
+					dbSession.persist(oimVendorsuppOrderhistory);
 				}
 			}
 
@@ -835,7 +837,7 @@ public class OrderRepositoryDB extends RepositoryBase implements
 		Transaction tx = null;
 		Map<String, OimSuppliers> supplierMap = new HashMap<String, OimSuppliers>();
 		try {
-			
+
 			Set suppliers = oimChannel.getOimChannelSupplierMaps();
 
 			Iterator itr = suppliers.iterator();

@@ -15,6 +15,7 @@ public class OimVendorsuppOrderhistory implements java.io.Serializable {
 	private Date processingTm;
 	private Integer errorCode;
 	private String description;
+	private Date deleteTm;
 
 	public OimVendorsuppOrderhistory() {
 	}
@@ -75,6 +76,14 @@ public class OimVendorsuppOrderhistory implements java.io.Serializable {
 
 	public void setDescription(String description) {
 		this.description = description;
+	}
+
+	public Date getDeleteTm() {
+		return deleteTm;
+	}
+
+	public void setDeleteTm(Date deleteTm) {
+		this.deleteTm = deleteTm;
 	}
 
 }

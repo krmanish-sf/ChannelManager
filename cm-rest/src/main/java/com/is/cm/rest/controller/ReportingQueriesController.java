@@ -3,6 +3,7 @@ package com.is.cm.rest.controller;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 
 import org.slf4j.Logger;
@@ -21,9 +22,11 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
 import com.is.cm.core.domain.ReportDataWrapper;
+import com.is.cm.core.domain.VendorsuppOrderhistory;
 import com.is.cm.core.event.ReadEvent;
 import com.is.cm.core.event.RequestReadEvent;
 import com.is.cm.core.event.reports.MaxReportEvent;
+import com.is.cm.core.event.reports.PagedDataEvent;
 import com.is.cm.core.event.reports.RequestDownloadReportEvent;
 import com.is.cm.core.event.reports.RequestMaxReportEvent;
 import com.is.cm.core.service.ReportService;
@@ -93,6 +96,16 @@ public class ReportingQueriesController {
 		ReadEvent<ReportDataWrapper> event = reportService
 				.getSystemReportData(new RequestDownloadReportEvent(st, ed,
 						reportType));
+		return event.getEntity();
+	}
+
+	@RequestMapping(value = "/system/vendor-supplier-history", method = RequestMethod.GET)
+	@ResponseBody
+	public List<VendorsuppOrderhistory> getVendorSupplierHistory() {
+		LOG.debug("Getting vendor-supplier-history");
+		ReadEvent<List<VendorsuppOrderhistory>> event = reportService
+				.getVendorSupplierHistory(new PagedDataEvent<VendorsuppOrderhistory>(
+						1, 100));
 		return event.getEntity();
 	}
 

@@ -1,11 +1,14 @@
 package com.is.cm.core.service;
 
+import java.util.List;
 import java.util.Map;
 
 import com.is.cm.core.domain.ReportDataWrapper;
+import com.is.cm.core.domain.VendorsuppOrderhistory;
 import com.is.cm.core.event.ReadEvent;
 import com.is.cm.core.event.RequestReadEvent;
 import com.is.cm.core.event.reports.MaxReportEvent;
+import com.is.cm.core.event.reports.PagedDataEvent;
 import com.is.cm.core.event.reports.RequestDownloadReportEvent;
 import com.is.cm.core.event.reports.RequestMaxReportEvent;
 import com.is.cm.core.persistance.ReportRepository;
@@ -63,5 +66,14 @@ public class ReportEventHandler implements ReportService {
 				.getSystemReportData(event.getReportType(),
 						event.getStartDate(), event.getEndDate());
 		return new ReadEvent<ReportDataWrapper>(0, data);
+	}
+
+	@Override
+	public ReadEvent<List<VendorsuppOrderhistory>> getVendorSupplierHistory(
+			PagedDataEvent<VendorsuppOrderhistory> pagedDataEvent) {
+		List<VendorsuppOrderhistory> data = reportRepository
+				.getVendorSupplierHistory(pagedDataEvent.getPageNum(),
+						pagedDataEvent.getRecordCount());
+		return new ReadEvent<List<VendorsuppOrderhistory>>(0, data);
 	}
 }

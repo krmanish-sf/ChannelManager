@@ -458,8 +458,11 @@ function evalArray(obj, expr) {
 
 		var options = {
 			chart : {
-			// title : 'Company Performance',
-			// subtitle : 'Sales, Expenses, and Profit: 2014-2017',
+				// title : 'Company Performance',
+				// subtitle : 'Sales, Expenses, and Profit: 2014-2017',
+				bar : {
+					groupWidth : "100"
+				}
 			}
 		};
 		var widget = $('#' + placeholder).parent().parent();

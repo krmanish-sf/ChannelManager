@@ -140,15 +140,12 @@ public class CREOrderImport extends ChannelBase implements IOrderImport {
 
 				LOG.debug("Saved batch id: {}", batch.getBatchId());
 
-				// Get all the orders for the current channel
-				List<String> currentOrders = getCurrentOrders();
 				boolean ordersSaved = false;
 				int importCount = 0;
 				for (Iterator oit = batch.getOimOrderses().iterator(); oit
 						.hasNext();) {
 					OimOrders order = (OimOrders) oit.next();
-
-					if (currentOrders.contains(order.getStoreOrderId())) {
+					if (orderAlreadyImported(order.getStoreOrderId())) {
 						LOG.warn(
 								"Order skipping as already exists. Store order id : {}",
 								order.getStoreOrderId());
