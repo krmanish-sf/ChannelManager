@@ -145,9 +145,14 @@ public class ShopifyOrderImport extends ChannelBase implements IOrderImport {
 		OimOrderBatches batch = new OimOrderBatches();
 		Transaction tx = null;
 		HttpClient client = new HttpClient();
-		// String requestUrl = storeUrl + "/admin/orders.json";
-		String requestUrl = storeUrl + "/admin/orders.json?since_id="
-				+ getMaxStoreOrderId();
+		 String requestUrl = null;
+		if (getMaxStoreOrderId()!=null){
+			requestUrl = storeUrl + "/admin/orders.json?since_id="
+					+ getMaxStoreOrderId();
+		}
+		else{
+			requestUrl = storeUrl + "/admin/orders.json";;
+		}
 		String jsonString = null;
 		GetMethod getOrderJson = new GetMethod(requestUrl);
 		getOrderJson.addRequestHeader("X-Shopify-Access-Token", shopifyToken);
@@ -395,7 +400,7 @@ public class ShopifyOrderImport extends ChannelBase implements IOrderImport {
 		return batch;
 	}
 
-	private int getMaxStoreOrderId() {
+	private Integer getMaxStoreOrderId() {
 		String maxStoreOrderId = null;
 		Query query = m_dbSession
 				.createQuery("select max(o.storeOrderId) from salesmachine.hibernatedb.OimOrders o where o.oimOrderBatches.oimChannels=:chan");
@@ -405,7 +410,8 @@ public class ShopifyOrderImport extends ChannelBase implements IOrderImport {
 			maxStoreOrderId = (String) iter.next();
 		}
 		log.info("Max store order id -- {}", maxStoreOrderId);
-		return Integer.parseInt(maxStoreOrderId);
+		
+		return maxStoreOrderId==null?null:Integer.getInteger(maxStoreOrderId);
 
 	}
 
