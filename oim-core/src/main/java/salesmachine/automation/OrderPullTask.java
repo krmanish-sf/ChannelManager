@@ -25,68 +25,84 @@ public class OrderPullTask extends TimerTask {
 	private static final Logger log = LoggerFactory
 			.getLogger(OrderPullTask.class);
 	private final EventBus eventBus;
-	private final Session session;
 
-	public OrderPullTask(EventBus eventBus, Session session) {
+	// private final Session session;
+
+	public OrderPullTask(EventBus eventBus) {
 		this.eventBus = eventBus;
-		this.session = session;
+		// this.session =
 	}
 
 	@Override
 	public void run() {
-		log.info("Order Pull Task Running...");
-		Criteria vendorQuery = session.createCriteria(Reps.class).add(
-				Restrictions.eq("cmAllowed", 1));
-		List<Reps> list = vendorQuery.list();
-		log.info("Found {} active vendors.", list.size());
-		for (Reps r : list) {
-			Query channelQuery = session
-					.createQuery("select distinct c from salesmachine.hibernatedb.OimChannels c "
-							+ "inner join c.oimSupportedChannels "
-							+ "inner join c.oimOrderProcessingRules r "
-							+ "left join c.oimChannelAccessDetailses d "
-							+ "where c.vendors.vendorId=:vid");
-			channelQuery.setInteger("vid", r.getVendorId());
-			for (Object object : channelQuery.list()) {
-				OimChannels channel = (OimChannels) object;
-				// FIXME eventBus.post(channel);
+		try {
+			log.info("Order Pull Task Running...");
+			Session session = SessionManager.currentSession();
+			Criteria vendorQuery = session.createCriteria(Reps.class).add(
+					Restrictions.eq("cmAllowed", 1));
+			List<Reps> list = vendorQuery.list();
+			log.info("Found {} active vendors.", list.size());
+			for (Reps r : list) {
+				Query channelQuery = session
+						.createQuery("select distinct c from salesmachine.hibernatedb.OimChannels c "
+								+ "inner join c.oimSupportedChannels "
+								+ "inner join c.oimOrderProcessingRules r "
+								+ "left join c.oimChannelAccessDetailses d "
+								+ "where c.vendors.vendorId=:vid and c.deleteTm is null");
+				channelQuery.setInteger("vid", r.getVendorId());
+				List list2 = channelQuery.list();
+				for (Object object : list2) {
+					OimChannels channel = (OimChannels) object;
+					// FIXME Thread Scoped Session is behaving bad
+					// eventBus.post(channel);
 
-				log.info("Channel Type: [{}], Name:[{}]", channel
-						.getOimSupportedChannels().getChannelName(), channel
-						.getChannelName());
-				String orderFetchBean = channel.getOimSupportedChannels()
-						.getOrderFetchBean();
-				IOrderImport iOrderImport = null;
-				if (orderFetchBean != null && orderFetchBean.length() > 0) {
-					try {
-						Class<?> theClass = Class.forName(orderFetchBean);
-						iOrderImport = (IOrderImport) theClass.newInstance();
+					log.info("Channel Type: [{}], Name:[{}]", channel
+							.getOimSupportedChannels().getChannelName(),
+							channel.getChannelName());
+					String orderFetchBean = channel.getOimSupportedChannels()
+							.getOrderFetchBean();
+					IOrderImport iOrderImport = null;
+					if (orderFetchBean != null && orderFetchBean.length() > 0) {
+						try {
+							Class<?> theClass = Class.forName(orderFetchBean);
+							iOrderImport = (IOrderImport) theClass
+									.newInstance();
 
-						log.debug("Created the orderimport object");
-						if (!iOrderImport.init(channel.getChannelId(),
-								SessionManager.currentSession(),
-								new OimLogStream())) {
-							log.error(
-									"Failed initializing the channel with channelId {},",
-									channel.getChannelId());
-						} else {
-							log.info("Pulling orders for channel id: {}",
-									channel.getChannelId());
-							OimOrderBatches vendorOrders = iOrderImport
-									.getVendorOrders(new OimOrderBatchesTypes(
-											OimConstants.ORDERBATCH_TYPE_ID_AUTOMATED));
-							if (vendorOrders != null)
-								eventBus.post(vendorOrders);
+							log.debug("Created the orderimport object");
+							if (!iOrderImport.init(channel.getChannelId(),
+									SessionManager.currentSession(),
+									new OimLogStream())) {
+								log.error(
+										"Failed initializing the channel with channelId {},",
+										channel.getChannelId());
+							} else {
+								log.info("Pulling orders for channel id: {}",
+										channel.getChannelId());
+								OimOrderBatches vendorOrders = iOrderImport
+										.getVendorOrders(new OimOrderBatchesTypes(
+												OimConstants.ORDERBATCH_TYPE_ID_AUTOMATED));
+
+								if (vendorOrders != null
+										&& vendorOrders.getOimOrderses().size() > 0) {
+									// TODO uncomment the line below if there is
+									// need for the Order to be processed
+									// automatically
+									// eventBus.post(vendorOrders);
+								}
+							}
+
+						} catch (InstantiationException
+								| IllegalAccessException e) {
+							log.error("CONFIG ERROR: Error in Instantiating Channel Bean.");
+						} catch (Exception e) {
+							log.error(e.getMessage(), e);
 						}
-
-					} catch (InstantiationException | IllegalAccessException e) {
-						log.error("CONFIG ERROR: Error in Instantiating Channel Bean.");
-					} catch (Exception e) {
-						log.error(e.getMessage(), e);
 					}
-				}
 
+				}
 			}
+		} catch (Throwable e) {
+			log.error("FATAL ERROR", e);
 		}
 	}
 }

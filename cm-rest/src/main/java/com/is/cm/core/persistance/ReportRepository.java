@@ -27,5 +27,5 @@ public interface ReportRepository {
 			Date endDate);
 
 	List<VendorsuppOrderhistory> getVendorSupplierHistory(int pageNum,
-			int recordCount);
+			int recordCount, Date startDate, Date endDate);
 }

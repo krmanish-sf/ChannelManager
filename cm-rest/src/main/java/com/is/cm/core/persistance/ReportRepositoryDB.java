@@ -1166,13 +1166,14 @@ public class ReportRepositoryDB extends RepositoryBase implements
 
 	@Override
 	public List<VendorsuppOrderhistory> getVendorSupplierHistory(int pageNum,
-			int recordCount) {
+			int recordCount, Date startDate, Date endDate) {
 		Session dbSession = SessionManager.currentSession();
 		Criteria createCriteria = dbSession
 				.createCriteria(OimVendorsuppOrderhistory.class)
 				.setFirstResult(pageNum).setMaxResults(recordCount)
 				.add(Restrictions.isNotNull("description"))
 				.add(Restrictions.isNotNull("oimSuppliers"))
+				.add(Restrictions.between("processingTm", startDate, endDate))
 				.addOrder(Order.desc("processingTm"));
 		List<VendorsuppOrderhistory> list = new ArrayList<VendorsuppOrderhistory>(
 				recordCount);

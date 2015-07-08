@@ -79,8 +79,10 @@ public class CREOrderImport extends ChannelBase implements IOrderImport {
 
 	@Override
 	public OimOrderBatches getVendorOrders(OimOrderBatchesTypes batchesTypes) {
-		OimOrderBatches batch = null;
-
+		OimOrderBatches batch = new OimOrderBatches();
+		batch.setOimChannels(m_channel);
+		batch.setOimOrderBatchesTypes(batchesTypes);
+		List<OimOrders> orderFetched = null;
 		try {
 			if (!pingTest()) {
 				logStream.println("Channel ping failed.");
@@ -92,7 +94,7 @@ public class CREOrderImport extends ChannelBase implements IOrderImport {
 			LOG.debug(response);
 			if (!"".equals(response)) {
 				StringReader str = new StringReader(response);
-				batch = parseGetProdResponse(str, batchesTypes);
+				orderFetched = parseGetProdResponse(str, batchesTypes);
 			} else {
 				LOG.error("FAILURE_GETPRODUCT_NULL_RESPONSE");
 				logStream
@@ -103,7 +105,7 @@ public class CREOrderImport extends ChannelBase implements IOrderImport {
 			long time = (System.currentTimeMillis() - start);
 			LOG.info("Finished GetProduct step in {} seconds", time / 1000);
 
-			if (batch.getOimOrderses().size() == 0) {
+			if (orderFetched.size() == 0) {
 				logStream
 						.println("Order Import Process Complete. No new orders found on the store.");
 				return batch;
@@ -112,19 +114,17 @@ public class CREOrderImport extends ChannelBase implements IOrderImport {
 			// Update status
 			if (!StringHandle.isNullOrEmpty(m_orderProcessingRule
 					.getConfirmedStatus())) {
-				response = sendOrderStatusRequest(batch,
+				response = sendOrderStatusRequest(orderFetched,
 						m_orderProcessingRule.getConfirmedStatus());
 			}
 
 			if (!StringHandle.isNullOrEmpty(response)) {
 				StringReader str = new StringReader(response);
 				List updatedOrders = parseUpdateResponse(str);
-				Set orders = batch.getOimOrderses();
 				Set confirmedOrders = new HashSet();
 				if (!StringHandle.isNullOrEmpty(m_orderProcessingRule
 						.getConfirmedStatus())) {
-					for (Iterator it = orders.iterator(); it.hasNext();) {
-						OimOrders order = (OimOrders) it.next();
+					for (OimOrders order : orderFetched) {
 						if (updatedOrders.contains(order.getStoreOrderId())) {
 							confirmedOrders.add(order);
 						}
@@ -133,7 +133,10 @@ public class CREOrderImport extends ChannelBase implements IOrderImport {
 				}
 
 				// Save everything
-				Transaction tx = m_dbSession.beginTransaction();
+				Transaction tx = m_dbSession.getTransaction();
+				if (tx != null && tx.isActive())
+					tx.commit();
+				tx = m_dbSession.beginTransaction();
 				batch.setInsertionTm(new Date());
 				batch.setCreationTm(new Date());
 				m_dbSession.save(batch);
@@ -211,6 +214,8 @@ public class CREOrderImport extends ChannelBase implements IOrderImport {
 		} catch (Exception e) {
 			LOG.info(e.getMessage(), e);
 		}
+		LOG.info("Returning Order batch with size: {}", batch.getOimOrderses()
+				.size());
 		return batch;
 	}
 
@@ -256,14 +261,11 @@ public class CREOrderImport extends ChannelBase implements IOrderImport {
 		return getprod_response.trim();
 	}
 
-	private OimOrderBatches parseGetProdResponse(StringReader xml_toparse,
+	private List<OimOrders> parseGetProdResponse(StringReader xml_toparse,
 			OimOrderBatchesTypes batchesTypes) {
 		try {
 			DecimalFormat df = new DecimalFormat("#.##");
-			OimOrderBatches batch = new OimOrderBatches();
-			batch.setOimChannels(m_channel);
-			batch.setOimOrderBatchesTypes(batchesTypes);
-
+			List<OimOrders> orderList = new ArrayList<OimOrders>();
 			ByteArrayOutputStream baos = new ByteArrayOutputStream(1000);
 			DOMParser parser = new DOMParser();
 			parser.setErrorStream(baos);
@@ -414,10 +416,10 @@ public class CREOrderImport extends ChannelBase implements IOrderImport {
 
 					LOG.info("Adding order in the batch with order id : "
 							+ order.getStoreOrderId());
-					batch.getOimOrderses().add(order);
+					orderList.add(order);
 				}
 			}
-			return batch;
+			return orderList;
 		} catch (Exception e) {
 			LOG.error(e.getMessage(), e);
 		}
@@ -511,7 +513,8 @@ public class CREOrderImport extends ChannelBase implements IOrderImport {
 		}
 	}
 
-	public String sendOrderStatusRequest(OimOrderBatches batch, String status) {
+	public String sendOrderStatusRequest(List<OimOrders> fetchedOrders,
+			String status) {
 		StringBuffer xmlrequest = new StringBuffer("<xmlPopulate>"
 				+ "<header>"
 				+ "<requestType>updateorders</requestType><orderStatus>"
@@ -522,9 +525,7 @@ public class CREOrderImport extends ChannelBase implements IOrderImport {
 						OimConstants.CHANNEL_ACCESSDETAIL_AUTH_KEY)
 				+ "</passkey>\n" + "</header>\n");
 
-		Set orders = batch.getOimOrderses();
-		for (Iterator it = orders.iterator(); it.hasNext();) {
-			OimOrders order = (OimOrders) it.next();
+		for (OimOrders order : fetchedOrders) {
 			xmlrequest.append("<xml_order>\n");
 			xmlrequest.append("<order_id>" + order.getStoreOrderId()
 					+ "</order_id>");

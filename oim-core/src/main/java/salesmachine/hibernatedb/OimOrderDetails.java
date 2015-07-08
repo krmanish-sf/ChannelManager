@@ -141,6 +141,8 @@ public class OimOrderDetails implements java.io.Serializable {
 	}
 
 	public void setProductName(String productName) {
+		if (productName != null && productName.length() > 100)
+			productName = productName.substring(0, 99);
 		this.productName = productName;
 	}
 
@@ -149,6 +151,8 @@ public class OimOrderDetails implements java.io.Serializable {
 	}
 
 	public void setProductDesc(String productDesc) {
+		if (productDesc != null && productDesc.length() > 500)
+			productDesc = productDesc.substring(0, 499);
 		this.productDesc = productDesc;
 	}
 

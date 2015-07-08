@@ -83,7 +83,6 @@ public class SignUpHandlerServlet extends HttpServlet {
 					.append(r.getPassword())
 					.append("<br><br>Cheers,<br>Inventory Source Channel Manager<br><a href='http://cm.inventorysource.com/admin'>cm.inventorysource.com</a>");
 			EmailUtil.sendEmail(email, "support@inventorysource.com",
-					"support@inventorysource.com", null,
 					"oim@inventorysource.com",
 					"Your Inventory Source Login Details",
 					emailContent.toString(), "text/html");

@@ -65,7 +65,7 @@ public class Moteng extends Supplier {
 			String emailAddress = r.getLogin();
 			String emailBody = "Account Number : "+accountNumber+"\n Find attached the orders from my store.";
 			String emailSubject = accountNumber;
-			EmailUtil.sendEmailWithAttachmentAndBCC("gsmith@moteng.com","support@inventorysource.com",r.getLogin(), null,"oim@inventorysource.com,"+emailAddress, emailSubject, emailBody,uploadfilename,"");
+			EmailUtil.sendEmailWithAttachment("gsmith@moteng.com","support@inventorysource.com","oim@inventorysource.com,"+emailAddress, emailSubject, emailBody,uploadfilename,"");
 		} catch (Exception e1) {
 			// TODO Auto-generated catch block
 			e1.printStackTrace();

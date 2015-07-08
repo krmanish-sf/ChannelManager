@@ -47,7 +47,7 @@ public class ProgressiveConcepts extends Supplier {
 		try {
 			emailContent += OimSupplierOrderPlacement.generateMailBody(orders,getFileFieldMap(session), new StandardFileSpecificsProvider(session,ovs,v));
 			String emailAddress = "pcimktgorders@teletouch.com";
-			EmailUtil.sendEmail(emailAddress, "support@inventorysource.com",r.getLogin(),null,"oim@inventorysource.com,"+r.getLogin(), "Progressive Concepts Orders", emailContent, "text/html");
+			EmailUtil.sendEmail(emailAddress, "support@inventorysource.com",r.getLogin(),"oim@inventorysource.com,"+r.getLogin(), "Progressive Concepts Orders", emailContent, "text/html");
 			//EmailUtil.sendEmail(r.getLogin(), "support@inventorysource.com",r.getLogin(),null,"oim@inventorysource.com,"+r.getLogin(), "Progressive Concepts Orders", emailContent, "text/html");
 		} catch (Exception e1) {
 			// TODO Auto-generated catch block

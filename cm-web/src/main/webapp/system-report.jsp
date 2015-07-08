@@ -70,7 +70,7 @@
              </jsp:include>
            </div> 
             <div class="space-2"></div>
-            <div class="row">
+           <%--  <div class="row">
             <div class="widget-main no-padding table-responsive">
 																<table
 									class="table table-bordered table-striped dataTable"
@@ -92,11 +92,39 @@
 									</table>
 							</div>
          </div>
-         <div class="space-2"></div>
-            <div class="row">
-            <div class="widget-main no-padding table-responsive">
-																<table
-									class="table table-bordered table-striped dataTable"
+         <div class="space-2"></div> --%>
+            
+           <div class="row">
+           <div class="widget-box transparent">
+	<div class="widget-header widget-header-flat">
+		<h4 class="lighter">
+			<i class="icon-signal"></i>&nbsp;Vendor Supplier Error History
+		</h4>
+		<div class="widget-toolbar">
+			<select class="select2-drop select-time-range" id="chartselecttime">
+				<option class="orange2 active" value="THIS_MONTH">This
+					Month</option>
+				<option class="orange2" value="LAST_SEVEN_DAYS">Last 7 Days</option>
+				<option class="orange2" value="LAST_MONTH">Last Month</option>
+				<option class="orange2" value="ALL_TIME">All Time</option>
+				<option class="orange2" value="CUSTOM">Custom</option>
+			</select>
+		</div>
+	</div>
+	<div class="space-4"></div>
+	<div class="container">
+		<label class="col-sm-2 control-label no-padding-right">Date</label> <input
+										type="text" class="width-25 datepicker start"
+										placeholder="mm/dd/yyyy" /> <span>&nbsp;To&nbsp;</span> <input
+										type="text" class="width-25 datepicker end"
+										placeholder="mm/dd/yyyy" />
+		<a href="javascript:;" onclick="getData(this);"
+										class="btn btn-info btn-sm pull-right">Generate</a>
+	</div>
+</div>
+<div class="space-2"></div>
+<div class="widget-main padding-4">
+	<table class="table table-bordered table-striped dataTable"
 									id="tableorderhistory">
 										<thead class="thin-border-bottom">
 											<tr>
@@ -113,9 +141,15 @@
 											</tr>
 										</thead>
 									</table>
-							</div>
+
+</div>
+           
+           </div>
+           <div class="space-2"></div>
          </div>
-         </div>
+         
+         
+         
       </div> 
     </div>
   </div>
@@ -124,17 +158,17 @@
 	<jsp:attribute name="pagejs">
 	 <script type="text/javascript" src="https://www.google.com/jsapi"></script>
     <script type="text/javascript">
-					jQuery(function($) {
+					function getData(e) {
+						var widget = $(e).parent().parent();
 						$('#tableorderhistory')
 								.DataTable(
 										{
-
+											"bDestroy" : true,
 											"bLengthChange" : true,
 											"bPaginate" : true,
 											"bInfo" : true,
 											"bFilter" : true,
 											"bJQueryUI" : true,
-											//"sDom" : 'lfrtip',
 											"sAjaxSource" : 'aggregators/reports/system/vendor-supplier-history',
 											"fnServerData" : function(sSource,
 													aoData, fnCallback,
@@ -142,9 +176,21 @@
 												oSettings.jqXHR = $(this)
 														.CRUD(
 																{
-																	type : "GET",
+																	method : "POST",
 																	url : sSource,
-																	data : aoData,
+																	data : JSON
+																			.stringify({
+																				startDate : Date
+																						.parse(widget
+																								.find(
+																										'input.start')
+																								.val()),
+																				endDate : Date
+																						.parse(widget
+																								.find(
+																										'input.end')
+																								.val())
+																			}),
 																	success : fnCallback
 																});
 											},
@@ -182,14 +228,14 @@
 														"bSortable" : false,
 														"mData" : "description"
 													} /* ,
-																																																																																																		{
-																																																																																																			"bSortable" : false,
-																																																																																																			"mData" : function(row) {
-																																																																																																				return '<a class="btn btn-info btn-minier radius-2 dropdown-hover" data-toggle="modal" href="#mychanneledit" onclick="channel(\'edit\',$(this).parent().parent())"><i class="icon-pencil"></i><span data-rel="tooltip" class="dropdown-menu tooltip-success purple dropdown-menu dropdown-yellow pull-right dropdown-caret dropdown-close">Edit Channel Setting</span></a><a class="btn btn-danger btn-minier radius-2 dropdown-hover" onclick="del($($($(this).parent()).parent()))"><i class="icon-trash"></i><span data-rel="tooltip" class="dropdown-menu tooltip-success purple dropdown-menu dropdown-yellow pull-right dropdown-caret dropdown-close">Delete Channel</span></a>';
-																																																																																																			}
-																																																																																																		} */]
+																																																																																																																																										{
+																																																																																																																																											"bSortable" : false,
+																																																																																																																																											"mData" : function(row) {
+																																																																																																																																												return '<a class="btn btn-info btn-minier radius-2 dropdown-hover" data-toggle="modal" href="#mychanneledit" onclick="channel(\'edit\',$(this).parent().parent())"><i class="icon-pencil"></i><span data-rel="tooltip" class="dropdown-menu tooltip-success purple dropdown-menu dropdown-yellow pull-right dropdown-caret dropdown-close">Edit Channel Setting</span></a><a class="btn btn-danger btn-minier radius-2 dropdown-hover" onclick="del($($($(this).parent()).parent()))"><i class="icon-trash"></i><span data-rel="tooltip" class="dropdown-menu tooltip-success purple dropdown-menu dropdown-yellow pull-right dropdown-caret dropdown-close">Delete Channel</span></a>';
+																																																																																																																																											}
+																																																																																																																																										} */]
 										});
-					});
+					}
 					// Load the Visualization API and the piechart package.
 					google.load('visualization', '1.0', {
 						'packages' : [ 'bar' ]

@@ -65,7 +65,7 @@ public class DrBott extends Supplier {
 			String emailAddress = r.getLogin();
 			String emailBody = "Account Number : "+accountNumber+"\n Find attached the orders from my store.";
 			String emailSubject = accountNumber;
-			EmailUtil.sendEmailWithAttachmentAndBCC(emailAddress,"support@inventorysource.com",r.getLogin(), null,"oim@inventorysource.com,"+r.getLogin(), emailSubject, emailBody,uploadfilename,"");
+			EmailUtil.sendEmailWithAttachment(emailAddress,"support@inventorysource.com","oim@inventorysource.com,"+r.getLogin(), emailSubject, emailBody,uploadfilename,"");
 		} catch (Exception e1) {
 			// TODO Auto-generated catch block
 			e1.printStackTrace();

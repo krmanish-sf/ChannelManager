@@ -10,6 +10,7 @@ public class TrackingData {
 	private String carrierName;
 	private String shippingMethod;
 	private String trackingNumber;
+	private int quantity = 1;
 	private GregorianCalendar shipDate;
 
 	public GregorianCalendar getShipDate() {
@@ -56,5 +57,13 @@ public class TrackingData {
 	public String toString() {
 		return StringHandle.isNullOrEmpty(carrierCode) ? "" : String.format(
 				"%s %s : %s", carrierCode, shippingMethod, trackingNumber);
+	}
+
+	public int getQuantity() {
+		return quantity;
+	}
+
+	public void setQuantity(int quantity) {
+		this.quantity = quantity;
 	}
 }

@@ -2,6 +2,8 @@ package salesmachine.util;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.Properties;
 
 import org.slf4j.Logger;
@@ -16,11 +18,15 @@ public class ApplicationProperties {
 	public static final String AUTOMATION_THREAD_POOL_SIZE = "cm.service.poolsize";
 	public static final String AUTOMATION_ORDER_PULL_INTERVAL = "cm.service.pullinterval";
 	public static final String AUTOMATION_ORDER_TRACK_INTERVAL = "cm.service.trackinginterval";
-	
-	//Shopify
-	public static final String SHOPIFY_API_KEY="cm.shopify.apiKey";
+
+	public static final String AUTOMATION_MONITORING_EMAIL_TO = "cm.service.monitoring.to";
+	public static final String AUTOMATION_MONITORING_EMAIL_FROM = "cm.service.monitoring.from";
+	public static final String AUTOMATION_MONITORING_EMAIL_CC = "cm.service.monitoring.cc";
+
+	// Shopify
+	public static final String SHOPIFY_API_KEY = "cm.shopify.apiKey";
 	public static final String SHOPIFY_SECRET_KEY = "cm.shopify.secretKey";
-	
+
 	private static final Logger log = LoggerFactory
 			.getLogger(ApplicationProperties.class);
 	private static final Properties prop = new Properties();
@@ -89,5 +95,19 @@ public class ApplicationProperties {
 			log.warn("Defaulting to track interval of {} milliseconds", i);
 		}
 		return i;
+	}
+
+	public static final String getHostName() {
+		String hostname = "Unknown";
+
+		try {
+			InetAddress addr;
+			addr = InetAddress.getLocalHost();
+			hostname = addr.getHostName();
+		} catch (UnknownHostException ex) {
+			log.warn("Hostname can not be resolved");
+		}
+		log.debug("HostName: {}", hostname);
+		return hostname;
 	}
 }

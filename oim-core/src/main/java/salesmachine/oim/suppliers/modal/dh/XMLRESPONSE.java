@@ -838,9 +838,9 @@ public class XMLRESPONSE {
 				@XmlElement(name = "PRICE")
 				protected float price;
 				@XmlElement(name = "QUANTITY")
-				protected byte quantity;
+				protected int quantity;
 				@XmlElement(name = "QTYBO")
-				protected byte qtybo;
+				protected int qtybo;
 				@XmlElement(name = "VENDOR", required = true)
 				protected String vendor;
 				@XmlElement(name = "DESCRIPTION", required = true)
@@ -887,7 +887,7 @@ public class XMLRESPONSE {
 				 * Gets the value of the quantity property.
 				 * 
 				 */
-				public byte getQUANTITY() {
+				public int getQUANTITY() {
 					return quantity;
 				}
 
@@ -895,7 +895,7 @@ public class XMLRESPONSE {
 				 * Sets the value of the quantity property.
 				 * 
 				 */
-				public void setQUANTITY(byte value) {
+				public void setQUANTITY(int value) {
 					this.quantity = value;
 				}
 
@@ -903,7 +903,7 @@ public class XMLRESPONSE {
 				 * Gets the value of the qtybo property.
 				 * 
 				 */
-				public byte getQTYBO() {
+				public int getQTYBO() {
 					return qtybo;
 				}
 
@@ -911,7 +911,7 @@ public class XMLRESPONSE {
 				 * Sets the value of the qtybo property.
 				 * 
 				 */
-				public void setQTYBO(byte value) {
+				public void setQTYBO(int value) {
 					this.qtybo = value;
 				}
 

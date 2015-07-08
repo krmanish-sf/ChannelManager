@@ -12,7 +12,8 @@
 <head>
 <meta http-equiv="Content-Type" content="text/html">
 <meta name="description" content="overview &amp; stats">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="viewport"
+	content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <link rel="shortcut icon" href="static/favicon.ico" type="image/x-icon">
 <link rel="icon" href="static/favicon.ico" type="image/x-icon">
@@ -144,117 +145,123 @@
 			<a class="menu-toggler" id="menu-toggler" href="#"> <span
 				class="menu-text"></span>
 			</a>
-			<c:if
-				test="${not fn:containsIgnoreCase(pageContext.request.requestURI, \"login.jsp\")}">
-				<div class="sidebar" id="sidebar">
-					<div class="sidebar-shortcuts" id="sidebar-shortcuts">
-						<div class="sidebar-shortcuts-large" id="sidebar-shortcuts-large">
-							<button class="btn btn-yellow" data-rel="tooltip"
-								data-original-title="Pull Orders (all channels)"
-								onclick="javascript:$.CM.pullorder();">
-								<i class="icon-shopping-cart"></i>
-							</button>
-							<a class="btn btn-success" data-rel="tooltip"
-								href="processorder.jsp#unprocessed"
-								data-original-title="Unprocessed Orders"> <i
-								class="icon-cogs"></i>
-							</a> <a class="btn btn-danger" data-rel="tooltip"
-								href="processorder.jsp#unresolved"
-								data-original-title="Unresolved Orders"> <i
-								class="icon-warning-sign"></i>
-							</a>
-							<button class="btn btn-info" data-rel="tooltip"
-								data-original-title="Process Orders (all channels/suppliers)"
-								onclick="$.CM.processOrders();">
-								<i class="icon-share"></i>
-							</button>
-						</div>
-						<div class="sidebar-shortcuts-mini" id="sidebar-shortcuts-mini">
-							<span class="btn btn-success"></span><span class="btn btn-info"></span>
-							<span class="btn btn-warning"></span><span class="btn btn-danger"></span>
-						</div>
+			<div class="sidebar" id="sidebar">
+				<div class="sidebar-shortcuts" id="sidebar-shortcuts">
+					<div class="sidebar-shortcuts-large" id="sidebar-shortcuts-large">
+						<button class="btn btn-yellow" data-rel="tooltip"
+							data-original-title="Pull Orders (all channels)"
+							onclick="javascript:$.CM.pullorder();">
+							<i class="icon-shopping-cart"></i>
+						</button>
+						<a class="btn btn-success" data-rel="tooltip"
+							href="processorder.jsp#unprocessed"
+							data-original-title="Unprocessed Orders"> <i
+							class="icon-cogs"></i>
+						</a> <a class="btn btn-danger" data-rel="tooltip"
+							href="processorder.jsp#unresolved"
+							data-original-title="Unresolved Orders"> <i
+							class="icon-warning-sign"></i>
+						</a>
+						<button class="btn btn-info" data-rel="tooltip"
+							data-original-title="Process Orders (all channels/suppliers)"
+							onclick="$.CM.processOrders();">
+							<i class="icon-share"></i>
+						</button>
 					</div>
-					<!-- #sidebar-shortcuts -->
+					<div class="sidebar-shortcuts-mini" id="sidebar-shortcuts-mini">
+						<span class="btn btn-success"></span><span class="btn btn-info"></span>
+						<span class="btn btn-warning"></span><span class="btn btn-danger"></span>
+					</div>
+				</div>
+				<!-- #sidebar-shortcuts -->
 
 
-					<ul id="navigation" class="nav nav-list">
-						<li
-							<c:if test="${fn:containsIgnoreCase(pageContext.request.requestURI, \"index.jsp\")}"> class="active" </c:if>><a
-							href="index.jsp"> <i class="icon-dashboard"></i> <span
-								class="menu-text">Dashboard</span>
-						</a></li>
-						<li
-							<c:if test="${fn:containsIgnoreCase(pageContext.request.requestURI, \"importchannel.jsp\")}"> class="active" </c:if>>
-							<a href="importchannel.jsp"> <i class="icon-random"></i> <span
-								class="menu-text">Channels</span>
-						</a>
-						</li>
-						<li
-							<c:if test="${fn:containsIgnoreCase(pageContext.request.requestURI, \"suppliers.jsp\")}"> class="active" </c:if>>
-							<a href="suppliers.jsp"> <i class="icon-truck"></i> <span
-								class="menu-text">Suppliers</span>
-						</a>
-						</li>
-						<li
-							<c:if test="${fn:containsIgnoreCase(pageContext.request.requestURI, \"shipping-mappings.jsp\")}"> class="active" </c:if>>
-							<a href="shipping-mappings.jsp"> <i class="icon-exchange"></i>
-								<span class="menu-text">Shipping Mappings</span>
-						</a>
-						</li>
-						<li
-							<c:if test="${fn:containsIgnoreCase(pageContext.request.requestURI, \"processorder.jsp\") || fn:containsIgnoreCase(pageContext.request.requestURI, \"orderhistory.jsp\")}"> class="open" </c:if>>
-							<a class="dropdown-toggle" href="#"> <i
-								class="icon-shopping-cart"></i> <span class="menu-text">Orders</span>
-								<b class="arrow icon-angle-down"></b>
-						</a>
-							<ul class="submenu"
-								<c:if test="${fn:containsIgnoreCase(pageContext.request.requestURI, \"processorder.jsp\") || fn:containsIgnoreCase(pageContext.request.requestURI, \"order-tracking.jsp\")|| fn:containsIgnoreCase(pageContext.request.requestURI, \"orderhistory.jsp\")}"> style="display: block;" </c:if>>
-								<li
-									<c:if test="${fn:containsIgnoreCase(pageContext.request.requestURI, \"processorder.jsp\")}"> class="active" </c:if>>
-									<a href="processorder.jsp"> <i class="icon-share"></i>
-										Process Orders
-								</a>
+				<ul id="navigation" class="nav nav-list">
+					<li
+						<c:if test="${fn:containsIgnoreCase(pageContext.request.requestURI, \"index.jsp\")}"> class="active" </c:if>><a
+						href="index.jsp"> <i class="icon-dashboard"></i> <span
+							class="menu-text">Dashboard</span>
+					</a></li>
+					<li
+						<c:if test="${fn:containsIgnoreCase(pageContext.request.requestURI, \"importchannel.jsp\")}"> class="active" </c:if>>
+						<a href="importchannel.jsp"> <i class="icon-random"></i> <span
+							class="menu-text">Channels</span>
+					</a>
+					</li>
+					<li
+						<c:if test="${fn:containsIgnoreCase(pageContext.request.requestURI, \"suppliers.jsp\")}"> class="active" </c:if>>
+						<a href="suppliers.jsp"> <i class="icon-truck"></i> <span
+							class="menu-text">Suppliers</span>
+					</a>
+					</li>
+					<li
+						<c:if test="${fn:containsIgnoreCase(pageContext.request.requestURI, \"shipping-mappings.jsp\")}"> class="active" </c:if>>
+						<a href="shipping-mappings.jsp"> <i class="icon-exchange"></i>
+							<span class="menu-text">Shipping Mappings</span>
+					</a>
+					</li>
+					<li
+						<c:if test="${fn:containsIgnoreCase(pageContext.request.requestURI, \"processorder.jsp\") || fn:containsIgnoreCase(pageContext.request.requestURI, \"orderhistory.jsp\")}"> class="open" </c:if>>
+						<a class="dropdown-toggle" href="#"> <i
+							class="icon-shopping-cart"></i> <span class="menu-text">Orders</span>
+							<b class="arrow icon-angle-down"></b>
+					</a>
+						<ul class="submenu"
+							<c:if test="${fn:containsIgnoreCase(pageContext.request.requestURI, \"processorder.jsp\") || fn:containsIgnoreCase(pageContext.request.requestURI, \"order-tracking.jsp\")|| fn:containsIgnoreCase(pageContext.request.requestURI, \"orderhistory.jsp\")}"> style="display: block;" </c:if>>
+							<li
+								<c:if test="${fn:containsIgnoreCase(pageContext.request.requestURI, \"processorder.jsp\")}"> class="active" </c:if>>
+								<a href="processorder.jsp"> <i class="icon-share"></i>
+									Process Orders
+							</a>
 
-								</li>
-								<li
-									<c:if test="${fn:containsIgnoreCase(pageContext.request.requestURI, \"order-tracking.jsp\")}"> class="active" </c:if>>
-									<a href="order-tracking.jsp"> <i class="icon-resize-small"></i>
-										Track Orders
-								</a>
+							</li>
+							<li
+								<c:if test="${fn:containsIgnoreCase(pageContext.request.requestURI, \"order-tracking.jsp\")}"> class="active" </c:if>>
+								<a href="order-tracking.jsp"> <i class="icon-resize-small"></i>
+									Track Orders
+							</a>
 
-								</li>
+							</li>
 
-								<li
-									<c:if test="${fn:containsIgnoreCase(pageContext.request.requestURI, \"orderhistory.jsp\")}"> class="active" </c:if>>
-									<a href="orderhistory.jsp"> <i class="icon-time"></i> Order
-										History
-								</a>
-								</li>
-							</ul>
-						</li>
+							<li
+								<c:if test="${fn:containsIgnoreCase(pageContext.request.requestURI, \"orderhistory.jsp\")}"> class="active" </c:if>>
+								<a href="orderhistory.jsp"> <i class="icon-time"></i> Order
+									History
+							</a>
+							</li>
+						</ul>
+					</li>
+					<li
+						<c:if test="${fn:containsIgnoreCase(pageContext.request.requestURI, \"reportmax.jsp\") || fn:containsIgnoreCase(pageContext.request.requestURI, \"reportmin.jsp\")}"> class="open" </c:if>>
+						<a href="#" class="dropdown-toggle"> <i class="icon-lightbulb"></i>
+							<span class="menu-text">Channel Intelligence</span> <b
+							class="arrow icon-angle-down"></b>
+					</a>
+						<ul class="submenu"
+							<c:if test="${fn:containsIgnoreCase(pageContext.request.requestURI, \"reportmax.jsp\") || fn:containsIgnoreCase(pageContext.request.requestURI, \"reportmin.jsp\")}"> style="display: block;"</c:if>>
+							<li
+								<c:if test="${fn:containsIgnoreCase(pageContext.request.requestURI, \"reportmax.jsp\")}"> class="active" </c:if>>
+								<a href="reportmax.jsp"> <i class="icon-resize-small"></i>
+									View All Reports
+							</a>
+							</li>
+							<li
+								<c:if test="${fn:containsIgnoreCase(pageContext.request.requestURI, \"reportmin.jsp\")}"> class="active" </c:if>>
+								<a href="reportmin.jsp"> <i class="icon-resize-small"></i>
+									Generate Visual Report
+							</a>
+							</li>
+						</ul>
+					</li>
+					<c:if test="${reps.getKbadminAllowed()==1}">
 						<li
-							<c:if test="${fn:containsIgnoreCase(pageContext.request.requestURI, \"reportmax.jsp\") || fn:containsIgnoreCase(pageContext.request.requestURI, \"reportmin.jsp\")}"> class="open" </c:if>>
-							<a href="#" class="dropdown-toggle"> <i
-								class="icon-lightbulb"></i> <span class="menu-text">Channel
-									Intelligence</span> <b class="arrow icon-angle-down"></b>
+							<c:if test="${fn:containsIgnoreCase(pageContext.request.requestURI, \"system-report.jsp\")}"> class="active" </c:if>>
+							<a href="system-report.jsp"> <i class="icon-cog"></i> <span
+								class="menu-text">System Report</span>
 						</a>
-							<ul class="submenu"
-								<c:if test="${fn:containsIgnoreCase(pageContext.request.requestURI, \"reportmax.jsp\") || fn:containsIgnoreCase(pageContext.request.requestURI, \"reportmin.jsp\")}"> style="display: block;"</c:if>>
-								<li
-									<c:if test="${fn:containsIgnoreCase(pageContext.request.requestURI, \"reportmax.jsp\")}"> class="active" </c:if>>
-									<a href="reportmax.jsp"> <i class="icon-resize-small"></i>
-										View All Reports
-								</a>
-								</li>
-								<li
-									<c:if test="${fn:containsIgnoreCase(pageContext.request.requestURI, \"reportmin.jsp\")}"> class="active" </c:if>>
-									<a href="reportmin.jsp"> <i class="icon-resize-small"></i>
-										Generate Visual Report
-								</a>
-								</li>
-							</ul>
 						</li>
-						<!-- <li><a href="#l"> <i class="icon-cog"></i> <span
+					</c:if>
+					<!-- <li><a href="#l"> <i class="icon-cog"></i> <span
 							class="menu-text">Support</span>
 					</a></li>
 					<li><a href="#" class="dropdown-toggle"> <i
@@ -281,23 +288,22 @@
 									class="icon-double-angle-right"></i> Login &amp; Register
 							</a></li>
 						</ul></li> -->
-					</ul>
+				</ul>
 
-					<!-- /.nav-list -->
+				<!-- /.nav-list -->
 
-					<div class="sidebar-collapse" id="sidebar-collapse">
-						<i class="icon-double-angle-left"
-							data-icon1="icon-double-angle-left"
-							data-icon2="icon-double-angle-right"></i>
-					</div>
-					<!-- <script type="text/javascript">
+				<div class="sidebar-collapse" id="sidebar-collapse">
+					<i class="icon-double-angle-left"
+						data-icon1="icon-double-angle-left"
+						data-icon2="icon-double-angle-right"></i>
+				</div>
+				<!-- <script type="text/javascript">
 						try {
 							ace.settings.check('sidebar', 'collapsed');
 						} catch (e) {
 						}
 					</script> -->
-				</div>
-			</c:if>
+			</div>
 			<jsp:invoke fragment="maincontent" />
 		</div>
 	</div>

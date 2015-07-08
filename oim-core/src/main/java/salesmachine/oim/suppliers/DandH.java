@@ -8,6 +8,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Date;
@@ -48,6 +49,9 @@ import salesmachine.hibernatedb.Vendors;
 import salesmachine.hibernatehelper.SessionManager;
 import salesmachine.oim.stores.api.IOrderImport;
 import salesmachine.oim.stores.impl.OrderImportManager;
+import salesmachine.oim.suppliers.exception.SupplierCommunicationException;
+import salesmachine.oim.suppliers.exception.SupplierConfigurationException;
+import salesmachine.oim.suppliers.exception.SupplierOrderException;
 import salesmachine.oim.suppliers.modal.OrderStatus;
 import salesmachine.oim.suppliers.modal.TrackingData;
 import salesmachine.oim.suppliers.modal.dh.XMLRESPONSE;
@@ -409,7 +413,9 @@ public class DandH extends Supplier implements HasTracking {
 		}
 	}
 
-	private String postRequest(String request, Reps r) {
+	private String postRequest(String request, Reps r)
+			throws SupplierConfigurationException,
+			SupplierCommunicationException, SupplierOrderException {
 		URL url;
 		HttpsURLConnection connection = null;
 		String response = "";
@@ -439,7 +445,8 @@ public class DandH extends Supplier implements HasTracking {
 			}
 			response = sb.toString();
 			log.info("Response: {}", response);
-		} catch (Exception e) {
+			return response;
+		} catch (RuntimeException e) {
 			log.error("Failed to send request ...", e);
 			String logEmailContent = "-------------- Order failed with Exception -------------\n";
 			logEmailContent += "-------------- XML SOAP REQUEST SENT -------------\n";
@@ -455,12 +462,19 @@ public class DandH extends Supplier implements HasTracking {
 			EmailUtil.sendEmail("orders@inventorysource.com",
 					"support@inventorysource.com", "", emailSubject,
 					logEmailContent);
+			throw new SupplierOrderException();
+		} catch (MalformedURLException e) {
+			log.error(e.getMessage());
+			throw new SupplierConfigurationException(
+					"Supplier Communication URL is invalid.", e);
+		} catch (IOException e) {
+			log.error(e.getMessage());
+			throw new SupplierCommunicationException();
 		} finally {
 			if (connection != null) {
 				connection.disconnect();
 			}
 		}
-		return response;
 	}
 
 	@Override
@@ -475,15 +489,16 @@ public class DandH extends Supplier implements HasTracking {
 				.createCriteria(Reps.class)
 				.add(Restrictions.eq("vendorId", oimVendorSuppliers
 						.getVendors().getVendorId())).uniqueResult();
-		String response;
+		String response = null;
 		String requestData = "<XMLFORMPOST>" + "<REQUEST>orderStatus</REQUEST>"
 				+ "<LOGIN><USERID>" + oimVendorSuppliers.getLogin()
 				+ "</USERID>" + "<PASSWORD>" + oimVendorSuppliers.getPassword()
 				+ "</PASSWORD></LOGIN>" + "<STATUSREQUEST><ORDERNUM>"
 				+ trackingMeta + "</ORDERNUM></STATUSREQUEST></XMLFORMPOST>";
-		response = postRequest(requestData, r);
-		JAXBContext jaxbContext;
 		try {
+			response = postRequest(requestData, r);
+
+			JAXBContext jaxbContext;
 			jaxbContext = JAXBContext.newInstance(XMLRESPONSE.class);
 			Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
 
@@ -513,17 +528,19 @@ public class DandH extends Supplier implements HasTracking {
 								response = "UnShipped";
 								orderStatus.setStatus(response);
 							} else {
-
 								orderStatus.setStatus("Shipped");
 								TrackingData trackingData = new TrackingData();
 								trackingData.setCarrierCode(package1
-										.getCARRIER());
+										.getCARRIER().split(" ")[0]);
 								trackingData.setCarrierName(package1
 										.getCARRIER());
 								trackingData.setShippingMethod(package1
 										.getSERVICE());
 								trackingData.setShipperTrackingNumber(package1
 										.getTRACKNUM());
+								trackingData.setQuantity(orderstatus2
+										.getORDERDETAIL().getDETAILITEM()
+										.get(0).getQUANTITY());
 								String dateshipped = package1.getDateshipped();
 								GregorianCalendar cal;
 								if (StringHandle.isNullOrEmpty(dateshipped)) {
@@ -552,6 +569,10 @@ public class DandH extends Supplier implements HasTracking {
 				orderStatus.setStatus(orderStatusResponse.getMESSAGE());
 			}
 		} catch (JAXBException e) {
+			log.error(e.getMessage(), e);
+		} catch (SupplierConfigurationException e) {
+			log.error(e.getMessage(), e);
+		} catch (SupplierCommunicationException e) {
 			log.error(e.getMessage(), e);
 		} catch (Exception e) {
 			log.error(e.getMessage(), e);

@@ -5,11 +5,10 @@ import java.util.TimerTask;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import org.hibernate.Session;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import salesmachine.hibernatehelper.SessionManager;
+import salesmachine.email.EmailUtil;
 import salesmachine.util.ApplicationProperties;
 
 import com.google.common.eventbus.AsyncEventBus;
@@ -20,23 +19,50 @@ public class AutomationManager {
 			.getLogger(AutomationManager.class);
 
 	public static void main(String[] args) {
+		if (args != null && args.length > 0
+				&& "stopped".equalsIgnoreCase(args[0])) {
+			sendNotification();
+		}
 		log.info("Channel Manager Order Automation Service Started.");
+		Runtime.getRuntime().addShutdownHook(new Thread() {
+			@Override
+			public void run() {
+				sendNotification();
+			}
+		});
+
 		ExecutorService executor = Executors
 				.newFixedThreadPool(ApplicationProperties
 						.getAutotmationThreadPoolSize());
 		EventBus eventBus = new AsyncEventBus(executor);
-		Session session = SessionManager.currentSession();
 		Timer timer = new Timer();
 
-		TimerTask orderPullTask = new OrderPullTask(eventBus, session);
+		TimerTask orderPullTask = new OrderPullTask(eventBus);
 		timer.schedule(orderPullTask, 1000L,
 				ApplicationProperties.getOrderPullInterval());
-		TimerTask orderTrackingTask = new OrderTrackingTask(eventBus, session);
+		TimerTask orderTrackingTask = new OrderTrackingTask(eventBus);
 		timer.schedule(orderTrackingTask, 1000L,
 				ApplicationProperties.getOrderTrackingInterval());
 
-		OrderHandler orderHandler = new OrderHandler(session, eventBus);
+		OrderHandler orderHandler = new OrderHandler(eventBus);
 		eventBus.register(orderHandler);
 	}
 
+	private static void sendNotification() {
+
+		log.error("Channel Manager Order Automation Service Stopped.");
+		EmailUtil
+				.sendEmail(
+						ApplicationProperties
+								.getProperty(ApplicationProperties.AUTOMATION_MONITORING_EMAIL_TO),
+						ApplicationProperties
+								.getProperty(ApplicationProperties.AUTOMATION_MONITORING_EMAIL_FROM),
+						ApplicationProperties
+								.getProperty(ApplicationProperties.AUTOMATION_MONITORING_EMAIL_CC),
+						"Channel Manager Order Automation Service Stopped.",
+						"Channel Manager Order Automation Service Stopped On HOST: "
+								+ ApplicationProperties.getHostName());
+		System.exit(0);
+
+	}
 }

@@ -1,58 +1,87 @@
 package salesmachine.automation;
 
 import org.hibernate.Session;
+import org.hibernate.criterion.Restrictions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import salesmachine.hibernatedb.OimChannelSupplierMap;
 import salesmachine.hibernatedb.OimChannels;
 import salesmachine.hibernatedb.OimOrderBatches;
 import salesmachine.hibernatedb.OimOrderBatchesTypes;
 import salesmachine.hibernatedb.OimOrderDetails;
+import salesmachine.hibernatedb.OimOrders;
 import salesmachine.hibernatehelper.SessionManager;
 import salesmachine.oim.api.OimConstants;
 import salesmachine.oim.stores.api.IOrderImport;
 import salesmachine.oim.suppliers.OimSupplierOrderPlacement;
 import salesmachine.util.OimLogStream;
 
-import com.google.common.eventbus.AllowConcurrentEvents;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 
 public class OrderHandler {
 	private static final Logger log = LoggerFactory
 			.getLogger(OrderHandler.class);
-	private final Session session;
 	private final EventBus eventBus;
 
-	public OrderHandler(Session session, EventBus eventBus) {
-		this.session = session;
+	public OrderHandler(EventBus eventBus) {
 		this.eventBus = eventBus;
 	}
 
 	@Subscribe
-	//@AllowConcurrentEvents
+	// @AllowConcurrentEvents
 	public void handleOrderPull(OimOrderBatches orderBatches) {
 		log.info("Order Recieved with BatchSize:{}", orderBatches
 				.getOimOrderses().size());
-		// orderBatches.getOimOrderses();
+		for (Object object : orderBatches.getOimOrderses()) {
+			try {
+				OimOrders oimOrders = (OimOrders) object;
+				OimSupplierOrderPlacement osop = new OimSupplierOrderPlacement(
+						SessionManager.currentSession());
+				Session session = SessionManager.currentSession();
+				session.createCriteria(OimChannelSupplierMap.class)
+						.add(Restrictions.eq("oimChannels.channelId",
+								orderBatches.getOimChannels().getChannelId()))
+						.add(Restrictions.eq("oimSuppliers.supplierId",
+								oimOrders));
+				boolean processVendorOrder = osop.processVendorOrder(
+						orderBatches.getOimChannels().getVendors()
+								.getVendorId(), oimOrders,
+						orderBatches.getOimOrderBatchesTypes());
+				if (processVendorOrder) {
+					log.info("Order {} Processed Successfully",
+							oimOrders.getOrderId());
+				} else {
+					log.error("Error in processing order {}",
+							oimOrders.getOrderId());
+				}
+			} catch (Exception e) {
+				log.error(e.getMessage(), e);
+			}
+		}
 	}
 
 	@Subscribe
-	//@AllowConcurrentEvents
+	// @AllowConcurrentEvents
 	public void handleOrderTracking(OimOrderDetails orderDetails) {
-		log.info("Order Tracking :{}", orderDetails.getDetailId());
-		OimSupplierOrderPlacement osop = new OimSupplierOrderPlacement(
-				SessionManager.currentSession());
-		String trackOrder = osop.trackOrder(orderDetails.getOimOrders()
-				.getOimOrderBatches().getOimChannels().getVendors()
-				.getVendorId(), orderDetails.getDetailId());
-		log.info("OrderId# {} ItemId# {} Status# {}", orderDetails
-				.getOimOrders().getOrderId(), orderDetails.getDetailId(),
-				trackOrder);
+		try {
+			log.info("Order Tracking :{}", orderDetails.getDetailId());
+			OimSupplierOrderPlacement osop = new OimSupplierOrderPlacement(
+					SessionManager.currentSession());
+			String trackOrder = osop.trackOrder(orderDetails.getOimOrders()
+					.getOimOrderBatches().getOimChannels().getVendors()
+					.getVendorId(), orderDetails.getDetailId());
+			log.info("OrderId# {} ItemId# {} Status# {}", orderDetails
+					.getOimOrders().getOrderId(), orderDetails.getDetailId(),
+					trackOrder);
+		} catch (Exception e) {
+			log.error(e.getMessage(), e);
+		}
 	}
 
 	@Subscribe
-	//@AllowConcurrentEvents
+	// @AllowConcurrentEvents
 	public void handleOrderPull(OimChannels channel) {
 
 		log.info("Channel Type: [{}], Name:[{}]", channel

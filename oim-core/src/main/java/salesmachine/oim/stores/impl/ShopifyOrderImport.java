@@ -143,15 +143,15 @@ public class ShopifyOrderImport extends ChannelBase implements IOrderImport {
 	public OimOrderBatches getVendorOrders(OimOrderBatchesTypes batchesTypes) {
 		// on the basis of access token, we will pull orders from vendors
 		OimOrderBatches batch = new OimOrderBatches();
-		Transaction tx = null;
+		Transaction tx = m_dbSession.getTransaction();
 		HttpClient client = new HttpClient();
-		 String requestUrl = null;
-		if (getMaxStoreOrderId()!=null){
+		String requestUrl = null;
+		if (getMaxStoreOrderId() != null) {
 			requestUrl = storeUrl + "/admin/orders.json?since_id="
 					+ getMaxStoreOrderId();
-		}
-		else{
-			requestUrl = storeUrl + "/admin/orders.json";;
+		} else {
+			requestUrl = storeUrl + "/admin/orders.json";
+			;
 		}
 		String jsonString = null;
 		GetMethod getOrderJson = new GetMethod(requestUrl);
@@ -159,7 +159,8 @@ public class ShopifyOrderImport extends ChannelBase implements IOrderImport {
 
 		batch.setOimChannels(m_channel);
 		batch.setOimOrderBatchesTypes(batchesTypes);
-
+		if (tx != null && tx.isActive())
+			tx.commit();
 		tx = m_dbSession.beginTransaction();
 		batch.setInsertionTm(new Date());
 		batch.setCreationTm(new Date());
@@ -396,7 +397,8 @@ public class ShopifyOrderImport extends ChannelBase implements IOrderImport {
 					"Got response code {} .Please check the request parameters",
 					responseCode);
 		}
-
+		log.info("Returning Order batch with size: {}", batch.getOimOrderses()
+				.size());
 		return batch;
 	}
 
@@ -410,8 +412,9 @@ public class ShopifyOrderImport extends ChannelBase implements IOrderImport {
 			maxStoreOrderId = (String) iter.next();
 		}
 		log.info("Max store order id -- {}", maxStoreOrderId);
-		
-		return maxStoreOrderId==null?null:Integer.getInteger(maxStoreOrderId);
+
+		return maxStoreOrderId == null ? null : Integer
+				.getInteger(maxStoreOrderId);
 
 	}
 

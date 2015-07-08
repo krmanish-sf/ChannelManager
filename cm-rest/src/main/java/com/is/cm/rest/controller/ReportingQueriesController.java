@@ -99,13 +99,14 @@ public class ReportingQueriesController {
 		return event.getEntity();
 	}
 
-	@RequestMapping(value = "/system/vendor-supplier-history", method = RequestMethod.GET)
+	@RequestMapping(value = "/system/vendor-supplier-history", method = RequestMethod.POST)
 	@ResponseBody
-	public List<VendorsuppOrderhistory> getVendorSupplierHistory() {
+	public List<VendorsuppOrderhistory> getVendorSupplierHistory(
+			@RequestBody Map<String, Date> dateRange) {
 		LOG.debug("Getting vendor-supplier-history");
 		ReadEvent<List<VendorsuppOrderhistory>> event = reportService
 				.getVendorSupplierHistory(new PagedDataEvent<VendorsuppOrderhistory>(
-						1, 100));
+						1, 100, dateRange));
 		return event.getEntity();
 	}
 

@@ -73,7 +73,9 @@ public class ReportEventHandler implements ReportService {
 			PagedDataEvent<VendorsuppOrderhistory> pagedDataEvent) {
 		List<VendorsuppOrderhistory> data = reportRepository
 				.getVendorSupplierHistory(pagedDataEvent.getPageNum(),
-						pagedDataEvent.getRecordCount());
+						pagedDataEvent.getRecordCount(), pagedDataEvent
+								.getDateRange().get("startDate"),
+						pagedDataEvent.getDateRange().get("endDate"));
 		return new ReadEvent<List<VendorsuppOrderhistory>>(0, data);
 	}
 }

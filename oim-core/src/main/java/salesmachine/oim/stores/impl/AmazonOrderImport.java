@@ -8,6 +8,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -132,13 +133,14 @@ public class AmazonOrderImport extends ChannelBase implements IOrderImport {
 
 	@Override
 	public OimOrderBatches getVendorOrders(OimOrderBatchesTypes batchesTypes) {
-		Transaction tx = null;
+		Transaction tx = m_dbSession.getTransaction();
 		OimOrderBatches batch = new OimOrderBatches();
 		try {
 
 			batch.setOimChannels(m_channel);
 			batch.setOimOrderBatchesTypes(batchesTypes);
-
+			if (tx != null && tx.isActive())
+				tx.commit();
 			// Save Batch..
 			tx = m_dbSession.beginTransaction();
 			batch.setInsertionTm(new Date());
@@ -396,6 +398,7 @@ public class AmazonOrderImport extends ChannelBase implements IOrderImport {
 					service.submitFeed(submitFeedRequest);
 				}
 			}
+			m_dbSession.persist(batch);
 			tx.commit();
 			logStream.println("Imported " + numOrdersSaved + " Orders");
 			log.debug("Finished importing orders...");
@@ -406,6 +409,8 @@ public class AmazonOrderImport extends ChannelBase implements IOrderImport {
 			logStream.println("Import Orders failed (" + e.getMessage() + ")");
 
 		}
+		log.info("Returning Order batch with size: {}", batch.getOimOrderses()
+				.size());
 		return batch;
 	}
 
@@ -441,16 +446,21 @@ public class AmazonOrderImport extends ChannelBase implements IOrderImport {
 							.longValue()));
 			XMLGregorianCalendar cal = MwsUtl.getDTF().newXMLGregorianCalendar(
 					orderStatus.getTrackingData().getShipDate());
+			GregorianCalendar shipDate = orderStatus.getTrackingData().getShipDate();
+			cal.setYear(shipDate.get(GregorianCalendar.YEAR));
+			cal.setMonth(shipDate.get(GregorianCalendar.MONTH));
+			cal.setDay(shipDate.get(GregorianCalendar.DATE));
 			fulfillment.setFulfillmentDate(cal);
 			Item i = new Item();
 			i.setAmazonOrderItemCode(oimOrderDetails.getStoreOrderItemId());
-			i.setQuantity(BigInteger.ONE);
+			i.setQuantity(BigInteger.valueOf(orderStatus.getTrackingData()
+					.getQuantity()));
 			i.setMerchantFulfillmentItemID(BigInteger.valueOf(oimOrderDetails
 					.getDetailId()));
 			fulfillment.getItem().add(i);
 			FulfillmentData value = new FulfillmentData();
-			value.setCarrierCode(orderStatus.getTrackingData().getCarrierCode());
-			// value.setCarrierName(orderStatus.getTrackingData().getCarrierName());
+			//value.setCarrierCode(orderStatus.getTrackingData().getCarrierCode());
+			value.setCarrierName(orderStatus.getTrackingData().getCarrierName());
 			value.setShipperTrackingNumber(orderStatus.getTrackingData()
 					.getShipperTrackingNumber());
 			value.setShippingMethod(orderStatus.getTrackingData()

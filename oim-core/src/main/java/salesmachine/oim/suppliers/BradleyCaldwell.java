@@ -77,10 +77,10 @@ public class BradleyCaldwell extends Supplier {
 
 			String emailBody = "Account Number : "+accountNumber+"\n Find attached hdr file for the orders from my store.";
 			String emailSubject = hdr_uploadfilename;
-			EmailUtil.sendEmailWithAttachmentAndBCC(r.getLogin(),"support@inventorysource.com",null, null,
+			EmailUtil.sendEmailWithAttachment(r.getLogin(),"support@inventorysource.com",
 					"oim@inventorysource.com,aruppar@inventorysource.com", emailSubject, emailBody,hdr_uploadfilename,"");
 			emailSubject = dtl_uploadfilename;
-			EmailUtil.sendEmailWithAttachmentAndBCC(r.getLogin(),"support@inventorysource.com",null, null,
+			EmailUtil.sendEmailWithAttachment(r.getLogin(),"support@inventorysource.com",
 					"oim@inventorysource.com,aruppar@inventorysource.com", emailSubject, emailBody,dtl_uploadfilename,"");
 		}catch(Exception e){
 			e.printStackTrace();

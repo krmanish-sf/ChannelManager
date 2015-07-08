@@ -87,4 +87,10 @@ public class OimChannelSupplierMap implements java.io.Serializable {
 		this.deleteTm = deleteTm;
 	}
 
+	@Override
+	public String toString() {
+		return supplierPrefix + " " + enableOrderAutomation + " "
+				+ oimChannels.getChannelName() + " "
+				+ oimSuppliers.getSupplierName();
+	}
 }

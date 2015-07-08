@@ -18,17 +18,22 @@ import jxl.write.WritableWorkbook;
 import jxl.write.WriteException;
 import jxl.write.biff.RowsExceededException;
 
+import org.hibernate.Criteria;
 import org.hibernate.Query;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
+import org.hibernate.criterion.Restrictions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import salesmachine.email.EmailUtil;
+import salesmachine.hibernatedb.OimChannelSupplierMap;
 import salesmachine.hibernatedb.OimChannels;
 import salesmachine.hibernatedb.OimFields;
 import salesmachine.hibernatedb.OimFileFieldMap;
 import salesmachine.hibernatedb.OimFiletypes;
+import salesmachine.hibernatedb.OimOrderBatches;
+import salesmachine.hibernatedb.OimOrderBatchesTypes;
 import salesmachine.hibernatedb.OimOrderDetails;
 import salesmachine.hibernatedb.OimOrderStatuses;
 import salesmachine.hibernatedb.OimOrders;
@@ -203,7 +208,15 @@ public class OimSupplierOrderPlacement {
 	}
 
 	public boolean processVendorOrder(Integer vendorId, OimOrders oimOrders) {
-		log.debug("Processing orders for vendor id: " + vendorId);
+		return processVendorOrder(
+				vendorId,
+				oimOrders,
+				new OimOrderBatchesTypes(OimConstants.ORDERBATCH_TYPE_ID_MANUAL));
+	}
+
+	public boolean processVendorOrder(Integer vendorId, OimOrders oimOrders,
+			OimOrderBatchesTypes processingType) {
+		log.debug("Processing orders for VendorId: {}", vendorId);
 		// Transaction tx = null;
 		boolean ordersSent = false;
 		try {
@@ -215,6 +228,8 @@ public class OimSupplierOrderPlacement {
 			try {
 				// tx = m_dbSession.beginTransaction();
 				// Removed the order details which have been processed
+				OimOrderBatches batches = oimOrders.getOimOrderBatches();
+				OimChannels oimChannels = batches.getOimChannels();
 
 				Set unprocessedDetails = new HashSet();
 				for (Iterator detailIt = oimOrders.getOimOrderDetailses()
@@ -222,16 +237,55 @@ public class OimSupplierOrderPlacement {
 					OimOrderDetails detail = (OimOrderDetails) detailIt.next();
 					if (OimConstants.ORDER_STATUS_UNPROCESSED.equals(detail
 							.getOimOrderStatuses().getStatusId())) {
-						unprocessedDetails.add(detail);
-						countToProcess++;
+						if (detail.getOimSuppliers() == null) {
+							log.warn("Unresolved order found. Skipping to process it.");
+							continue;
+						}
+						Criteria channelSupplierMapQuery = m_dbSession
+								.createCriteria(OimChannelSupplierMap.class)
+								.add(Restrictions.eq("oimChannels.channelId",
+										oimChannels.getChannelId()))
+								.add(Restrictions.eq("oimSuppliers.supplierId",
+										detail.getOimSuppliers()
+												.getSupplierId()));
+						List<OimChannelSupplierMap> list = channelSupplierMapQuery
+								.list();
+
+						if (list.size() == 0) {
+							log.warn(
+									"Order processing rule not found for Channel: {} Supplier: {}",
+									oimChannels.getChannelName(), detail
+											.getOimSuppliers()
+											.getSupplierName());
+							continue;
+						} else {
+							log.info("Channel Supplier Mapping : {}", list);
+							for (OimChannelSupplierMap oimChannelSupplierMap : list) {
+								if (processingType.getBatchTypeId().equals(
+										OimConstants.ORDERBATCH_TYPE_ID_MANUAL)
+										|| (batches
+												.getOimOrderBatchesTypes()
+												.getBatchTypeId()
+												.equals(OimConstants.ORDERBATCH_TYPE_ID_AUTOMATED)
+												&& detail
+														.getSku()
+														.startsWith(
+																oimChannelSupplierMap
+																		.getSupplierPrefix()) && oimChannelSupplierMap
+												.getEnableOrderAutomation()
+												.equals(1))) {
+									unprocessedDetails.add(detail);
+									countToProcess++;
+								}
+							}
+						}
 					}
 				}
 				oimOrders.setOimOrderDetailses(unprocessedDetails);
 				// tx.commit();
 				orders.add(oimOrders);
 			} catch (RuntimeException e) {
-				// tx.rollback();
-				e.printStackTrace();
+				log.error(e.getMessage(), e);
 			}
 			if (countToProcess == 0) {
 				return true;
@@ -639,9 +693,7 @@ public class OimSupplierOrderPlacement {
 								fileName, ofile.getFileFormatParams(),
 								ofile.getSpecificsProvider(ovs));
 					} catch (Exception e) {
-						// TODO Auto-generated catch block
-						log.debug(e.getMessage());
-						e.printStackTrace();
+						log.error(e.getMessage(), e);
 					}
 				} else if (fileFormat == OimConstants.FILE_FORMAT_CSV) {
 					fileName = "" + vendorId + "-" + m_supplier.getSupplierId()
@@ -654,9 +706,7 @@ public class OimSupplierOrderPlacement {
 								fileName, ofile.getFileFormatParams(),
 								ofile.getSpecificsProvider(ovs));
 					} catch (Exception e) {
-						// TODO Auto-generated catch block
-						log.debug(e.getMessage());
-						e.printStackTrace();
+						log.debug(e.getMessage(), e);
 					}
 				}
 
@@ -704,9 +754,7 @@ public class OimSupplierOrderPlacement {
 					try {
 						uploader.Upload(ftpFolder, fileName, fileName);
 					} catch (Exception e) {
-						// TODO Auto-generated catch block
-						log.debug(e.getMessage());
-						e.printStackTrace();
+						log.error(e.getMessage(), e);
 						return false;
 					}
 
@@ -734,25 +782,19 @@ public class OimSupplierOrderPlacement {
 													vendorId)));
 							EmailUtil.sendEmail(emailAddress,
 									"support@inventorysource.com",
-									r.getLogin(), null,
-									"oim@inventorysource.com," + r.getLogin(),
+									r.getLogin(), "oim@inventorysource.com",
 									m_supplier.getSupplierName() + " Orders",
 									emailContent, "text/html");
 						} catch (Exception e1) {
-							// TODO Auto-generated catch block
-							e1.printStackTrace();
+							log.error(e1.getMessage(), e1);
 						}
 					} else {
-						EmailUtil.sendEmailWithAttachmentAndBCC(emailAddress,
-								"support@inventorysource.com", r.getLogin(),
-								null,
+						EmailUtil.sendEmailWithAttachment(emailAddress,
+								"support@inventorysource.com",
 								"oim@inventorysource.com," + r.getLogin(),
 								m_supplier.getSupplierName() + " Orders",
 								"Find attached the orders from my store.",
 								fileName, "");
-						// EmailUtil.sendEmailWithAttachment(emailAddress,"support@inventorysource.com",
-						// "mayank@inventorysource.com", "Orders",
-						// "Find attached the orders from my store.",fileName);
 					}
 				}
 
@@ -942,9 +984,7 @@ public class OimSupplierOrderPlacement {
 							ofile.getFileFormatParams(),
 							ofile.getSpecificsProvider(ovs));
 				} catch (Exception e) {
-					// TODO Auto-generated catch block
-					log.debug(e.getMessage());
-					e.printStackTrace();
+					log.error(e.getMessage(), e);
 				}
 			} else if (fileFormat == OimConstants.FILE_FORMAT_CSV) {
 				fileName = "" + vendorId + "-" + m_supplier.getSupplierId()
@@ -957,9 +997,7 @@ public class OimSupplierOrderPlacement {
 							ofile.getFileFormatParams(),
 							ofile.getSpecificsProvider(ovs));
 				} catch (Exception e) {
-					// TODO Auto-generated catch block
-					log.debug(e.getMessage());
-					e.printStackTrace();
+					log.error(e.getMessage(), e);
 				}
 			}
 
@@ -1002,9 +1040,7 @@ public class OimSupplierOrderPlacement {
 				try {
 					uploader.Upload(ftpFolder, fileName, fileName);
 				} catch (Exception e) {
-					// TODO Auto-generated catch block
-					log.debug(e.getMessage());
-					e.printStackTrace();
+					log.error(e.getMessage(), e);
 					return false;
 				}
 
@@ -1030,24 +1066,20 @@ public class OimSupplierOrderPlacement {
 										ovs, new Vendors(vendorId)));
 						EmailUtil.sendEmail(emailAddress,
 								"support@inventorysource.com", r.getLogin(),
-								null,
-								"oim@inventorysource.com," + r.getLogin(),
+								"oim@inventorysource.com",
 								m_supplier.getSupplierName() + " Orders",
 								emailContent, "text/html");
 					} catch (Exception e1) {
-						// TODO Auto-generated catch block
-						e1.printStackTrace();
+						log.error(e1.getMessage(), e1);
 					}
 				} else {
-					EmailUtil.sendEmailWithAttachmentAndBCC(emailAddress,
-							"support@inventorysource.com", r.getLogin(), null,
-							"oim@inventorysource.com," + r.getLogin(),
-							m_supplier.getSupplierName() + " Orders",
-							"Find attached the orders from my store.",
-							fileName, "");
-					// EmailUtil.sendEmailWithAttachment(emailAddress,"support@inventorysource.com",
-					// "mayank@inventorysource.com", "Orders",
-					// "Find attached the orders from my store.",fileName);
+					EmailUtil
+							.sendEmailWithAttachment(emailAddress,
+									"support@inventorysource.com",
+									r.getLogin(), "oim@inventorysource.com",
+									m_supplier.getSupplierName() + " Orders",
+									"Find attached the orders from my store.",
+									fileName);
 				}
 			}
 
@@ -1314,11 +1346,15 @@ public class OimSupplierOrderPlacement {
 
 	public String trackOrder(Integer vendorId, Integer orderDetailId) {
 		Session session = m_dbSession;
-		Transaction tx = null;
+		Transaction tx = session.getTransaction();
 		OrderStatus orderStatus;
+		if (tx != null && tx.isActive())
+			tx.commit();
 		tx = session.beginTransaction();
 		OimOrderDetails oimOrderDetails = (OimOrderDetails) session.get(
 				OimOrderDetails.class, orderDetailId);
+		log.info("Tracking Status for Vendor#{} SKU# {}", vendorId,
+				oimOrderDetails.getSku());
 		HasTracking s = null;
 		OimVendorSuppliers oimVendorSuppliers = null;
 		Query query = session

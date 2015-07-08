@@ -64,7 +64,7 @@ public class Petra extends Supplier {
 			OimSupplierOrderPlacement.generateCsvFile(orders,getFileFieldMap(), uploadfilename, fileFormatParams, new PetraFileSpecificsProvider(session, ovs, v));						
 			String emailAddress = "flatfileorders@petra.com";			
 			//EmailUtil.sendEmailWithAttachment(emailAddress,"support@inventorysource.com", "mayank@inventorysource.com", "Orders", "Find attached the orders from my store.",uploadfilename);
-			EmailUtil.sendEmailWithAttachmentAndBCC(emailAddress,"support@inventorysource.com",r.getLogin(), null,"oim@inventorysource.com,"+r.getLogin(), "Petra Orders", "Find attached the orders from my store.",uploadfilename,"");
+			EmailUtil.sendEmailWithAttachment(emailAddress,"support@inventorysource.com","oim@inventorysource.com,"+r.getLogin(), "Petra Orders", "Find attached the orders from my store.",uploadfilename,"");
 		} catch (Exception e1) {
 			// TODO Auto-generated catch block
 			e1.printStackTrace();
