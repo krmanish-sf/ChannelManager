@@ -34,4 +34,13 @@ public abstract class ApplicationProperties extends Properties {
 		return instance.getProperty("com.is.cm.logshomedir");
 	}
 
+	public static boolean showReport() {
+		try {
+			return Boolean.parseBoolean(instance
+					.getProperty("com.is.cm.report.show"));
+		} catch (Exception e) {
+			LOG.warn(e.getMessage());
+			return false;
+		}
+	}
 }

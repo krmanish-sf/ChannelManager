@@ -14,6 +14,8 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.servlet.ModelAndView;
 
+import com.is.cm.core.domain.VendorContext;
+
 import salesmachine.hibernatehelper.SessionManager;
 import salesmachine.util.ApplicationProperties;
 
@@ -72,9 +74,9 @@ public class AuthenticationInterceptor implements HandlerInterceptor {
 			res.setStatus(401);
 			return false;
 		}
-		MyThreadLocal.set(vendorId);
+		VendorContext.set(vendorId);
 		SessionManager.currentSession();
-		LOG.debug("Setting vendorId# {} in ThreadLocal ", MyThreadLocal.get());
+		LOG.debug("Setting vendorId# {} in ThreadLocal ", VendorContext.get());
 		return true;
 	}
 
@@ -83,25 +85,8 @@ public class AuthenticationInterceptor implements HandlerInterceptor {
 			HttpServletResponse arg1, Object arg2, Exception arg3)
 			throws Exception {
 		LOG.debug("Removing vendorId# {} from ThreadLocal ",
-				MyThreadLocal.get());
+				VendorContext.get());
 		SessionManager.closeSession();
-		MyThreadLocal.unset();
-	}
-
-	public static class MyThreadLocal {
-
-		public static final ThreadLocal<Integer> userThreadLocal = new ThreadLocal<Integer>();
-
-		public static void set(Integer user) {
-			userThreadLocal.set(user);
-		}
-
-		public static void unset() {
-			userThreadLocal.remove();
-		}
-
-		public static Integer get() {
-			return userThreadLocal.get();
-		}
+		VendorContext.unset();
 	}
 }

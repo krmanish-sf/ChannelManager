@@ -2,6 +2,10 @@ package com.is.cm.core.domain;
 
 import java.util.Date;
 
+import org.springframework.beans.BeanUtils;
+
+import salesmachine.hibernatedb.OimOrderDetailsMods;
+
 public class OrderDetailMod extends DomainBase implements java.io.Serializable {
 	private static final long serialVersionUID = 6443276437112277777L;
 	private Integer modId;
@@ -116,4 +120,11 @@ public class OrderDetailMod extends DomainBase implements java.io.Serializable {
 		this.quantity = quantity;
 	}
 
+	public static final OrderDetailMod from(OimOrderDetailsMods mods) {
+		if (mods == null)
+			return null;
+		OrderDetailMod mod = new OrderDetailMod();
+		BeanUtils.copyProperties(mods, mod);
+		return mod;
+	}
 }

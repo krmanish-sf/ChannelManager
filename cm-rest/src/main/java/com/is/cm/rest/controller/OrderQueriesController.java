@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -16,11 +17,15 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
 import com.is.cm.core.domain.Order;
+import com.is.cm.core.domain.OrderDetail;
+import com.is.cm.core.domain.OrderDetailMod;
+import com.is.cm.core.domain.VendorContext;
 import com.is.cm.core.event.ReadCollectionEvent;
+import com.is.cm.core.event.ReadEvent;
 import com.is.cm.core.event.RequestReadEvent;
 import com.is.cm.core.event.orders.AllOrdersEvent;
+import com.is.cm.core.event.orders.OrderDetailUpdatedEvent;
 import com.is.cm.core.event.orders.RequestAllOrdersEvent;
-import com.is.cm.core.security.AuthenticationInterceptor.MyThreadLocal;
 import com.is.cm.core.service.OrderService;
 
 @Controller
@@ -58,10 +63,20 @@ public class OrderQueriesController {
 	@ResponseBody
 	public Collection<Order> searchOrders(
 			@RequestBody Map<String, String> filters) {
-		LOG.debug("Getting orders for vid: {}", MyThreadLocal.get());
+		LOG.debug("Getting orders for vid: {}", VendorContext.get());
 		Map<String, String> o = (Map<String, String>) filters;
 		ReadCollectionEvent<Order> details = orderService
 				.find(new RequestReadEvent<Map<String, String>>(o));
 		return details.getEntity();
+	}
+
+	@RequestMapping(method = { RequestMethod.GET }, value = "/orderdetails/{detailId}/modifications")
+	public ResponseEntity<Collection<OrderDetailMod>> getOrderDetailModifications(
+			@PathVariable int detailId) {
+		ReadCollectionEvent<OrderDetailMod> event = orderService
+				.getOrderDetailModifications(new ReadEvent<OrderDetailMod>(
+						detailId));
+		return new ResponseEntity<Collection<OrderDetailMod>>(
+				event.getEntity(), HttpStatus.OK);
 	}
 }

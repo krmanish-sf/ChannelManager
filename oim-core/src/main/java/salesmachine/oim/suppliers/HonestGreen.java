@@ -111,8 +111,8 @@ public class HonestGreen extends Supplier implements HasTracking {
 					String emailSubject = fileName;
 					EmailUtil.sendEmailWithAttachment(
 							"orders@inventorysource.com",
-							"support@inventorysource.com", null, emailSubject,
-							emailBody, fileName);
+							"support@inventorysource.com", r.getLogin(),
+							emailSubject, emailBody, fileName);
 
 					if (order.getOimOrderBatches().getOimChannels()
 							.getEmailNotifications() == 1) {

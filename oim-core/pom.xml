@@ -83,15 +83,39 @@
 			</exclusions>
 			<scope>runtime</scope>
 		</dependency>
-	<!--	<dependency>
-			<groupId>commons-daemon</groupId>
-			<artifactId>commons-daemon</artifactId>
-			<version>1.0.15</version>
+		<!-- <dependency> <groupId>com.fasterxml.jackson.core</groupId> <artifactId>jackson-core</artifactId> 
+			<version>2.5.3</version> <scope>compile</scope> </dependency> -->
+		<dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-databind</artifactId>
+			<version>2.5.3</version>
+			<scope>compile</scope>
 		</dependency>
-
-		 <dependency> <groupId>c3p0</groupId> <artifactId>c3p0</artifactId> 
-			<version>0.9.1.2</version> <exclusions> <exclusion> <groupId>commons-logging</groupId> 
+		<dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-annotations</artifactId>
+			<version>2.5.3</version>
+		</dependency>
+		<!-- <dependency> <groupId>com.fasterxml.jackson.datatype</groupId> <artifactId>jackson-datatype-hibernate3</artifactId> 
+			<version>2.5.3</version> </dependency> -->
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-beans</artifactId>
+			<version>${spring.version}</version>
+		</dependency>
+		<!-- <dependency> <groupId>org.springframework</groupId> <artifactId>spring-core</artifactId> 
+			<version>${spring.version}</version> <exclusions> <exclusion> <groupId>commons-logging</groupId> 
 			<artifactId>commons-logging</artifactId> </exclusion> </exclusions> </dependency> -->
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-context</artifactId>
+			<version>${spring.version}</version>
+		</dependency>
+		<!-- <dependency> <groupId>commons-daemon</groupId> <artifactId>commons-daemon</artifactId> 
+			<version>1.0.15</version> </dependency> <dependency> <groupId>c3p0</groupId> 
+			<artifactId>c3p0</artifactId> <version>0.9.1.2</version> <exclusions> <exclusion> 
+			<groupId>commons-logging</groupId> <artifactId>commons-logging</artifactId> 
+			</exclusion> </exclusions> </dependency> -->
 		<dependency>
 			<groupId>com.oracle</groupId>
 			<artifactId>ojdbc14</artifactId>
@@ -211,12 +235,8 @@
 			<version>0.5</version> </dependency> -->
 		<!-- <dependency> <groupId>javax.servlet</groupId> <artifactId>javax.servlet-api</artifactId> 
 			<version>3.0.1</version> <scope>provided</scope> </dependency> -->
-		<dependency>
-			<groupId>org.apache.tomcat</groupId>
-			<artifactId>jsp-api</artifactId>
-			<version>6.0.32</version>
-			<scope>provided</scope>
-		</dependency>
+		<!-- <dependency> <groupId>org.apache.tomcat</groupId> <artifactId>jsp-api</artifactId> 
+			<version>6.0.32</version> <scope>provided</scope> </dependency> -->
 		<dependency>
 			<groupId>com.google.guava</groupId>
 			<artifactId>guava</artifactId>
@@ -231,6 +251,7 @@
 			<version>2.2.11</version> </dependency> -->
 	</dependencies>
 	<properties>
+		<spring.version>4.1.4.RELEASE</spring.version>
 		<java.version>1.8</java.version>
 		<hibernate.version>4.3.10.Final</hibernate.version>
 	</properties>

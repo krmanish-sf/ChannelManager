@@ -9,6 +9,7 @@ import salesmachine.oim.stores.modal.shop.order.CCTRANSMISSION;
 
 import com.is.cm.core.domain.Order;
 import com.is.cm.core.domain.OrderDetail;
+import com.is.cm.core.domain.OrderDetailMod;
 
 public interface OrderRepository {
 
@@ -43,4 +44,6 @@ public interface OrderRepository {
 	List<Order> findProcessedOrders();
 
 	List<Order> save(CCTRANSMISSION entity);
+
+	List<OrderDetailMod> findOrderDetailModifications(int orderDetailId);
 }

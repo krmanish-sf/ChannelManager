@@ -21,6 +21,10 @@ import salesmachine.hibernatedb.OimShippingMethod;
 import salesmachine.hibernatedb.OimSupplierShippingOverride;
 import salesmachine.hibernatehelper.SessionManager;
 
+import com.is.cm.core.domain.OrderDetailMod;
+import com.is.cm.core.persistance.OrderRepository;
+import com.is.cm.core.persistance.OrderRepositoryDB;
+
 public class HibernateTest {
 
 	private static final Logger log = LoggerFactory
@@ -102,5 +106,14 @@ public class HibernateTest {
 		tx.commit();
 		log.debug("Transaction 2 Committed..");
 		// session.close();
+	}
+
+	@Test
+	public void testOrderDetailMods() {
+		OrderRepository db = new OrderRepositoryDB();
+		List<OrderDetailMod> findOrderDetailModifications = db
+				.findOrderDetailModifications(8963830);
+		Assert.assertNotNull(findOrderDetailModifications);
+		Assert.assertTrue(findOrderDetailModifications.size() > 0);
 	}
 }

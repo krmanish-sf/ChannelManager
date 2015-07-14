@@ -121,8 +121,24 @@ public class EmailUtil {
 
 	/**
 	 * Sends an email, with email information specified in the parameters.
-	 *
+	 * 
+	 * @param to
+	 *            comma(,) separated String of email addresses to send email TO.
+	 * @param from
+	 *            Email Address mail is being sent from.
+	 * @param cc
+	 *            comma(,) separated String of email addresses to send email as
+	 *            CC.
+	 * @param subject
+	 *            String containing Email subject
+	 * @param message
+	 *            String containing Email body message
+	 * @param content_type
+	 *            String depicting MimeType of the email.
+	 * @param useHeader
+	 * 
 	 * @return If an error occurs return -1 else return 1
+	 *
 	 */
 	public static int sendEmail(String to, String from, String cc,
 			String subject, String message, String content_type,

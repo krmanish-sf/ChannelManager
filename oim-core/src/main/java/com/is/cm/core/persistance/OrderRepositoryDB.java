@@ -25,6 +25,7 @@ import salesmachine.hibernatedb.OimChannels;
 import salesmachine.hibernatedb.OimOrderBatches;
 import salesmachine.hibernatedb.OimOrderBatchesTypes;
 import salesmachine.hibernatedb.OimOrderDetails;
+import salesmachine.hibernatedb.OimOrderDetailsMods;
 import salesmachine.hibernatedb.OimOrderStatuses;
 import salesmachine.hibernatedb.OimOrders;
 import salesmachine.hibernatedb.OimSuppliers;
@@ -39,6 +40,7 @@ import salesmachine.util.StringHandle;
 
 import com.is.cm.core.domain.Order;
 import com.is.cm.core.domain.OrderDetail;
+import com.is.cm.core.domain.OrderDetailMod;
 
 public class OrderRepositoryDB extends RepositoryBase implements
 		OrderRepository {
@@ -1046,5 +1048,21 @@ public class OrderRepositoryDB extends RepositoryBase implements
 			return oimChannels;
 		}
 		return null;
+	}
+
+	@Override
+	public List<OrderDetailMod> findOrderDetailModifications(int orderDetailId) {
+		Session currentSession = SessionManager.currentSession();
+		Criteria orderDetailCriteria = currentSession
+				.createCriteria(OimOrderDetailsMods.class)
+				.add(Restrictions.eq("detailId", orderDetailId))
+				.addOrder(org.hibernate.criterion.Order.asc("insertionTm"));
+		List<OrderDetailMod> modList = new ArrayList<OrderDetailMod>();
+		for (OimOrderDetailsMods mods : (List<OimOrderDetailsMods>) orderDetailCriteria
+				.list()) {
+			OrderDetailMod mod = OrderDetailMod.from(mods);
+			modList.add(mod);
+		}
+		return modList;
 	}
 }

@@ -18,7 +18,7 @@
 		<property name="hibernate.c3p0.automaticTestTable">con_test</property>
 		<property name="hibernate.c3p0.maxConnectionAge">300</property>
 		<property name="hibernate.current_session_context_class">thread</property>
-		
+
 		<mapping resource="salesmachine/hibernatedb/Reps.hbm.xml" />
 		<mapping resource="salesmachine/hibernatedb/Vendors.hbm.xml" />
 		<mapping resource="salesmachine/hibernatedb/OimChannelAccessDetails.hbm.xml" />
@@ -47,6 +47,7 @@
 		<mapping resource="salesmachine/hibernatedb/OimOrderBatchesTypes.hbm.xml" />
 		<mapping resource="salesmachine/hibernatedb/OimVendorSuppliers.hbm.xml" />
 		<mapping resource="salesmachine/hibernatedb/OimOrderDetails.hbm.xml" />
+		<mapping resource="salesmachine/hibernatedb/OimOrderDetailsMods.hbm.xml" />
 		<mapping resource="salesmachine/hibernatedb/OimVendorsuppOrderhistory.hbm.xml" />
 		<mapping resource="salesmachine/hibernatedb/Product.hbm.xml" />
 		<mapping resource="salesmachine/hibernatedb/OimSupplierShippingMethods.hbm.xml" />

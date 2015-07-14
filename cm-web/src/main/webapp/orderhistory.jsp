@@ -217,7 +217,7 @@
 										<!-- /.modal-content -->
 									</div>
 									<!-- / mobile.modal -->
-									<div aria-hidden="true" role="dialog" tabindex="-1"
+									<!-- <div aria-hidden="true" role="dialog" tabindex="-1"
 								id="myModalResolvemob" class="modal fade">
 										<div class="modal-dialog">
 											<div class="modal-content">
@@ -254,12 +254,12 @@
 														</div>
 													</div>
 
-													<!-- PAGE CONTENT ENDS -->
+													PAGE CONTENT ENDS
 												</div>
-												<!-- /.col -->
+												/.col
 											</div>
 										</div>
-									</div>
+									</div> -->
 									<!-- /.modal-content -->
 									<div aria-hidden="true" role="dialog" tabindex="-1"
 								id="myModaledit" class="modal fade">
@@ -431,53 +431,11 @@
                                 </tr>
                               </thead>
                               <tbody>
-                               <%--  <tr>
-                                  <td><input type="text"
-																		value="RS1234" readonly=""
-																		class="pull-right width-100" name="billno"></td>
-                                  <td><input type="text"
-																		value="Ravish Test Product" readonly=""
-																		class="pull-right width-100" name="orderdate"></td>
-                                  <td><input type="text" value="4"
-																		readonly="" class="pull-right width-100"
-																		name="Quantity"></td>
-                                  <td><input type="text"
-																		value="0.0" readonly="" class="pull-right width-100"
-																		name="SalePrice"></td>
-                                  <td><input type="text"
-																		value="Unprocessed" readonly=""
-																		class="pull-right width-100" name="Status"></td>
-                                </tr> --%>
                               </tbody>
                             </table>
                           </div>
                         </div>
                       </div>
-                      <!-- <div class="row">
-                              <div class="col-sm-4">
-                                <label>Sku</label>
-                                <input type="text" name="billno" class="pull-right" readonly value="RS1234"/>
-                              </div>
-                              <div class="col-sm-4">
-                                <label>Name</label>
-                                <input type="text" name="orderdate" class="pull-right" readonly value="Ravish Test Product"/>
-                              </div>
-                              <div class="col-sm-4">
-                                <label>Quantity</label>
-                                <input type="text" name="Quantity" class="pull-right" readonly value="4"/>
-                              </div>
-                            </div>
-                            <div class="space-4"></div>
-                            <div class="row">
-                              <div class="col-sm-4">
-                                <label>SalePrice</label>
-                                <input type="text" name="SalePrice" class="pull-right" readonly value="0.0"/>
-                              </div>
-                              <div class="col-sm-4">
-                                <label>Status</label>
-                                <input type="text" name="Status" class="pull-right" readonly value="Unprocessed"/>
-                              </div>
-                            </div>--> 
                     </div>
                     <!-- PAGE CONTENT ENDS --> 
                   </div>
@@ -490,6 +448,40 @@
 		</div>
 	</div>		
 	<!-- /.page-content -->
+	
+	<div aria-hidden="true" role="dialog" tabindex="-1"
+			id="myModalOrderMods" class="modal fade">
+										<div class="modal-dialog">
+											<div class="modal-content">
+												<div class="modal-header">
+													<button aria-hidden="true" data-dismiss="modal"
+							class="close" type="button">&times;</button>
+													<h4 class="modal-title">Order Audit Trail</h4>
+												</div>
+												<div class="modal-body ">
+													<div class="row">
+														<div class="col-xs-12">
+															<!-- PAGE CONTENT BEGINS -->
+															<table id="tableordermods" class="table">
+																<thead>
+																	<tr>
+																		<th>Sku</th>
+																		<th>Comment</th>
+																		<th>Quantity</th>
+																		<th>Sale Price</th>
+																		<th>Status</th>
+																		<th>Change Date</th>
+																	</tr>
+																</thead>
+																<tbody>
+																</tbody>
+															</table>
+														</div>
+													</div>
+												</div>
+											</div>
+										</div>
+									</div>
 	</jsp:attribute>
 	<jsp:attribute name="pagejs">
 	<!-- inline scripts related to this page -->
@@ -514,12 +506,10 @@
 		}, {
 			"statusId" : 7,
 			"statusValue" : "Shipped"
-		}  ];
+		} ];
+
 		function a(e) {
-			console.log(e[0]);
 			var order = table_xy.row(e[0]).data();
-			console.log(order.orderId);
-			console.log(order);
 			$('#tableorderdetails')
 					.dataTable(
 							{
@@ -815,6 +805,7 @@
 									});
 									$(this).CRUD({
 										"method" : "POST",
+										"cache" : true,
 										"url" : 'aggregators/orders/search',
 										"data" : JSON.stringify(map),
 										"message" : true,
@@ -833,18 +824,22 @@
 												var text = '';
 												for (var i = 0; i < order.oimOrderDetailses.length; i++) {
 													var orderDetail = order.oimOrderDetailses[i];
+													text += '<div>';
+													text += '<a href="#myModalOrderMods" title="Click to view Order Audit trail." data-toggle="modal" onclick="$.CM.getOrderModification('
+															+ orderDetail.detailId
+															+ ');"><strong>'
+															+ orderDetail.sku
+															+ "</strong></a>";
 													if (orderDetail.supplierOrderStatus) {
-														text += "<b>"
-																+ orderDetail.sku
-																+ "</b>";
 														text += ':<span id="orderStatus'+orderDetail.detailId+'">';
 														text += orderDetail.supplierOrderStatus
 																+ '</span>';
 													}
 													if (orderDetail.supplierOrderNumber)
-														text += '<br><a style="cursor:pointer;" onclick="$.CM.trackOrder('
+														text += '<br><a style="cursor:pointer;" title="Click to refresh tracking" onclick="$.CM.trackOrder('
 																+ orderDetail.detailId
-																+ ');">Refresh</a>';
+																+ ');"><i class="icon-refresh"></i></a>';
+													text += '</div>';
 												}
 												return text;
 											},

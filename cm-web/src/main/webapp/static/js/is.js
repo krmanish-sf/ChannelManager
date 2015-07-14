@@ -602,6 +602,63 @@ function evalArray(obj, expr) {
 			message : true
 		});
 	};
+	$.CM.getOrderModification = function(detailId) {
+		$('#tableordermods')
+				.DataTable(
+						{
+							bSort : false,
+							bFilter : false,
+							"bDestroy" : true,
+							"sAjaxDataProp" : "",
+							"ajax" : function(data, callback, settings) {
+								$(this)
+										.CRUD(
+												{
+													"method" : "GET",
+													"url" : 'aggregators/orders/orderdetails/'
+															+ detailId
+															+ '/modifications',
+													"message" : true,
+													"success" : function(d) {
+														callback(d);
+													}
+												});
+							},
+							"aoColumns" : [
+									{
+										"mData" : "sku"
+									},
+									{
+										"mData" : "operation"
+									},
+									{
+										"mData" : "quantity"
+									},
+									{
+										"mData" : "salePrice"
+									},
+									{
+										"mData" : function(orderDetail) {
+											var status = '';
+											for (var i = 0; i < STATUS.length; i++) {
+												if (STATUS[i].statusId == orderDetail.statusId)
+													status = STATUS[i].statusValue
+											}
+											return status;
+										}
+									},
+									{
+										"mData" : function(d) {
+											return "<span style='display:none'>"
+													+ d.insertionTm
+													+ "</span>"
+													+ new Date(d.insertionTm)
+															.toLocaleString();
+										}
+									} ]
+						});
+	};
+
 	$.CM.processOrders = function() {
 		$(this).CRUD({
 			url : 'aggregators/orders/processed/bulk/process',

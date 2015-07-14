@@ -6,9 +6,11 @@ import java.util.Map;
 import salesmachine.oim.stores.modal.shop.order.CCTRANSMISSION;
 
 import com.is.cm.core.domain.Order;
+import com.is.cm.core.domain.OrderDetailMod;
 import com.is.cm.core.event.CreateEvent;
 import com.is.cm.core.event.CreatedEvent;
 import com.is.cm.core.event.ReadCollectionEvent;
+import com.is.cm.core.event.ReadEvent;
 import com.is.cm.core.event.RequestReadEvent;
 import com.is.cm.core.event.UpdateEvent;
 import com.is.cm.core.event.UpdatedEvent;
@@ -46,5 +48,8 @@ public interface OrderService {
 	UpdatedEvent<String> trackOrderStatus(UpdateEvent<Integer> updateEvent);
 
 	CreatedEvent<List<Order>> saveOrder(CreateEvent<CCTRANSMISSION> event);
+
+	ReadCollectionEvent<OrderDetailMod> getOrderDetailModifications(
+			ReadEvent<OrderDetailMod> readEvent);
 
 }

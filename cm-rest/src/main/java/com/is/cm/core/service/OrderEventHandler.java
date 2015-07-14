@@ -16,9 +16,11 @@ import salesmachine.oim.api.OimConstants;
 import salesmachine.oim.stores.modal.shop.order.CCTRANSMISSION;
 
 import com.is.cm.core.domain.Order;
+import com.is.cm.core.domain.OrderDetailMod;
 import com.is.cm.core.event.CreateEvent;
 import com.is.cm.core.event.CreatedEvent;
 import com.is.cm.core.event.ReadCollectionEvent;
+import com.is.cm.core.event.ReadEvent;
 import com.is.cm.core.event.RequestReadEvent;
 import com.is.cm.core.event.UpdateEvent;
 import com.is.cm.core.event.UpdatedEvent;
@@ -197,6 +199,16 @@ public class OrderEventHandler implements OrderService {
 	public CreatedEvent<List<Order>> saveOrder(CreateEvent<CCTRANSMISSION> event) {
 		List<Order> orders = orderRepository.save(event.getEntity());
 		return new CreatedEvent<List<Order>>(0, orders);
+	}
+
+	@Override
+	public ReadCollectionEvent<OrderDetailMod> getOrderDetailModifications(
+			ReadEvent<OrderDetailMod> readEvent) {
+		List<OrderDetailMod> findOrderDetailModifications = orderRepository
+				.findOrderDetailModifications(readEvent.getId());
+
+		return new ReadCollectionEvent<OrderDetailMod>(
+				findOrderDetailModifications);
 	}
 
 }

@@ -224,11 +224,11 @@
 			<artifactId>commons-httpclient</artifactId>
 			<version>3.1</version>
 		</dependency>
-		<dependency>
+		<!-- <dependency>
 			<groupId>HTTPClient</groupId>
 			<artifactId>HTTPClient</artifactId>
 			<version>0.3-3</version>
-		</dependency>
+		</dependency> -->
 		<dependency>
 			<groupId>oracle</groupId>
 			<artifactId>xmlparserv2</artifactId>

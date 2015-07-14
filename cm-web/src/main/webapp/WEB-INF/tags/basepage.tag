@@ -1,7 +1,7 @@
-<%@tag import="com.inventorysource.cm.web.config.ApplicationProperties"%><%@tag
-	import="org.springframework.context.annotation.Import"%><%@tag
-	import="salesmachine.hibernatedb.Reps"%><%@tag language="java"
-	trimDirectiveWhitespaces="true"
+<%@tag import="com.inventorysource.cm.web.config.ApplicationProperties"%>
+<%@tag import="org.springframework.context.annotation.Import"%>
+<%@tag import="salesmachine.hibernatedb.Reps"%>
+<%@tag language="java" trimDirectiveWhitespaces="true"
 	description="Base content Page template" pageEncoding="UTF-8"%><%@taglib
 	uri="http://java.sun.com/jsp/jstl/core" prefix="c"%><%@taglib
 	uri="http://java.sun.com/jsp/jstl/functions" prefix="fn"%><%@attribute
@@ -253,7 +253,8 @@
 							</li>
 						</ul>
 					</li>
-					<c:if test="${reps.getKbadminAllowed()==1}">
+					<c:if
+						test="${ ApplicationProperties.showReport() && reps.getKbadminAllowed()==1}">
 						<li
 							<c:if test="${fn:containsIgnoreCase(pageContext.request.requestURI, \"system-report.jsp\")}"> class="active" </c:if>>
 							<a href="system-report.jsp"> <i class="icon-cog"></i> <span

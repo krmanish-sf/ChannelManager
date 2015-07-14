@@ -7,7 +7,6 @@ import java.util.Set;
 import org.springframework.beans.BeanUtils;
 
 import salesmachine.hibernatedb.OimOrderBatches;
-import salesmachine.hibernatedb.OimOrders;
 import salesmachine.hibernatedb.OimUploadedFiles;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
