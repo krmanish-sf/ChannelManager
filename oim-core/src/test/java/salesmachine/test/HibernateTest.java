@@ -108,7 +108,7 @@ public class HibernateTest {
 		// session.close();
 	}
 
-	@Test
+	//@Test
 	public void testOrderDetailMods() {
 		OrderRepository db = new OrderRepositoryDB();
 		List<OrderDetailMod> findOrderDetailModifications = db

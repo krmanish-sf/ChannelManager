@@ -64,6 +64,8 @@ public class OrderTrackingTask extends TimerTask {
 			log.info("Order Tracking Task Queued up...");
 		} catch (Throwable e) {
 			log.error("FATAL ERROR", e);
+			AutomationManager.sendNotification(
+					"ORDER TRACKING ERROR: " + e.getMessage(), e.toString());
 		}
 	}
 

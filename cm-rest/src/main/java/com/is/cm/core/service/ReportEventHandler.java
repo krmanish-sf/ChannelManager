@@ -5,6 +5,7 @@ import java.util.Map;
 
 import com.is.cm.core.domain.ReportDataWrapper;
 import com.is.cm.core.domain.VendorsuppOrderhistory;
+import com.is.cm.core.event.ReadCollectionEvent;
 import com.is.cm.core.event.ReadEvent;
 import com.is.cm.core.event.RequestReadEvent;
 import com.is.cm.core.event.reports.MaxReportEvent;
@@ -77,5 +78,12 @@ public class ReportEventHandler implements ReportService {
 								.getDateRange().get("startDate"),
 						pagedDataEvent.getDateRange().get("endDate"));
 		return new ReadEvent<List<VendorsuppOrderhistory>>(0, data);
+	}
+
+	@Override
+	public ReadCollectionEvent getAlerts(
+			RequestReadEvent requestReadEvent) {
+		List alertAndErrors = reportRepository.getSystemAlerts();
+		return new ReadCollectionEvent(alertAndErrors);
 	}
 }

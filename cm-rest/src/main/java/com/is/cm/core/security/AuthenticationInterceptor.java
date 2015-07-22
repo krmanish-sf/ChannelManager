@@ -14,19 +14,20 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.servlet.ModelAndView;
 
-import com.is.cm.core.domain.VendorContext;
-
 import salesmachine.hibernatehelper.SessionManager;
 import salesmachine.util.ApplicationProperties;
+
+import com.is.cm.core.domain.VendorContext;
 
 public class AuthenticationInterceptor implements HandlerInterceptor {
 	private static final Logger LOG = LoggerFactory
 			.getLogger(AuthenticationInterceptor.class);
 
 	@Override
-	public void postHandle(HttpServletRequest arg0, HttpServletResponse arg1,
-			Object arg2, ModelAndView arg3) throws Exception {
-		// DO NOTHING
+	public void postHandle(HttpServletRequest arg0,
+			HttpServletResponse response, Object arg2, ModelAndView arg3)
+			throws Exception {
+
 	}
 
 	@Override
@@ -40,6 +41,9 @@ public class AuthenticationInterceptor implements HandlerInterceptor {
 			LOG.info("Content-Type:" + req.getContentType());
 			if (req.getParameter("data") != null)
 				LOG.info(req.getParameter("data"));
+			return true;
+		} else if (req.getServletPath().contains("modifications")
+				|| req.getServletPath().contains("system")) {
 			return true;
 		}
 		LOG.debug(

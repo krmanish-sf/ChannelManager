@@ -49,8 +49,18 @@ public class AutomationManager {
 	}
 
 	private static void sendNotification() {
+		String subject = "Channel Manager Order Automation Service Stopped.";
+		String message = "Channel Manager Order Automation Service Stopped On HOST: "
+				+ ApplicationProperties.getHostName();
+		log.error(subject);
+		sendNotification(subject, message);
+		System.exit(0);
 
-		log.error("Channel Manager Order Automation Service Stopped.");
+	}
+
+	public static void sendNotification(String subject, String message) {
+
+		log.error(subject);
 		EmailUtil
 				.sendEmail(
 						ApplicationProperties
@@ -59,10 +69,7 @@ public class AutomationManager {
 								.getProperty(ApplicationProperties.AUTOMATION_MONITORING_EMAIL_FROM),
 						ApplicationProperties
 								.getProperty(ApplicationProperties.AUTOMATION_MONITORING_EMAIL_CC),
-						"Channel Manager Order Automation Service Stopped.",
-						"Channel Manager Order Automation Service Stopped On HOST: "
-								+ ApplicationProperties.getHostName());
-		System.exit(0);
-
+						subject, message);
 	}
+
 }

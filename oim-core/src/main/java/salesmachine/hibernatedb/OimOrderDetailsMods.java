@@ -9,6 +9,10 @@ import java.util.Date;
  */
 public class OimOrderDetailsMods implements java.io.Serializable {
 
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 	private Integer modId;
 	private String operation;
 	private Integer detailId;
@@ -16,7 +20,7 @@ public class OimOrderDetailsMods implements java.io.Serializable {
 	private String sku;
 	private Double costPrice;
 	private Double salePrice;
-	private Integer supplierId;
+	private OimSuppliers oimSuppliers;
 	private Date processingTm;
 	private Date insertionTm;
 	private Integer statusId;
@@ -31,7 +35,7 @@ public class OimOrderDetailsMods implements java.io.Serializable {
 
 	public OimOrderDetailsMods(Integer modId, String operation,
 			Integer detailId, Integer orderId, String sku, Double costPrice,
-			Double salePrice, Integer supplierId, Date processingTm,
+			Double salePrice, OimSuppliers oimSuppliers, Date processingTm,
 			Date insertionTm, Integer statusId, Integer quantity) {
 		this.modId = modId;
 		this.operation = operation;
@@ -40,7 +44,7 @@ public class OimOrderDetailsMods implements java.io.Serializable {
 		this.sku = sku;
 		this.costPrice = costPrice;
 		this.salePrice = salePrice;
-		this.supplierId = supplierId;
+		this.setOimSuppliers(oimSuppliers);
 		this.processingTm = processingTm;
 		this.insertionTm = insertionTm;
 		this.statusId = statusId;
@@ -103,14 +107,6 @@ public class OimOrderDetailsMods implements java.io.Serializable {
 		this.salePrice = salePrice;
 	}
 
-	public Integer getSupplierId() {
-		return this.supplierId;
-	}
-
-	public void setSupplierId(Integer supplierId) {
-		this.supplierId = supplierId;
-	}
-
 	public Date getProcessingTm() {
 		return this.processingTm;
 	}
@@ -141,6 +137,14 @@ public class OimOrderDetailsMods implements java.io.Serializable {
 
 	public void setQuantity(Integer quantity) {
 		this.quantity = quantity;
+	}
+
+	public OimSuppliers getOimSuppliers() {
+		return oimSuppliers;
+	}
+
+	public void setOimSuppliers(OimSuppliers oimSuppliers) {
+		this.oimSuppliers = oimSuppliers;
 	}
 
 }

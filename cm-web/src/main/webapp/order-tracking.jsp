@@ -46,6 +46,10 @@
 								
 								
 								
+								
+								
+								
+								
 								</thead>
 									</table>
 									</div>
@@ -75,7 +79,7 @@
 		}, {
 			"statusId" : 6,
 			"statusValue" : "Canceled"
-		} , {
+		}, {
 			"statusId" : 7,
 			"statusValue" : "Shipped"
 		} ];
@@ -104,22 +108,22 @@
 										},
 										{
 											"mData" : function(order) {
-
 												var text = '';
 												for (var i = 0; i < order.oimOrderDetailses.length; i++) {
 													var orderDetail = order.oimOrderDetailses[i];
+													text += '<strong>'
+															+ orderDetail.sku
+															+ '</strong>';
+													if (orderDetail.supplierOrderNumber)
+														text += '&nbsp;<a style="cursor:pointer;" title="Click to refresh tracking" onclick="$.CM.trackOrder('
+																+ orderDetail.detailId
+																+ ');"><i class="icon-refresh"></i></a>';
 													if (orderDetail.supplierOrderStatus) {
-														text += "<b>"
-																+ orderDetail.sku
-																+ "</b>";
-														text += '&nbsp;<span id="orderStatus'+orderDetail.detailId+'">';
+														text += '<br/><span id="orderStatus'+orderDetail.detailId+'">';
 														text += orderDetail.supplierOrderStatus
 																+ '</span>';
 													}
-													if (orderDetail.supplierOrderNumber)
-														text += '<br><a style="cursor:pointer;" onclick="$.CM.trackOrder('
-																+ orderDetail.detailId
-																+ ');">Refresh</a><br/>';
+													text += '<div class="space-2"></div>';
 												}
 												return text;
 											},

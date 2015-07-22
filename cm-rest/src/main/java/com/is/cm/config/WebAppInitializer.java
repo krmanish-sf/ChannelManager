@@ -2,6 +2,7 @@ package com.is.cm.config;
 
 import java.util.Set;
 
+import javax.servlet.FilterRegistration.Dynamic;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletRegistration;
 
@@ -13,6 +14,8 @@ import org.springframework.web.context.WebApplicationContext;
 import org.springframework.web.context.support.AnnotationConfigWebApplicationContext;
 import org.springframework.web.servlet.DispatcherServlet;
 
+import com.is.cm.rest.controller.SimpleCORSFilter;
+
 public class WebAppInitializer implements WebApplicationInitializer {
 	private static final String SERVLET_URL = "/";
 	private static Logger LOG = LoggerFactory
@@ -21,6 +24,9 @@ public class WebAppInitializer implements WebApplicationInitializer {
 	@Override
 	public void onStartup(ServletContext servletContext) {
 		WebApplicationContext rootContext = createRootContext(servletContext);
+		Dynamic addFilter = servletContext.addFilter("crosFilter",
+				SimpleCORSFilter.class);
+		addFilter.addMappingForUrlPatterns(null, false, "/*");
 		configureSpringMvc(servletContext, rootContext);
 	}
 
@@ -59,6 +65,7 @@ public class WebAppInitializer implements WebApplicationInitializer {
 					"Servlet 'webservice' cannot be mapped to " + SERVLET_URL);
 		}
 	}
+
 	@Override
 	public String toString() {
 		return "InventorySource Channel Manager Rest API";

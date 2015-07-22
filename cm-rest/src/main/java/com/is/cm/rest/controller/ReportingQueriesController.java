@@ -23,6 +23,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 
 import com.is.cm.core.domain.ReportDataWrapper;
 import com.is.cm.core.domain.VendorsuppOrderhistory;
+import com.is.cm.core.event.ReadCollectionEvent;
 import com.is.cm.core.event.ReadEvent;
 import com.is.cm.core.event.RequestReadEvent;
 import com.is.cm.core.event.reports.MaxReportEvent;
@@ -115,6 +116,14 @@ public class ReportingQueriesController {
 	public Map<String, Map> getNotifications() {
 		ReadEvent<Map<String, Map>> event = reportService
 				.getNotifications(new RequestReadEvent<Map<String, Map>>());
+		return event.getEntity();
+	}
+
+	@RequestMapping(value = "/system/alerts", method = RequestMethod.GET)
+	@ResponseBody
+	public List getAlerts() {
+		ReadCollectionEvent event = reportService
+				.getAlerts(new RequestReadEvent());
 		return event.getEntity();
 	}
 }

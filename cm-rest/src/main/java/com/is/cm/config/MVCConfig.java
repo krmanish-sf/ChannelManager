@@ -35,6 +35,8 @@ public class MVCConfig extends WebMvcConfigurerAdapter {
 		LOG.info("Adding AuthenticationInterceptor ");
 		registry.addInterceptor(new AuthenticationInterceptor());
 	}
+	
+	
 
 	/*@Override
 	public void configureMessageConverters(

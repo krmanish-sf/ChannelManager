@@ -150,7 +150,7 @@
 		<dependency>
 			<groupId>com.is.salesmachine</groupId>
 			<artifactId>salesmachine-core</artifactId>
-			<version>1.0.0</version>
+			<version>1.0.0-SNAPSHOT</version>
 			<exclusions>
 				<exclusion>
 					<artifactId>servlet-api</artifactId>

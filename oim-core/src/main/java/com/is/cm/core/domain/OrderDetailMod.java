@@ -15,7 +15,7 @@ public class OrderDetailMod extends DomainBase implements java.io.Serializable {
 	private String sku;
 	private Double costPrice;
 	private Double salePrice;
-	private Integer supplierId;
+	private Supplier supplier;
 	private Date processingTm;
 	private Date insertionTm;
 	private Integer statusId;
@@ -80,14 +80,6 @@ public class OrderDetailMod extends DomainBase implements java.io.Serializable {
 		this.salePrice = salePrice;
 	}
 
-	public Integer getSupplierId() {
-		return this.supplierId;
-	}
-
-	public void setSupplierId(Integer supplierId) {
-		this.supplierId = supplierId;
-	}
-
 	public Date getProcessingTm() {
 		return this.processingTm;
 	}
@@ -124,7 +116,16 @@ public class OrderDetailMod extends DomainBase implements java.io.Serializable {
 		if (mods == null)
 			return null;
 		OrderDetailMod mod = new OrderDetailMod();
-		BeanUtils.copyProperties(mods, mod);
+		BeanUtils.copyProperties(mods, mod, "oimSuppliers", "supplier");
+		mod.setSupplier(Supplier.from(mods.getOimSuppliers()));
 		return mod;
+	}
+
+	public Supplier getSupplier() {
+		return supplier;
+	}
+
+	public void setSupplier(Supplier supplier) {
+		this.supplier = supplier;
 	}
 }

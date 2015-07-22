@@ -16,11 +16,6 @@ public class SessionManager {
 	private static final SessionFactory sessionFactory;
 	static {
 		try {
-			// Create the SessionFactory
-			// File configFile = new
-			// File("/home/shared/salesmachine/hibernatehelper/hibernate.cfg.xml");
-			// sessionFactory = new Configuration().configure()
-			// .buildSessionFactory();
 			Configuration configuration = new Configuration().configure();
 			StandardServiceRegistryBuilder builder = new StandardServiceRegistryBuilder()
 					.applySettings(configuration.getProperties());
@@ -35,16 +30,16 @@ public class SessionManager {
 	public static final ThreadLocal<Session> session = new ThreadLocal<Session>();
 
 	public static Session currentSession() {
-		//log.info("Fetching Current Session");
+		// log.info("Fetching Current Session");
 		Session s = session.get();
 		// Open a new Session, if this Thread has none yet
 		if (s == null) {
-			//log.info("No existing session found, opening new Session");
+			// log.info("No existing session found, opening new Session");
 			s = sessionFactory.openSession();
 			session.set(s);
 		}
-		//log.info("Session returned for TenantIdentifier : {}",
-		//		s.getTenantIdentifier());
+		// log.info("Session returned for TenantIdentifier : {}",
+		// s.getTenantIdentifier());
 		return s;
 	}
 

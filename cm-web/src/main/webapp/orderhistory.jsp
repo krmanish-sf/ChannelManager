@@ -451,7 +451,7 @@
 	
 	<div aria-hidden="true" role="dialog" tabindex="-1"
 			id="myModalOrderMods" class="modal fade">
-										<div class="modal-dialog">
+										<div class="modal-dialog" style="width: 750px;">
 											<div class="modal-content">
 												<div class="modal-header">
 													<button aria-hidden="true" data-dismiss="modal"
@@ -465,12 +465,13 @@
 															<table id="tableordermods" class="table">
 																<thead>
 																	<tr>
-																		<th>Sku</th>
-																		<th>Comment</th>
-																		<th>Quantity</th>
-																		<th>Sale Price</th>
+																		<th>Date</th>
 																		<th>Status</th>
-																		<th>Change Date</th>
+																		<th>Comment</th>
+																		<th>Sku</th>
+																		<th>Supplier</th>
+																		<th>Qty</th>
+																		<th>Sale Price</th>
 																	</tr>
 																</thead>
 																<tbody>
@@ -824,22 +825,22 @@
 												var text = '';
 												for (var i = 0; i < order.oimOrderDetailses.length; i++) {
 													var orderDetail = order.oimOrderDetailses[i];
-													text += '<div>';
-													text += '<a href="#myModalOrderMods" title="Click to view Order Audit trail." data-toggle="modal" onclick="$.CM.getOrderModification('
-															+ orderDetail.detailId
-															+ ');"><strong>'
+
+													text += '<strong>'
 															+ orderDetail.sku
-															+ "</strong></a>";
+															+ '</strong><a href="#myModalOrderMods" title="Click to view Order Audit trail." data-toggle="modal" onclick="$.CM.getOrderModification('
+															+ orderDetail.detailId
+															+ ');"><i class=\"icon-book\"></i></a>';
+													if (orderDetail.supplierOrderNumber)
+														text += '&nbsp;<a style="cursor:pointer;" title="Click to refresh tracking" onclick="$.CM.trackOrder('
+																+ orderDetail.detailId
+																+ ');"><i class="icon-refresh"></i></a>';
 													if (orderDetail.supplierOrderStatus) {
-														text += ':<span id="orderStatus'+orderDetail.detailId+'">';
+														text += '<br/><span id="orderStatus'+orderDetail.detailId+'">';
 														text += orderDetail.supplierOrderStatus
 																+ '</span>';
 													}
-													if (orderDetail.supplierOrderNumber)
-														text += '<br><a style="cursor:pointer;" title="Click to refresh tracking" onclick="$.CM.trackOrder('
-																+ orderDetail.detailId
-																+ ');"><i class="icon-refresh"></i></a>';
-													text += '</div>';
+													text += '<div class="space-2"></div>';
 												}
 												return text;
 											},

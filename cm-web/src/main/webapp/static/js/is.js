@@ -178,7 +178,7 @@ function customMapper(obj, expr) {
 			break;
 		}
 	}
-	console.log(retVal);
+//	console.log(retVal);
 	return retVal;
 };
 
@@ -195,11 +195,43 @@ function evalArray(obj, expr) {
 	}
 };
 (function($) {
-	$("select.select-time-range").each(function(i, e) {
-		var widget = $(this).parent().parent().parent();
-		widget.find('.start').val(new Date().getMonthRange().sStartDate);
-		widget.find('.end').val(new Date().getMonthRange().sEndDate);
-	});
+	$("select.select-time-range")
+			.each(
+					function(i, e) {
+						var sel = $(this).val();
+						var widget = $(this).parent().parent().parent();
+						switch (sel) {
+						case "THIS_MONTH":
+							widget.find('.start').val(
+									new Date().getMonthRange().sStartDate);
+							widget.find('.end').val(
+									new Date().getMonthRange().sEndDate);
+							break;
+						case "LAST_SEVEN_DAYS":
+							widget.find('.start').val(
+									new Date().getWeekRange().sStartDate);
+							widget.find('.end').val(
+									new Date().getWeekRange().sEndDate);
+							break;
+						case "LAST_MONTH":
+							widget.find('.start').val(
+									new Date().firstDayInPreviousMonth()
+											.format());
+							widget.find('.end').val(
+									new Date().lastDayInPreviousMonth()
+											.format());
+							break;
+						case "ALL_TIME":
+							widget
+									.find('.start')
+									.val(
+											new Date("2010-01-01")
+													.getMonthRange().sStartDate);
+							widget.find('.end').val(
+									new Date().getWeekRange().sEndDate);
+							break;
+						}
+					});
 	$(document)
 			.on(
 					"change",
@@ -606,8 +638,12 @@ function evalArray(obj, expr) {
 		$('#tableordermods')
 				.DataTable(
 						{
+							// "order" : [ [ 4, "desc" ] ],
 							bSort : false,
 							bFilter : false,
+							"language" : {
+								"emptyTable" : "No Order modification history found."
+							},
 							"bDestroy" : true,
 							"sAjaxDataProp" : "",
 							"ajax" : function(data, callback, settings) {
@@ -626,16 +662,13 @@ function evalArray(obj, expr) {
 							},
 							"aoColumns" : [
 									{
-										"mData" : "sku"
-									},
-									{
-										"mData" : "operation"
-									},
-									{
-										"mData" : "quantity"
-									},
-									{
-										"mData" : "salePrice"
+										"mData" : function(d) {
+											return "<span style='display:none'>"
+													+ d.insertionTm
+													+ "</span>"
+													+ new Date(d.insertionTm)
+															.toLocaleString();
+										}
 									},
 									{
 										"mData" : function(orderDetail) {
@@ -646,15 +679,18 @@ function evalArray(obj, expr) {
 											}
 											return status;
 										}
+									}, {
+										"mData" : "operation"
+									}, {
+										"mData" : "sku"
+									}, {
+										"mData" : "supplier.supplierName"
 									},
+
 									{
-										"mData" : function(d) {
-											return "<span style='display:none'>"
-													+ d.insertionTm
-													+ "</span>"
-													+ new Date(d.insertionTm)
-															.toLocaleString();
-										}
+										"mData" : "quantity"
+									}, {
+										"mData" : "salePrice"
 									} ]
 						});
 	};

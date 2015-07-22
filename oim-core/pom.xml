@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.is.salesmachine</groupId>
 	<artifactId>salesmachine-core</artifactId>
-	<version>1.0.0</version>
+	<version>1.0.0-SNAPSHOT</version>
 	<build>
 		<finalName>salesmachine-core</finalName>
 		<sourceDirectory>src/main/java/</sourceDirectory>

@@ -5,6 +5,7 @@ import java.util.Map;
 
 import com.is.cm.core.domain.ReportDataWrapper;
 import com.is.cm.core.domain.VendorsuppOrderhistory;
+import com.is.cm.core.event.ReadCollectionEvent;
 import com.is.cm.core.event.ReadEvent;
 import com.is.cm.core.event.RequestReadEvent;
 import com.is.cm.core.event.reports.MaxReportEvent;
@@ -28,4 +29,7 @@ public interface ReportService {
 
 	ReadEvent<List<VendorsuppOrderhistory>> getVendorSupplierHistory(
 			PagedDataEvent<VendorsuppOrderhistory> requestDownloadReportEvent);
+
+	ReadCollectionEvent getAlerts(
+			RequestReadEvent<Map<String, Map>> requestReadEvent);
 }

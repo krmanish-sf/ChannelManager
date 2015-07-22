@@ -34,6 +34,7 @@ import com.is.cm.core.service.SupplierEventHandler;
 import com.is.cm.core.service.SupplierService;
 import com.is.cm.core.service.UserEventHandler;
 import com.is.cm.core.service.UserService;
+import com.is.cm.rest.controller.SimpleCORSFilter;
 
 @Configuration()
 // @EnableCaching
@@ -119,6 +120,11 @@ public class CoreConfig {
 	Filter requestLoggingFilter() {
 		Filter filter = new CommonsRequestLoggingFilter();
 		return filter;
+	}
+
+	@Bean
+	public Filter corsFilter() {
+		return new SimpleCORSFilter();
 	}
 
 	/*

@@ -93,7 +93,7 @@
 		<downloadJavadocs>true</downloadJavadocs>
 	</properties>
 	<build>
-		<finalName>admin</finalName>
+		<finalName>cm-admin</finalName>
 		<plugins>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>

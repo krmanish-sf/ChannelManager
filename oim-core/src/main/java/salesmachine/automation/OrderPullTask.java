@@ -103,6 +103,9 @@ public class OrderPullTask extends TimerTask {
 			}
 		} catch (Throwable e) {
 			log.error("FATAL ERROR", e);
+			AutomationManager.sendNotification(
+					"ORDER PULL ERROR: " + e.getMessage(), e.toString());
+			
 		}
 	}
 }
