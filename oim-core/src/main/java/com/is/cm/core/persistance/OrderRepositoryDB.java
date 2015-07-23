@@ -934,6 +934,8 @@ public class OrderRepositoryDB extends RepositoryBase implements
 						.getCUPHONE());
 				order.setDeliveryState(ccorder.getSHIPPINGLABEL().getADDRESS()
 						.getADSTATE());
+				order.setDeliveryStateCode(ccorder.getSHIPPINGLABEL().getADDRESS()
+						.getADSTATE());
 				order.setDeliveryStreetAddress(ccorder.getSHIPPINGLABEL()
 						.getADDRESS().getADADDRESS1());
 				order.setDeliverySuburb(ccorder.getSHIPPINGLABEL().getADDRESS()

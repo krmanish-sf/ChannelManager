@@ -84,7 +84,22 @@ public class OrderCommandsController {
 					HttpStatus.FORBIDDEN);
 		}
 	}
-
+	@RequestMapping(method = { RequestMethod.GET }, value = "/processed/ifs/{orderId}")
+	public ResponseEntity<Order> processOrderForIFS(
+			UriComponentsBuilder builder, @PathVariable int orderId) {
+		
+//		UpdatedEvent<Order> event = orderService
+//				.processOrder(new UpdateEvent<Order>(orderId, order));
+//		if (event.isUpdateCompleted()) {
+//			return new ResponseEntity<Order>(event.getEntity(), HttpStatus.OK);
+//		} else {
+//			return new ResponseEntity<Order>(event.getEntity(),
+//					HttpStatus.FORBIDDEN);
+//		}
+		
+		LOG.info("processOrderForIFS called..................................");
+		return null;
+	}
 	@RequestMapping(method = { RequestMethod.POST }, value = "/processed/bulk/{action}")
 	public ResponseEntity<List<Order>> processOrder(
 			@PathVariable String action, @RequestBody List<Integer> orders) {

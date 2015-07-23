@@ -28,6 +28,7 @@ public class OimOrders implements java.io.Serializable {
 	private String deliveryCompany;
 	private String deliveryPhone;
 	private String deliveryEmail;
+	private String deliveryStateCode;
 	private String billingName;
 	private String billingStreetAddress;
 	private String billingSuburb;
@@ -45,6 +46,8 @@ public class OimOrders implements java.io.Serializable {
 	private String customerState;
 	private String customerCountry;
 	private String customerZip;
+	
+
 	private String customerCompany;
 	private String customerPhone;
 	private String customerEmail;
@@ -458,6 +461,14 @@ public class OimOrders implements java.io.Serializable {
 
 	public void setOimShippingMethod(OimShippingMethod oimShippingMethod) {
 		this.oimShippingMethod = oimShippingMethod;
+	}
+	
+	public String getDeliveryStateCode() {
+		return deliveryStateCode;
+	}
+
+	public void setDeliveryStateCode(String deliveryStateCode) {
+		this.deliveryStateCode = deliveryStateCode;
 	}
 
 }

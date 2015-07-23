@@ -111,7 +111,8 @@ public class GreenSupply extends Supplier {
 		// append in header "Address"
 		String fields[] = ORDERHEADER.split(",");
 
-		Integer mappedFieldIds[] = { 2, 3, 4, 12, 5, 6, 7, 0, 0, 0, 1, 9, 10 };
+		//Integer mappedFieldIds[] = { 2, 3, 4, 12, 5, 6, 7, 0, 0, 0, 1, 9, 10 };
+		Integer mappedFieldIds[] = { 2, 3, 4, 12, 5, 36, 7, 0, 0, 0, 1, 9, 10 };
 
 		for (int i = 0; i < fields.length; i++) {
 			OimFields field = new OimFields(fields[i], fields[i], new Date(), null, null);

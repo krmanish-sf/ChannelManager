@@ -109,7 +109,7 @@ public class BF extends Supplier implements HasTracking {
 				"exp", "ship_via", "Ship_acct", "inv_notes", "/processing",
 				"/order", "item", "vend_id", "item_id", "qty", "/item" };
 
-		Integer mappedFieldIds[] = { 0, 2, 0, 3, 0, 4, 0, 5, 6, 7, 0, 0, 2, 0,
+		Integer mappedFieldIds[] = { 0, 2, 0, 3, 0, 4, 0, 5, 36, 7, 0, 0, 2, 0,
 				10, 0, 0, 0, 0, 0, 0, 1, 9, 0 };
 
 		for (int i = 0; i < fields.length; i++) {

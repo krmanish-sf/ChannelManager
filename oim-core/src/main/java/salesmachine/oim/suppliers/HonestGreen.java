@@ -95,7 +95,6 @@ public class HonestGreen extends Supplier implements HasTracking {
 				OimOrders order = (OimOrders) object;
 				try {
 					String fileName = createOrderFile(order, ovs);
-
 					FTPClient ftp = new FTPClient();
 					ftp.setRemoteHost("ftp1.unfi.com");
 					ftp.setDetectTransferMode(true);
@@ -191,6 +190,7 @@ public class HonestGreen extends Supplier implements HasTracking {
 		String uploadfilename = "HG_" + ovs.getAccountNumber() + "_"
 				+ sdf.format(new Date()) + ".txt";
 		File f = new File(uploadfilename);
+		log.info("created file name for HG:{}",f.getName());
 		log.debug("Creating order file for OrderId:{}", order.getOrderId());
 		try {
 			FileOutputStream fOut = new FileOutputStream(f);
@@ -224,7 +224,7 @@ public class HonestGreen extends Supplier implements HasTracking {
 			fOut.write(StringHandle.removeNull(order.getDeliveryCity())
 					.toUpperCase().getBytes(ASCII));
 			fOut.write(COMMA);
-			fOut.write(StringHandle.removeNull(order.getDeliveryState())
+			fOut.write(StringHandle.removeNull(order.getDeliveryStateCode()!=null?order.getDeliveryStateCode():order.getDeliveryState())
 					.toUpperCase().getBytes(ASCII));
 			fOut.write(COMMA);
 			fOut.write(StringHandle.removeNull(order.getDeliveryZip())

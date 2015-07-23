@@ -190,7 +190,7 @@
 														readonly />
 												</div>
 											</div>
-											<div class="form-group">
+											<div class="form-group store-info shopify-store">
 												<div class="col-sm-5"></div>
 												<div class="col-sm-7"><a style=" cursor: pointer;"
 															onclick="openUrl()">Get Access Token</a></div>

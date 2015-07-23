@@ -6,6 +6,7 @@ import java.util.Map;
 import salesmachine.oim.stores.modal.shop.order.CCTRANSMISSION;
 
 import com.is.cm.core.domain.Order;
+import com.is.cm.core.domain.OrderDetail;
 import com.is.cm.core.domain.OrderDetailMod;
 import com.is.cm.core.event.CreateEvent;
 import com.is.cm.core.event.CreatedEvent;
@@ -51,5 +52,9 @@ public interface OrderService {
 
 	ReadCollectionEvent<OrderDetailMod> getOrderDetailModifications(
 			ReadEvent<OrderDetailMod> readEvent);
+	
+	ReadCollectionEvent<OrderDetail> getOrderDetailByOrderId(
+			ReadEvent<String> requestReadEvent);
+	
 
 }

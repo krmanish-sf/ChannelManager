@@ -149,6 +149,8 @@ public class StandardFileSpecificsProvider implements IFileSpecificsProvider {
 				return code.getCarrierName();
 			} else
 				return "";
+		case 36 :
+			return order.getDeliveryStateCode()!=null?order.getDeliveryStateCode():order.getDeliveryState();
 		}
 		return null;
 	}

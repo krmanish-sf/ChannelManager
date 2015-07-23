@@ -117,7 +117,7 @@ public class DandH extends Supplier implements HasTracking {
 				"SHIPCARRIER", "SHIPSERVICE", "PONUM", "/ORDERHEADER",
 				"ORDERITEMS", "ITEM", "PARTNUM", "QTY", "/ITEM" };
 
-		Integer mappedFieldIds[] = { 3, 3, 4, 0, 5, 6, 7, 35, 10, 2, 0, 0, 0,
+		Integer mappedFieldIds[] = { 3, 3, 4, 0, 5, 36, 7, 35, 10, 2, 0, 0, 0,
 				1, 9, 0 };
 
 		for (int i = 0; i < fields.length; i++) {

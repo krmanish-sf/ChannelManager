@@ -24,7 +24,6 @@ import com.is.cm.core.event.ReadCollectionEvent;
 import com.is.cm.core.event.ReadEvent;
 import com.is.cm.core.event.RequestReadEvent;
 import com.is.cm.core.event.orders.AllOrdersEvent;
-import com.is.cm.core.event.orders.OrderDetailUpdatedEvent;
 import com.is.cm.core.event.orders.RequestAllOrdersEvent;
 import com.is.cm.core.service.OrderService;
 
@@ -77,6 +76,16 @@ public class OrderQueriesController {
 				.getOrderDetailModifications(new ReadEvent<OrderDetailMod>(
 						detailId));
 		return new ResponseEntity<Collection<OrderDetailMod>>(
+				event.getEntity(), HttpStatus.OK);
+	}
+	
+	@RequestMapping(method = { RequestMethod.GET }, value = "/system/{orderId}/modifications")
+	public ResponseEntity<Collection<OrderDetail>> getOrderDetailByOrderId(
+			@PathVariable int orderId) {
+		LOG.info("getOrderDetailByOrderId called------------------");
+		ReadCollectionEvent<OrderDetail> event = orderService
+				.getOrderDetailByOrderId(new ReadEvent<String>(orderId));
+		return new ResponseEntity<Collection<OrderDetail>>(
 				event.getEntity(), HttpStatus.OK);
 	}
 }
