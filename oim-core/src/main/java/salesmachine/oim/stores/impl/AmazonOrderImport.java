@@ -281,6 +281,8 @@ public class AmazonOrderImport extends ChannelBase implements IOrderImport {
 							.getPhone());
 					oimOrders.setDeliveryState(order2.getShippingAddress()
 							.getStateOrRegion());
+					oimOrders.setDeliveryStateCode(order2.getShippingAddress()
+							.getStateOrRegion());
 					oimOrders.setDeliveryStreetAddress(order2
 							.getShippingAddress().getAddressLine1());
 					oimOrders.setDeliverySuburb(order2.getShippingAddress()
