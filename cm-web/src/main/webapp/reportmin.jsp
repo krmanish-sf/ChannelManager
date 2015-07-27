@@ -161,8 +161,8 @@
 								method : "POST",
 								url : "/aggregators/reports/" + reportType,
 								data : JSON.stringify({
-									startDate : Date.parse(t1),
-									endDate : Date.parse(t2)
+									startDate : t1,
+									endDate : t2
 								}),
 								success : function(data, textStatus, jqXHR) {
 									$(this).drawBarChart('sales-charts', data,

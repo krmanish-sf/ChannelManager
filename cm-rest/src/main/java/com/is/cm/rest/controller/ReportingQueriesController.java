@@ -1,8 +1,11 @@
 package com.is.cm.rest.controller;
 
 import java.io.IOException;
+import java.text.DateFormat;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -40,17 +43,34 @@ public class ReportingQueriesController {
 	@Autowired
 	private ReportService reportService;
 
+	private static final DateFormat df = new SimpleDateFormat("MM/dd/yyyy");
+	private static final Logger log = LoggerFactory
+			.getLogger(ReportingQueriesController.class);
+
 	@RequestMapping(method = RequestMethod.POST)
 	@ResponseStatus(HttpStatus.OK)
 	@ResponseBody
 	public ReportDataWrapper getMaxReportData(
-			@RequestBody Map<String, Date> requestData) {
+			@RequestBody Map<String, String> requestData) {
 		LOG.debug("Getting Report Data ...");
-		Date st = requestData.get("startDate");
-		Date ed = requestData.get("endDate");
-		MaxReportEvent event = reportService
-				.getReport(new RequestMaxReportEvent(st, ed));
-		return event.getEntity();
+		String st = requestData.get("startDate");
+		String ed = requestData.get("endDate");
+		Date startDate, endDate;
+		try {
+			startDate = df.parse(st);
+			endDate = df.parse(ed);
+			endDate.setHours(23);
+			endDate.setMinutes(59);
+			endDate.setSeconds(59);
+			MaxReportEvent event = reportService
+					.getReport(new RequestMaxReportEvent(startDate, endDate));
+			return event.getEntity();
+		} catch (ParseException e) {
+			log.error("Error in parsing the provided date string",
+					e.getMessage());
+			throw new RuntimeException(
+					"Error in parsing the provided date string");
+		}
 	}
 
 	@RequestMapping(value = "/download/{reportType}/{o}/{a}", method = RequestMethod.GET)
@@ -76,39 +96,83 @@ public class ReportingQueriesController {
 	@RequestMapping(value = "/{reportType}", method = RequestMethod.POST)
 	@ResponseBody
 	public ReportDataWrapper getReportData(@PathVariable String reportType,
-			@RequestBody Map<String, Date> dateRange) {
+			@RequestBody Map<String, String> dateRange) {
 		LOG.debug("Getting {} Report Data ...", reportType);
-		Date st = dateRange.get("startDate");
-		Date ed = dateRange.get("endDate");
-		ReadEvent<ReportDataWrapper> event = reportService
-				.getReportData(new RequestDownloadReportEvent(st, ed,
-						reportType));
-		return event.getEntity();
+		String st = dateRange.get("startDate");
+		String ed = dateRange.get("endDate");
+		Date startDate, endDate;
+		try {
+			startDate = df.parse(st);
+			endDate = df.parse(ed);
+			endDate.setHours(23);
+			endDate.setMinutes(59);
+			endDate.setSeconds(59);
+			ReadEvent<ReportDataWrapper> event = reportService
+					.getReportData(new RequestDownloadReportEvent(startDate,
+							endDate, reportType));
+			return event.getEntity();
+		} catch (ParseException e) {
+			log.error("Error in parsing the provided date string",
+					e.getMessage());
+			throw new RuntimeException(
+					"Error in parsing the provided date string");
+		}
 	}
 
 	@RequestMapping(value = "/system/{reportType}", method = RequestMethod.POST)
 	@ResponseBody
 	public ReportDataWrapper getSystemReportData(
 			@PathVariable String reportType,
-			@RequestBody Map<String, Date> dateRange) {
+			@RequestBody Map<String, String> dateRange) {
 		LOG.debug("Getting {} Report Data ...", reportType);
-		Date st = dateRange.get("startDate");
-		Date ed = dateRange.get("endDate");
-		ReadEvent<ReportDataWrapper> event = reportService
-				.getSystemReportData(new RequestDownloadReportEvent(st, ed,
-						reportType));
-		return event.getEntity();
+		String st = dateRange.get("startDate");
+		String ed = dateRange.get("endDate");
+		Date startDate, endDate;
+		try {
+			startDate = df.parse(st);
+			endDate = df.parse(ed);
+			endDate.setHours(23);
+			endDate.setMinutes(59);
+			endDate.setSeconds(59);
+			ReadEvent<ReportDataWrapper> event = reportService
+					.getSystemReportData(new RequestDownloadReportEvent(
+							startDate, endDate, reportType));
+			return event.getEntity();
+		} catch (ParseException e) {
+			log.error("Error in parsing the provided date string",
+					e.getMessage());
+			throw new RuntimeException(
+					"Error in parsing the provided date string");
+		}
 	}
 
 	@RequestMapping(value = "/system/vendor-supplier-history", method = RequestMethod.POST)
 	@ResponseBody
 	public List<VendorsuppOrderhistory> getVendorSupplierHistory(
-			@RequestBody Map<String, Date> dateRange) {
+			@RequestBody Map<String, String> dateRange) {
 		LOG.debug("Getting vendor-supplier-history");
-		ReadEvent<List<VendorsuppOrderhistory>> event = reportService
-				.getVendorSupplierHistory(new PagedDataEvent<VendorsuppOrderhistory>(
-						1, 100, dateRange));
-		return event.getEntity();
+		String st = dateRange.get("startDate");
+		String ed = dateRange.get("endDate");
+		Date startDate, endDate;
+		try {
+			Map<String, Date> dateRange1 = new HashMap<String, Date>();
+			startDate = df.parse(st);
+			endDate = df.parse(ed);
+			endDate.setHours(23);
+			endDate.setMinutes(59);
+			endDate.setSeconds(59);
+			dateRange1.put("startDate", startDate);
+			dateRange1.put("endDate", endDate);
+			ReadEvent<List<VendorsuppOrderhistory>> event = reportService
+					.getVendorSupplierHistory(new PagedDataEvent<VendorsuppOrderhistory>(
+							1, 100, dateRange1));
+			return event.getEntity();
+		} catch (ParseException e) {
+			log.error("Error in parsing the provided date string",
+					e.getMessage());
+			throw new RuntimeException(
+					"Error in parsing the provided date string");
+		}
 	}
 
 	@RequestMapping(value = "/notifications", method = RequestMethod.GET)

@@ -178,7 +178,7 @@ function customMapper(obj, expr) {
 			break;
 		}
 	}
-//	console.log(retVal);
+	// console.log(retVal);
 	return retVal;
 };
 
@@ -311,8 +311,8 @@ function evalArray(obj, expr) {
 				url : data,
 				method : "POST",
 				data : JSON.stringify({
-					startDate : Date.parse(widget.find('.start').val()),
-					endDate : Date.parse(widget.find('.end').val())
+					startDate : widget.find('.start').val(),
+					endDate : widget.find('.end').val()
 				}),
 				success : function(data, textStatus, jqXHR) {
 					var formatted_data = [];
@@ -422,8 +422,8 @@ function evalArray(obj, expr) {
 				url : data,
 				method : "POST",
 				data : JSON.stringify({
-					startDate : Date.parse(widget.find('.start').val()),
-					endDate : Date.parse(widget.find('.end').val())
+					startDate : widget.find('.start').val(),
+					endDate : widget.find('.end').val()
 				}),
 				success : function(data, textStatus, jqXHR) {
 					var formatted_data = [];
@@ -469,8 +469,6 @@ function evalArray(obj, expr) {
 			$(placeholder).bind(
 					'plothover',
 					function(event, pos, item) {
-						// debugger;
-						console.log(item)
 						if (item) {
 							var x = item.datapoint[0], y = item.datapoint[1]
 									.toFixed(2);
@@ -502,8 +500,8 @@ function evalArray(obj, expr) {
 			url : data,
 			method : "POST",
 			data : JSON.stringify({
-				startDate : Date.parse(widget.find('.start').val()),
-				endDate : Date.parse(widget.find('.end').val())
+				startDate : widget.find('.start').val(),
+				endDate : widget.find('.end').val()
 			}),
 			success : function(data, textStatus, jqXHR) {
 				var formatted_data = [];
@@ -720,10 +718,8 @@ function evalArray(obj, expr) {
 							url : 'aggregators/reports',
 							data : JSON
 									.stringify({
-										startDate : new Date().getMonthRange().startDate
-												.getTime(),
-										endDate : new Date().getMonthRange().endDate
-												.getTime()
+										startDate : new Date().getMonthRange().sStartDate,
+										endDate : new Date().getMonthRange().sEndDate
 									}),
 							success : function(data, textStatus, jqXHR) {
 								try {

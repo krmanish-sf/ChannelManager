@@ -339,8 +339,12 @@ public class AmazonOrderImport extends ChannelBase implements IOrderImport {
 					for (OrderItem orderItem : listOrderItemsResult
 							.getOrderItems()) {
 						OimOrderDetails details = new OimOrderDetails();
-						details.setCostPrice(Double.parseDouble(orderItem
-								.getItemPrice().getAmount()));
+						double itemPrice = Double.parseDouble(orderItem
+								.getItemPrice().getAmount());
+						// Amazon returns total price for this order item which
+						// needs to be divided by quantity before saving.
+						itemPrice = itemPrice / orderItem.getQuantityOrdered();
+						details.setCostPrice(itemPrice);
 						details.setInsertionTm(new Date());
 						details.setOimOrderStatuses(new OimOrderStatuses(
 								OimConstants.ORDER_STATUS_UNPROCESSED));
@@ -358,8 +362,7 @@ public class AmazonOrderImport extends ChannelBase implements IOrderImport {
 						details.setProductDesc(orderItem.getTitle());
 						details.setProductName(orderItem.getTitle());
 						details.setQuantity(orderItem.getQuantityOrdered());
-						details.setSalePrice(Double.parseDouble(orderItem
-								.getItemPrice().getAmount()));
+						details.setSalePrice(itemPrice);
 						details.setSku(orderItem.getSellerSKU());
 						details.setStoreOrderItemId(orderItem.getOrderItemId());
 						details.setOimOrders(oimOrders);
@@ -448,7 +451,8 @@ public class AmazonOrderImport extends ChannelBase implements IOrderImport {
 							.longValue()));
 			XMLGregorianCalendar cal = MwsUtl.getDTF().newXMLGregorianCalendar(
 					orderStatus.getTrackingData().getShipDate());
-			GregorianCalendar shipDate = orderStatus.getTrackingData().getShipDate();
+			GregorianCalendar shipDate = orderStatus.getTrackingData()
+					.getShipDate();
 			cal.setYear(shipDate.get(GregorianCalendar.YEAR));
 			cal.setMonth(shipDate.get(GregorianCalendar.MONTH));
 			cal.setDay(shipDate.get(GregorianCalendar.DATE));
@@ -461,7 +465,7 @@ public class AmazonOrderImport extends ChannelBase implements IOrderImport {
 					.getDetailId()));
 			fulfillment.getItem().add(i);
 			FulfillmentData value = new FulfillmentData();
-			//value.setCarrierCode(orderStatus.getTrackingData().getCarrierCode());
+			// value.setCarrierCode(orderStatus.getTrackingData().getCarrierCode());
 			value.setCarrierName(orderStatus.getTrackingData().getCarrierName());
 			value.setShipperTrackingNumber(orderStatus.getTrackingData()
 					.getShipperTrackingNumber());

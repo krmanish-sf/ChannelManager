@@ -165,10 +165,8 @@ div.flot-x-axis>div.flot-tick-label {
 							url : 'aggregators/reports',
 							data : JSON
 									.stringify({
-										startDate : new Date().getMonthRange().startDate
-												.getTime(),
-										endDate : new Date().getMonthRange().endDate
-												.getTime()
+										startDate : new Date().getMonthRange().sStartDate,
+										endDate : new Date().getMonthRange().sEndDate
 									}),
 							success : function(data, textStatus, jqXHR) {
 								$("#tasks").empty();

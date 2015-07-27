@@ -132,8 +132,7 @@ public class ReportRepositoryDB extends RepositoryBase implements
 						+ " and o.oimOrderBatches.oimChannels.vendors.vendorId =:vid "
 						+ conditionSubQuery
 						+ " group by d.insertionTm order by d.insertionTm desc");
-		// System.out.println(query.getQueryString());
-
+		
 		query.setInteger("vid", vendorId);
 		Iterator iter = query.iterate();
 

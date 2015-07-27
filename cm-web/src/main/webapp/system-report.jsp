@@ -180,16 +180,14 @@
 																	url : sSource,
 																	data : JSON
 																			.stringify({
-																				startDate : Date
-																						.parse(widget
-																								.find(
-																										'input.start')
-																								.val()),
-																				endDate : Date
-																						.parse(widget
-																								.find(
-																										'input.end')
-																								.val())
+																				startDate : widget
+																						.find(
+																								'input.start')
+																						.val(),
+																				endDate : widget
+																						.find(
+																								'input.end')
+																						.val()
 																			}),
 																	success : fnCallback
 																});
@@ -228,12 +226,12 @@
 														"bSortable" : false,
 														"mData" : "description"
 													} /* ,
-																																																																																																																																										{
-																																																																																																																																											"bSortable" : false,
-																																																																																																																																											"mData" : function(row) {
-																																																																																																																																												return '<a class="btn btn-info btn-minier radius-2 dropdown-hover" data-toggle="modal" href="#mychanneledit" onclick="channel(\'edit\',$(this).parent().parent())"><i class="icon-pencil"></i><span data-rel="tooltip" class="dropdown-menu tooltip-success purple dropdown-menu dropdown-yellow pull-right dropdown-caret dropdown-close">Edit Channel Setting</span></a><a class="btn btn-danger btn-minier radius-2 dropdown-hover" onclick="del($($($(this).parent()).parent()))"><i class="icon-trash"></i><span data-rel="tooltip" class="dropdown-menu tooltip-success purple dropdown-menu dropdown-yellow pull-right dropdown-caret dropdown-close">Delete Channel</span></a>';
-																																																																																																																																											}
-																																																																																																																																										} */]
+																																																																																																																																																														{
+																																																																																																																																																															"bSortable" : false,
+																																																																																																																																																															"mData" : function(row) {
+																																																																																																																																																																return '<a class="btn btn-info btn-minier radius-2 dropdown-hover" data-toggle="modal" href="#mychanneledit" onclick="channel(\'edit\',$(this).parent().parent())"><i class="icon-pencil"></i><span data-rel="tooltip" class="dropdown-menu tooltip-success purple dropdown-menu dropdown-yellow pull-right dropdown-caret dropdown-close">Edit Channel Setting</span></a><a class="btn btn-danger btn-minier radius-2 dropdown-hover" onclick="del($($($(this).parent()).parent()))"><i class="icon-trash"></i><span data-rel="tooltip" class="dropdown-menu tooltip-success purple dropdown-menu dropdown-yellow pull-right dropdown-caret dropdown-close">Delete Channel</span></a>';
+																																																																																																																																																															}
+																																																																																																																																																														} */]
 										});
 					}
 					// Load the Visualization API and the piechart package.
