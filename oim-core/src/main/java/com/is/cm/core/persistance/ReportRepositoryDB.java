@@ -1,6 +1,5 @@
 package com.is.cm.core.persistance;
 
-import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -115,7 +114,7 @@ public class ReportRepositoryDB extends RepositoryBase implements
 	public List<OverAllSalesData> getOverallSalesData(Session dbSession,
 			Integer vendorId, Date startDate, Date endDate) {
 		List<OverAllSalesData> overallSales = new ArrayList<OverAllSalesData>();
-		Double totalSalePrice = 0.00;
+
 		String dateSubQuery = " and d.insertionTm between to_date ('"
 				+ dateToString(startDate) + "', 'mm-dd-yyyy') AND to_date ('"
 				+ dateToString(endDate) + "', 'mm-dd-yyyy') ";
@@ -132,20 +131,18 @@ public class ReportRepositoryDB extends RepositoryBase implements
 						+ " and o.oimOrderBatches.oimChannels.vendors.vendorId =:vid "
 						+ conditionSubQuery
 						+ " group by d.insertionTm order by d.insertionTm desc");
-		
+
 		query.setInteger("vid", vendorId);
 		Iterator iter = query.iterate();
 
 		while (iter.hasNext()) {
 			Object[] row = (Object[]) iter.next();
 			double sp = (row[0] == null) ? 0 : (Double) row[0];
-			totalSalePrice = totalSalePrice + sp;
-			final double tsp = totalSalePrice;
 			final Date dt = (Date) row[1];
 			overallSales.add(new OverAllSalesData() {
 				@Override
 				public Double getTotalSales() {
-					return tsp;
+					return sp;
 				}
 
 				@Override
@@ -155,10 +152,11 @@ public class ReportRepositoryDB extends RepositoryBase implements
 			});
 		}
 
-		DecimalFormat priceFormatter = new DecimalFormat("#0.00");
-		reportDataWrapper.put("additionalRevenues",
-				String.valueOf(priceFormatter.format(totalSalePrice)));
-
+		/*
+		 * DecimalFormat priceFormatter = new DecimalFormat("#0.00");
+		 * reportDataWrapper.put("additionalRevenues",
+		 * String.valueOf(priceFormatter.format(totalSalePrice)));
+		 */
 		query = dbSession.createQuery("select count(o.orderId) from "
 				+ "salesmachine.hibernatedb.OimOrders o inner join "
 				+ "o.oimOrderDetailses d where " + "o.deleteTm is null and "

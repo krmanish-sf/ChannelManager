@@ -359,133 +359,38 @@ function evalArray(obj, expr) {
 	};
 	$.fn.drawLineChart = function(placeholder, data, data_formatter) {
 		var options = {
-			hoverable : true,
-			shadowSize : 1,
-			series : {
-				lines : {
-					show : true,
-					color : '#3e3e3e'
-				},
-				points : {
-					show : true
-				}
+			chart : {
+			// title : 'Box Office Earnings in First Two Weeks of Opening',
+			// subtitle : 'in millions of dollars (USD)'
 			},
-			xaxes : [ {
-				// mode : "categories",
-				tickLength : 0,
-				mode : "time",
-				// timeformat : "%m/%d",
-				tickPadding : 0,
-				// tickSize : 'auto',
-				/*
-				 * tickFormatter : function(val, axis) { var d = new Date(val);
-				 * return (d.getUTCMonth() + 1) + "/" + d.getUTCDate(); },
-				 */
-				color : "black",
-				axisLabel : "Date(mm/dd)",
-				position : "bottom",
-				axisLabelUseCanvas : false,
-				axisLabelFontSizePixels : 12,
-				axisLabelFontFamily : 'Verdana, Arial',
-				axisLabelPadding : 10
-			} ],
-			yaxes : [ {
-				axisLabel : "",
-				min : 0,
-				axisLabelUseCanvas : true,
-				axisLabelFontSizePixels : 12,
-				axisLabelFontFamily : 'Verdana, Arial',
-				axisLabelPadding : 3,
-				tickFormatter : function(v, axis) {
-					return $.formatNumber(v, {
-						format : "#,###",
-						locale : "us"
-					});
-				}
-			} ],
-			grid : {
-				hoverable : true,
-				clickable : true,
-				backgroundColor : {
-					colors : [ "#fff", "#fff" ]
-				},
-				borderWidth : 1,
-				borderColor : '#555'
-			}
 		};
 
-		if (typeof placeholder == 'string')
-			placeholder = $('#' + placeholder);
-		var widget = placeholder.parent().parent();
-		if (typeof data == 'string') {
-			$(this).CRUD({
-				url : data,
-				method : "POST",
-				data : JSON.stringify({
-					startDate : widget.find('.start').val(),
-					endDate : widget.find('.end').val()
-				}),
-				success : function(data, textStatus, jqXHR) {
-					var formatted_data = [];
-					if (typeof data_formatter === 'string') {
-						eval(data_formatter + '(data, formatted_data)');
-						plotInternal(formatted_data, options);
-					} else {
-						console.log('data format provider not defined.');
-					}
-				}
-			});
-		} else {
-			if (typeof data_formatter === 'string') {
+		var widget = $('#' + placeholder).parent().parent();
+		$(this).CRUD({
+			url : data,
+			method : "POST",
+			data : JSON.stringify({
+				startDate : widget.find('.start').val(),
+				endDate : widget.find('.end').val()
+			}),
+			success : function(data, textStatus, jqXHR) {
 				var formatted_data = [];
-				eval(data_formatter + '(data, formatted_data)');
-				data = formatted_data;
+				if (typeof data_formatter === 'string') {
+					eval(data_formatter + '(data, formatted_data)');
+					plotInternal(formatted_data, options);
+				} else {
+					console.log('data format provider not defined.');
+				}
 			}
-			plotInternal(data, options);
-		}
+		});
+		var chart = new google.charts.Line(document.getElementById(placeholder));
 		function plotInternal(data, options) {
-			if (!data || !data.length) {
-				placeholder.text('No Data to draw.');
-				return;
-			} else {
-				placeholder.empty().css({
-					'width' : '90%',
-					'min-height' : '150px'
-				});
-				$.plot(placeholder, [ {
-					label : "Total sales",
-					data : data
-				} ], options);
-			}
-
-			$("<div id='tooltip'></div>").css({
-				position : "absolute",
-				display : "none",
-				border : "1px solid #fdd",
-				padding : "2px",
-				"background-color" : "#fee",
-				opacity : 0.80
-			}).appendTo("body");
-			$(placeholder).bind(
-					'plothover',
-					function(event, pos, item) {
-						if (item) {
-							var x = item.datapoint[0], y = item.datapoint[1]
-									.toFixed(2);
-							$("#tooltip").html(item.series.label + ": " + y)
-									.css({
-										top : item.pageY + 5,
-										left : item.pageX + 5
-									}).fadeIn(200);
-						} else {
-							$("#tooltip").hide();
-						}
-					});
+			var d = google.visualization.arrayToDataTable(data);
+			chart.draw(d, options);
 		}
 	};
 
 	$.fn.drawBarChart = function(placeholder, data, data_formatter) {
-
 		var options = {
 			chart : {
 				// title : 'Company Performance',
@@ -737,8 +642,8 @@ function evalArray(obj, expr) {
 														date.getTime(),
 														data.overAllSales[i].totalSales ]);
 									}
-									$(this).drawLineChart('sales-charts',
-											chartData);
+									// $(this).drawBarChart('sales-charts',
+									// chartData, 'formatSalesData');
 									for (var i = 0; i < channelsales.length; i++) {
 										var row = '<li class="item-orange clearfix"><label class="inline"> <span>'
 												+ channelsales[i].name
