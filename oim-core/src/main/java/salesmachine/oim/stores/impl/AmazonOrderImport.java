@@ -281,8 +281,6 @@ public class AmazonOrderImport extends ChannelBase implements IOrderImport {
 							.getPhone());
 					oimOrders.setDeliveryState(order2.getShippingAddress()
 							.getStateOrRegion());
-					oimOrders.setDeliveryStateCode(order2.getShippingAddress()
-							.getStateOrRegion());
 					oimOrders.setDeliveryStreetAddress(order2
 							.getShippingAddress().getAddressLine1());
 					oimOrders.setDeliverySuburb(order2.getShippingAddress()
@@ -323,6 +321,16 @@ public class AmazonOrderImport extends ChannelBase implements IOrderImport {
 				if (oimOrders.getOimShippingMethod() == null)
 					log.warn("Shipping can't be mapped for order "
 							+ oimOrders.getStoreOrderId());
+				// setting delivery state code 
+				if (order2.getShippingAddress().getStateOrRegion().length() == 2) {
+					oimOrders.setDeliveryStateCode(order2
+							.getShippingAddress().getStateOrRegion());
+				} else {
+					String stateCode = validateAndGetStateCode(oimOrders);
+					if (stateCode != "") 
+						oimOrders.setDeliveryStateCode(stateCode); 
+				}
+				
 				m_dbSession.saveOrUpdate(oimOrders);
 				ListOrderItemsRequest itemsRequest = new ListOrderItemsRequest();
 				itemsRequest.setSellerId(sellerId);
@@ -448,7 +456,8 @@ public class AmazonOrderImport extends ChannelBase implements IOrderImport {
 							.longValue()));
 			XMLGregorianCalendar cal = MwsUtl.getDTF().newXMLGregorianCalendar(
 					orderStatus.getTrackingData().getShipDate());
-			GregorianCalendar shipDate = orderStatus.getTrackingData().getShipDate();
+			GregorianCalendar shipDate = orderStatus.getTrackingData()
+					.getShipDate();
 			cal.setYear(shipDate.get(GregorianCalendar.YEAR));
 			cal.setMonth(shipDate.get(GregorianCalendar.MONTH));
 			cal.setDay(shipDate.get(GregorianCalendar.DATE));
@@ -461,7 +470,7 @@ public class AmazonOrderImport extends ChannelBase implements IOrderImport {
 					.getDetailId()));
 			fulfillment.getItem().add(i);
 			FulfillmentData value = new FulfillmentData();
-			//value.setCarrierCode(orderStatus.getTrackingData().getCarrierCode());
+			// value.setCarrierCode(orderStatus.getTrackingData().getCarrierCode());
 			value.setCarrierName(orderStatus.getTrackingData().getCarrierName());
 			value.setShipperTrackingNumber(orderStatus.getTrackingData()
 					.getShipperTrackingNumber());
@@ -487,4 +496,5 @@ public class AmazonOrderImport extends ChannelBase implements IOrderImport {
 		}
 		return false;
 	}
+
 }

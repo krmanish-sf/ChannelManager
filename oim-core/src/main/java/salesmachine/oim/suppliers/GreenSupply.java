@@ -29,6 +29,7 @@ import salesmachine.hibernatedb.Vendors;
 import salesmachine.hibernatehelper.SessionManager;
 import salesmachine.oim.stores.api.IOrderImport;
 import salesmachine.oim.stores.impl.OrderImportManager;
+import salesmachine.oim.suppliers.exception.InvalidAddressException;
 import salesmachine.oim.suppliers.modal.OrderStatus;
 import salesmachine.util.OimLogStream;
 import salesmachine.util.StringHandle;
@@ -134,6 +135,7 @@ public class GreenSupply extends Supplier {
 			for (Object object : orders) {
 				if (object instanceof OimOrders) {
 					OimOrders order = (OimOrders) object;
+					
 					for (OimOrderDetails od : ((Set<OimOrderDetails>) order.getOimOrderDetailses())) {
 						StringBuilder sb = new StringBuilder();
 						// for (OimFileFieldMap map : fileFieldMaps) {

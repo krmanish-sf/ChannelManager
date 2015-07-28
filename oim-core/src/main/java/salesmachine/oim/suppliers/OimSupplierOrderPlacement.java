@@ -48,6 +48,7 @@ import salesmachine.hibernatehelper.SessionManager;
 import salesmachine.oim.api.OimConstants;
 import salesmachine.oim.stores.api.IOrderImport;
 import salesmachine.oim.stores.impl.OrderImportManager;
+import salesmachine.oim.suppliers.exception.InvalidAddressException;
 import salesmachine.oim.suppliers.modal.OrderStatus;
 import salesmachine.orderfile.DatabaseFile;
 import salesmachine.orderfile.DefaultCsvFile;
@@ -217,6 +218,9 @@ public class OimSupplierOrderPlacement {
 	public boolean processVendorOrder(Integer vendorId, OimOrders oimOrders,
 			OimOrderBatchesTypes processingType) {
 		log.debug("Processing orders for VendorId: {}", vendorId);
+		
+		if(oimOrders.getDeliveryStateCode()==null)
+			throw new InvalidAddressException("Please check Delivery State code for order id - "+oimOrders.getStoreOrderId());
 		// Transaction tx = null;
 		boolean ordersSent = false;
 		try {

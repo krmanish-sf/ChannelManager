@@ -288,12 +288,20 @@ public class CREOrderImport extends ChannelBase implements IOrderImport {
 						order.setDeliverySuburb(getTagValue("suburb", e));
 						order.setDeliveryCity(getTagValue("city", e));
 						order.setDeliveryState(getTagValue("state", e));
-						order.setDeliveryStateCode(getTagValue("state", e));
+						//order.setDeliveryStateCode(getTagValue("state", e));
 						order.setDeliveryCountry(getTagValue("country", e));
 						order.setDeliveryZip(getTagValue("zip", e));
 						order.setDeliveryCompany(getTagValue("company", e));
 						order.setDeliveryPhone(getTagValue("phone", e));
 						order.setDeliveryEmail(getTagValue("email", e));
+						
+						if (getTagValue("state", e).length() == 2) {
+							order.setDeliveryStateCode(getTagValue("state", e));
+						} else {
+							String stateCode = validateAndGetStateCode(order);
+							if (stateCode != "") 
+								order.setDeliveryStateCode(stateCode); 
+						}
 					}
 
 					details = element.getElementsByTagName("billingdetails");

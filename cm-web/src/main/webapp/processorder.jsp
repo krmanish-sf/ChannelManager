@@ -512,6 +512,11 @@
 																		data-bind-order="deliveryName" maxlength="200"
 																		class="pull-right" name="deliveryname">
                                 </div>
+                               <div class="col-sm-4">
+                                  <label>State Code</label>
+                                  <input type="text" id="deliveryStateCode" data-bind-order="deliveryStateCode" class="pull-right"
+																			maxlength="2" name="deliveryStateCode">
+                                </div>
                                
                                 
                               </div>
@@ -963,6 +968,9 @@
 															if (!order.shippingMethod) {
 																order.unresolved = true;
 															}
+															if (!order.deliveryStateCode) {
+																order.unresolved = true;
+															}
 															var total = (order.orderTotalAmount != null && order.orderTotalAmount > 0) ? order.orderTotalAmount
 																	: 0;
 															if (order.unresolved) {
@@ -1052,6 +1060,9 @@
 												var ret = '<div class="panel panel-default"><a class="btn  btn-danger hidden-xs" href="#myModaledit" onclick="showResolve($(this).parent().parent().parent());" data-toggle="modal">Resolve</a><a class="btn btn-danger visible-xs btn-xs" href="#myModalResolvemob"  onclick="a($($($(this).parent()).parent().parent()));" data-toggle="modal">Resolve</a></div>';
 												if (!order.shippingMethod) {
 													ret += '<small>Shipping Mapping Error</small>';
+												}
+												if (!order.deliveryStateCode) {
+													ret += '<small>This order is missing Delivery State Code. Please update to resolve.</small>';
 												}
 												return ret;
 											}

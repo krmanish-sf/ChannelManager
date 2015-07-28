@@ -37,6 +37,7 @@ import salesmachine.hibernatedb.Vendors;
 import salesmachine.hibernatehelper.SessionManager;
 import salesmachine.oim.stores.api.IOrderImport;
 import salesmachine.oim.stores.impl.OrderImportManager;
+import salesmachine.oim.suppliers.exception.InvalidAddressException;
 import salesmachine.oim.suppliers.modal.OrderStatus;
 import salesmachine.oim.suppliers.modal.hg.TrackingData;
 import salesmachine.util.OimLogStream;
@@ -224,7 +225,7 @@ public class HonestGreen extends Supplier implements HasTracking {
 			fOut.write(StringHandle.removeNull(order.getDeliveryCity())
 					.toUpperCase().getBytes(ASCII));
 			fOut.write(COMMA);
-			fOut.write(StringHandle.removeNull(order.getDeliveryStateCode()!=null?order.getDeliveryStateCode():order.getDeliveryState())
+			fOut.write(StringHandle.removeNull(order.getDeliveryStateCode())
 					.toUpperCase().getBytes(ASCII));
 			fOut.write(COMMA);
 			fOut.write(StringHandle.removeNull(order.getDeliveryZip())

@@ -49,6 +49,7 @@ import salesmachine.hibernatedb.Vendors;
 import salesmachine.hibernatehelper.SessionManager;
 import salesmachine.oim.stores.api.IOrderImport;
 import salesmachine.oim.stores.impl.OrderImportManager;
+import salesmachine.oim.suppliers.exception.InvalidAddressException;
 import salesmachine.oim.suppliers.exception.SupplierCommunicationException;
 import salesmachine.oim.suppliers.exception.SupplierConfigurationException;
 import salesmachine.oim.suppliers.exception.SupplierOrderException;
@@ -147,7 +148,6 @@ public class DandH extends Supplier implements HasTracking {
 		// Write the data now
 		for (int i = 0; i < orders.size(); i++) {
 			OimOrders order = (OimOrders) orders.get(i);
-
 			boolean addShippingDetails = true;
 			StringBuilder xmlOrder = new StringBuilder();
 

@@ -1103,7 +1103,7 @@ public class ReportRepositoryDB extends RepositoryBase implements
 	@Override
 	public List getSystemAlerts() {
 		StringBuilder sb = new StringBuilder(
-				"select error_code,count(error_code) from OIM_VENDORSUPP_ORDERHISTORY where processing_tm>sysdate-1 group by error_code");
+				"select error_code,count(error_code) from OIM_VENDORSUPP_ORDERHISTORY where error_code!=0 AND processing_tm>sysdate-1 group by error_code");
 		Session dbSession = SessionManager.currentSession();
 		SQLQuery reportQuery = dbSession.createSQLQuery(sb.toString());
 

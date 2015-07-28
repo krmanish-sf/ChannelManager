@@ -32,6 +32,7 @@ public class Order extends DomainBase implements Serializable {
 	private String deliverySuburb;
 	private String deliveryCity;
 	private String deliveryState;
+	private String deliveryStateCode;
 	private String deliveryCountry;
 	private String deliveryZip;
 	private String deliveryCompany;
@@ -448,6 +449,13 @@ public class Order extends DomainBase implements Serializable {
 
 	public void setShippingMethod(ShippingMethod shippingMethod) {
 		this.shippingMethod = shippingMethod;
+	}
+	public String getDeliveryStateCode() {
+		return deliveryStateCode;
+	}
+
+	public void setDeliveryStateCode(String deliveryStateCode) {
+		this.deliveryStateCode = deliveryStateCode;
 	}
 
 }

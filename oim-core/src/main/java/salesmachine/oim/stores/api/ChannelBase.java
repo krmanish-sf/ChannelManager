@@ -18,6 +18,8 @@ import salesmachine.hibernatedb.OimOrderProcessingRule;
 import salesmachine.hibernatedb.OimOrders;
 import salesmachine.hibernatedb.OimSuppliers;
 import salesmachine.util.OimLogStream;
+import salesmachine.util.StateCodeProperty;
+import salesmachine.util.StringHandle;
 
 public abstract class ChannelBase implements IOrderImport {
 	private static final Logger log = LoggerFactory
@@ -91,6 +93,14 @@ public abstract class ChannelBase implements IOrderImport {
 		Object obj = query.uniqueResult();
 		return obj instanceof OimOrders;
 
+	}
+	
+	protected String validateAndGetStateCode(OimOrders order) {
+		log.info("Getting state code for - {}",order.getDeliveryState());
+		String stateCode = StateCodeProperty.getProperty(order.getDeliveryState());
+		stateCode = StringHandle.removeNull(stateCode);
+		log.info("state code for {} is {}",order.getDeliveryState(),stateCode);
+		return stateCode;
 	}
 
 }
