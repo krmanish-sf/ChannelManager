@@ -18,8 +18,6 @@ import javax.mail.internet.MimeMultipart;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import salesmachine.util.ExcHandle;
-
 public class EmailUtil {
 
 	private static final Logger log = LoggerFactory.getLogger(EmailUtil.class);
@@ -185,7 +183,7 @@ public class EmailUtil {
 
 			Transport.send(msg);
 		} catch (Exception e) {
-			ExcHandle.printStackTraceToErr(e);
+			log.error(e.getMessage(), e);
 			return -1;
 		}
 
@@ -252,7 +250,7 @@ public class EmailUtil {
 
 			Transport.send(msg);
 		} catch (Exception e) {
-			ExcHandle.printStackTraceToErr(e);
+			log.error(e.getMessage(), e);
 			return -1;
 		}
 
@@ -327,7 +325,7 @@ public class EmailUtil {
 
 			Transport.send(msg);
 		} catch (Exception e) {
-			ExcHandle.printStackTraceToErr(e);
+			log.error(e.getMessage(), e);
 			return -1;
 		}
 
@@ -412,7 +410,7 @@ public class EmailUtil {
 			// transport.connect(MAILHOST, MAILUSER, MAILPWD);
 			Transport.send(msg);
 		} catch (Exception e) {
-			ExcHandle.printStackTraceToErr(e);
+			log.error(e.getMessage(), e);
 			return -1;
 		}
 
@@ -491,7 +489,7 @@ public class EmailUtil {
 			// transport.connect(MAILHOST, MAILUSER, MAILPWD);
 			Transport.send(msg);
 		} catch (Exception e) {
-			ExcHandle.printStackTraceToErr(e);
+			log.error(e.getMessage(), e);
 			return -1;
 		}
 
@@ -540,7 +538,7 @@ public class EmailUtil {
 			// send the thing off
 			Transport.send(msg);
 		} catch (Exception e) {
-			ExcHandle.printStackTraceToErr(e);
+			log.error(e.getMessage(), e);
 			return -1;
 		}
 
