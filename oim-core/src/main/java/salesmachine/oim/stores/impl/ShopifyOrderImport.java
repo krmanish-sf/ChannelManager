@@ -260,8 +260,16 @@ public class ShopifyOrderImport extends ChannelBase implements IOrderImport {
 							.removeNull((String) deliveryObj.get("zip")));
 					oimOrders.setDeliveryState(StringHandle
 							.removeNull((String) deliveryObj.get("province")));
-					oimOrders.setDeliveryStateCode(StringHandle
-							.removeNull((String) deliveryObj.get("province_code")));
+//					oimOrders.setDeliveryStateCode(StringHandle
+//							.removeNull((String) deliveryObj.get("province_code")));
+					
+					if (((String)deliveryObj.get("province")).length() == 2) {
+						oimOrders.setDeliveryStateCode((String) deliveryObj.get("province"));
+					} else {
+						String stateCode = validateAndGetStateCode(oimOrders);
+						if (stateCode != "") 
+							oimOrders.setDeliveryStateCode(stateCode); 
+					}
 				}
 				// setting customer information
 				JSONObject custInfo = (JSONObject) orderObj.get("customer");

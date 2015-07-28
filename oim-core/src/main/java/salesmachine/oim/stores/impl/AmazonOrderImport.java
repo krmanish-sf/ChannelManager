@@ -281,8 +281,6 @@ public class AmazonOrderImport extends ChannelBase implements IOrderImport {
 							.getPhone());
 					oimOrders.setDeliveryState(order2.getShippingAddress()
 							.getStateOrRegion());
-					oimOrders.setDeliveryStateCode(order2.getShippingAddress()
-							.getStateOrRegion());
 					oimOrders.setDeliveryStreetAddress(order2
 							.getShippingAddress().getAddressLine1());
 					oimOrders.setDeliverySuburb(order2.getShippingAddress()
@@ -323,6 +321,16 @@ public class AmazonOrderImport extends ChannelBase implements IOrderImport {
 				if (oimOrders.getOimShippingMethod() == null)
 					log.warn("Shipping can't be mapped for order "
 							+ oimOrders.getStoreOrderId());
+				// setting delivery state code 
+				if (order2.getShippingAddress().getStateOrRegion().length() == 2) {
+					oimOrders.setDeliveryStateCode(order2
+							.getShippingAddress().getStateOrRegion());
+				} else {
+					String stateCode = validateAndGetStateCode(oimOrders);
+					if (stateCode != "") 
+						oimOrders.setDeliveryStateCode(stateCode); 
+				}
+				
 				m_dbSession.saveOrUpdate(oimOrders);
 				ListOrderItemsRequest itemsRequest = new ListOrderItemsRequest();
 				itemsRequest.setSellerId(sellerId);
@@ -491,4 +499,5 @@ public class AmazonOrderImport extends ChannelBase implements IOrderImport {
 		}
 		return false;
 	}
+
 }
