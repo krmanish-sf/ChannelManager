@@ -596,7 +596,7 @@ public class BF extends Supplier implements HasTracking {
 							GregorianCalendar cal = new GregorianCalendar(year,
 									month, dayOfMonth);
 							trackingData.setShipDate(cal);
-							orderStatus.setTrackingData(trackingData);
+							orderStatus.addTrackingData(trackingData);
 						} else
 							orderStatus
 									.setStatus("No tracking info available.");

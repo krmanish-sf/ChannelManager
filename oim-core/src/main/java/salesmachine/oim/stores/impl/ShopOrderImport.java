@@ -35,6 +35,7 @@ import salesmachine.oim.stores.modal.shop.order.status.ADIOSORDERSTATUSDETAIL;
 import salesmachine.oim.stores.modal.shop.order.status.ADIOSORDERSTATUSTRANSMISSION;
 import salesmachine.oim.stores.modal.shop.order.status.ADIOSSTATUS;
 import salesmachine.oim.stores.modal.shop.order.status.OrderStatus;
+import salesmachine.oim.suppliers.modal.TrackingData;
 import salesmachine.util.OimLogStream;
 import salesmachine.util.StringHandle;
 
@@ -82,67 +83,61 @@ public class ShopOrderImport extends ChannelBase implements IOrderImport {
 		statusRequest.setADIOSHEADER(header);
 		ADIOSSTATUS status = new ADIOSSTATUS();
 		status.setINVOICENUM(oimOrderDetails.getOimOrders().getStoreOrderId());
-		ADIOSORDERSTATUSDETAIL statusDetail = new ADIOSORDERSTATUSDETAIL();
+
 		if (orderStatus.isShipped()) {
-			statusDetail.setINTERNALSTATUS(OrderStatus.Item_shipped.getValue());
-			statusDetail.setEXTERNALSTATUS(OrderStatus.Item_shipped.getValue());
-			statusDetail.setCARRIERTRACKINGNUM(orderStatus.getTrackingData()
-					.getShipperTrackingNumber());
-			statusDetail.setSHIPMETHOD(orderStatus.getTrackingData()
-					.getCarrierCode()
-					+ " "
-					+ orderStatus.getTrackingData().getShippingMethod());
-			statusDetail.setSHIPDATE(df.format(orderStatus.getTrackingData()
-					.getShipDate().getTime()));
-			statusDetail.setPURCHASEID(oimOrderDetails.getStoreOrderItemId());
-		} else {
-			statusDetail.setINTERNALSTATUS(OrderStatus.Order_received_by_seller
-					.getValue());
-			statusDetail.setEXTERNALSTATUS(OrderStatus.Order_received_by_seller
-					.getValue());
-			// statusDetail.setINTERNALTEXT("Order imported to InventorySource CM");
-			// statusDetail.setEXTERNALTEXT("Order imported to InventorySource CM");
-
-		}
-		status.getADIOSORDERSTATUSDETAILOrINTERNALTEXTOrEXTERNALTEXT().add(
-				statusDetail);
-		statusRequest.getADIOSSTATUS().add(status);
-		DefaultHttpClient client = new DefaultHttpClient();
-		// client.setRedirectStrategy(new LaxRedirectStrategy());
-		try {
-
-			JAXBContext context = JAXBContext
-					.newInstance(ADIOSORDERSTATUSTRANSMISSION.class);
-			Marshaller marshaller = context.createMarshaller();
-			OutputStream os = new ByteArrayOutputStream();
-			marshaller.marshal(statusRequest, os);
-			LOG.info(os.toString());
-			HttpPost post = new HttpPost(STORE_ORDER_STATUS_UPDATE_URL);
-			List<BasicNameValuePair> nameValuePairs = new ArrayList<BasicNameValuePair>(
-					1);
-			nameValuePairs.add(new BasicNameValuePair("order_status_data", os
-					.toString()));
-			post.setEntity(new UrlEncodedFormEntity(nameValuePairs));
-			HttpResponse response = client.execute(post);
-			if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
-				LOG.info("Order Status updated");
+			for (TrackingData td : orderStatus.getTrackingData()) {
+				ADIOSORDERSTATUSDETAIL statusDetail = new ADIOSORDERSTATUSDETAIL();
+				statusDetail.setINTERNALSTATUS(OrderStatus.Item_shipped
+						.getValue());
+				statusDetail.setEXTERNALSTATUS(OrderStatus.Item_shipped
+						.getValue());
+				statusDetail.setCARRIERTRACKINGNUM(td
+						.getShipperTrackingNumber());
+				statusDetail.setSHIPMETHOD(td.getCarrierCode() + " "
+						+ td.getShippingMethod());
+				statusDetail.setSHIPDATE(df.format(td.getShipDate().getTime()));
+				statusDetail.setPURCHASEID(oimOrderDetails
+						.getStoreOrderItemId());
+				status.getADIOSORDERSTATUSDETAILOrINTERNALTEXTOrEXTERNALTEXT()
+						.add(statusDetail);
 			}
+			statusRequest.getADIOSSTATUS().add(status);
+			DefaultHttpClient client = new DefaultHttpClient();
+			// client.setRedirectStrategy(new LaxRedirectStrategy());
+			try {
 
-			byte[] resp = new byte[(int) response.getEntity()
-					.getContentLength()];
-			// response.getEntity().getContent().read(resp);
-			int c;
-			StringBuilder sb = new StringBuilder();
-			while ((c = response.getEntity().getContent().read()) != -1) {
-				sb.append(c);
+				JAXBContext context = JAXBContext
+						.newInstance(ADIOSORDERSTATUSTRANSMISSION.class);
+				Marshaller marshaller = context.createMarshaller();
+				OutputStream os = new ByteArrayOutputStream();
+				marshaller.marshal(statusRequest, os);
+				LOG.info(os.toString());
+				HttpPost post = new HttpPost(STORE_ORDER_STATUS_UPDATE_URL);
+				List<BasicNameValuePair> nameValuePairs = new ArrayList<BasicNameValuePair>(
+						1);
+				nameValuePairs.add(new BasicNameValuePair("order_status_data",
+						os.toString()));
+				post.setEntity(new UrlEncodedFormEntity(nameValuePairs));
+				HttpResponse response = client.execute(post);
+				if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
+					LOG.info("Order Status updated");
+				}
+
+				byte[] resp = new byte[(int) response.getEntity()
+						.getContentLength()];
+				// response.getEntity().getContent().read(resp);
+				int c;
+				StringBuilder sb = new StringBuilder();
+				while ((c = response.getEntity().getContent().read()) != -1) {
+					sb.append(c);
+				}
+				LOG.info("Response: {}", sb);
+			} catch (JAXBException e1) {
+				LOG.error(e1.getMessage());
+			} catch (IOException e) {
+				LOG.error(e.getMessage());
 			}
-			LOG.info("Response: {}", sb);
-		} catch (JAXBException e1) {
-			LOG.error(e1.getMessage());
-		} catch (IOException e) {
-			LOG.error(e.getMessage());
 		}
 		return true;
 	}
-
 }

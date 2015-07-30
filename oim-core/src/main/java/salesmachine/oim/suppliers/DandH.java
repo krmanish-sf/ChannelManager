@@ -49,7 +49,6 @@ import salesmachine.hibernatedb.Vendors;
 import salesmachine.hibernatehelper.SessionManager;
 import salesmachine.oim.stores.api.IOrderImport;
 import salesmachine.oim.stores.impl.OrderImportManager;
-import salesmachine.oim.suppliers.exception.InvalidAddressException;
 import salesmachine.oim.suppliers.exception.SupplierCommunicationException;
 import salesmachine.oim.suppliers.exception.SupplierConfigurationException;
 import salesmachine.oim.suppliers.exception.SupplierOrderException;
@@ -520,8 +519,29 @@ public class DandH extends Supplier implements HasTracking {
 						response = invoice;
 						orderStatus.setStatus(response);
 					} else {
-						log.info("Package Size: {}", orderstatus2.getPACKAGE()
-								.size());
+						int perBoxQty = 1;
+						int shipQty = 0;
+						int detailSize = orderstatus2.getORDERDETAIL()
+								.getDETAILITEM().size();
+						int packageSize = orderstatus2.getPACKAGE().size();
+						log.debug(
+								"DETAILITEM Size in tracking response is {}.",
+								detailSize);
+						log.debug("Package Size: {}", packageSize);
+						if (detailSize == 0) {
+							log.error("Error in tracking data format.");
+						} else {
+							shipQty = orderstatus2.getORDERDETAIL()
+									.getDETAILITEM().get(0).getQUANTITY();
+						}
+
+						if (packageSize == shipQty)
+							perBoxQty = 1;
+						else if (packageSize > shipQty) {
+							perBoxQty = packageSize / shipQty;
+						} else {
+							perBoxQty = shipQty / packageSize;
+						}
 						for (PACKAGE package1 : orderstatus2.getPACKAGE()) {
 							String shipped = package1.getSHIPPED();
 							if ("no".equalsIgnoreCase(shipped)) {
@@ -538,9 +558,7 @@ public class DandH extends Supplier implements HasTracking {
 										.getSERVICE());
 								trackingData.setShipperTrackingNumber(package1
 										.getTRACKNUM());
-								trackingData.setQuantity(orderstatus2
-										.getORDERDETAIL().getDETAILITEM()
-										.get(0).getQUANTITY());
+								trackingData.setQuantity(perBoxQty);
 								String dateshipped = package1.getDateshipped();
 								GregorianCalendar cal;
 								if (StringHandle.isNullOrEmpty(dateshipped)) {
@@ -559,7 +577,7 @@ public class DandH extends Supplier implements HasTracking {
 											dayOfMonth);
 								}
 								trackingData.setShipDate(cal);
-								orderStatus.setTrackingData(trackingData);
+								orderStatus.addTrackingData(trackingData);
 							}
 
 						}

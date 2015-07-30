@@ -8,7 +8,9 @@ function $$(selector, context) {
 Date.prototype.getWeekRange = function() {
 	var curr_date = this;
 	var day = curr_date.getDay();
-	var diff = curr_date.getDate() - day + (day == 0 ? -6 : 1); // 0 for sunday
+	// var diff = curr_date.getDate() - day + (day == 0 ? -6 : 1); // 0 for
+	// sunday
+	var diff = curr_date.getDate() - 6;
 	var week_start_tstmp = curr_date.setDate(diff);
 	var week_start = new Date(week_start_tstmp);
 	var week_start_date = week_start.format();
@@ -359,32 +361,42 @@ function evalArray(obj, expr) {
 	};
 	$.fn.drawLineChart = function(placeholder, data, data_formatter) {
 		var options = {
-			chart : {
-			// title : 'Box Office Earnings in First Two Weeks of Opening',
-			// subtitle : 'in millions of dollars (USD)'
-			},
+			pointSize : 20,
+			// colors : [ '#795548' ],
+			pointShape : 'circle'
 		};
-
 		var widget = $('#' + placeholder).parent().parent();
-		$(this).CRUD({
-			url : data,
-			method : "POST",
-			data : JSON.stringify({
-				startDate : widget.find('.start').val(),
-				endDate : widget.find('.end').val()
-			}),
-			success : function(data, textStatus, jqXHR) {
-				var formatted_data = [];
-				if (typeof data_formatter === 'string') {
-					eval(data_formatter + '(data, formatted_data)');
-					plotInternal(formatted_data, options);
-				} else {
-					console.log('data format provider not defined.');
+		if (typeof data === 'string') {
+			$(this).CRUD({
+				url : data,
+				method : "POST",
+				data : JSON.stringify({
+					startDate : widget.find('.start').val(),
+					endDate : widget.find('.end').val()
+				}),
+				success : function(data, textStatus, jqXHR) {
+					var formatted_data = [];
+					if (typeof data_formatter === 'string') {
+						eval(data_formatter + '(data, formatted_data)');
+						plotInternal(formatted_data, options);
+					} else {
+						console.log('data format provider not defined.');
+					}
 				}
+			});
+		} else {
+			var formatted_data = [];
+			if (typeof data_formatter === 'string') {
+				eval(data_formatter + '(data, formatted_data)');
+				plotInternal(formatted_data, options);
+			} else {
+				console.log('data format provider not defined.');
 			}
-		});
-		var chart = new google.charts.Line(document.getElementById(placeholder));
+		}
+
 		function plotInternal(data, options) {
+			var chart = new google.charts.Line(document
+					.getElementById(placeholder));
 			var d = google.visualization.arrayToDataTable(data);
 			chart.draw(d, options);
 		}
@@ -449,6 +461,9 @@ function evalArray(obj, expr) {
 		return this;
 	};
 	$(document).ajaxError(function(event, jqxhr, settings, exception) {
+		console.log(event);
+		console.log(jqxhr);
+		console.log(settings);
 		console.log(exception);
 	});
 	$(document)
@@ -642,8 +657,10 @@ function evalArray(obj, expr) {
 														date.getTime(),
 														data.overAllSales[i].totalSales ]);
 									}
-									// $(this).drawBarChart('sales-charts',
-									// chartData, 'formatSalesData');
+
+									$(this).drawLineChart('sales-charts', data,
+											'formatSalesData');
+
 									for (var i = 0; i < channelsales.length; i++) {
 										var row = '<li class="item-orange clearfix"><label class="inline"> <span>'
 												+ channelsales[i].name
@@ -744,7 +761,6 @@ function evalArray(obj, expr) {
 				});
 	};
 	$.CM.viewSupplierShippingMap = function(e, tableId) {
-		// debugger;
 		var supplierId;
 		if (typeof e == 'number')
 			supplierId = e;
@@ -791,7 +807,6 @@ function evalArray(obj, expr) {
 						});
 	};
 	$.CM.showChannelSupplierShipMap = function(tr, supplierId) {
-		// debugger;
 		$('#editshippingmethods').modal('show');
 		var table = $($(tr).closest('table')).DataTable();
 		var row = table.row(tr);

@@ -37,7 +37,6 @@ import salesmachine.hibernatedb.Vendors;
 import salesmachine.hibernatehelper.SessionManager;
 import salesmachine.oim.stores.api.IOrderImport;
 import salesmachine.oim.stores.impl.OrderImportManager;
-import salesmachine.oim.suppliers.exception.InvalidAddressException;
 import salesmachine.oim.suppliers.modal.OrderStatus;
 import salesmachine.oim.suppliers.modal.hg.TrackingData;
 import salesmachine.util.OimLogStream;
@@ -49,6 +48,8 @@ import com.enterprisedt.net.ftp.FTPException;
 public class HonestGreen extends Supplier implements HasTracking {
 	private static final String UNFIORDERNO = "UNFIORDERNO";
 	private static final String PONUM = "PONUM";
+	private static final String QTY_ORDERED = "QTY_ORDERED";
+	private static final String QTY_SHIPPED = "QTY_SHIPPED";
 	private static final String ASCII = "ASCII";
 	private static final Logger log = LoggerFactory
 			.getLogger(HonestGreen.class);
@@ -149,6 +150,15 @@ public class HonestGreen extends Supplier implements HasTracking {
 		return orderData;
 	}
 
+	private Map<String, String> parseShippingConfirmation(
+			Map<Integer, String> shippingConfirmationMap) {
+		String[] lineArray4 = shippingConfirmationMap.get(4).split(",");
+		Map<String, String> orderData = new HashMap<String, String>();
+		orderData.put(QTY_ORDERED, lineArray4[3]);
+		orderData.put(QTY_SHIPPED, lineArray4[4]);
+		return orderData;
+	}
+
 	/**
 	 * Parses and returns the file data in a Map with line number as keys.
 	 * 
@@ -191,7 +201,7 @@ public class HonestGreen extends Supplier implements HasTracking {
 		String uploadfilename = "HG_" + ovs.getAccountNumber() + "_"
 				+ sdf.format(new Date()) + ".txt";
 		File f = new File(uploadfilename);
-		log.info("created file name for HG:{}",f.getName());
+		log.info("created file name for HG:{}", f.getName());
 		log.debug("Creating order file for OrderId:{}", order.getOrderId());
 		try {
 			FileOutputStream fOut = new FileOutputStream(f);
@@ -310,7 +320,7 @@ public class HonestGreen extends Supplier implements HasTracking {
 
 	private static final String ORDER_CONFIRMATION_FILE_PATH_TEMPLATE = "confirmations/%s.O%sA.txt";
 	private static final String ORDER_SHIPPING_FILE_PATH_TEMPLATE = "shipping/%s.S%sA.txt";
-	private static final String ORDER_TRACKING_FILE_PATH_TEMPLATE = "%s.T%sX.txt";
+	private static final String ORDER_TRACKING_FILE_PATH_TEMPLATE = "tracking/%s.T%sX.txt";
 
 	private String getShippingFilePath(String account, String unfiOrderNo) {
 		return getFilePath(ORDER_SHIPPING_FILE_PATH_TEMPLATE, account,
@@ -347,25 +357,24 @@ public class HonestGreen extends Supplier implements HasTracking {
 			ftp.connect();
 			ftp.login(ovs.getLogin(), ovs.getPassword());
 			ftp.setTimeout(60 * 1000 * 60 * 5);
-			ftp.chdir("confirmations");
-			for (String confirmationFile : ftp.dir()) {
-				byte[] confirmationFileData = ftp.get(confirmationFile);
+			for (String confirmationFile : ftp.dir("confirmations")) {
+				log.debug("Confirmation file path: {}", confirmationFile);
+				byte[] confirmationFileData = ftp.get("confirmations/"
+						+ confirmationFile);
 				Map<Integer, String> orderDataMap = parseFileData(confirmationFileData);
 				Map<String, String> orderData = parseOrderConfirmation(orderDataMap);
 				log.info("Order Confirmation details found for {}", orderData);
 				if (trackingMeta.toString().equals(orderData.get(PONUM))) {
 					log.debug("Order Invoice Data Found");
 					String unfiOrderNo = orderData.get(UNFIORDERNO);
-					// String shippingFilePath = getShippingFilePath(
-					// ovs.getAccountNumber(), unfiOrderNo);
-					ftp.cdup();
-					ftp.chdir("tracking");
 					String trackingFilePath = getTrackingFilePath(
 							ovs.getAccountNumber(), unfiOrderNo);
 					orderStatus.setStatus("In-Process");
-					// byte[] shippingFileData = ftp.get(shippingFilePath);
-					// Map<Integer, String> shippingDataMap =
-					// parseFileData(shippingFileData);
+					String shippingFilePath = getShippingFilePath(
+							ovs.getAccountNumber(), unfiOrderNo);
+					byte[] shippingFileData = ftp.get(shippingFilePath);
+					Map<Integer, String> shippingDataMap = parseFileData(shippingFileData);
+					Map<String, String> parseShippingConfirmation = parseShippingConfirmation(shippingDataMap);
 					try {
 						byte[] trackingFileData = ftp.get(trackingFilePath);
 						Unmarshaller unmarshaller = jaxbContext
@@ -390,7 +399,11 @@ public class HonestGreen extends Supplier implements HasTracking {
 						trackingData
 								.setShipperTrackingNumber(orderTrackingResponse
 										.getPOTracking().getTrackingNumber());
-						orderStatus.setTrackingData(trackingData);
+
+						trackingData.setQuantity(Integer
+								.parseInt(parseShippingConfirmation
+										.get(QTY_SHIPPED)));
+						orderStatus.addTrackingData(trackingData);
 						log.info("Tracking details: {} {}",
 								orderTrackingResponse.getPO().getShipVia(),
 								orderTrackingResponse.getPOTracking()
@@ -427,20 +440,23 @@ public class HonestGreen extends Supplier implements HasTracking {
 	}
 
 	public static void main(String[] args) {
-		JAXBContext jaxbContext;
-		try {
-			jaxbContext = JAXBContext.newInstance(TrackingData.class);
-			Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
-			File f = new File("/tmp/37984.T19559757X.txt");
-			TrackingData orderTrackingResponse = (TrackingData) unmarshaller
-					.unmarshal(f);
-			String trackingInfo = orderTrackingResponse.getPO().getShipVia()
-					+ ":"
-					+ orderTrackingResponse.getPOTracking().getTrackingNumber();
-			log.info("Tracking:{}", trackingInfo);
-
-		} catch (JAXBException e) {
-			log.error(e.getMessage(), e);
-		}
+		HonestGreen hg = new HonestGreen();
+		Session session = SessionManager.currentSession();
+		OimVendorSuppliers ovs = (OimVendorSuppliers) session.get(
+				OimVendorSuppliers.class, 9241);
+		hg.getOrderStatus(ovs, "441325-139");
+		System.exit(0);
+		/*
+		 * JAXBContext jaxbContext; try { jaxbContext =
+		 * JAXBContext.newInstance(TrackingData.class); Unmarshaller
+		 * unmarshaller = jaxbContext.createUnmarshaller(); File f = new
+		 * File("/tmp/37984.T19559757X.txt"); TrackingData orderTrackingResponse
+		 * = (TrackingData) unmarshaller .unmarshal(f); String trackingInfo =
+		 * orderTrackingResponse.getPO().getShipVia() + ":" +
+		 * orderTrackingResponse.getPOTracking().getTrackingNumber();
+		 * log.info("Tracking:{}", trackingInfo);
+		 * 
+		 * } catch (JAXBException e) { log.error(e.getMessage(), e); }
+		 */
 	}
 }

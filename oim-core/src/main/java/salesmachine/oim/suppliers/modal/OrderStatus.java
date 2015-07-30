@@ -1,10 +1,17 @@
 package salesmachine.oim.suppliers.modal;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class OrderStatus {
 
 	private String status;
-	private TrackingData trackingData;
+	private final List<TrackingData> trackingData;
 	private boolean isShipped = false;
+
+	public OrderStatus() {
+		trackingData = new ArrayList<TrackingData>();
+	}
 
 	public String getStatus() {
 		return status;
@@ -14,12 +21,12 @@ public class OrderStatus {
 		this.status = status;
 	}
 
-	public TrackingData getTrackingData() {
+	public List<TrackingData> getTrackingData() {
 		return trackingData;
 	}
 
-	public void setTrackingData(TrackingData trackingData) {
-		this.trackingData = trackingData;
+	public void addTrackingData(TrackingData trackingData) {
+		this.trackingData.add(trackingData);
 		this.isShipped = true;
 	}
 

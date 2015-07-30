@@ -114,7 +114,6 @@
 						url : "aggregators/channels/supported-channels",
 						method : "GET",
 						success : function(data) {
-							debugger;
 							$('#channelselect').empty();
 							$("<option/>").val("").html("Select Channel")
 									.appendTo($('#channelselect'));

@@ -48,6 +48,7 @@ import salesmachine.oim.stores.modal.amazon.OrderFulfillment;
 import salesmachine.oim.stores.modal.amazon.OrderFulfillment.FulfillmentData;
 import salesmachine.oim.stores.modal.amazon.OrderFulfillment.Item;
 import salesmachine.oim.suppliers.modal.OrderStatus;
+import salesmachine.oim.suppliers.modal.TrackingData;
 import salesmachine.util.ApplicationProperties;
 import salesmachine.util.OimLogStream;
 import salesmachine.util.StringHandle;
@@ -321,16 +322,16 @@ public class AmazonOrderImport extends ChannelBase implements IOrderImport {
 				if (oimOrders.getOimShippingMethod() == null)
 					log.warn("Shipping can't be mapped for order "
 							+ oimOrders.getStoreOrderId());
-				// setting delivery state code 
+				// setting delivery state code
 				if (order2.getShippingAddress().getStateOrRegion().length() == 2) {
-					oimOrders.setDeliveryStateCode(order2
-							.getShippingAddress().getStateOrRegion());
+					oimOrders.setDeliveryStateCode(order2.getShippingAddress()
+							.getStateOrRegion());
 				} else {
 					String stateCode = validateAndGetStateCode(oimOrders);
-					if (stateCode != "") 
-						oimOrders.setDeliveryStateCode(stateCode); 
+					if (stateCode != "")
+						oimOrders.setDeliveryStateCode(stateCode);
 				}
-				
+
 				m_dbSession.saveOrUpdate(oimOrders);
 				ListOrderItemsRequest itemsRequest = new ListOrderItemsRequest();
 				itemsRequest.setSellerId(sellerId);
@@ -446,41 +447,40 @@ public class AmazonOrderImport extends ChannelBase implements IOrderImport {
 			header.setMerchantIdentifier(sellerId);
 			envelope.setHeader(header);
 			envelope.setMessageType("OrderFulfillment");
-			Message message = new Message();
-			message.setMessageID(BigInteger.ONE);
+			long msgId = 1L;
+			for (TrackingData td : orderStatus.getTrackingData()) {
+				Message message = new Message();
+				message.setMessageID(BigInteger.valueOf(msgId++));
+				envelope.getMessage().add(message);
+				OrderFulfillment fulfillment = new OrderFulfillment();
+				message.setOrderFulfillment(fulfillment);
+				fulfillment.setAmazonOrderID(oimOrderDetails.getOimOrders()
+						.getStoreOrderId());
+				fulfillment.setMerchantFulfillmentID(BigInteger
+						.valueOf(oimOrderDetails.getOimOrders().getOrderId()
+								.longValue()));
+				XMLGregorianCalendar cal = MwsUtl.getDTF()
+						.newXMLGregorianCalendar(td.getShipDate());
+				GregorianCalendar shipDate = td.getShipDate();
+				cal.setYear(shipDate.get(GregorianCalendar.YEAR));
+				cal.setMonth(shipDate.get(GregorianCalendar.MONTH));
+				cal.setDay(shipDate.get(GregorianCalendar.DATE));
+				fulfillment.setFulfillmentDate(cal);
 
-			envelope.getMessage().add(message);
-			OrderFulfillment fulfillment = new OrderFulfillment();
-			message.setOrderFulfillment(fulfillment);
-			fulfillment.setAmazonOrderID(oimOrderDetails.getOimOrders()
-					.getStoreOrderId());
-			fulfillment.setMerchantFulfillmentID(BigInteger
-					.valueOf(oimOrderDetails.getOimOrders().getOrderId()
-							.longValue()));
-			XMLGregorianCalendar cal = MwsUtl.getDTF().newXMLGregorianCalendar(
-					orderStatus.getTrackingData().getShipDate());
-			GregorianCalendar shipDate = orderStatus.getTrackingData()
-					.getShipDate();
-			cal.setYear(shipDate.get(GregorianCalendar.YEAR));
-			cal.setMonth(shipDate.get(GregorianCalendar.MONTH));
-			cal.setDay(shipDate.get(GregorianCalendar.DATE));
-			fulfillment.setFulfillmentDate(cal);
-			Item i = new Item();
-			i.setAmazonOrderItemCode(oimOrderDetails.getStoreOrderItemId());
-			i.setQuantity(BigInteger.valueOf(orderStatus.getTrackingData()
-					.getQuantity()));
-			i.setMerchantFulfillmentItemID(BigInteger.valueOf(oimOrderDetails
-					.getDetailId()));
-			fulfillment.getItem().add(i);
-			FulfillmentData value = new FulfillmentData();
-			// value.setCarrierCode(orderStatus.getTrackingData().getCarrierCode());
-			value.setCarrierName(orderStatus.getTrackingData().getCarrierName());
-			value.setShipperTrackingNumber(orderStatus.getTrackingData()
-					.getShipperTrackingNumber());
-			value.setShippingMethod(orderStatus.getTrackingData()
-					.getShippingMethod());
+				Item i = new Item();
+				i.setAmazonOrderItemCode(oimOrderDetails.getStoreOrderItemId());
+				i.setQuantity(BigInteger.valueOf(td.getQuantity()));
+				i.setMerchantFulfillmentItemID(BigInteger
+						.valueOf(oimOrderDetails.getDetailId()));
+				FulfillmentData value = new FulfillmentData();
+				// value.setCarrierCode(orderStatus.getTrackingData().getCarrierCode());
+				value.setCarrierName(td.getCarrierName());
+				value.setShipperTrackingNumber(td.getShipperTrackingNumber());
+				value.setShippingMethod(td.getShippingMethod());
+				fulfillment.getItem().add(i);
+				fulfillment.setFulfillmentData(value);
+			}
 
-			fulfillment.setFulfillmentData(value);
 			ByteArrayOutputStream os = new ByteArrayOutputStream();
 			marshaller.marshal(envelope, os);
 			InputStream inputStream = new ByteArrayInputStream(os.toByteArray());

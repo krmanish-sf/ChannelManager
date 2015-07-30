@@ -39,6 +39,7 @@ import salesmachine.oim.api.OimConstants;
 import salesmachine.oim.stores.api.ChannelBase;
 import salesmachine.oim.stores.api.IOrderImport;
 import salesmachine.oim.suppliers.modal.OrderStatus;
+import salesmachine.oim.suppliers.modal.TrackingData;
 import salesmachine.util.OimLogStream;
 import salesmachine.util.StringHandle;
 
@@ -95,14 +96,25 @@ public class ShopifyOrderImport extends ChannelBase implements IOrderImport {
 		postMethod.addRequestHeader("X-Shopify-Access-Token", shopifyToken);
 		JSONObject jsonObject = new JSONObject();
 		JSONObject jsonObjVal = new JSONObject();
-		jsonObjVal.put("tracking_number", orderStatus.getTrackingData()
-				.getShipperTrackingNumber());
-		jsonObjVal.put("tracking_company", orderStatus.getTrackingData()
+		JSONArray trackingNos = new JSONArray();
+		JSONArray lineItemArray = new JSONArray();
+		int qty = 0;
+		for (TrackingData trackingData : orderStatus.getTrackingData()) {
+			trackingNos.add(trackingData.getShipperTrackingNumber());
+			qty += trackingData.getQuantity();
+		}
+		jsonObjVal.put("tracking_numbers", trackingNos);
+		jsonObjVal.put("tracking_company", orderStatus.getTrackingData().get(0)
 				.getCarrierName());
 
-		jsonObjVal.put("notify_customer", true);
-		jsonObject.put("fulfillment", jsonObjVal);
+		JSONObject lineItem = new JSONObject();
+		lineItem.put("id", oimOrderDetails.getStoreOrderItemId());
+		lineItem.put("quantity", qty);
+		lineItemArray.add(lineItem);
 
+		jsonObjVal.put("notify_customer", true);
+		jsonObject.put("fulfillments", jsonObjVal);
+		jsonObject.put("line_items", lineItemArray);
 		StringRequestEntity requestEntity = null;
 		try {
 			requestEntity = new StringRequestEntity(jsonObject.toJSONString(),
@@ -151,7 +163,6 @@ public class ShopifyOrderImport extends ChannelBase implements IOrderImport {
 					+ getMaxStoreOrderId();
 		} else {
 			requestUrl = storeUrl + "/admin/orders.json";
-			;
 		}
 		String jsonString = null;
 		GetMethod getOrderJson = new GetMethod(requestUrl);
@@ -260,15 +271,16 @@ public class ShopifyOrderImport extends ChannelBase implements IOrderImport {
 							.removeNull((String) deliveryObj.get("zip")));
 					oimOrders.setDeliveryState(StringHandle
 							.removeNull((String) deliveryObj.get("province")));
-//					oimOrders.setDeliveryStateCode(StringHandle
-//							.removeNull((String) deliveryObj.get("province_code")));
-					
-					if (((String)deliveryObj.get("province")).length() == 2) {
-						oimOrders.setDeliveryStateCode((String) deliveryObj.get("province"));
+					// oimOrders.setDeliveryStateCode(StringHandle
+					// .removeNull((String) deliveryObj.get("province_code")));
+
+					if (((String) deliveryObj.get("province")).length() == 2) {
+						oimOrders.setDeliveryStateCode((String) deliveryObj
+								.get("province"));
 					} else {
 						String stateCode = validateAndGetStateCode(oimOrders);
-						if (stateCode != "") 
-							oimOrders.setDeliveryStateCode(stateCode); 
+						if (stateCode != "")
+							oimOrders.setDeliveryStateCode(stateCode);
 					}
 				}
 				// setting customer information
@@ -445,11 +457,12 @@ public class ShopifyOrderImport extends ChannelBase implements IOrderImport {
 		if (isSendTrackingDetails) {
 			JSONObject attributeObj2 = new JSONObject();
 			attributeObj2.put("name", "Tracking Status");
-			attributeObj2.put("value", orderStatus.getTrackingData()
-					.getShippingMethod()
-					+ " : "
-					+ orderStatus.getTrackingData().getShipperTrackingNumber());
-			// attributeObj2.put("value","UPS Ground"+" : "+"987654320");
+			StringBuilder trackingDetail = new StringBuilder();
+			for (TrackingData td : orderStatus.getTrackingData()) {
+				trackingDetail.append(td.toString());
+				trackingDetail.append("\n");
+			}
+			attributeObj2.put("value", trackingDetail.toString());
 			attributeArray.add(attributeObj2);
 		}
 		jsonObjVal.put("note_attributes", attributeArray);

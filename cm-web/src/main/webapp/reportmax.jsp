@@ -59,6 +59,7 @@ div.flot-x-axis>div.flot-tick-label {
               <jsp:param value="aggregators/reports/totalsales"
 										name="reportUrl" />
 				<jsp:param value="formatSalesData" name="dataFormatter" />
+				<jsp:param value="drawLineChart" name="fnChart" />
              </jsp:include>
              </div>
              <!-- /widget-box -->
@@ -99,10 +100,14 @@ div.flot-x-axis>div.flot-tick-label {
     </div> 
 	</jsp:attribute>
 	<jsp:attribute name="pagejs">
-	
-<!-- inline scripts related to this page --> 
+<script type="text/javascript" src="https://www.google.com/jsapi"></script>	
 
+<!-- inline scripts related to this page --> 
 <script type="text/javascript">
+	google.load('visualization', '1.1', {
+		'packages' : [ 'corechart', 'bar', 'line' ]
+	});
+
 	jQuery(function($) {
 		$('#recent-box [data-rel="tooltip"]').tooltip({
 			placement : tooltip_placement
@@ -181,8 +186,9 @@ div.flot-x-axis>div.flot-tick-label {
 									chartData.push([ date.getTime(),
 											data.overAllSales[i].totalSales ]);
 								}
-								//chart1load(chartData, null);
-								$(this).drawLineChart('sales-charts', chartData);
+
+								$(this).drawLineChart('sales-charts', data,
+										'formatSalesData');
 								for (var i = 0; i < channelsales.length; i++) {
 									var row = '<li class="item-orange clearfix"><label class="inline"> <span>'
 											+ channelsales[i].name
@@ -294,9 +300,9 @@ div.flot-x-axis>div.flot-tick-label {
 	}
 
 	function formatSalesData(data, salesData) {
+		salesData.push([ "Date", "Total Sales($)" ]);
 		for (var i = 0; i < data.overAllSales.length; i++) {
-			var date = new Date(data.overAllSales[i].date);
-			salesData.push([ date.getTime(), data.overAllSales[i].totalSales ]);
+			salesData.push(data.overAllSales[i]);
 		}
 	}
 </script>
