@@ -87,7 +87,6 @@ public class OimSupplierOrderPlacement {
 	@Deprecated
 	protected OimLogStream logStream;
 
-	public static final Integer ERROR_NONE = 0;
 	public static final Integer ERROR_UNCONFIGURED_SUPPLIER = 1;
 	public static final Integer ERROR_PING_FAILURE = 2;
 	public static final Integer ERROR_ORDER_PROCESSING = 3;
@@ -218,9 +217,11 @@ public class OimSupplierOrderPlacement {
 	public boolean processVendorOrder(Integer vendorId, OimOrders oimOrders,
 			OimOrderBatchesTypes processingType) {
 		log.debug("Processing orders for VendorId: {}", vendorId);
-		
-		if(oimOrders.getDeliveryStateCode()==null)
-			throw new InvalidAddressException("Please check Delivery State code for order id - "+oimOrders.getStoreOrderId());
+
+		if (oimOrders.getDeliveryStateCode() == null)
+			throw new InvalidAddressException(
+					"Please check Delivery State code for order id - "
+							+ oimOrders.getStoreOrderId());
 		// Transaction tx = null;
 		boolean ordersSent = false;
 		try {
@@ -311,7 +312,7 @@ public class OimSupplierOrderPlacement {
 			updateOrderStatus(failedOrders,
 					OimConstants.ORDER_STATUS_PROCESSED_FAILED);
 			if (failedOrders.size() == 0) {
-				updateVendorSupplierOrderHistory(vendorId, ERROR_NONE, "");
+				// updateVendorSupplierOrderHistory(vendorId, ERROR_NONE, "");
 				ordersSent = true;
 			} else
 				ordersSent = false;
@@ -443,7 +444,8 @@ public class OimSupplierOrderPlacement {
 			}
 
 			if (failedOrders.size() == 0) {
-				updateVendorSupplierOrderHistory(vendorId, ERROR_NONE, "");
+				// updateVendorSupplierOrderHistory(vendorId, ERROR_NONE, "");
+				return false;
 			} else
 				return false;
 		} catch (RuntimeException e) {

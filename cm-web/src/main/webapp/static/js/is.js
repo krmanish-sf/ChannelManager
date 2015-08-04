@@ -279,36 +279,10 @@ function evalArray(obj, expr) {
 	});
 	$.fn.drawPieChart = function(placeholder, data, data_formatter) {
 		var options = {
-			series : {
-				pie : {
-					show : true,
-					tilt : 0.8,
-					highlight : {
-						opacity : 0.25
-					},
-					stroke : {
-						color : '#fff',
-						width : 2
-					},
-					startAngle : 2
-				}
-			},
-			legend : {
-				show : true,
-				position : "ne",
-				labelBoxBorderColor : null,
-				margin : [ 0, 0 ]
-			},
-			grid : {
-				hoverable : true,
-				clickable : true
-			},
-			colors : [ "green", "blue", "yellow", "purple" ]
+			is3D : true
 		};
-		if (typeof placeholder == 'string')
-			placeholder = $('#' + placeholder);
-		var widget = placeholder.parent().parent().parent();
-		if (typeof data == 'string') {
+		var widget = $('#' + placeholder).parent().parent().parent();
+		if (typeof data === 'string') {
 			$(this).CRUD({
 				url : data,
 				method : "POST",
@@ -327,42 +301,25 @@ function evalArray(obj, expr) {
 				}
 			});
 		} else {
-			plotInternal(data, options);
+			var formatted_data = [];
+			if (typeof data_formatter === 'string') {
+				eval(data_formatter + '(data, formatted_data)');
+				plotInternal(formatted_data, options);
+			} else {
+				console.log('data format provider not defined.');
+			}
 		}
+
 		function plotInternal(data, options) {
-			if (!data || !data.length) {
-				placeholder.text('No Data to draw.');
-				return;
-			} else {
-				placeholder.empty().css({
-					'width' : '90%',
-					'min-height' : '210px'
-				});
-				$.plot(placeholder, data, options);
-			}
+			var chart = new google.visualization.PieChart(document
+					.getElementById(placeholder));
+			var d = google.visualization.arrayToDataTable(data);
+			chart.draw(d, options);
 		}
-		placeholder.on('plothover', function(event, pos, item) {
-			if (item) {
-				if (previousPoint != item.seriesIndex) {
-					previousPoint = item.seriesIndex;
-					var tip = item.series['label'] + " : "
-							+ item.series['percent'].toFixed(2) + '%';
-					$tooltip.show().children(0).text(tip);
-				}
-				$tooltip.css({
-					top : pos.pageY + 10,
-					left : pos.pageX + 10
-				});
-			} else {
-				$tooltip.hide();
-				previousPoint = null;
-			}
-		});
 	};
 	$.fn.drawLineChart = function(placeholder, data, data_formatter) {
 		var options = {
 			pointSize : 20,
-			// colors : [ '#795548' ],
 			pointShape : 'circle'
 		};
 		var widget = $('#' + placeholder).parent().parent();

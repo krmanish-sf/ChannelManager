@@ -598,7 +598,7 @@ public class CREOrderImport extends ChannelBase implements IOrderImport {
 				+ "</passkey>\n" + "</header>\n");
 		while (it.hasNext()) {
 			String storeOrderId = (String) it.next();
-			LOG.info("Updating order: " + storeOrderId);
+			LOG.info("Updating Store order: " + storeOrderId);
 			xmlrequest.append("<xml_order>\n");
 			xmlrequest.append("<order_id>" + storeOrderId + "</order_id>");
 			xmlrequest.append("<order_status>" + 3 + "</order_status>");
@@ -606,8 +606,7 @@ public class CREOrderImport extends ChannelBase implements IOrderImport {
 		}
 
 		xmlrequest.append("</xmlPopulate>");
-		LOG.info(xmlrequest.toString());
-		String getprod_response = sendRequest(xmlrequest.toString());
+		String 	response = sendRequest(xmlrequest.toString());
 	}
 
 	@Override

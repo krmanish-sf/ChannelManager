@@ -52,7 +52,7 @@ public abstract class Supplier {
 		logStream = ls;
 	}
 
-	abstract public void sendOrders(Integer vendorId, OimVendorSuppliers ovs,
+	public abstract void sendOrders(Integer vendorId, OimVendorSuppliers ovs,
 			List orders);
 
 	protected String getUSStateFullName(String stateCode) {

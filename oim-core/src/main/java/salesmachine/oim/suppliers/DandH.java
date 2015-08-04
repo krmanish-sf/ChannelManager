@@ -60,6 +60,11 @@ import salesmachine.oim.suppliers.modal.dh.XMLRESPONSE.ORDERSTATUS.PACKAGE;
 import salesmachine.util.OimLogStream;
 import salesmachine.util.StringHandle;
 
+/***
+ * 
+ * @author amit-yadav
+ *
+ */
 public class DandH extends Supplier implements HasTracking {
 	private static final String SERVICE_URL = "https://www.dandh.com/dhXML/xmlDispatch";
 	private static final Logger log = LoggerFactory.getLogger(DandH.class);
@@ -78,12 +83,10 @@ public class DandH extends Supplier implements HasTracking {
 
 	public void sendOrders(Integer vendorId, OimVendorSuppliers ovs, List orders) {
 		logStream.println("Started sending orders to DandH");
-		orderSkuPrefixMap = setSkuPrefixForOrders(ovs); // populate
-														// orderSkuPrefixMap
-														// with channel id and
-														// the prefix to be used
-														// for the given
-														// supplier.
+
+		// populate orderSkuPrefixMap with channel id and the prefix to be used
+		// for the given supplier.
+		orderSkuPrefixMap = setSkuPrefixForOrders(ovs);
 
 		Session session = SessionManager.currentSession();
 

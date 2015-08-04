@@ -31,5 +31,9 @@
 		<property name="deleteTm" type="java.util.Date">
 			<column name="DELETE_TM" length="7" />
 		</property>
+		<many-to-one name="oimOrderDetails"
+			class="salesmachine.hibernatedb.OimOrderDetails" fetch="select">
+			<column name="DETAIL_ID" precision="22" scale="0" />
+		</many-to-one>
 	</class>
 </hibernate-mapping>

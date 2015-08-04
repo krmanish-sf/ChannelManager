@@ -175,20 +175,12 @@ div.flot-x-axis>div.flot-tick-label {
 									}),
 							success : function(data, textStatus, jqXHR) {
 								$("#tasks").empty();
+								$("#tasks1").empty();
+								$("#tasks2").empty();
 								var productsales = data.productsales;
 								var suppliersales = data.suppliersales;
 								var channelsales = data.channelsales;
-								var chartData = [];
-								var pieChartData = [];
-								for (var i = 0; i < data.overAllSales.length; i++) {
-									var date = new Date(
-											data.overAllSales[i].date);
-									chartData.push([ date.getTime(),
-											data.overAllSales[i].totalSales ]);
-								}
 
-								$(this).drawLineChart('sales-charts', data,
-										'formatSalesData');
 								for (var i = 0; i < channelsales.length; i++) {
 									var row = '<li class="item-orange clearfix"><label class="inline"> <span>'
 											+ channelsales[i].name
@@ -196,13 +188,7 @@ div.flot-x-axis>div.flot-tick-label {
 											+ channelsales[i].totalSales
 											+ ' </div></li>';
 									$(row).appendTo("#tasks");
-									pieChartData.push({
-										label : channelsales[i].name,
-										data : channelsales[i].totalSales
-									});
 								}
-								$(this).drawPieChart('channel-sales-piechart',
-										pieChartData);
 								var supplierSalesData = [];
 								for (var i = 0; i < suppliersales.length; i++) {
 									var row = '<li class="item-orange clearfix"><label class="inline"> <span>'
@@ -211,10 +197,6 @@ div.flot-x-axis>div.flot-tick-label {
 											+ suppliersales[i].totalSales
 											+ ' </div></li>';
 									$(row).appendTo("#tasks1");
-									supplierSalesData.push({
-										label : suppliersales[i].name,
-										data : suppliersales[i].totalSales
-									});
 								}
 								var prodSalesPieData = [];
 								for (var i = 0; i < productsales.length; i++) {
@@ -224,15 +206,16 @@ div.flot-x-axis>div.flot-tick-label {
 											+ productsales[i].totalSales
 											+ '</div></li>';
 									$(row).appendTo("#tasks2");
-									prodSalesPieData.push({
-										label : productsales[i].sku,
-										data : productsales[i].totalSales
-									});
 								}
+
+								$(this).drawLineChart('sales-charts', data,
+										'formatSalesData');
+								$(this).drawPieChart('channel-sales-piechart',
+										data, 'formatChannelData');
 								$(this).drawPieChart('product-sales-piechart',
-										prodSalesPieData);
+										data, 'formatProductData');
 								$(this).drawPieChart('supplier-sales-piechart',
-										supplierSalesData);
+										data, 'formatSupplierData');
 							},
 							error : function(data, textStatus, jqXHR) {
 								alert("Error in getting report data.");
@@ -273,29 +256,26 @@ div.flot-x-axis>div.flot-tick-label {
 							}); */
 	});
 	function formatSupplierData(data, supplierSalesData) {
+		supplierSalesData.push([ "Supplier", "Total Sales($)" ]);
 		for (var i = 0; i < data.suppliersales.length; i++) {
-			supplierSalesData.push({
-				label : data.suppliersales[i].name,
-				data : data.suppliersales[i].totalSales
-			});
+			supplierSalesData.push([ data.suppliersales[i].name,
+					data.suppliersales[i].totalSales ]);
 		}
 	}
 
 	function formatChannelData(data, channelSalesData) {
+		channelSalesData.push([ "Channel", "Total Sales($)" ]);
 		for (var i = 0; i < data.channelsales.length; i++) {
-			channelSalesData.push({
-				label : data.channelsales[i].name,
-				data : data.channelsales[i].totalSales
-			});
+			channelSalesData.push([ data.channelsales[i].name,
+					data.channelsales[i].totalSales ]);
 		}
 	}
 
 	function formatProductData(data, prodSalesData) {
+		prodSalesData.push([ "SKU", "Total Sales($)" ]);
 		for (var i = 0; i < data.productsales.length; i++) {
-			prodSalesData.push({
-				label : data.productsales[i].sku,
-				data : data.productsales[i].totalSales
-			});
+			prodSalesData.push([ data.productsales[i].sku,
+					data.productsales[i].totalSales ]);
 		}
 	}
 
