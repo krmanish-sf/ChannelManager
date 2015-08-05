@@ -248,12 +248,12 @@ If you have not yet configured your supplier, click "Add Supplier" to do it now.
 									<div class="panel-collapse collapse" id="collapseOne">
 										<div class="panel-body">
 										
-											<div class="form-group" id="customname">
+											<div class="form-group">
 							                            <div class="col-sm-5">
-							                              <label for="phi-name" class="col-sm-offset-8 control-label no-padding-right">Name</label>
+							                              <label for="phi-ftp" class="col-sm-offset-8 control-label no-padding-right">FTP</label>
 														</div>
 							                              <div class="col-sm-7">
-							                                 <input class="width-70" name="name" minlength="2" type="text" value="" required />
+							                                 <input class="width-70" name="phi-ftp" minlength="2" type="text" value="" required />
 							                            </div>
 											</div>
 											 <div class="form-group">
@@ -284,15 +284,6 @@ If you have not yet configured your supplier, click "Add Supplier" to do it now.
 																			type="text" value="" required />
 				                            </div>
 																</div>
-											<div class="form-group">
-				                              <label class="col-sm-5 control-label no-padding-right">Test Mode</label>
-				                              <div class="col-sm-7">
-					                              <select class="width-70" name="phi-testmode">
-					                                <option value="1" selected>Enabled</option>
-					                                <option value="0">Disabled</option>
-					                              </select>
-				                              </div>
-											</div>
 										</div>
 									</div>
 									
@@ -312,12 +303,12 @@ If you have not yet configured your supplier, click "Add Supplier" to do it now.
 							<div class="panel-collapse collapse" id="collapseTwo">
 											<div class="panel-body">
 										
-											<div class="form-group" id="customname">
+											<div class="form-group" >
 							                            <div class="col-sm-5">
-							                              <label for="name" class="col-sm-offset-8 control-label no-padding-right">Name</label>
+							                              <label for="hva-ftp" class="col-sm-offset-8 control-label no-padding-right">FTP</label>
 														</div>
 							                              <div class="col-sm-7">
-							                                 <input class="width-70" name="hva-name" minlength="2" type="text" value="" required />
+							                                 <input class="width-70" name="hva-ftp" minlength="2" type="text" value="" required />
 							                            </div>
 											</div>
 											 <div class="form-group">
@@ -348,15 +339,6 @@ If you have not yet configured your supplier, click "Add Supplier" to do it now.
 																			type="text" value="" required />
 				                            </div>
 																</div>
-											<div class="form-group">
-				                              <label class="col-sm-5 control-label no-padding-right">Test Mode</label>
-				                              <div class="col-sm-7">
-					                              <select class="width-70" name="hva-testmode">
-					                                <option value="1" selected>Enabled</option>
-					                                <option value="0">Disabled</option>
-					                              </select>
-				                              </div>
-											</div>
 										</div>
 							</div>
 					</div>
@@ -410,7 +392,7 @@ If you have not yet configured your supplier, click "Add Supplier" to do it now.
 															name="defshippingmc" type="text" value="" required />
                             </div>
 												</div>
-                            <div class="form-group supplier-class">
+                            <div class="form-group">
                               <label
 														class="col-sm-5 control-label no-padding-right">Test Mode</label>
                               <div class="col-sm-7">

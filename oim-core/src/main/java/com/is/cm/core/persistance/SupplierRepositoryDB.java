@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -48,7 +49,7 @@ import com.is.cm.core.domain.VendorShippingMap;
 import com.is.cm.core.domain.VendorSupplier;
 
 public class SupplierRepositoryDB extends RepositoryBase implements
-		SupplierRepository {
+SupplierRepository {
 	private static final Logger LOG = LoggerFactory
 			.getLogger(SupplierRepositoryDB.class);
 	private Map<String, String> map;
@@ -64,15 +65,15 @@ public class SupplierRepositoryDB extends RepositoryBase implements
 			Criteria fetchCriteria = dbSession
 					.createCriteria(OimVendorSuppliers.class);
 			fetchCriteria
-					.add(Restrictions.eq("vendors.vendorId", getVendorId()))
-					.add(Restrictions.isNull("deleteTm"))
-					.createCriteria("oimSuppliers.oimSupplierMethodses",
-							"methods", JoinType.INNER.ordinal())
+			.add(Restrictions.eq("vendors.vendorId", getVendorId()))
+			.add(Restrictions.isNull("deleteTm"))
+			.createCriteria("oimSuppliers.oimSupplierMethodses",
+					"methods", JoinType.INNER.ordinal())
 					// .addOrder(Order.asc("supplierMethodId"))
 					.createCriteria("methods.oimSupplierMethodNames",
 							JoinType.INNER.ordinal())
-					.createCriteria("methods.oimSupplierMethodattrValueses",
-							JoinType.INNER.ordinal());
+							.createCriteria("methods.oimSupplierMethodattrValueses",
+									JoinType.INNER.ordinal());
 
 			List<OimVendorSuppliers> vendorSuppliers = fetchCriteria.list();
 			VendorSupplier vendorSupplier;
@@ -88,31 +89,31 @@ public class SupplierRepositoryDB extends RepositoryBase implements
 							.createCriteria(OimSupplierMethods.class, "methods")
 							.add(Restrictions.eq(
 									"methods.oimSuppliers.supplierId", s
-											.getOimSuppliers().getSupplierId()))
-							// .addOrder(Order.asc("supplierMethodId"))
-							.createCriteria("methods.oimSupplierMethodNames",
-									JoinType.INNER.ordinal())
-							.createCriteria(
-									"methods.oimSupplierMethodattrValueses",
-									JoinType.INNER.ordinal())
-							.createCriteria(
-									"methods.oimSupplierMethodattrValueses.oimSupplierMethodattrNames",
-									JoinType.INNER.ordinal()).list();
+									.getOimSuppliers().getSupplierId()))
+									// .addOrder(Order.asc("supplierMethodId"))
+									.createCriteria("methods.oimSupplierMethodNames",
+											JoinType.INNER.ordinal())
+											.createCriteria(
+													"methods.oimSupplierMethodattrValueses",
+													JoinType.INNER.ordinal())
+													.createCriteria(
+															"methods.oimSupplierMethodattrValueses.oimSupplierMethodattrNames",
+															JoinType.INNER.ordinal()).list();
 					oimSupplierMethodses.addAll(list);
 					Collections.sort(list,
 							new Comparator<OimSupplierMethods>() {
 
-								@Override
-								public int compare(OimSupplierMethods o1,
-										OimSupplierMethods o2) {
-									return o1
-											.getOimSupplierMethodNames()
-											.getMethodNameId()
-											.compareTo(
-													o2.getOimSupplierMethodNames()
-															.getMethodNameId());
-								}
-							});
+						@Override
+						public int compare(OimSupplierMethods o1,
+								OimSupplierMethods o2) {
+							return o1
+									.getOimSupplierMethodNames()
+									.getMethodNameId()
+									.compareTo(
+											o2.getOimSupplierMethodNames()
+											.getMethodNameId());
+						}
+					});
 					LOG.info("Now Supplier {} has {} method(s)", s
 							.getOimSuppliers().getSupplierName(), s
 							.getOimSuppliers().getOimSupplierMethodses().size());
@@ -125,22 +126,22 @@ public class SupplierRepositoryDB extends RepositoryBase implements
 							.getOimSupplierMethodattrValueses();
 					LOG.info("Reading "
 							+ oimSupplierMethods.getOimSupplierMethodNames()
-									.getMethodName()
+							.getMethodName()
 							+ ":"
 							+ oimSupplierMethods.getOimSupplierMethodTypes()
-									.getMethodTypeName());
+							.getMethodTypeName());
 					LOG.info("This Supplier method has {} attribute values",
 							oimSupplierMethodattrValueses.size());
 					if (oimSupplierMethodattrValueses.size() == 0) {
 						oimSupplierMethodattrValueses
-								.addAll(dbSession
-										.createCriteria(
-												OimSupplierMethodattrValues.class)
+						.addAll(dbSession
+								.createCriteria(
+										OimSupplierMethodattrValues.class)
 										.add(Restrictions
 												.eq("oimSupplierMethods.supplierMethodId",
 														oimSupplierMethods
-																.getSupplierMethodId()))
-										.list());
+														.getSupplierMethodId()))
+														.list());
 						LOG.info(
 								"Now this Supplier method has {} attribute values",
 								oimSupplierMethodattrValueses.size());
@@ -149,11 +150,11 @@ public class SupplierRepositoryDB extends RepositoryBase implements
 						// oimSupplierMethodattrValues.setDeleteTm(new Date());
 						LOG.info("Reading "
 								+ oimSupplierMethodattrValues
-										.getOimSupplierMethodattrNames()
-										.getAttrName()
+								.getOimSupplierMethodattrNames()
+								.getAttrName()
 								+ ":"
 								+ oimSupplierMethodattrValues
-										.getAttributeValue());
+								.getAttributeValue());
 					}
 
 				}
@@ -243,14 +244,14 @@ public class SupplierRepositoryDB extends RepositoryBase implements
 										.getOimSupplierMethodattrNames()
 										.getAttrId())) {
 							oimSupplierMethodattrValues
-									.setAttributeValue(supplierEmail);
+							.setAttributeValue(supplierEmail);
 							dbSession.update(oimSupplierMethodattrValues);
 						} else if (OimConstants.SUPPLIER_METHOD_ATTRIBUTES_FILEFORMAT
 								.equals(oimSupplierMethodattrValues
 										.getOimSupplierMethodattrNames()
 										.getAttrId())) {
 							oimSupplierMethodattrValues
-									.setAttributeValue(fileFormat);
+							.setAttributeValue(fileFormat);
 							dbSession.update(oimSupplierMethodattrValues);
 						}
 					}
@@ -346,10 +347,21 @@ public class SupplierRepositoryDB extends RepositoryBase implements
 		dbSession.evict(ovs);
 		return VendorSupplier.from(ovs);
 	}
+
 	@Override
-	public VendorSupplier addSubscriptionHG(Integer supplierId, String login,
-			String password, String accountno, String defShippingMc,
+	public VendorSupplier addSubscriptionHG(Integer supplierId, String phi_login,
+			String phi_password, String phi_accountno, String phi_ftp,String hva_login,
+			String hva_password, String hva_accountno, String hva_ftp,
 			Integer testmode) {
+		boolean isPHI=false;
+		boolean isHVA=false;
+		if(!StringHandle.removeNull(phi_login).equals("") && !StringHandle.removeNull(phi_password).equals("") && !StringHandle.removeNull(phi_accountno).equals("")
+				&& !StringHandle.removeNull(phi_ftp).equals("") )
+			isPHI=true;
+		if(!StringHandle.removeNull(hva_login).equals("") && !StringHandle.removeNull(hva_password).equals("") && !StringHandle.removeNull(hva_accountno).equals("")
+				&& !StringHandle.removeNull(hva_ftp).equals("") )
+			isHVA=true;
+
 		OimSuppliers supplier = new OimSuppliers();
 		supplier.setSupplierId(supplierId);
 		Session dbSession = SessionManager.currentSession();
@@ -357,12 +369,86 @@ public class SupplierRepositoryDB extends RepositoryBase implements
 		OimVendorSuppliers ovs = new OimVendorSuppliers();
 		ovs.setVendors(new Vendors(getVendorId()));
 		ovs.setOimSuppliers(supplier);
+		if(isPHI){
+			OimSupplierMethods oimSupplierMethods = new OimSupplierMethods();
+			oimSupplierMethods.setInsertionTm(new Date());
+			oimSupplierMethods.setOimSuppliers(supplier);
+			oimSupplierMethods.setVendor(new Vendors(getVendorId()));
+			oimSupplierMethods.setOimSupplierMethodNames(new OimSupplierMethodNames(OimConstants.SUPPLIER_METHOD_NAME_FTP));
+			oimSupplierMethods.setOimSupplierMethodTypes(new OimSupplierMethodTypes(OimConstants.SUPPLIER_METHOD_TYPE_HG_PHI));
+			Set<OimSupplierMethodattrValues> valuesSet = new HashSet<OimSupplierMethodattrValues>();
+			
+			OimSupplierMethodattrValues ftpUrlValue = new OimSupplierMethodattrValues();
+			ftpUrlValue.setAttributeValue(phi_ftp);
+			ftpUrlValue.setOimSupplierMethodattrNames(new OimSupplierMethodattrNames(OimConstants.SUPPLIER_METHOD_ATTRIBUTES_FTPSERVER));
+			ftpUrlValue.setOimSupplierMethods(oimSupplierMethods);
+			
+			
+			OimSupplierMethodattrValues ftploginValue = new OimSupplierMethodattrValues();
+			ftploginValue.setAttributeValue(phi_login);
+			ftploginValue.setOimSupplierMethodattrNames(new OimSupplierMethodattrNames(OimConstants.SUPPLIER_METHOD_ATTRIBUTES_FTPLOGIN));
+			ftploginValue.setOimSupplierMethods(oimSupplierMethods);
+			
+			OimSupplierMethodattrValues ftpPasswordValue = new OimSupplierMethodattrValues();
+			ftpPasswordValue.setAttributeValue(phi_password);
+			ftpPasswordValue.setOimSupplierMethodattrNames(new OimSupplierMethodattrNames(OimConstants.SUPPLIER_METHOD_ATTRIBUTES_FTPPASSWORD));
+			ftpPasswordValue.setOimSupplierMethods(oimSupplierMethods);
+			
+			OimSupplierMethodattrValues ftpAccountValue = new OimSupplierMethodattrValues();
+			ftpAccountValue.setAttributeValue(phi_accountno);
+			ftpAccountValue.setOimSupplierMethodattrNames(new OimSupplierMethodattrNames(OimConstants.SUPPLIER_METHOD_ATTRIBUTES_FTPACCOUNT));
+			ftpAccountValue.setOimSupplierMethods(oimSupplierMethods);
+			
+			valuesSet.add(ftpUrlValue);
+			
+			oimSupplierMethods.setOimSupplierMethodattrValueses(valuesSet);
+			dbSession.save(oimSupplierMethods);
+			dbSession.save(ftpUrlValue);
+			dbSession.save(ftploginValue);
+			dbSession.save(ftpPasswordValue);
+			dbSession.save(ftpAccountValue);
+		}
+		if(isHVA){
+			OimSupplierMethods oimSupplierMethods = new OimSupplierMethods();
+			oimSupplierMethods.setInsertionTm(new Date());
+			oimSupplierMethods.setOimSuppliers(supplier);
+			oimSupplierMethods.setVendor(new Vendors(getVendorId()));
+			oimSupplierMethods.setOimSupplierMethodNames(new OimSupplierMethodNames(OimConstants.SUPPLIER_METHOD_NAME_FTP));
+			oimSupplierMethods.setOimSupplierMethodTypes(new OimSupplierMethodTypes(OimConstants.SUPPLIER_METHOD_TYPE_HG_HVA));
+			Set<OimSupplierMethodattrValues> valuesSet = new HashSet<OimSupplierMethodattrValues>();
+			
+			OimSupplierMethodattrValues ftpUrlValue = new OimSupplierMethodattrValues();
+			ftpUrlValue.setAttributeValue(hva_ftp);
+			ftpUrlValue.setOimSupplierMethodattrNames(new OimSupplierMethodattrNames(OimConstants.SUPPLIER_METHOD_ATTRIBUTES_FTPSERVER));
+			ftpUrlValue.setOimSupplierMethods(oimSupplierMethods);
+			
+			OimSupplierMethodattrValues ftpLoginValue = new OimSupplierMethodattrValues();
+			ftpLoginValue.setAttributeValue(hva_login);
+			ftpLoginValue.setOimSupplierMethodattrNames(new OimSupplierMethodattrNames(OimConstants.SUPPLIER_METHOD_ATTRIBUTES_FTPLOGIN));
+			ftpLoginValue.setOimSupplierMethods(oimSupplierMethods);
+			
+			OimSupplierMethodattrValues ftpPasswordValue = new OimSupplierMethodattrValues();
+			ftpPasswordValue.setAttributeValue(hva_password);
+			ftpPasswordValue.setOimSupplierMethodattrNames(new OimSupplierMethodattrNames(OimConstants.SUPPLIER_METHOD_ATTRIBUTES_FTPPASSWORD));
+			ftpPasswordValue.setOimSupplierMethods(oimSupplierMethods);
+			
+			OimSupplierMethodattrValues ftpAccountValue = new OimSupplierMethodattrValues();
+			ftpAccountValue.setAttributeValue(hva_accountno);
+			ftpAccountValue.setOimSupplierMethodattrNames(new OimSupplierMethodattrNames(OimConstants.SUPPLIER_METHOD_ATTRIBUTES_FTPACCOUNT));
+			ftpAccountValue.setOimSupplierMethods(oimSupplierMethods);
+			
+			valuesSet.add(ftpUrlValue);
+			
+			oimSupplierMethods.setOimSupplierMethodattrValueses(valuesSet);
+			dbSession.save(oimSupplierMethods);
+			dbSession.save(ftpUrlValue);
+			dbSession.save(ftpLoginValue);
+			dbSession.save(ftpPasswordValue);
+			dbSession.save(ftpAccountValue);
+		}
 		ovs.setInsertionTm(new Date());
-		ovs.setAccountNumber(accountno);
-		ovs.setDefShippingMethodCode(defShippingMc);
-		ovs.setLogin(login);
-		ovs.setPassword(password);
 		ovs.setTestMode(testmode);
+		
 		dbSession.save(ovs);
 		tx.commit();
 		dbSession.evict(supplier);
@@ -583,9 +669,9 @@ public class SupplierRepositoryDB extends RepositoryBase implements
 		List methods = query.list();
 		if (methods.size() > 0) {
 			System.out
-					.println("Found "
-							+ methods.size()
-							+ " existing shipping methods with the same code for this supplier");
+			.println("Found "
+					+ methods.size()
+					+ " existing shipping methods with the same code for this supplier");
 			OimSupplierShippingMethods osm = (OimSupplierShippingMethods) methods
 					.get(0);
 			return osm;

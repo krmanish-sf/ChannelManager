@@ -35,10 +35,13 @@ import salesmachine.hibernatedb.OimChannels;
 import salesmachine.hibernatedb.OimOrderDetails;
 import salesmachine.hibernatedb.OimOrderProcessingRule;
 import salesmachine.hibernatedb.OimOrders;
+import salesmachine.hibernatedb.OimSupplierMethodattrValues;
+import salesmachine.hibernatedb.OimSupplierMethods;
 import salesmachine.hibernatedb.OimVendorSuppliers;
 import salesmachine.hibernatedb.Reps;
 import salesmachine.hibernatedb.Vendors;
 import salesmachine.hibernatehelper.SessionManager;
+import salesmachine.oim.api.OimConstants;
 import salesmachine.oim.stores.api.IOrderImport;
 import salesmachine.oim.stores.impl.OrderImportManager;
 import salesmachine.oim.suppliers.modal.OrderStatus;
@@ -120,22 +123,58 @@ public class HonestGreen extends Supplier implements HasTracking {
 							OimOrderDetails detail = itr.next();
 							orderDetailMap.put(detail.getDetailId(), detail);
 						}
+						FtpDetails ftpDetails = new FtpDetails();
+						for(Iterator<OimSupplierMethods> itr = ovs.getOimSuppliers().getOimSupplierMethodses().iterator(); itr.hasNext();){
+							OimSupplierMethods oimSupplierMethods = itr.next();
+							if(oimSupplierMethods.getOimSupplierMethodTypes().getMethodTypeId().intValue()==OimConstants.SUPPLIER_METHOD_TYPE_HG_HVA){
+								log.info("found configured HVA Location ");
+								for(Iterator<OimSupplierMethodattrValues> iterator = oimSupplierMethods.getOimSupplierMethodattrValueses().iterator(); iterator.hasNext();){
+									OimSupplierMethodattrValues oimSupplierMethodattrValues = iterator.next();
+									if(oimSupplierMethodattrValues.getAttrvalueId().intValue()==OimConstants.SUPPLIER_METHOD_ATTRIBUTES_FTPACCOUNT)
+										ftpDetails.setAccountNumber(oimSupplierMethodattrValues.getAttributeValue());
+									if(oimSupplierMethodattrValues.getAttrvalueId().intValue()==OimConstants.SUPPLIER_METHOD_ATTRIBUTES_FTPSERVER)
+										ftpDetails.setUrl(oimSupplierMethodattrValues.getAttributeValue());
+									if(oimSupplierMethodattrValues.getAttrvalueId().intValue()==OimConstants.SUPPLIER_METHOD_ATTRIBUTES_FTPLOGIN)
+										ftpDetails.setUserName(oimSupplierMethodattrValues.getAttributeValue());
+									if(oimSupplierMethodattrValues.getAttrvalueId().intValue()==OimConstants.SUPPLIER_METHOD_ATTRIBUTES_FTPPASSWORD)
+										ftpDetails.setPassword(oimSupplierMethodattrValues.getAttributeValue());
+								}
+							}
+						}
 						String fileName = createOrderFile(order, ovs,
-								orderDetailMap);
-						sendToFTP(fileName, ovs, true, false);
+								orderDetailMap,ftpDetails);
+						sendToFTP(fileName, ovs,ftpDetails, true, false);
 					}
 					if (PhiMap.size() > 0) {
 						// create order file and send order to PHI configured
 						// ftp
+						FtpDetails ftpDetails = new FtpDetails();
 						Map<Integer, OimOrderDetails> orderDetailMap = new HashMap<Integer, OimOrderDetails>();
 						for (Iterator<OimOrderDetails> itr = PhiMap.values()
 								.iterator(); itr.hasNext();) {
 							OimOrderDetails detail = itr.next();
 							orderDetailMap.put(detail.getDetailId(), detail);
 						}
+						for(Iterator<OimSupplierMethods> itr = ovs.getOimSuppliers().getOimSupplierMethodses().iterator(); itr.hasNext();){
+							OimSupplierMethods oimSupplierMethods = itr.next();
+							if(oimSupplierMethods.getOimSupplierMethodTypes().getMethodTypeId().intValue()==OimConstants.SUPPLIER_METHOD_TYPE_HG_PHI){
+								log.info("found configured PHI Location ");
+								for(Iterator<OimSupplierMethodattrValues> iterator = oimSupplierMethods.getOimSupplierMethodattrValueses().iterator(); iterator.hasNext();){
+									OimSupplierMethodattrValues oimSupplierMethodattrValues = iterator.next();
+									if(oimSupplierMethodattrValues.getAttrvalueId().intValue()==OimConstants.SUPPLIER_METHOD_ATTRIBUTES_FTPACCOUNT)
+										ftpDetails.setAccountNumber(oimSupplierMethodattrValues.getAttributeValue());
+									if(oimSupplierMethodattrValues.getAttrvalueId().intValue()==OimConstants.SUPPLIER_METHOD_ATTRIBUTES_FTPSERVER)
+										ftpDetails.setUrl(oimSupplierMethodattrValues.getAttributeValue());
+									if(oimSupplierMethodattrValues.getAttrvalueId().intValue()==OimConstants.SUPPLIER_METHOD_ATTRIBUTES_FTPLOGIN)
+										ftpDetails.setUserName(oimSupplierMethodattrValues.getAttributeValue());
+									if(oimSupplierMethodattrValues.getAttrvalueId().intValue()==OimConstants.SUPPLIER_METHOD_ATTRIBUTES_FTPPASSWORD)
+										ftpDetails.setPassword(oimSupplierMethodattrValues.getAttributeValue());
+								}
+							}
+						}
 						String fileName = createOrderFile(order, ovs,
-								orderDetailMap);
-						sendToFTP(fileName, ovs, false, true);
+								orderDetailMap,ftpDetails);
+						sendToFTP(fileName, ovs,ftpDetails, false, true);
 					}
 					if (HVAPhiMap.size() > 0) {
 						// check quantity of hva and phi. based on that send
@@ -157,14 +196,50 @@ public class HonestGreen extends Supplier implements HasTracking {
 						}
 						String fileName = "";
 						if (orderDetailHVAMap.size() > 0) {
+							FtpDetails ftpDetails = new FtpDetails();
+							for(Iterator<OimSupplierMethods> itr = ovs.getOimSuppliers().getOimSupplierMethodses().iterator(); itr.hasNext();){
+								OimSupplierMethods oimSupplierMethods = itr.next();
+								if(oimSupplierMethods.getOimSupplierMethodTypes().getMethodTypeId().intValue()==OimConstants.SUPPLIER_METHOD_TYPE_HG_HVA){
+									log.info("found configured HVA Location ");
+									for(Iterator<OimSupplierMethodattrValues> iterator = oimSupplierMethods.getOimSupplierMethodattrValueses().iterator(); iterator.hasNext();){
+										OimSupplierMethodattrValues oimSupplierMethodattrValues = iterator.next();
+										if(oimSupplierMethodattrValues.getAttrvalueId().intValue()==OimConstants.SUPPLIER_METHOD_ATTRIBUTES_FTPACCOUNT)
+											ftpDetails.setAccountNumber(oimSupplierMethodattrValues.getAttributeValue());
+										if(oimSupplierMethodattrValues.getAttrvalueId().intValue()==OimConstants.SUPPLIER_METHOD_ATTRIBUTES_FTPSERVER)
+											ftpDetails.setUrl(oimSupplierMethodattrValues.getAttributeValue());
+										if(oimSupplierMethodattrValues.getAttrvalueId().intValue()==OimConstants.SUPPLIER_METHOD_ATTRIBUTES_FTPLOGIN)
+											ftpDetails.setUserName(oimSupplierMethodattrValues.getAttributeValue());
+										if(oimSupplierMethodattrValues.getAttrvalueId().intValue()==OimConstants.SUPPLIER_METHOD_ATTRIBUTES_FTPPASSWORD)
+											ftpDetails.setPassword(oimSupplierMethodattrValues.getAttributeValue());
+									}
+								}
+							}
 							fileName = createOrderFile(order, ovs,
-									orderDetailHVAMap);
-							sendToFTP(fileName, ovs, true, false);
+									orderDetailHVAMap,ftpDetails);
+							sendToFTP(fileName, ovs,ftpDetails, true, false);
 						}
 						if (orderDetailPHIMap.size() > 0) {
+							FtpDetails ftpDetails = new FtpDetails();
+							for(Iterator<OimSupplierMethods> itr = ovs.getOimSuppliers().getOimSupplierMethodses().iterator(); itr.hasNext();){
+								OimSupplierMethods oimSupplierMethods = itr.next();
+								if(oimSupplierMethods.getOimSupplierMethodTypes().getMethodTypeId().intValue()==OimConstants.SUPPLIER_METHOD_TYPE_HG_PHI){
+									log.info("found configured HVA Location ");
+									for(Iterator<OimSupplierMethodattrValues> iterator = oimSupplierMethods.getOimSupplierMethodattrValueses().iterator(); iterator.hasNext();){
+										OimSupplierMethodattrValues oimSupplierMethodattrValues = iterator.next();
+										if(oimSupplierMethodattrValues.getAttrvalueId().intValue()==OimConstants.SUPPLIER_METHOD_ATTRIBUTES_FTPACCOUNT)
+											ftpDetails.setAccountNumber(oimSupplierMethodattrValues.getAttributeValue());
+										if(oimSupplierMethodattrValues.getAttrvalueId().intValue()==OimConstants.SUPPLIER_METHOD_ATTRIBUTES_FTPSERVER)
+											ftpDetails.setUrl(oimSupplierMethodattrValues.getAttributeValue());
+										if(oimSupplierMethodattrValues.getAttrvalueId().intValue()==OimConstants.SUPPLIER_METHOD_ATTRIBUTES_FTPLOGIN)
+											ftpDetails.setUserName(oimSupplierMethodattrValues.getAttributeValue());
+										if(oimSupplierMethodattrValues.getAttrvalueId().intValue()==OimConstants.SUPPLIER_METHOD_ATTRIBUTES_FTPPASSWORD)
+											ftpDetails.setPassword(oimSupplierMethodattrValues.getAttributeValue());
+									}
+								}
+							}
 							fileName = createOrderFile(order, ovs,
-									orderDetailPHIMap);
-							sendToFTP(fileName, ovs, false, true);
+									orderDetailPHIMap,ftpDetails);
+							sendToFTP(fileName, ovs,ftpDetails, false, true);
 						}
 
 					}
@@ -241,15 +316,15 @@ public class HonestGreen extends Supplier implements HasTracking {
 		return ((Integer) quantity).intValue();
 	}
 
-	private void sendToFTP(String fileName, OimVendorSuppliers ovs,
+	private void sendToFTP(String fileName, OimVendorSuppliers ovs, FtpDetails ftpDetails,
 			boolean isHva, boolean isPhi) {
 		FTPClient ftp = new FTPClient();
-		if (isHva) {
+		//if (isHva) {
 			try {
-				ftp.setRemoteHost("ftp1.unfi.com");
+				ftp.setRemoteHost(ftpDetails.getUrl());
 				ftp.setDetectTransferMode(true);
 				ftp.connect();
-				ftp.login(ovs.getLogin(), ovs.getPassword());
+				ftp.login(ftpDetails.getUserName(), ftpDetails.getPassword());
 				ftp.setTimeout(60 * 1000 * 60 * 5);
 				ftp.put(fileName, fileName);
 				ftp.quit();
@@ -260,23 +335,23 @@ public class HonestGreen extends Supplier implements HasTracking {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-		} else if (isPhi) {
-			try {
-				ftp.setRemoteHost("ftp1.unfi.com");
-				ftp.setDetectTransferMode(true);
-				ftp.connect();
-				ftp.login(ovs.getLogin(), ovs.getPassword());
-				ftp.setTimeout(60 * 1000 * 60 * 5);
-				ftp.put(fileName, fileName);
-				ftp.quit();
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (FTPException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-		}
+//		} else if (isPhi) {
+//			try {
+//				ftp.setRemoteHost("ftp1.unfi.com");
+//				ftp.setDetectTransferMode(true);
+//				ftp.connect();
+//				ftp.login(ovs.getLogin(), ovs.getPassword());
+//				ftp.setTimeout(60 * 1000 * 60 * 5);
+//				ftp.put(fileName, fileName);
+//				ftp.quit();
+//			} catch (IOException e) {
+//				// TODO Auto-generated catch block
+//				e.printStackTrace();
+//			} catch (FTPException e) {
+//				// TODO Auto-generated catch block
+//				e.printStackTrace();
+//			}
+//		}
 	}
 
 	private void getProdTypeMap(OimOrders order, int vendorId) {
@@ -509,10 +584,10 @@ public class HonestGreen extends Supplier implements HasTracking {
 	}
 
 	private String createOrderFile(OimOrders order, OimVendorSuppliers ovs,
-			Map<Integer, OimOrderDetails> detailMap) {
+			Map<Integer, OimOrderDetails> detailMap, FtpDetails ftpDetails) {
 		SimpleDateFormat sdf = new SimpleDateFormat("yyMMddHHmm");
-		String uploadfilename = "/home/manish-kumar/Desktop/" + "HG_"
-				+ ovs.getAccountNumber() + "_" + sdf.format(new Date())
+		String uploadfilename = "HG_"
+				+ ftpDetails.getAccountNumber() + "_" + sdf.format(new Date())
 				+ ".txt";
 		File f = new File(uploadfilename);
 		log.info("created file name for HG:{}", f.getName());
@@ -522,7 +597,7 @@ public class HonestGreen extends Supplier implements HasTracking {
 			// Integer orderSize = order.getOimOrderDetailses().size();
 			fOut.write("1".getBytes(ASCII));
 			fOut.write(NEW_LINE);
-			fOut.write(ovs.getAccountNumber().getBytes(ASCII));
+			fOut.write(ftpDetails.getAccountNumber().getBytes(ASCII));
 			fOut.write(COMMA);
 			// fOut.write(BLANK_SPACE);
 			fOut.write(COMMA);
@@ -755,4 +830,49 @@ public class HonestGreen extends Supplier implements HasTracking {
 		}
 		return orderStatus;
 	}
+}
+
+class FtpDetails{
+	String accountNumber;
+	String url;
+	String userName;
+	String password;
+	
+	
+	public FtpDetails() {
+		super();
+	}
+	public FtpDetails(String accountNumber, String url, String userName,
+			String password) {
+		this.accountNumber = accountNumber;
+		this.url = url;
+		this.userName = userName;
+		this.password = password;
+	}
+	public String getAccountNumber() {
+		return accountNumber;
+	}
+	public void setAccountNumber(String accountNumber) {
+		this.accountNumber = accountNumber;
+	}
+	public String getUrl() {
+		return url;
+	}
+	public void setUrl(String url) {
+		this.url = url;
+	}
+	public String getUserName() {
+		return userName;
+	}
+	public void setUserName(String userName) {
+		this.userName = userName;
+	}
+	public String getPassword() {
+		return password;
+	}
+	public void setPassword(String password) {
+		this.password = password;
+	}
+	
+	
 }

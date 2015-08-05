@@ -27,9 +27,10 @@ public interface SupplierRepository {
 	VendorSupplier addSubscription(Integer supplierId, String login,
 			String password, String accountno, String defShippingMc,
 			Integer testmode);
-	VendorSupplier addSubscriptionHG(Integer supplierId, String login,
-			String password, String accountno, String defShippingMc,
-			Integer testmode);
+
+	VendorSupplier addSubscriptionHG(Integer supplierId, String phi_login,
+			String phi_password, String phi_accountno, String phi_ftp,
+			String hva_login, String hva_password, String hva_accountno, String hva_ftp, Integer testmode);
 
 	VendorSupplier addCustomSubscription(Map<String, String> map);
 

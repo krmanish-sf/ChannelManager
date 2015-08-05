@@ -15,6 +15,15 @@ public class OimSupplierMethods implements java.io.Serializable {
 	private OimSupplierMethodNames oimSupplierMethodNames;
 	private OimSupplierMethodTypes oimSupplierMethodTypes;
 	private OimSuppliers oimSuppliers;
+	private Vendors vendor;
+	public Vendors getVendor() {
+		return vendor;
+	}
+
+	public void setVendor(Vendors vendor) {
+		this.vendor = vendor;
+	}
+
 	private Date insertionTm;
 	private Date deleteTm;
 	private Set oimSupplierMethodattrValueses = new HashSet(0);

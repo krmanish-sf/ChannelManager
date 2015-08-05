@@ -72,18 +72,25 @@ public class SupplierEventHandler implements SupplierService {
 		Integer testMode = Integer.parseInt(createEvent.getEntity().get(
 				"testmode"));
 		if (supplierId > 0) {
-			if(supplierId==1822){
+			if (supplierId == 1822) {
 				supplier = supplierRepository.addSubscriptionHG(supplierId,
 						createEvent.getEntity().get("phi-login"), createEvent
-								.getEntity().get("phi-password"), createEvent
-								.getEntity().get("phi-accountno"), createEvent
-								.getEntity().get("defshippingmc"), testMode);
+						.getEntity().get("phi-password"), createEvent
+						.getEntity().get("phi-accountno"), createEvent
+						.getEntity().get("phi-ftp"),
+						createEvent.getEntity().get("hva-login"),
+						createEvent.getEntity().get("hva-password"),
+						createEvent.getEntity().get("hva-accountno"),
+						createEvent.getEntity().get("hva-ftp"),
+						testMode);
 			}
-			supplier = supplierRepository.addSubscription(supplierId,
-					createEvent.getEntity().get("login"), createEvent
-							.getEntity().get("password"), createEvent
-							.getEntity().get("accountno"), createEvent
-							.getEntity().get("defshippingmc"), testMode);
+			else{
+				supplier = supplierRepository.addSubscription(supplierId,
+						createEvent.getEntity().get("login"), createEvent
+						.getEntity().get("password"), createEvent
+						.getEntity().get("accountno"), createEvent
+						.getEntity().get("defshippingmc"), testMode);
+			}
 		} else {
 			supplier = supplierRepository.addCustomSubscription(createEvent
 					.getEntity());

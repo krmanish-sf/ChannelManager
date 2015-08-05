@@ -38,6 +38,8 @@ public class OimConstants {
 	
 	public static final Integer SUPPLIER_METHOD_TYPE_ORDERPUSH = new Integer(1);
 	public static final Integer SUPPLIER_METHOD_TYPE_STATUSPULL = new Integer(2);	
+	public static final Integer SUPPLIER_METHOD_TYPE_HG_PHI = new Integer(3);
+	public static final Integer SUPPLIER_METHOD_TYPE_HG_HVA = new Integer(4);
 	
 	public static final Integer SUPPLIER_METHOD_NAME_EMAIL = new Integer(1);
 	public static final Integer SUPPLIER_METHOD_NAME_FTP = new Integer(2);
@@ -50,6 +52,7 @@ public class OimConstants {
 	public static final Integer SUPPLIER_METHOD_ATTRIBUTES_FTPFOLDER = new Integer(5);
 	public static final Integer SUPPLIER_METHOD_ATTRIBUTES_FILETYPEID = new Integer(6);
 	public static final Integer SUPPLIER_METHOD_ATTRIBUTES_FILEFORMAT = new Integer(8);
+	public static final Integer SUPPLIER_METHOD_ATTRIBUTES_FTPACCOUNT = new Integer(9);
 	
 	public static final String FILE_FORMAT_PARAMS_USEHEADER = "USE_HEADER";
 	public static final String FILE_FORMAT_PARAMS_FIELD_DELIMITER = "FIELD_DELIMITER";

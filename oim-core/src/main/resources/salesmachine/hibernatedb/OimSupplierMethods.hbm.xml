@@ -19,6 +19,9 @@
         <many-to-one name="oimSuppliers" class="salesmachine.hibernatedb.OimSuppliers" fetch="select">
             <column name="SUPPLIER_ID" precision="22" scale="0" />
         </many-to-one>
+         <many-to-one name="vendor" class="salesmachine.hibernatedb.Vendors" fetch="select">
+            <column name="VENDOR_ID" precision="22" scale="0" />
+        </many-to-one>
         <property name="insertionTm" type="java.util.Date">
             <column name="INSERTION_TM" length="7" />
         </property>
