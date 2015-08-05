@@ -101,11 +101,11 @@ public class DandH extends Supplier implements HasTracking {
 		} catch (HibernateException e) {
 			log.error(e.getLocalizedMessage(), e);
 
-		} catch (Exception e1) {
+		} catch (RuntimeException e1) {
 			log.error("Error in sending orders", e1);
 
 			updateVendorSupplierOrderHistory(vendorId, ovs,
-					"Error in sending orders");
+					"Error in sending orders", ERROR_ORDER_PROCESSING);
 		}
 	}
 
@@ -137,7 +137,7 @@ public class DandH extends Supplier implements HasTracking {
 	private void createAndPostXMLRequest(List orders,
 			List<OimFileFieldMap> fileFieldMaps,
 			IFileSpecificsProvider fileSpecifics, OimVendorSuppliers ovs,
-			Integer vendorId, Reps r) throws Exception {
+			Integer vendorId, Reps r) {
 		String USERID = ovs.getLogin();
 		String PASSWORD = ovs.getPassword();
 		String lincenceKey = ovs.getAccountNumber();
@@ -247,7 +247,8 @@ public class DandH extends Supplier implements HasTracking {
 				} catch (RuntimeException e) {
 					log.error(e.getMessage(), e);
 					String message = "Error in posting order";
-					updateVendorSupplierOrderHistory(vendorId, ovs, message);
+					updateVendorSupplierOrderHistory(vendorId, ovs, message
+							+ ": " + e.getMessage(), ERROR_ORDER_PROCESSING);
 					failedOrders.add(detail.getDetailId());
 					detail.setSupplierOrderStatus(message);
 					Session session = SessionManager.currentSession();
@@ -269,8 +270,20 @@ public class DandH extends Supplier implements HasTracking {
 			String xmlResponse = null;
 			try {
 				xmlResponse = postRequest(xmlRequest, r);
-			} catch (Exception e) {
+			} catch (RuntimeException e) {
 				log.error(e.getMessage(), e);
+			} catch (SupplierConfigurationException e) {
+				log.error(e.getMessage(), e);
+				updateVendorSupplierOrderHistory(vendorId, ovs, e.getMessage(),
+						ERROR_UNCONFIGURED_SUPPLIER);
+			} catch (SupplierCommunicationException e) {
+				log.error(e.getMessage(), e);
+				updateVendorSupplierOrderHistory(vendorId, ovs, e.getMessage(),
+						ERROR_PING_FAILURE);
+			} catch (SupplierOrderException e) {
+				log.error(e.getMessage(), e);
+				updateVendorSupplierOrderHistory(vendorId, ovs, e.getMessage(),
+						ERROR_ORDER_PROCESSING);
 			}
 			String orderMessage = "";
 			if (xmlResponse == null) {
@@ -362,7 +375,12 @@ public class DandH extends Supplier implements HasTracking {
 						stream.println("This Channel type is not supported for pushing order updates.");
 					}
 				}
-				updateVendorSupplierOrderHistory(vendorId, ovs, orderMessage);
+				updateVendorSupplierOrderHistory(
+						vendorId,
+						ovs,
+						orderMessage,
+						orderMessage.contains("login") ? ERROR_UNCONFIGURED_SUPPLIER
+								: ERROR_ORDER_PROCESSING);
 			}
 
 			// Send Email Notifications if is set to true.

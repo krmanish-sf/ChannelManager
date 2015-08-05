@@ -1,9 +1,11 @@
 package salesmachine.oim.suppliers;
 
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.StringReader;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Date;
@@ -39,6 +41,9 @@ import salesmachine.hibernatedb.Vendors;
 import salesmachine.hibernatehelper.SessionManager;
 import salesmachine.oim.stores.api.IOrderImport;
 import salesmachine.oim.stores.impl.OrderImportManager;
+import salesmachine.oim.suppliers.exception.SupplierCommunicationException;
+import salesmachine.oim.suppliers.exception.SupplierConfigurationException;
+import salesmachine.oim.suppliers.exception.SupplierOrderException;
 import salesmachine.oim.suppliers.modal.TrackingData;
 import salesmachine.oim.suppliers.modal.bf.OrderXMLresp;
 import salesmachine.oim.suppliers.modal.bf.OrderXMLresp.Items.Item;
@@ -295,8 +300,20 @@ public class BF extends Supplier implements HasTracking {
 			String xmlResponse = null;
 			try {
 				xmlResponse = postRequest(xmlRequest, r, "cart");
-			} catch (Exception e) {
+			} catch (RuntimeException e) {
 				log.error(e.getMessage(), e);
+			} catch (SupplierConfigurationException e) {
+				log.error(e.getMessage(), e);
+				updateVendorSupplierOrderHistory(vendorId, ovs, e.getMessage(),
+						ERROR_UNCONFIGURED_SUPPLIER);
+			} catch (SupplierCommunicationException e) {
+				log.error(e.getMessage(), e);
+				updateVendorSupplierOrderHistory(vendorId, ovs, e.getMessage(),
+						ERROR_PING_FAILURE);
+			} catch (SupplierOrderException e) {
+				log.error(e.getMessage(), e);
+				updateVendorSupplierOrderHistory(vendorId, ovs, e.getMessage(),
+						ERROR_ORDER_PROCESSING);
 			}
 			// Output the response
 			JAXBContext jaxbContext;
@@ -376,7 +393,8 @@ public class BF extends Supplier implements HasTracking {
 						failedOrders.add(detail.getDetailId());
 					}
 					updateVendorSupplierOrderHistory(vendorId, ovs,
-							orderXMLresp.getErrorResponse().getMSG().get(0));
+							orderXMLresp.getErrorResponse().getMSG().get(0),
+							ERROR_ORDER_PROCESSING);
 				}
 			} else {
 				for (Iterator detailIt = order.getOimOrderDetailses()
@@ -385,7 +403,7 @@ public class BF extends Supplier implements HasTracking {
 					failedOrders.add(detail.getDetailId());
 				}
 				updateVendorSupplierOrderHistory(vendorId, ovs,
-						xmlResponse.toString());
+						xmlResponse.toString(), ERROR_PING_FAILURE);
 			}
 
 			// Send Email Notifications if is set to true.
@@ -435,7 +453,9 @@ public class BF extends Supplier implements HasTracking {
 		}
 	}
 
-	private String postRequest(String request, Reps r, String service) {
+	private String postRequest(String request, Reps r, String service)
+			throws SupplierConfigurationException, SupplierOrderException,
+			SupplierCommunicationException {
 		URL url;
 		HttpsURLConnection connection = null;
 		String response = "";
@@ -473,7 +493,7 @@ public class BF extends Supplier implements HasTracking {
 			// System.out.println(sb.toString());
 			response = sb.toString();
 			log.info("Response: {}", response);
-		} catch (Exception e) {
+		} catch (RuntimeException e) {
 			log.error(e.getMessage(), e);
 			String logEmailContent = "-------------- Order failed with Exception -------------\n";
 			logEmailContent += "-------------- XML SOAP REQUEST SENT -------------\n";
@@ -489,6 +509,14 @@ public class BF extends Supplier implements HasTracking {
 			EmailUtil.sendEmail("orders@inventorysource.com",
 					"support@inventorysource.com", "", emailSubject,
 					logEmailContent);
+			throw new SupplierOrderException();
+		} catch (MalformedURLException e) {
+			log.error(e.getMessage());
+			throw new SupplierConfigurationException(
+					"Supplier Communication URL is invalid.", e);
+		} catch (IOException e) {
+			log.error(e.getMessage());
+			throw new SupplierCommunicationException();
 		} finally {
 			if (connection != null) {
 				connection.disconnect();
@@ -605,7 +633,8 @@ public class BF extends Supplier implements HasTracking {
 
 				}
 			}
-		} catch (JAXBException e) {
+		} catch (JAXBException | SupplierConfigurationException
+				| SupplierOrderException | SupplierCommunicationException e) {
 			log.error(e.getMessage(), e);
 		}
 		return orderStatus;

@@ -2,14 +2,19 @@ package com.inventorysource.cm.web;
 
 import java.util.StringTokenizer;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import salesmachine.email.EmailUtil;
-import salesmachine.util.ExcHandle;
 import salesmachine.util.Filter;
 import salesmachine.util.NumberFormat;
 import salesmachine.util.StringHandle;
 import HTTPClient.CookieModule;
 
 public class Payments {
+
+	private static final Logger log = LoggerFactory.getLogger(Payments.class);
+
 	public static class CreditCard {
 		public String name_on_card;
 		public String card_num;
@@ -17,35 +22,38 @@ public class Payments {
 		public String exp_year;
 		public String type;
 	}
+
 	public static class Contact {
-		  public static int CONTACT_TYPE_SHIPPING = 1;
-		  public static int CONTACT_TYPE_BILLING = 2;
-		  public static int CONTACT_TYPE_VENDOR = 3;
+		public static int CONTACT_TYPE_SHIPPING = 1;
+		public static int CONTACT_TYPE_BILLING = 2;
+		public static int CONTACT_TYPE_VENDOR = 3;
 
-		  public int contact_id;
-		  public int contact_type_id;
-		  public String firstName;
-		  public String lastName;
-		  public String email;
-		  public String address1;
-		  public String address2;
-		  public String city;
-		  public String state;
-		  public String zip;
-		  public String province;
-		  public String country;
-		  public String phone;
-		  public String dailyUpdateEmail;
+		public int contact_id;
+		public int contact_type_id;
+		public String firstName;
+		public String lastName;
+		public String email;
+		public String address1;
+		public String address2;
+		public String city;
+		public String state;
+		public String zip;
+		public String province;
+		public String country;
+		public String phone;
+		public String dailyUpdateEmail;
 
-		  public String errorMessage;  //if anything goes wrong, store it here
+		public String errorMessage; // if anything goes wrong, store it here
 	}
-	
+
 	public String message;
 	// New YourPay info
 	public String username = "1001110893";
 	public String password = "salesmachine"; // not needed "kocmljch",[hidden];
-	
-	public boolean chargeVendor(CreditCard credit_card, Contact billing_contact, double total_amount, String charge_description) {
+
+	public boolean chargeVendor(CreditCard credit_card,
+			Contact billing_contact, double total_amount,
+			String charge_description) {
 		String statement = "", txnNumber = "";
 		Filter f = new Filter("");
 		String res_array[] = new String[35];
@@ -81,10 +89,10 @@ public class Payments {
 			String amount = NumberFormat.formatNum(total_amount);
 
 			String invNum = "";
-			String commentString = "Inventory Source Channel Manager - invoice #" + invNum;
+			String commentString = "Inventory Source Channel Manager - invoice #"
+					+ invNum;
 			commentString += "\n"
-					+ Filter.transForm("s/<br>/\n/gi",
-							charge_description);
+					+ Filter.transForm("s/<br>/\n/gi", charge_description);
 
 			// for trasanction type
 			String txn_type = txn_type = "SALE";
@@ -210,7 +218,7 @@ public class Payments {
 					+ "<notes>" + "<comments>" + f.filterxml(commentString)
 					+ "</comments>" + "</notes>" + "</order>";
 
-			System.out.println(sXml);			
+			System.out.println(sXml);
 			String xmlresponse = sendXmlToPaymentGateway(sXml);
 
 			StringTokenizer str = new StringTokenizer(xmlresponse, "<");
@@ -286,11 +294,10 @@ public class Payments {
 			if (!declined && transFailed) {
 
 				message = "<B>INVENTORY SOURCE DIRECT CHARGE: Payment Gateway Error!<BR>Message from CardServices: </B>"
-						+ Filter
-								.transForm(
-										"s/\\+/ /gi",
-											error_reason
-												+ "<BR>Please contact <A HREF=\"mailto:payments@inventorysource.com\" class=\"reg\">payments@inventorysource.com</A>");
+						+ Filter.transForm(
+								"s/\\+/ /gi",
+								error_reason
+										+ "<BR>Please contact <A HREF=\"mailto:payments@inventorysource.com\" class=\"reg\">payments@inventorysource.com</A>");
 
 				EmailUtil
 						.sendEmail(
@@ -299,19 +306,15 @@ public class Payments {
 								"",
 								"INVENTORY SOURCE DIRECT CHARGE: Transaction Error!",
 								"INVENTORY SOURCE DIRECT CHARGE: ERROR MESSAGE: \"<B>Payment Gateway Error!<BR>Message from CardServices: </B><BR>"
-										+ Filter
-												.transForm(
-														"s/\\+/ /gi",
-														StringHandle
-																.removeNull(transError))
+										+ Filter.transForm("s/\\+/ /gi",
+												StringHandle
+														.removeNull(transError))
 										+ "<BR>"
 										+ "<P>PARAMETERS: <BR>"
 										+ Filter.transForm("s/\n/<BR>/",
 												passed_params)
 										+ "<BR><BR>"
-										+ response
-										+ "<BR><BR>",
-								"text/html");
+										+ response + "<BR><BR>", "text/html");
 				return false;
 			}
 
@@ -327,7 +330,7 @@ public class Payments {
 				return true;
 			}
 		} catch (Exception e) {
-			ExcHandle.printStackTraceToErr(e);
+			log.error(e.getMessage(), e);
 			if (!"".equals(message)) {
 				message += "<BR>";
 			}
@@ -339,24 +342,20 @@ public class Payments {
 
 	private String sendXmlToPaymentGateway(String xml) {
 		System.out.println("Sending request to gateway");
-		
+
 		CookieModule.setCookiePolicyHandler(null);
-		String[] params = new String[]{
-				"xml-request",xml,
-				"authkey","MONKEYRULES"
-				};		
-		/*FormObject formObj = new FormObject(
-				"app1.inventorysource.com",8081, 
-				"/is6/charge.action",
-				"","",false,false,false);
-		if(params != null && params.length > 0 ) {
-			formObj.addData(params);
-		}	*/       
-		/*formObj.setTimeOut(60*1000*15);
-		formObj.hitForm("Post", null);
-		*/
-		String pageResponseString = "";//formObj.page;
-		System.out.println("Gateway response: \n"+pageResponseString);		
+		String[] params = new String[] { "xml-request", xml, "authkey",
+				"MONKEYRULES" };
+		/*
+		 * FormObject formObj = new FormObject( "app1.inventorysource.com",8081,
+		 * "/is6/charge.action", "","",false,false,false); if(params != null &&
+		 * params.length > 0 ) { formObj.addData(params); }
+		 */
+		/*
+		 * formObj.setTimeOut(60*1000*15); formObj.hitForm("Post", null);
+		 */
+		String pageResponseString = "";// formObj.page;
+		System.out.println("Gateway response: \n" + pageResponseString);
 		return pageResponseString;
 	}
 }

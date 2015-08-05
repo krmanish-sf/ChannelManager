@@ -25,7 +25,7 @@ import salesmachine.hibernatedb.OimVendorsuppOrderhistory;
 import salesmachine.hibernatedb.Vendors;
 import salesmachine.hibernatehelper.SessionManager;
 import salesmachine.oim.api.OimConstants;
-import salesmachine.oim.suppliers.OimSupplierOrderPlacement;
+import salesmachine.oim.suppliers.Supplier;
 import salesmachine.util.StringHandle;
 
 import com.is.cm.core.domain.ProductSalesData;
@@ -864,14 +864,14 @@ public class ReportRepositoryDB extends RepositoryBase implements
 			errorDetails.put("supplier", supplier.getSupplierName());
 			errorDetails.put("processingtm", processingTm);
 			String errorCodeStr = "";
-			if (errorCode.intValue() == OimSupplierOrderPlacement.ERROR_PING_FAILURE) {
+			if (errorCode.intValue() == Supplier.ERROR_PING_FAILURE) {
 				errorCodeStr = "Supplier ("
 						+ supplier.getSupplierName()
 						+ ") can not be reached to post orders in their system.";
-			} else if (errorCode.intValue() == OimSupplierOrderPlacement.ERROR_UNCONFIGURED_SUPPLIER) {
+			} else if (errorCode.intValue() == Supplier.ERROR_UNCONFIGURED_SUPPLIER) {
 				errorCodeStr = "Supplier (" + supplier.getSupplierName()
 						+ ") is not configured properly to send orders.";
-			} else if (errorCode.intValue() == OimSupplierOrderPlacement.ERROR_ORDER_PROCESSING) {
+			} else if (errorCode.intValue() == Supplier.ERROR_ORDER_PROCESSING) {
 				errorCodeStr = "You have some Failed orders that need your attention to resolve.";
 			}
 			errorDetails.put("errormsg", errorCodeStr);
@@ -1039,25 +1039,28 @@ public class ReportRepositoryDB extends RepositoryBase implements
 		Session dbSession = SessionManager.currentSession();
 		Criteria createCriteria = dbSession
 				.createCriteria(OimVendorsuppOrderhistory.class)
-				.setFirstResult(pageNum).setMaxResults(recordCount)
-				.add(Restrictions.isNotNull("description"))
-				.add(Restrictions.isNotNull("oimSuppliers"))
-				.add(Restrictions.between("processingTm", startDate, endDate))
+				// .setFirstResult(pageNum).setMaxResults(recordCount)
+				// .add(Restrictions.isNotNull("description"))
+				// .add(Restrictions.isNotNull("oimSuppliers"))
+				.add(Restrictions.ge("processingTm", startDate))
+				// .add(Restrictions.le("processingTm", endDate))
 				.addOrder(Order.desc("processingTm"));
 		List<VendorsuppOrderhistory> list = new ArrayList<VendorsuppOrderhistory>(
 				recordCount);
-		for (Object object : createCriteria.list()) {
-			VendorsuppOrderhistory e = new VendorsuppOrderhistory(
-					(OimVendorsuppOrderhistory) object);
+		List<OimVendorsuppOrderhistory> list2 = createCriteria.list();
+		for (OimVendorsuppOrderhistory object : list2) {
+			VendorsuppOrderhistory e = new VendorsuppOrderhistory(object);
 			list.add(e);
 		}
+		LOG.info("History Size : {} and Elements {}", list.size(),
+				list.toString());
 		return list;
 	}
 
 	@Override
 	public List getSystemAlerts() {
 		StringBuilder sb = new StringBuilder(
-				"select error_code,count(error_code) from OIM_VENDORSUPP_ORDERHISTORY where error_code!=0 AND processing_tm>sysdate-1 group by error_code");
+				"select error_code,count(error_code) from OIM_VENDORSUPP_ORDERHISTORY where processing_tm > trunc(sysdate-1) group by error_code");
 		Session dbSession = SessionManager.currentSession();
 		SQLQuery reportQuery = dbSession.createSQLQuery(sb.toString());
 

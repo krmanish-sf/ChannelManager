@@ -87,10 +87,6 @@ public class OimSupplierOrderPlacement {
 	@Deprecated
 	protected OimLogStream logStream;
 
-	public static final Integer ERROR_UNCONFIGURED_SUPPLIER = 1;
-	public static final Integer ERROR_PING_FAILURE = 2;
-	public static final Integer ERROR_ORDER_PROCESSING = 3;
-
 	public OimSupplierOrderPlacement(Session dbSession) {
 		this.m_dbSession = dbSession;
 		logStream = new OimLogStream();
@@ -143,43 +139,6 @@ public class OimSupplierOrderPlacement {
 		return true;
 	}
 
-	public boolean placeOrders() {
-		Transaction tx = null;
-		List vendorIds = new ArrayList();
-		try {
-			tx = m_dbSession.beginTransaction();
-
-			// Here is your db code
-			Query query = m_dbSession
-					.createQuery("select distinct c.vendors.vendorId from salesmachine.hibernatedb.OimChannels as c, "
-							+ "salesmachine.hibernatedb.OimOrderBatches as b, "
-							+ "salesmachine.hibernatedb.OimOrders as o, "
-							+ "salesmachine.hibernatedb.OimOrderDetails as d "
-							+ "where d.oimSuppliers=:supp and d.deleteTm is null and d.oimOrderStatuses=:status "
-							+ "and b.oimChannels = c and o.oimOrderBatches = b and d.oimOrders = o");
-			query.setEntity("supp", m_supplier);
-			query.setEntity("status", new OimOrderStatuses(
-					OimConstants.ORDER_STATUS_UNPROCESSED));
-
-			for (Iterator it = query.iterate(); it.hasNext();) {
-				Integer vendorId = (Integer) it.next();
-				vendorIds.add(vendorId);
-			}
-			tx.commit();
-		} catch (RuntimeException e) {
-			tx.rollback();
-			e.printStackTrace();
-		}
-
-		for (Iterator it = vendorIds.iterator(); it.hasNext();) {
-			Integer vendorId = (Integer) it.next();
-			log.debug("Processing orders for vendor: " + vendorId);
-			processVendorOrders(vendorId);
-		}
-
-		return true;
-	}
-
 	private void updateVendorSupplierOrderHistory(Integer vendorId,
 			Integer errorCode, String description) {
 		Transaction tx = null;
@@ -201,10 +160,6 @@ public class OimSupplierOrderPlacement {
 				tx.rollback();
 			e.printStackTrace();
 		}
-	}
-
-	public boolean processVendorOrders(Integer vendorId) {
-		return processVendorOrders(vendorId, "");
 	}
 
 	public boolean processVendorOrder(Integer vendorId, OimOrders oimOrders) {
@@ -321,137 +276,6 @@ public class OimSupplierOrderPlacement {
 			return false;
 		}
 		return ordersSent;
-	}
-
-	@Deprecated
-	public boolean processVendorOrders(Integer vendorId, String orderIds) {
-		log.debug("Processing orders for vendor id: " + vendorId);
-		Transaction tx = null;
-		try {
-			OimVendorSuppliers ovs = null;
-			boolean ping = false;
-			StringBuffer errorMessage = new StringBuffer();
-			Query query;
-			try {
-				tx = m_dbSession.beginTransaction();
-
-				// Here is your db code
-				query = m_dbSession
-						.createQuery("from OimVendorSuppliers s where s.oimSuppliers=:supp and s.vendors.vendorId=:vid and s.deleteTm is null");
-				query.setEntity("supp", m_supplier);
-				query.setInteger("vid", vendorId.intValue());
-				Iterator it = query.iterate();
-				if (it.hasNext()) {
-					ovs = (OimVendorSuppliers) it.next();
-					ping = pingSupplier(vendorId, ovs, errorMessage);
-				} else
-					return false;
-				tx.commit();
-			} catch (RuntimeException e) {
-				tx.rollback();
-				e.printStackTrace();
-			}
-
-			if (ovs == null || ovs.getTestMode() > 0) {
-				updateVendorSupplierOrderHistory(vendorId, ERROR_PING_FAILURE,
-						"Supplier is not configured for this vendor");
-				log.debug("Supplier is not configured for this vendor");
-				return false;
-			} else if (!ping) {
-				updateVendorSupplierOrderHistory(vendorId, ERROR_PING_FAILURE,
-						errorMessage.toString());
-				log.debug("Could not connect to the supplier: "
-						+ ovs.getOimSuppliers().getSupplierName());
-				log.debug(errorMessage.toString());
-				return false;
-			}
-
-			List successfulOrders = new ArrayList();
-			List failedOrders = new ArrayList();
-			List orders = new ArrayList();
-
-			int countToProcess = 0;
-			try {
-				tx = m_dbSession.beginTransaction();
-
-				String queryStr = "select distinct o from salesmachine.hibernatedb.OimOrders as o "
-						+ "inner join o.oimOrderDetailses d where o.oimOrderBatches.oimChannels.vendors.vendorId=:vid "
-						+ "and d.oimSuppliers=:supp and d.deleteTm is null and d.oimOrderStatuses=:status";
-				if (orderIds != null && orderIds.length() > 0)
-					queryStr += " and o.orderId in (" + orderIds + ")";
-
-				query = m_dbSession.createQuery(queryStr);
-				query.setEntity("supp", m_supplier);
-				query.setEntity("status", new OimOrderStatuses(
-						OimConstants.ORDER_STATUS_UNPROCESSED));
-				query.setInteger("vid", vendorId.intValue());
-				orders = query.list();
-
-				// Removed the order details which have been processed
-				for (int i = 0; i < orders.size(); i++) {
-					OimOrders order = (OimOrders) orders.get(i);
-					Set unprocessedDetails = new HashSet();
-					for (Iterator detailIt = order.getOimOrderDetailses()
-							.iterator(); detailIt.hasNext();) {
-						OimOrderDetails detail = (OimOrderDetails) detailIt
-								.next();
-						if (OimConstants.ORDER_STATUS_UNPROCESSED.equals(detail
-								.getOimOrderStatuses().getStatusId())
-								&& detail.getOimSuppliers().getSupplierId()
-										.equals(m_supplier.getSupplierId())) {
-							unprocessedDetails.add(detail);
-							countToProcess++;
-						}
-					}
-					order.setOimOrderDetailses(unprocessedDetails);
-				}
-
-				tx.commit();
-			} catch (RuntimeException e) {
-				tx.rollback();
-				e.printStackTrace();
-			}
-
-			log.debug("Number of order details to process: " + countToProcess);
-			if (countToProcess == 0)
-				return true;
-
-			boolean ordersSent = true;
-			try {
-				tx = m_dbSession.beginTransaction();
-				log.debug("Sending orders to the supplier");
-				ordersSent = sendOrdersToSupplier(vendorId, ovs, orders,
-						successfulOrders, failedOrders);
-				tx.commit();
-			} catch (RuntimeException e) {
-				e.printStackTrace();
-				if (tx != null)
-					tx.rollback();
-			}
-			log.debug("Successful orders: " + successfulOrders.size());
-			log.debug("Failed orders: " + failedOrders.size());
-
-			if (ordersSent) {
-				logStream
-						.println("Updating orders status to placed in the database");
-				updateOrderStatus(successfulOrders,
-						OimConstants.ORDER_STATUS_PROCESSED_SUCCESS);
-				updateOrderStatus(failedOrders,
-						OimConstants.ORDER_STATUS_PROCESSED_FAILED);
-			} else {
-				logStream
-						.println("Sending order failed. Not updating order statuses");
-			}
-
-			if (failedOrders.size() == 0) {
-				// updateVendorSupplierOrderHistory(vendorId, ERROR_NONE, "");
-				return false;
-			} else
-				return false;
-		} catch (RuntimeException e) {
-			e.printStackTrace();
-		}
-		return true;
 	}
 
 	private boolean pingSupplier(Integer vendorId, OimVendorSuppliers ovs,

@@ -39,7 +39,9 @@ public abstract class Supplier {
 	protected Map<Integer, String> orderSkuPrefixMap;
 	@Deprecated
 	protected OimLogStream logStream = new OimLogStream();
-	protected static final Integer ERROR_ORDER_PROCESSING = new Integer(3);
+	public static final Integer ERROR_ORDER_PROCESSING = 3;
+	public static final Integer ERROR_UNCONFIGURED_SUPPLIER = 1;
+	public static final Integer ERROR_PING_FAILURE = 2;
 
 	public Supplier() {
 		log.debug("Creating instance");
@@ -61,8 +63,8 @@ public abstract class Supplier {
 		return null;
 	}
 
-	protected void updateVendorSupplierOrderHistory(Integer vid,
-			OimVendorSuppliers ovs, Object response) {
+	public static final void updateVendorSupplierOrderHistory(Integer vid,
+			OimVendorSuppliers ovs, Object response, int errorCode) {
 		Session session = SessionManager.currentSession();
 		OimVendorsuppOrderhistory history = new OimVendorsuppOrderhistory();
 		Vendors vendor = new Vendors();
@@ -70,7 +72,7 @@ public abstract class Supplier {
 		history.setVendors(vendor);
 		history.setOimSuppliers(ovs.getOimSuppliers());
 		history.setProcessingTm(new Date());
-		history.setErrorCode(ERROR_ORDER_PROCESSING);
+		history.setErrorCode(errorCode);
 
 		if (response != null) {
 			if (response instanceof OrderReturnInfo) {

@@ -59,16 +59,16 @@
 			<artifactId>spring-beans</artifactId>
 			<version>${spring.version}</version>
 		</dependency>
-		<!-- <dependency>
+		<dependency>
+			<groupId>org.springframework.security</groupId>
+			<artifactId>spring-security-config</artifactId>
+			<version>3.2.5.RELEASE</version>
+		</dependency>
+		<dependency>
 			<groupId>org.springframework</groupId>
-			<artifactId>spring-expression</artifactId>
+			<artifactId>spring-context</artifactId>
 			<version>${spring.version}</version>
-		</dependency> -->
-		<!-- <dependency>
-			<groupId>org.springframework</groupId>
-			<artifactId>spring-context-support</artifactId>
-			<version>${spring.version}</version>
-		</dependency> -->
+		</dependency>
 		<dependency>
 			<groupId>org.springframework</groupId>
 			<artifactId>spring-web</artifactId>
@@ -80,21 +80,15 @@
 			<artifactId>spring-webmvc</artifactId>
 			<version>${spring.version}</version>
 		</dependency>
+		<!-- <dependency> <groupId>org.springframework</groupId> <artifactId>spring-orm</artifactId> 
+			<version>${spring.version}</version> </dependency> -->
+		<!-- <dependency> <groupId>org.springframework.security</groupId> <artifactId>spring-security-web</artifactId> 
+			<version>4.0.1.RELEASE</version> </dependency> -->
 		<!-- <dependency>
-			<groupId>org.springframework</groupId>
-			<artifactId>spring-orm</artifactId>
-			<version>${spring.version}</version>
-		</dependency> -->
-		<!-- <dependency>
-			<groupId>org.springframework.security</groupId>
-			<artifactId>spring-security-web</artifactId>
-			<version>4.0.1.RELEASE</version>
-		</dependency> -->
-		<dependency>
 			<groupId>org.springframework.integration</groupId>
 			<artifactId>spring-integration-security</artifactId>
 			<version>${spring.version}</version>
-		</dependency>
+		</dependency> -->
 		<dependency>
 			<groupId>org.hibernate</groupId>
 			<artifactId>hibernate-core</artifactId>
@@ -106,17 +100,9 @@
 				</exclusion>
 			</exclusions>
 		</dependency>
-		<!-- <dependency>
-			<groupId>org.hibernate</groupId>
-			<artifactId>hibernate-c3p0</artifactId>
-			<version>${hibernate.version}</version>
-			<exclusions>
-				<exclusion>
-					<groupId>commons-logging</groupId>
-					<artifactId>commons-logging</artifactId>
-				</exclusion>
-			</exclusions>
-		</dependency> -->
+		<!-- <dependency> <groupId>org.hibernate</groupId> <artifactId>hibernate-c3p0</artifactId> 
+			<version>${hibernate.version}</version> <exclusions> <exclusion> <groupId>commons-logging</groupId> 
+			<artifactId>commons-logging</artifactId> </exclusion> </exclusions> </dependency> -->
 		<dependency>
 			<groupId>com.oracle</groupId>
 			<artifactId>ojdbc14</artifactId>
@@ -151,12 +137,6 @@
 			<groupId>com.is.salesmachine</groupId>
 			<artifactId>salesmachine-core</artifactId>
 			<version>1.0.0-SNAPSHOT</version>
-			<exclusions>
-				<exclusion>
-					<artifactId>servlet-api</artifactId>
-					<groupId>javax.servlet</groupId>
-				</exclusion>
-			</exclusions>
 		</dependency>
 		<dependency>
 			<groupId>com.fasterxml.jackson.core</groupId>
@@ -170,21 +150,19 @@
 			<version>2.5.3</version>
 			<scope>compile</scope>
 		</dependency>
-		<dependency>
+		<!-- <dependency>
 			<groupId>com.fasterxml.jackson.core</groupId>
 			<artifactId>jackson-annotations</artifactId>
 			<version>2.5.3</version>
-		</dependency>
+			<scope>runtime</scope>
+		</dependency> -->
 		<dependency>
 			<groupId>com.fasterxml.jackson.datatype</groupId>
 			<artifactId>jackson-datatype-hibernate3</artifactId>
 			<version>2.5.3</version>
 		</dependency>
-		<!-- <dependency>
-			<groupId>jstl</groupId>
-			<artifactId>jstl</artifactId>
-			<version>1.2</version>
-		</dependency> -->
+		<!-- <dependency> <groupId>jstl</groupId> <artifactId>jstl</artifactId> 
+			<version>1.2</version> </dependency> -->
 		<dependency>
 			<groupId>cglib</groupId>
 			<artifactId>cglib</artifactId>
@@ -197,16 +175,10 @@
 			<version>3.3.1</version>
 			<scope>runtime</scope>
 		</dependency>
-		<!-- <dependency>
-			<groupId>org.javassist</groupId>
-			<artifactId>javassist</artifactId>
-			<version>3.17.1-GA</version>
-		</dependency> -->
-		<!-- <dependency>
-			<groupId>com.stevesoft.pat</groupId>
-			<artifactId>pat</artifactId>
-			<version>1.5.3</version>
-		</dependency> -->
+		<!-- <dependency> <groupId>org.javassist</groupId> <artifactId>javassist</artifactId> 
+			<version>3.17.1-GA</version> </dependency> -->
+		<!-- <dependency> <groupId>com.stevesoft.pat</groupId> <artifactId>pat</artifactId> 
+			<version>1.5.3</version> </dependency> -->
 		<!-- Apache Commons file upload -->
 		<dependency>
 			<groupId>commons-fileupload</groupId>
@@ -224,11 +196,8 @@
 			<artifactId>commons-httpclient</artifactId>
 			<version>3.1</version>
 		</dependency>
-		<!-- <dependency>
-			<groupId>HTTPClient</groupId>
-			<artifactId>HTTPClient</artifactId>
-			<version>0.3-3</version>
-		</dependency> -->
+		<!-- <dependency> <groupId>HTTPClient</groupId> <artifactId>HTTPClient</artifactId> 
+			<version>0.3-3</version> </dependency> -->
 		<dependency>
 			<groupId>oracle</groupId>
 			<artifactId>xmlparserv2</artifactId>
