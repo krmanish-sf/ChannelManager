@@ -72,6 +72,13 @@ public class SupplierEventHandler implements SupplierService {
 		Integer testMode = Integer.parseInt(createEvent.getEntity().get(
 				"testmode"));
 		if (supplierId > 0) {
+			if(supplierId==1822){
+				supplier = supplierRepository.addSubscriptionHG(supplierId,
+						createEvent.getEntity().get("phi-login"), createEvent
+								.getEntity().get("phi-password"), createEvent
+								.getEntity().get("phi-accountno"), createEvent
+								.getEntity().get("defshippingmc"), testMode);
+			}
 			supplier = supplierRepository.addSubscription(supplierId,
 					createEvent.getEntity().get("login"), createEvent
 							.getEntity().get("password"), createEvent

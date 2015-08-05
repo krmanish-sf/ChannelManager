@@ -346,6 +346,29 @@ public class SupplierRepositoryDB extends RepositoryBase implements
 		dbSession.evict(ovs);
 		return VendorSupplier.from(ovs);
 	}
+	@Override
+	public VendorSupplier addSubscriptionHG(Integer supplierId, String login,
+			String password, String accountno, String defShippingMc,
+			Integer testmode) {
+		OimSuppliers supplier = new OimSuppliers();
+		supplier.setSupplierId(supplierId);
+		Session dbSession = SessionManager.currentSession();
+		Transaction tx = dbSession.beginTransaction();
+		OimVendorSuppliers ovs = new OimVendorSuppliers();
+		ovs.setVendors(new Vendors(getVendorId()));
+		ovs.setOimSuppliers(supplier);
+		ovs.setInsertionTm(new Date());
+		ovs.setAccountNumber(accountno);
+		ovs.setDefShippingMethodCode(defShippingMc);
+		ovs.setLogin(login);
+		ovs.setPassword(password);
+		ovs.setTestMode(testmode);
+		dbSession.save(ovs);
+		tx.commit();
+		dbSession.evict(supplier);
+		dbSession.evict(ovs);
+		return VendorSupplier.from(ovs);
+	}
 
 	@Override
 	public VendorSupplier addCustomSubscription(Map<String, String> map) {

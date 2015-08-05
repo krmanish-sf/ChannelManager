@@ -158,5 +158,8 @@
         <property name="oem" type="string">
             <column name="OEM" length="20" />
         </property>
+        <property name="isRestricted" type="java.lang.Integer">
+            <column name="IS_RESTRICTED" precision="22" scale="0" />
+        </property>
     </class>
 </hibernate-mapping>

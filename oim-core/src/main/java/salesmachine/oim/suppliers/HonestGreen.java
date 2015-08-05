@@ -10,9 +10,11 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
+import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -21,7 +23,9 @@ import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
 
+import org.hibernate.Query;
 import org.hibernate.Session;
+import org.hibernate.Transaction;
 import org.hibernate.criterion.Restrictions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -60,6 +64,9 @@ public class HonestGreen extends Supplier implements HasTracking {
 	private static final byte[] FIL = new byte[] { 'F', 'I', 'L' };
 	private static final byte[] COMMA = new byte[] { ',' };
 	private static JAXBContext jaxbContext;
+	protected Map<String, OimOrderDetails> HvaMap = new HashMap<String, OimOrderDetails>();
+	protected Map<String, OimOrderDetails> PhiMap = new HashMap<String, OimOrderDetails>();
+	protected Map<String, OimOrderDetails> HVAPhiMap = new HashMap<String, OimOrderDetails>();
 
 	static {
 		try {
@@ -74,6 +81,7 @@ public class HonestGreen extends Supplier implements HasTracking {
 		log.info("Sending orders of Account: {}", ovs.getAccountNumber());
 		if (ovs.getTestMode().equals(1))
 			return;
+
 		// populate orderSkuPrefixMap with channel id and the prefix to be used
 		// for the given supplier.
 		orderSkuPrefixMap = setSkuPrefixForOrders(ovs);
@@ -96,34 +104,101 @@ public class HonestGreen extends Supplier implements HasTracking {
 			if (object instanceof OimOrders) {
 				OimOrders order = (OimOrders) object;
 				try {
-					String fileName = createOrderFile(order, ovs);
-					FTPClient ftp = new FTPClient();
-					ftp.setRemoteHost("ftp1.unfi.com");
-					ftp.setDetectTransferMode(true);
-					ftp.connect();
-					ftp.login(ovs.getLogin(), ovs.getPassword());
-					ftp.setTimeout(60 * 1000 * 60 * 5);
-					ftp.put(fileName, fileName);
-					ftp.quit();
-
-					String emailBody = "Account Number : "
-							+ accountNumber
-							+ "\n Find attached order file for the orders from my store.";
-					String emailSubject = fileName;
-					EmailUtil.sendEmailWithAttachment(
-							"orders@inventorysource.com",
-							"support@inventorysource.com", r.getLogin(),
-							emailSubject, emailBody, fileName);
-
-					if (order.getOimOrderBatches().getOimChannels()
-							.getEmailNotifications() == 1) {
-						emailNotification = true;
-						String orderStatus = "Successfully Placed";
-						emailContent += "<b>Store Order ID "
-								+ order.getStoreOrderId() + "</b> -> "
-								+ orderStatus + " ";
-						emailContent += "<br>";
+					getProdTypeMap(order, vendorId);
+					for (OimOrderDetails orderDetail : ((Set<OimOrderDetails>) order
+							.getOimOrderDetailses())) {
+						String sku = orderDetail.getSku();
+						isRestricted(sku, orderDetail, vendorId);
 					}
+					// ***************************************************
+					if (HvaMap.size() > 0) {
+						// create order file and send order to Hva configured
+						// ftp
+						Map<Integer, OimOrderDetails> orderDetailMap = new HashMap<Integer, OimOrderDetails>();
+						for (Iterator<OimOrderDetails> itr = HvaMap.values()
+								.iterator(); itr.hasNext();) {
+							OimOrderDetails detail = itr.next();
+							orderDetailMap.put(detail.getDetailId(), detail);
+						}
+						String fileName = createOrderFile(order, ovs,
+								orderDetailMap);
+						sendToFTP(fileName, ovs, true, false);
+					}
+					if (PhiMap.size() > 0) {
+						// create order file and send order to PHI configured
+						// ftp
+						Map<Integer, OimOrderDetails> orderDetailMap = new HashMap<Integer, OimOrderDetails>();
+						for (Iterator<OimOrderDetails> itr = PhiMap.values()
+								.iterator(); itr.hasNext();) {
+							OimOrderDetails detail = itr.next();
+							orderDetailMap.put(detail.getDetailId(), detail);
+						}
+						String fileName = createOrderFile(order, ovs,
+								orderDetailMap);
+						sendToFTP(fileName, ovs, false, true);
+					}
+					if (HVAPhiMap.size() > 0) {
+						// check quantity of hva and phi. based on that send
+						// order file to particular location.
+						Map<Integer, OimOrderDetails> orderDetailHVAMap = new HashMap<Integer, OimOrderDetails>();
+						Map<Integer, OimOrderDetails> orderDetailPHIMap = new HashMap<Integer, OimOrderDetails>();
+						for (Iterator<OimOrderDetails> itr = HVAPhiMap.values()
+								.iterator(); itr.hasNext();) {
+							OimOrderDetails detail = itr.next();
+							int hvaQuantity = getHvaQuantity(detail.getSku());
+							int phiQuantity = getPhiQuantity(detail.getSku(),
+									vendorId, hvaQuantity);
+							if (hvaQuantity > phiQuantity) {
+								orderDetailHVAMap.put(detail.getDetailId(),
+										detail);
+							} else
+								orderDetailPHIMap.put(detail.getDetailId(),
+										detail);
+						}
+						String fileName = "";
+						if (orderDetailHVAMap.size() > 0) {
+							fileName = createOrderFile(order, ovs,
+									orderDetailHVAMap);
+							sendToFTP(fileName, ovs, true, false);
+						}
+						if (orderDetailPHIMap.size() > 0) {
+							fileName = createOrderFile(order, ovs,
+									orderDetailPHIMap);
+							sendToFTP(fileName, ovs, false, true);
+						}
+
+					}
+					// ***************************************************
+
+					// String fileName = createOrderFile(order, ovs);
+					// FTPClient ftp = new FTPClient();
+					// ftp.setRemoteHost("ftp1.unfi.com");
+					// ftp.setDetectTransferMode(true);
+					// ftp.connect();
+					// ftp.login(ovs.getLogin(), ovs.getPassword());
+					// ftp.setTimeout(60 * 1000 * 60 * 5);
+					// ftp.put(fileName, fileName);
+					// ftp.quit();
+					//
+					// String emailBody = "Account Number : "
+					// + accountNumber
+					// +
+					// "\n Find attached order file for the orders from my store.";
+					// String emailSubject = fileName;
+					// EmailUtil.sendEmailWithAttachment(
+					// "orders@inventorysource.com",
+					// "support@inventorysource.com", r.getLogin(),
+					// emailSubject, emailBody, fileName);
+					//
+					// if (order.getOimOrderBatches().getOimChannels()
+					// .getEmailNotifications() == 1) {
+					// emailNotification = true;
+					// String orderStatus = "Successfully Placed";
+					// emailContent += "<b>Store Order ID "
+					// + order.getStoreOrderId() + "</b> -> "
+					// + orderStatus + " ";
+					// emailContent += "<br>";
+					// }
 				} catch (Exception e) {
 					log.error(e.getMessage(), e);
 				}
@@ -139,6 +214,120 @@ public class HonestGreen extends Supplier implements HasTracking {
 				}
 			}
 		}
+	}
+
+	private int getPhiQuantity(String sku, Integer vendorId, int hvaQuantity) {
+		Session dbSession = SessionManager.currentSession();
+		Query query = dbSession
+				.createSQLQuery("select QUANTITY from VENDOR_CUSTOM_FEEDS_PRODUCTS where sku=:sku and VENDOR_CUSTOM_FEED_ID=(select VENDOR_CUSTOM_FEED_ID from VENDOR_CUSTOM_FEEDS where vendor_id=:vendorID AND IS_RESTRICTED=1)");
+		query.setString("sku", sku);
+		query.setInteger("vendorID", vendorId);
+		Object q = query.uniqueResult();
+		int tempQuantity = 0;
+		if (q != null)
+			tempQuantity = ((Integer) q).intValue();
+
+		return tempQuantity - hvaQuantity;
+	}
+
+	private int getHvaQuantity(String sku) {
+		Session dbSession = SessionManager.currentSession();
+		Query query = dbSession
+				.createQuery("select p.quantity from salesmachine.hibernatedb.Product p where p.sku=:sku");
+		query.setString("sku", sku);
+		System.out.println(query.list());
+		Object quantity = query.uniqueResult();
+		dbSession.close();
+		return ((Integer) quantity).intValue();
+	}
+
+	private void sendToFTP(String fileName, OimVendorSuppliers ovs,
+			boolean isHva, boolean isPhi) {
+		FTPClient ftp = new FTPClient();
+		if (isHva) {
+			try {
+				ftp.setRemoteHost("ftp1.unfi.com");
+				ftp.setDetectTransferMode(true);
+				ftp.connect();
+				ftp.login(ovs.getLogin(), ovs.getPassword());
+				ftp.setTimeout(60 * 1000 * 60 * 5);
+				ftp.put(fileName, fileName);
+				ftp.quit();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (FTPException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		} else if (isPhi) {
+			try {
+				ftp.setRemoteHost("ftp1.unfi.com");
+				ftp.setDetectTransferMode(true);
+				ftp.connect();
+				ftp.login(ovs.getLogin(), ovs.getPassword());
+				ftp.setTimeout(60 * 1000 * 60 * 5);
+				ftp.put(fileName, fileName);
+				ftp.quit();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (FTPException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+	}
+
+	private void getProdTypeMap(OimOrders order, int vendorId) {
+		// for (OimOrderDetails orderDetail : ((Set<OimOrderDetails>) order
+		// .getOimOrderDetailses())) {
+		// String sku = orderDetail.getSku();
+		// if (isHVAAndPHIBoth(sku,vendorId))
+		// HVAPhiMap.put(sku,sku);
+		// else if(isHVA(sku,vendorId))
+		// HvaMap.put(sku,sku);
+		// else if(isPHI(sku,vendorId))
+		// PhiMap.put(sku, sku);
+		// }
+
+	}
+
+	private boolean isRestricted(String sku, OimOrderDetails orderDetail,
+			int vendorID) {
+		// if is restricted value is 0 in product table and 1 in vendor custom
+		// product
+		// or if is restricted value is 1 in product table
+		Transaction tx = null;
+		Session dbSession = SessionManager.currentSession();
+		tx = dbSession.beginTransaction();
+		Query query = dbSession
+				.createQuery("select p.isRestricted from salesmachine.hibernatedb.Product p where p.sku=:sku");
+		query.setString("sku", sku);
+		System.out.println(query.list());
+		Object restrictedIntVal = query.uniqueResult();
+		if (((Integer) restrictedIntVal).intValue() == 1) {
+			log.info("{} is restricted in product table", sku);
+			HvaMap.put(sku, orderDetail);
+		} else {
+			query = dbSession
+					.createSQLQuery("select IS_RESTRICTED from VENDOR_CUSTOM_FEEDS_PRODUCTS where sku=:sku and VENDOR_CUSTOM_FEED_ID=(select VENDOR_CUSTOM_FEED_ID from VENDOR_CUSTOM_FEEDS where vendor_id=:vendorID)");
+			query.setString("sku", sku);
+			query.setInteger("vendorID", vendorID);
+			Object restrictedVal = query.uniqueResult();
+			if (((BigDecimal) restrictedVal).intValue() == 1) {
+				log.info(
+						"{} is restricted in VENDOR_CUSTOM_FEEDS_PRODUCTS table",
+						sku);
+				HVAPhiMap.put(sku, orderDetail);
+			} else {
+				log.info("{} is not restricted in both the tables", sku);
+				PhiMap.put(sku, orderDetail);
+			}
+		}
+		dbSession.close();
+		// return ((Integer) restrictedIntVal).intValue() == 1 ? true : false;
+		return HvaMap.size() > 0 || HVAPhiMap.size() > 0;
 	}
 
 	private Map<String, String> parseOrderConfirmation(
@@ -198,8 +387,9 @@ public class HonestGreen extends Supplier implements HasTracking {
 
 	private String createOrderFile(OimOrders order, OimVendorSuppliers ovs) {
 		SimpleDateFormat sdf = new SimpleDateFormat("yyMMddHHmm");
-		String uploadfilename = "HG_" + ovs.getAccountNumber() + "_"
-				+ sdf.format(new Date()) + ".txt";
+		String uploadfilename = "/home/manish-kumar/Desktop/" + "HG_"
+				+ ovs.getAccountNumber() + "_" + sdf.format(new Date())
+				+ ".txt";
 		File f = new File(uploadfilename);
 		log.info("created file name for HG:{}", f.getName());
 		log.debug("Creating order file for OrderId:{}", order.getOrderId());
@@ -250,6 +440,133 @@ public class HonestGreen extends Supplier implements HasTracking {
 			fOut.write(NEW_LINE);
 			for (OimOrderDetails od : ((Set<OimOrderDetails>) order
 					.getOimOrderDetailses())) {
+				if (!od.getOimSuppliers().getSupplierId()
+						.equals(ovs.getOimSuppliers().getSupplierId()))
+					continue;
+				String skuPrefix = null, sku = od.getSku();
+				if (!orderSkuPrefixMap.isEmpty()) {
+					skuPrefix = orderSkuPrefixMap.values().toArray()[0]
+							.toString();
+				}
+				skuPrefix = StringHandle.removeNull(skuPrefix);
+				if (sku.startsWith(skuPrefix)) {
+					sku = sku.substring(skuPrefix.length());
+				}
+				fOut.write(sku.getBytes(ASCII));
+				fOut.write(COMMA);
+				// fOut.write(BLANK_SPACE);
+				fOut.write(COMMA);
+				fOut.write(od.getQuantity().toString().getBytes(ASCII));
+				fOut.write(COMMA);
+				// fOut.write(BLANK_SPACE);
+				fOut.write(COMMA);
+				// fOut.write(BLANK_SPACE);
+				fOut.write(COMMA);
+				// fOut.write(BLANK_SPACE);
+				// fOut.write(COMMA);
+				fOut.write(NEW_LINE);
+				od.setSupplierOrderNumber(poNum);
+				od.setSupplierOrderStatus("Sent to supplier.");
+				Session session = SessionManager.currentSession();
+				session.update(od);
+				successfulOrders.add(od.getDetailId());
+				OimChannels oimChannels = order.getOimOrderBatches()
+						.getOimChannels();
+				Integer channelId = oimChannels.getChannelId();
+				IOrderImport iOrderImport = OrderImportManager
+						.getIOrderImport(channelId);
+				OimLogStream stream = new OimLogStream();
+				if (iOrderImport != null) {
+					log.debug("Created the iorderimport object");
+					if (!iOrderImport.init(channelId,
+							SessionManager.currentSession(), stream)) {
+						log.debug("Failed initializing the channel with Id:{}",
+								channelId);
+					} else {
+						OrderStatus orderStatus = new OrderStatus();
+						orderStatus
+								.setStatus(((OimOrderProcessingRule) oimChannels
+										.getOimOrderProcessingRules()
+										.iterator().next())
+										.getProcessedStatus());
+						iOrderImport.updateStoreOrder(od, orderStatus);
+					}
+				} else {
+					log.error("Could not find a bean to work with this Channel.");
+					stream.println("This Channel type is not supported for pushing order updates.");
+				}
+			}
+			fOut.write(HG_EOF);
+			fOut.write(NEW_LINE);
+			fOut.flush();
+			fOut.close();
+		} catch (FileNotFoundException e) {
+			log.error(e.getMessage(), e);
+		} catch (IOException e) {
+			log.error(e.getMessage(), e);
+		}
+		return uploadfilename;
+	}
+
+	private String createOrderFile(OimOrders order, OimVendorSuppliers ovs,
+			Map<Integer, OimOrderDetails> detailMap) {
+		SimpleDateFormat sdf = new SimpleDateFormat("yyMMddHHmm");
+		String uploadfilename = "/home/manish-kumar/Desktop/" + "HG_"
+				+ ovs.getAccountNumber() + "_" + sdf.format(new Date())
+				+ ".txt";
+		File f = new File(uploadfilename);
+		log.info("created file name for HG:{}", f.getName());
+		log.debug("Creating order file for OrderId:{}", order.getOrderId());
+		try {
+			FileOutputStream fOut = new FileOutputStream(f);
+			// Integer orderSize = order.getOimOrderDetailses().size();
+			fOut.write("1".getBytes(ASCII));
+			fOut.write(NEW_LINE);
+			fOut.write(ovs.getAccountNumber().getBytes(ASCII));
+			fOut.write(COMMA);
+			// fOut.write(BLANK_SPACE);
+			fOut.write(COMMA);
+			String poNum = ovs.getVendors().getVendorId() + "-"
+					+ order.getStoreOrderId();
+			fOut.write(poNum.getBytes(ASCII));
+			fOut.write(COMMA);
+			// fOut.write(BLANK_SPACE);
+			fOut.write(COMMA);
+			fOut.write(FIL);
+			fOut.write(COMMA);
+			// fOut.write(BLANK_SPACE);
+			fOut.write(NEW_LINE);
+			fOut.write(StringHandle.removeNull(order.getDeliveryName())
+					.toUpperCase().getBytes(ASCII));
+			fOut.write(COMMA);
+			fOut.write(StringHandle
+					.removeNull(order.getDeliveryStreetAddress()).toUpperCase()
+					.getBytes(ASCII));
+			fOut.write(COMMA);
+			fOut.write(StringHandle.removeNull(order.getDeliverySuburb())
+					.toUpperCase().getBytes(ASCII));
+			fOut.write(COMMA);
+			fOut.write(StringHandle.removeNull(order.getDeliveryCity())
+					.toUpperCase().getBytes(ASCII));
+			fOut.write(COMMA);
+			fOut.write(StringHandle.removeNull(order.getDeliveryStateCode())
+					.toUpperCase().getBytes(ASCII));
+			fOut.write(COMMA);
+			fOut.write(StringHandle.removeNull(order.getDeliveryZip())
+					.toUpperCase().getBytes(ASCII));
+			fOut.write(COMMA);
+			fOut.write(StringHandle.removeNull(order.getDeliveryPhone())
+					.toUpperCase().getBytes(ASCII));
+			fOut.write(COMMA);
+			fOut.write('A');
+			fOut.write(COMMA);
+			fOut.write("5001".getBytes(ASCII));
+			fOut.write(NEW_LINE);
+			// for (OimOrderDetails od : ((Set<OimOrderDetails>) order
+			// .getOimOrderDetailses())) {
+			for (Iterator<OimOrderDetails> itr = detailMap.values().iterator(); itr
+					.hasNext();) {
+				OimOrderDetails od = itr.next();
 				if (!od.getOimSuppliers().getSupplierId()
 						.equals(ovs.getOimSuppliers().getSupplierId()))
 					continue;
@@ -437,26 +754,5 @@ public class HonestGreen extends Supplier implements HasTracking {
 			log.error(e.getMessage(), e);
 		}
 		return orderStatus;
-	}
-
-	public static void main(String[] args) {
-		HonestGreen hg = new HonestGreen();
-		Session session = SessionManager.currentSession();
-		OimVendorSuppliers ovs = (OimVendorSuppliers) session.get(
-				OimVendorSuppliers.class, 9241);
-		hg.getOrderStatus(ovs, "441325-139");
-		System.exit(0);
-		/*
-		 * JAXBContext jaxbContext; try { jaxbContext =
-		 * JAXBContext.newInstance(TrackingData.class); Unmarshaller
-		 * unmarshaller = jaxbContext.createUnmarshaller(); File f = new
-		 * File("/tmp/37984.T19559757X.txt"); TrackingData orderTrackingResponse
-		 * = (TrackingData) unmarshaller .unmarshal(f); String trackingInfo =
-		 * orderTrackingResponse.getPO().getShipVia() + ":" +
-		 * orderTrackingResponse.getPOTracking().getTrackingNumber();
-		 * log.info("Tracking:{}", trackingInfo);
-		 * 
-		 * } catch (JAXBException e) { log.error(e.getMessage(), e); }
-		 */
 	}
 }

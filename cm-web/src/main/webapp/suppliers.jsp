@@ -233,8 +233,137 @@ If you have not yet configured your supplier, click "Add Supplier" to do it now.
                                 <option value="0">Custom</option>
                               </select>
                             </div>
-												</div>
-												 <div class="form-group" id="customname">
+						</div>
+						<div class="panel panel-default honestGreen-settings hide">
+									<div class="panel-heading">
+										<h4 class="panel-title">
+											<a class="accordion-toggle collapsed" data-toggle="collapse"
+												data-parent="#accordion" href="#collapseOne"> <i
+												class="icon-angle-right bigger-110"
+												data-icon-hide="icon-angle-down"
+												data-icon-show="icon-angle-right"></i> &nbsp;PHI Details
+											</a>
+										</h4>
+									</div>
+									<div class="panel-collapse collapse" id="collapseOne">
+										<div class="panel-body">
+										
+											<div class="form-group" id="customname">
+							                            <div class="col-sm-5">
+							                              <label for="phi-name" class="col-sm-offset-8 control-label no-padding-right">Name</label>
+														</div>
+							                              <div class="col-sm-7">
+							                                 <input class="width-70" name="name" minlength="2" type="text" value="" required />
+							                            </div>
+											</div>
+											 <div class="form-group">
+				                            <div class="col-sm-5">
+				                              <label
+																			class="col-sm-offset-8 control-label no-padding-right">UserName</label>
+																	</div>
+				                              <div class="col-sm-7">
+				                              <input class="width-70" name="phi-login"
+																			type="text" value="" required />
+				                            </div>
+																</div>
+				                            <div class="form-group">
+				                            <div class="col-sm-5">
+				                              <label
+																			class="col-sm-offset-8 control-label no-padding-right">Password</label>
+																	</div>
+				                              <div class="col-sm-7">
+				                              <input class="width-70" name="phi-password"
+																			type="text" value="" required />
+				                            </div>
+																</div>
+				                            <div class="form-group">
+				                              <label
+																		class="col-sm-5 control-label no-padding-right">Account</label>
+				                              <div class="col-sm-7">
+				                              <input class="width-70" name="phi-accountno"
+																			type="text" value="" required />
+				                            </div>
+																</div>
+											<div class="form-group">
+				                              <label class="col-sm-5 control-label no-padding-right">Test Mode</label>
+				                              <div class="col-sm-7">
+					                              <select class="width-70" name="phi-testmode">
+					                                <option value="1" selected>Enabled</option>
+					                                <option value="0">Disabled</option>
+					                              </select>
+				                              </div>
+											</div>
+										</div>
+									</div>
+									
+					</div>
+								
+					<div class="panel panel-default honestGreen-settings hide">
+							<div class="panel-heading">
+								<h4 class="panel-title">
+									<a class="accordion-toggle collapsed" data-toggle="collapse"
+												data-parent="#accordion" href="#collapseTwo"> <i
+												class="icon-angle-right bigger-110"
+												data-icon-hide="icon-angle-down"
+												data-icon-show="icon-angle-right"></i> &nbsp;HVA Details
+									</a>
+								</h4>
+							</div>
+							<div class="panel-collapse collapse" id="collapseTwo">
+											<div class="panel-body">
+										
+											<div class="form-group" id="customname">
+							                            <div class="col-sm-5">
+							                              <label for="name" class="col-sm-offset-8 control-label no-padding-right">Name</label>
+														</div>
+							                              <div class="col-sm-7">
+							                                 <input class="width-70" name="hva-name" minlength="2" type="text" value="" required />
+							                            </div>
+											</div>
+											 <div class="form-group">
+				                            <div class="col-sm-5">
+				                              <label
+																			class="col-sm-offset-8 control-label no-padding-right">UserName</label>
+																	</div>
+				                              <div class="col-sm-7">
+				                              <input class="width-70" name="hva-login"
+																			type="text" value="" required />
+				                            </div>
+																</div>
+				                            <div class="form-group">
+				                            <div class="col-sm-5">
+				                              <label
+																			class="col-sm-offset-8 control-label no-padding-right">Password</label>
+																	</div>
+				                              <div class="col-sm-7">
+				                              <input class="width-70" name="hva-password"
+																			type="text" value="" required />
+				                            </div>
+																</div>
+				                            <div class="form-group">
+				                              <label
+																		class="col-sm-5 control-label no-padding-right">Account</label>
+				                              <div class="col-sm-7">
+				                              <input class="width-70" name="hva-accountno"
+																			type="text" value="" required />
+				                            </div>
+																</div>
+											<div class="form-group">
+				                              <label class="col-sm-5 control-label no-padding-right">Test Mode</label>
+				                              <div class="col-sm-7">
+					                              <select class="width-70" name="hva-testmode">
+					                                <option value="1" selected>Enabled</option>
+					                                <option value="0">Disabled</option>
+					                              </select>
+				                              </div>
+											</div>
+										</div>
+							</div>
+					</div>
+						
+						
+						
+												 <div class="form-group supplier-class" id="customname">
                             <div class="col-sm-5">
                               <label for="name"
 															class="col-sm-offset-8 control-label no-padding-right">Name</label>
@@ -244,7 +373,7 @@ If you have not yet configured your supplier, click "Add Supplier" to do it now.
 															minlength="2" type="text" value="" required />
                             </div>
 												</div>
-                           <div class="form-group">
+                           <div class="form-group supplier-class">
                             <div class="col-sm-5">
                               <label
 															class="col-sm-offset-8 control-label no-padding-right">UserName</label>
@@ -254,7 +383,7 @@ If you have not yet configured your supplier, click "Add Supplier" to do it now.
 															type="text" value="" required />
                             </div>
 												</div>
-                            <div class="form-group">
+                            <div class="form-group supplier-class">
                             <div class="col-sm-5">
                               <label
 															class="col-sm-offset-8 control-label no-padding-right">Password</label>
@@ -264,7 +393,7 @@ If you have not yet configured your supplier, click "Add Supplier" to do it now.
 															type="text" value="" required />
                             </div>
 												</div>
-                            <div class="form-group">
+                            <div class="form-group supplier-class">
                               <label
 														class="col-sm-5 control-label no-padding-right">Account</label>
                               <div class="col-sm-7">
@@ -272,7 +401,7 @@ If you have not yet configured your supplier, click "Add Supplier" to do it now.
 															type="text" value="" required />
                             </div>
 												</div>
-                            <div class="form-group"
+                            <div class="form-group supplier-class"
 													style="display: none;">
                               <label
 														class="col-sm-5 control-label no-padding-right">Default Shipping Method Code</label>
@@ -281,7 +410,7 @@ If you have not yet configured your supplier, click "Add Supplier" to do it now.
 															name="defshippingmc" type="text" value="" required />
                             </div>
 												</div>
-                            <div class="form-group">
+                            <div class="form-group supplier-class">
                               <label
 														class="col-sm-5 control-label no-padding-right">Test Mode</label>
                               <div class="col-sm-7">
@@ -316,6 +445,7 @@ If you have not yet configured your supplier, click "Add Supplier" to do it now.
 														id="savesupplier" type="button"> <i
 															class="icon-ok "></i>Save</button>
                             </div>
+                           
                          
                          
                         </form>
@@ -561,7 +691,23 @@ If you have not yet configured your supplier, click "Add Supplier" to do it now.
 				$('#customname').show();
 				$('.customfileformatDiv').show();
 				$('.supplieremailDiv').show();
+				$('.honestGreen-settings').removeClass("show");
+				$('.honestGreen-settings').addClass("hide");
+				$('.supplier-class').removeClass("hide");
+				$('.supplier-class').addClass("show");
 			} else {
+				if(a=='1822'){
+					$('.honestGreen-settings').removeClass("hide");
+					$('.honestGreen-settings').addClass("show");
+					$('.supplier-class').removeClass("show");
+					$('.supplier-class').addClass("hide");
+				}
+				else{
+					$('.honestGreen-settings').removeClass("show");
+					$('.honestGreen-settings').addClass("hide");
+					$('.supplier-class').removeClass("hide");
+					$('.supplier-class').addClass("show");
+				}
 				$('#customname').hide();
 				$('.customfileformatDiv').hide();
 				$('.supplieremailDiv').hide();
@@ -709,7 +855,6 @@ If you have not yet configured your supplier, click "Add Supplier" to do it now.
 		$('#savesupplier').off('click').on('click', function() {
 			$('#supplierAddForm').submit();
 		});
-
 		$(document).on('click', ".deleteparent", function() {
 			$(this).parent().parent().remove();
 		});

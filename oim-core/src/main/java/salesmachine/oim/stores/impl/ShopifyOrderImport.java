@@ -159,6 +159,7 @@ public class ShopifyOrderImport extends ChannelBase implements IOrderImport {
 		HttpClient client = new HttpClient();
 		String requestUrl = null;
 		if (getMaxStoreOrderId() != null) {
+			log.info("Max store id -- ",getMaxStoreOrderId());
 			requestUrl = storeUrl + "/admin/orders.json?since_id="
 					+ getMaxStoreOrderId();
 		} else {

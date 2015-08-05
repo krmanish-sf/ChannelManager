@@ -60,6 +60,7 @@ public class Product implements java.io.Serializable {
 	private String yahooSku1;
 	private String yahooSku2;
 	private String oem;
+	private Integer isRestricted;
 
 	public Product() {
 	}
@@ -87,7 +88,7 @@ public class Product implements java.io.Serializable {
 			String asin, Double customShippingRate, Date reactivateDate,
 			String smallImageUrl, String largeImageUrl,
 			String originalThumbnailUrl, String yahooSku1, String yahooSku2,
-			String oem) {
+			String oem, Integer isRestricted) {
 		this.productId = productId;
 		this.dropshipperId = dropshipperId;
 		this.sku = sku;
@@ -139,6 +140,15 @@ public class Product implements java.io.Serializable {
 		this.yahooSku1 = yahooSku1;
 		this.yahooSku2 = yahooSku2;
 		this.oem = oem;
+		this.isRestricted = isRestricted;
+	}
+
+	public Integer getIsRestricted() {
+		return isRestricted;
+	}
+
+	public void setIsRestricted(Integer isRestricted) {
+		this.isRestricted = isRestricted;
 	}
 
 	public Integer getProductId() {
