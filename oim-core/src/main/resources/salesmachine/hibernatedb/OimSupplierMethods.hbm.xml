@@ -28,7 +28,7 @@
         <property name="deleteTm" type="java.util.Date">
             <column name="DELETE_TM" length="7" />
         </property>
-        <set name="oimSupplierMethodattrValueses" inverse="true" lazy="true" table="OIM_SUPPLIER_METHODATTR_VALUES" fetch="select">
+        <set name="oimSupplierMethodattrValueses" inverse="true" lazy="false" table="OIM_SUPPLIER_METHODATTR_VALUES" fetch="select">
             <key>
                 <column name="SUPPLIER_METHOD_ID" precision="22" scale="0" />
             </key>

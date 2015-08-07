@@ -400,6 +400,9 @@ SupplierRepository {
 			ftpAccountValue.setOimSupplierMethods(oimSupplierMethods);
 			
 			valuesSet.add(ftpUrlValue);
+			valuesSet.add(ftploginValue);
+			valuesSet.add(ftpPasswordValue);
+			valuesSet.add(ftpAccountValue);
 			
 			oimSupplierMethods.setOimSupplierMethodattrValueses(valuesSet);
 			dbSession.save(oimSupplierMethods);
@@ -437,7 +440,11 @@ SupplierRepository {
 			ftpAccountValue.setOimSupplierMethodattrNames(new OimSupplierMethodattrNames(OimConstants.SUPPLIER_METHOD_ATTRIBUTES_FTPACCOUNT));
 			ftpAccountValue.setOimSupplierMethods(oimSupplierMethods);
 			
+
 			valuesSet.add(ftpUrlValue);
+			valuesSet.add(ftpLoginValue);
+			valuesSet.add(ftpPasswordValue);
+			valuesSet.add(ftpAccountValue);
 			
 			oimSupplierMethods.setOimSupplierMethodattrValueses(valuesSet);
 			dbSession.save(oimSupplierMethods);
