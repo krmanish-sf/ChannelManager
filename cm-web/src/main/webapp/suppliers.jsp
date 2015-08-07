@@ -82,7 +82,6 @@ If you have not yet configured your supplier, click "Add Supplier" to do it now.
        </div>
          </div>
          </div>
-        
         <div class="modal fade" id="mySupplieredit" tabindex="-1"
 						role="dialog" aria-hidden="true">
               <div id="mysuppliereditdailog" class="modal-dialog">
@@ -191,6 +190,148 @@ If you have not yet configured your supplier, click "Add Supplier" to do it now.
 												</div>
                             <div class="form-group center">
                              <button class="btn btn-info btn-sm"
+														id="update" type="button"> <i class="icon-ok "></i>Update</button>
+                            </div>
+                         
+                         
+                        </form>
+                        <!-- PAGE CONTENT BEGINS --> 
+                        
+                      </div>
+                      
+                    </div>
+                  </div>
+                </div>
+                <!-- PAGE CONTENT ENDS --> 
+              </div>
+              <!-- /.col --> 
+            </div>
+            
+             <div class="modal fade" id="mySupplierHGedit" tabindex="-1"
+						role="dialog" aria-hidden="true">
+              <div id="mysuppliereditdailog" class="modal-dialog">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <button type="button" class="close hideHGSpecificDiv"
+										data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <h4 class="modal-title">Edit</h4>
+                  </div>
+                  <div class="modal-body ">
+                    <div class="row">
+                      <div class="container">
+                        <form class="form-horizontal" role="form"
+												action="/aggregators/suppliers" method="PUT"
+												id="supplierform">
+                           	<div class="panel panel-default honestGreen-settings hide">
+									<div class="panel-heading">
+										<h4 class="panel-title">
+											<a class="accordion-toggle collapsed" data-toggle="collapse"
+												data-parent="#accordion" href="#collapseOne"> <i
+												class="icon-angle-right bigger-110"
+												data-icon-hide="icon-angle-down"
+												data-icon-show="icon-angle-right"></i> &nbsp;PHI Details
+											</a>
+										</h4>
+									</div>
+									<div class="panel-collapse collapse" id="collapseOne">
+										<div class="panel-body">
+										
+											<div class="form-group">
+							                            <div class="col-sm-5">
+							                              <label for="phi-ftp" class="col-sm-offset-8 control-label no-padding-right">FTP</label>
+														</div>
+							                              <div class="col-sm-7">
+							                                 <input class="width-70" name="phi-ftp" minlength="2" type="text" data-bind-vendorsupplier="customMapper:oimSuppliers.oimSupplierMethodses[oimSupplierMethodTypes.methodTypeId=3].oimSupplierMethodattrValueses[oimSupplierMethodattrNames.attrId=2].attributeValue" />
+							                            </div>
+											</div>
+											 <div class="form-group">
+				                            <div class="col-sm-5">
+				                              <label
+																			class="col-sm-offset-8 control-label no-padding-right">UserName</label>
+																	</div>
+				                              <div class="col-sm-7">
+				                              <input class="width-70" name="phi-login"
+																			type="text" data-bind-vendorsupplier="customMapper:oimSuppliers.oimSupplierMethodses[oimSupplierMethodTypes.methodTypeId=3].oimSupplierMethodattrValueses[oimSupplierMethodattrNames.attrId=3].attributeValue" />
+				                            </div>
+																</div>
+				                            <div class="form-group">
+				                            <div class="col-sm-5">
+				                              <label
+																			class="col-sm-offset-8 control-label no-padding-right">Password</label>
+																	</div>
+				                              <div class="col-sm-7">
+				                              <input class="width-70" name="phi-password"
+																			type="password" data-bind-vendorsupplier="customMapper:oimSuppliers.oimSupplierMethodses[oimSupplierMethodTypes.methodTypeId=3].oimSupplierMethodattrValueses[oimSupplierMethodattrNames.attrId=4].attributeValue" />
+				                            </div>
+																</div>
+				                            <div class="form-group">
+				                              <label
+																		class="col-sm-5 control-label no-padding-right">Account</label>
+				                              <div class="col-sm-7">
+				                              <input class="width-70" name="phi-accountno"
+																			type="text" data-bind-vendorsupplier="customMapper:oimSuppliers.oimSupplierMethodses[oimSupplierMethodTypes.methodTypeId=3].oimSupplierMethodattrValueses[oimSupplierMethodattrNames.attrId=9].attributeValue" />
+				                            </div>
+																</div>
+										</div>
+									</div>
+									
+					</div>
+								
+					<div class="panel panel-default honestGreen-settings hide">
+							<div class="panel-heading">
+								<h4 class="panel-title">
+									<a class="accordion-toggle collapsed" data-toggle="collapse"
+												data-parent="#accordion" href="#collapseTwo"> <i
+												class="icon-angle-right bigger-110"
+												data-icon-hide="icon-angle-down"
+												data-icon-show="icon-angle-right"></i> &nbsp;HVA Details
+									</a>
+								</h4>
+							</div>
+							<div class="panel-collapse collapse" id="collapseTwo">
+											<div class="panel-body">
+										
+											<div class="form-group" >
+							                            <div class="col-sm-5">
+							                              <label for="hva-ftp" class="col-sm-offset-8 control-label no-padding-right">FTP</label>
+														</div>
+							                              <div class="col-sm-7">
+							                                 <input class="width-70" name="hva-ftp" minlength="2" type="text" data-bind-vendorsupplier="customMapper:oimSuppliers.oimSupplierMethodses[oimSupplierMethodTypes.methodTypeId=4].oimSupplierMethodattrValueses[oimSupplierMethodattrNames.attrId=2].attributeValue" />
+							                            </div>
+											</div>
+											 <div class="form-group">
+				                            <div class="col-sm-5">
+				                              <label
+																			class="col-sm-offset-8 control-label no-padding-right">UserName</label>
+																	</div>
+				                              <div class="col-sm-7">
+				                              <input class="width-70" name="hva-login"
+																			type="text" data-bind-vendorsupplier="customMapper:oimSuppliers.oimSupplierMethodses[oimSupplierMethodTypes.methodTypeId=4].oimSupplierMethodattrValueses[oimSupplierMethodattrNames.attrId=3].attributeValue" />
+				                            </div>
+																</div>
+				                            <div class="form-group">
+				                            <div class="col-sm-5">
+				                              <label
+																			class="col-sm-offset-8 control-label no-padding-right">Password</label>
+																	</div>
+				                              <div class="col-sm-7">
+				                              <input class="width-70" name="hva-password"
+																			type="password" data-bind-vendorsupplier="customMapper:oimSuppliers.oimSupplierMethodses[oimSupplierMethodTypes.methodTypeId=4].oimSupplierMethodattrValueses[oimSupplierMethodattrNames.attrId=4].attributeValue" />
+				                            </div>
+																</div>
+				                            <div class="form-group">
+				                              <label
+																		class="col-sm-5 control-label no-padding-right">Account</label>
+				                              <div class="col-sm-7">
+				                              <input class="width-70" name="hva-accountno"
+																			type="text" data-bind-vendorsupplier="customMapper:oimSuppliers.oimSupplierMethodses[oimSupplierMethodTypes.methodTypeId=4].oimSupplierMethodattrValueses[oimSupplierMethodattrNames.attrId=9].attributeValue" />
+				                            </div>
+																</div>
+										</div>
+							</div>
+					</div>
+                            <div class="form-group center">
+                             <button class="btn btn-info btn-sm hideHGSpecificDiv"
 														id="update" type="button"> <i class="icon-ok "></i>Update</button>
                             </div>
                          
@@ -487,10 +628,59 @@ If you have not yet configured your supplier, click "Add Supplier" to do it now.
 </jsp:attribute>
 	<jsp:attribute name="pagejs">
 <script type="text/javascript">
+$(document).on('click', '.hideHGSpecificDiv', function(e) {
+	$('.honestGreen-settings').removeClass('show');
+	$('.honestGreen-settings').addClass('hide');
+
+});
 	var table_vendorSuppliers;
 	function edit(e) {
 		var vendorSupplier = table_vendorSuppliers.fnGetData(e[0]);
 		var vendorSupplierTemp = JSON.parse(JSON.stringify(vendorSupplier));
+		//var rowIndex = table_vendorSuppliers.fnGetPosition(e[0]);
+		GenericBinder('vendorsupplier', vendorSupplierTemp);
+		if (vendorSupplier.oimSuppliers.isCustom) {
+			$('#customSupplierFileFormatDiv').show();
+			$('.supplieremailDiv').show();
+		} else {
+			$('#customSupplierFileFormatDiv').hide();
+			$('.supplieremailDiv').hide();
+		}
+
+		$('#saveshippingmapping').off('click').on(
+				'click',
+				vendorSupplier,
+				function(e) {
+					var data = {};
+					$('#shippingmethodsForm :input').each(function() {
+						if (this.name) {
+							data[this.name] = this.value;
+						}
+					});
+					$(this).CRUD(
+							{
+								url : "aggregators/suppliers/"
+										+ e.data.oimSuppliers.supplierId
+										+ '/shippingmapping',
+								method : "PUT",
+								data : JSON.stringify(data)
+							});
+				});
+		$('#supplierform').validate();
+		$('#supplierform').prop('action',
+				'aggregators/suppliers/' + vendorSupplier.vendorSupplierId);
+		$('#update').off("click").on("click", function(e) {
+			$('#supplierform').submit();
+		});
+	}
+	
+	function editHG(e) {
+		$('.honestGreen-settings').removeClass('hide');
+		$('.honestGreen-settings').addClass('show');
+		var vendorSupplier = table_vendorSuppliers.fnGetData(e[0]);
+		
+		var vendorSupplierTemp = JSON.parse(JSON.stringify(vendorSupplier));
+		console.log(vendorSupplierTemp);
 		//var rowIndex = table_vendorSuppliers.fnGetPosition(e[0]);
 		GenericBinder('vendorsupplier', vendorSupplierTemp);
 		if (vendorSupplier.oimSuppliers.isCustom) {
@@ -656,7 +846,11 @@ If you have not yet configured your supplier, click "Add Supplier" to do it now.
 									{
 										"bSortable" : false,
 										"mData" : function(vendorSupplier) {
-											return '<a class="btn btn-info btn-sm hidden-xs icon-pencil" href="#mySupplieredit" data-toggle="modal" onclick="edit((($(this)).parent()).parent())"></a><a class="btn btn-info btn-xs icon-pencil visible-xs btn-xs" href="#mySupplieredit" data-toggle="modal" onclick="edit((($(this)).parent()).parent())"></a>';
+											if(vendorSupplier.oimSuppliers.supplierId==1822)
+											return '<a class="btn btn-info btn-sm hidden-xs icon-pencil" href="#mySupplierHGedit" data-toggle="modal" onclick="editHG((($(this)).parent()).parent())"></a><a class="btn btn-info btn-xs icon-pencil visible-xs btn-xs" href="#mySupplierHGedit" data-toggle="modal" onclick="editHG((($(this)).parent()).parent())"></a>';
+											else{
+												return '<a class="btn btn-info btn-sm hidden-xs icon-pencil" href="#mySupplieredit" data-toggle="modal" onclick="edit((($(this)).parent()).parent())"></a><a class="btn btn-info btn-xs icon-pencil visible-xs btn-xs" href="#mySupplieredit" data-toggle="modal" onclick="edit((($(this)).parent()).parent())"></a>';	
+											}
 										}
 									},
 									{

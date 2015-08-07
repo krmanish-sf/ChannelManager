@@ -29,8 +29,8 @@ public class Supplier extends DomainBase {
 	private Date insertionTm;
 	private Date deleteTm;
 	private String description;
-	@JsonDeserialize(as = TreeSet.class)
-	private Set<SupplierMethod> oimSupplierMethodses = new TreeSet<SupplierMethod>();
+	@JsonDeserialize(as = HashSet.class)
+	private Set<SupplierMethod> oimSupplierMethodses = new HashSet<SupplierMethod>();
 	@JsonDeserialize(as = HashSet.class)
 	private Set<VendorsuppOrderhistory> oimVendorsuppOrderhistories = new HashSet<VendorsuppOrderhistory>(
 			0);

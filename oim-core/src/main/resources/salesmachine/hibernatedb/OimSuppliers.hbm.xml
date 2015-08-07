@@ -25,7 +25,7 @@
         <property name="description" type="string">
             <column name="DESCRIPTION" length="200" />
         </property>
-        <set name="oimSupplierMethodses" inverse="true" lazy="true" table="OIM_SUPPLIER_METHODS" fetch="select">
+        <set name="oimSupplierMethodses" inverse="true" lazy="false" table="OIM_SUPPLIER_METHODS" fetch="select">
             <key>
                 <column name="SUPPLIER_ID" precision="22" scale="0" />
             </key>
