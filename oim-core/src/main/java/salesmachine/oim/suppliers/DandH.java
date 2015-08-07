@@ -48,6 +48,7 @@ import salesmachine.hibernatedb.Reps;
 import salesmachine.hibernatedb.Vendors;
 import salesmachine.hibernatehelper.SessionManager;
 import salesmachine.oim.stores.api.IOrderImport;
+import salesmachine.oim.stores.exception.ChannelConfigurationException;
 import salesmachine.oim.stores.impl.OrderImportManager;
 import salesmachine.oim.suppliers.exception.SupplierCommunicationException;
 import salesmachine.oim.suppliers.exception.SupplierConfigurationException;
@@ -312,19 +313,24 @@ public class DandH extends Supplier implements HasTracking {
 					OimLogStream stream = new OimLogStream();
 					if (iOrderImport != null) {
 						log.debug("Created the iorderimport object");
-						if (!iOrderImport.init(channelId,
-								SessionManager.currentSession(), stream)) {
-							log.debug(
-									"Failed initializing the channel with Id:{}",
-									channelId);
-						} else {
-							OrderStatus orderStatus = new OrderStatus();
-							orderStatus
-									.setStatus(((OimOrderProcessingRule) oimChannels
-											.getOimOrderProcessingRules()
-											.iterator().next())
-											.getProcessedStatus());
-							iOrderImport.updateStoreOrder(detail, orderStatus);
+						try {
+							if (!iOrderImport.init(channelId,
+									SessionManager.currentSession())) {
+								log.debug(
+										"Failed initializing the channel with Id:{}",
+										channelId);
+							} else {
+								OrderStatus orderStatus = new OrderStatus();
+								orderStatus
+										.setStatus(((OimOrderProcessingRule) oimChannels
+												.getOimOrderProcessingRules()
+												.iterator().next())
+												.getProcessedStatus());
+								iOrderImport.updateStoreOrder(detail,
+										orderStatus);
+							}
+						} catch (ChannelConfigurationException e) {
+							stream.println(e.getMessage());
 						}
 					} else {
 						log.error("Could not find a bean to work with this Channel.");
@@ -356,19 +362,24 @@ public class DandH extends Supplier implements HasTracking {
 					OimLogStream stream = new OimLogStream();
 					if (iOrderImport != null) {
 						log.debug("Created the iorderimport object");
-						if (!iOrderImport.init(channelId,
-								SessionManager.currentSession(), stream)) {
-							log.debug(
-									"Failed initializing the channel with Id:{}",
-									channelId);
-						} else {
-							OrderStatus orderStatus = new OrderStatus();
-							orderStatus
-									.setStatus(((OimOrderProcessingRule) oimChannels
-											.getOimOrderProcessingRules()
-											.iterator().next())
-											.getFailedStatus());
-							iOrderImport.updateStoreOrder(detail, orderStatus);
+						try {
+							if (!iOrderImport.init(channelId,
+									SessionManager.currentSession())) {
+								log.debug(
+										"Failed initializing the channel with Id:{}",
+										channelId);
+							} else {
+								OrderStatus orderStatus = new OrderStatus();
+								orderStatus
+										.setStatus(((OimOrderProcessingRule) oimChannels
+												.getOimOrderProcessingRules()
+												.iterator().next())
+												.getFailedStatus());
+								iOrderImport.updateStoreOrder(detail,
+										orderStatus);
+							}
+						} catch (ChannelConfigurationException e) {
+							stream.println(e.getMessage());
 						}
 					} else {
 						log.error("Could not find a bean to work with this Channel.");

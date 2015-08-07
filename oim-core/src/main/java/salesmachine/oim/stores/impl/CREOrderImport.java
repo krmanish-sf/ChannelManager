@@ -45,8 +45,10 @@ import salesmachine.hibernatehelper.PojoHelper;
 import salesmachine.oim.api.OimConstants;
 import salesmachine.oim.stores.api.ChannelBase;
 import salesmachine.oim.stores.api.IOrderImport;
+import salesmachine.oim.stores.exception.ChannelCommunicationException;
+import salesmachine.oim.stores.exception.ChannelConfigurationException;
+import salesmachine.oim.stores.exception.ChannelOrderFormatException;
 import salesmachine.oim.suppliers.modal.OrderStatus;
-import salesmachine.util.OimLogStream;
 import salesmachine.util.StringHandle;
 
 import com.stevesoft.pat.Regex;
@@ -56,22 +58,23 @@ public class CREOrderImport extends ChannelBase implements IOrderImport {
 			.getLogger(CREOrderImport.class);
 	private String m_storeURL;
 
-	public boolean init(int channelID, Session dbSession, OimLogStream log) {
-		super.init(channelID, dbSession, log);
+	public boolean init(int channelID, Session dbSession)
+			throws ChannelConfigurationException {
+		super.init(channelID, dbSession);
 		String scriptPath = PojoHelper.getChannelAccessDetailValue(m_channel,
 				OimConstants.CHANNEL_ACCESSDETAIL_SCRIPT_PATH);
 		LOG.info("Checking the script path");
 		if (StringHandle.isNullOrEmpty(scriptPath)) {
 			LOG.warn("Channel is not yet setup for automation.");
-			log.println("Channel is not yet setup for automation. Script not found.");
-			return false;
+			throw new ChannelConfigurationException(
+					"Channel is not yet setup for automation. Script not found.");
 		}
 
 		Regex scriptMatch = Regex.perlCode("/https?:\\/\\/(.+?)\\/(.+)/i");
 		if (!scriptMatch.search(scriptPath)) {
 			LOG.error("FAILED TO PARSE SCRIPT LOCATION");
-			log.println("Failed to parse script location.");
-			return false;
+			throw new ChannelConfigurationException(
+					"Script location is invalid.");
 		}
 		m_storeURL = scriptPath;
 		return true;
@@ -85,29 +88,25 @@ public class CREOrderImport extends ChannelBase implements IOrderImport {
 		List<OimOrders> orderFetched = null;
 		try {
 			if (!pingTest()) {
-				logStream.println("Channel ping failed.");
-				return batch;
+				throw new ChannelCommunicationException("Channel ping failed.");
 			}
 
 			long start = System.currentTimeMillis();
 			String response = sendGetOrdersRequest();
 			LOG.debug(response);
-			if (!"".equals(response)) {
+			if (!StringHandle.isNullOrEmpty(response)) {
 				StringReader str = new StringReader(response);
 				orderFetched = parseGetProdResponse(str, batchesTypes);
 			} else {
 				LOG.error("FAILURE_GETPRODUCT_NULL_RESPONSE");
-				logStream
-						.println("Channel returned null in response to fetch Orders.");
-				return batch;
+				throw new ChannelOrderFormatException(
+						"Channel returned null in response to fetch Orders.");
 			}
 
 			long time = (System.currentTimeMillis() - start);
 			LOG.info("Finished GetProduct step in {} seconds", time / 1000);
 
 			if (orderFetched.size() == 0) {
-				logStream
-						.println("Order Import Process Complete. No new orders found on the store.");
 				return batch;
 			}
 
@@ -118,99 +117,88 @@ public class CREOrderImport extends ChannelBase implements IOrderImport {
 						m_orderProcessingRule.getConfirmedStatus());
 			}
 
-			if (!StringHandle.isNullOrEmpty(response)) {
-				StringReader str = new StringReader(response);
-				List updatedOrders = parseUpdateResponse(str);
-				Set confirmedOrders = new HashSet();
-				if (!StringHandle.isNullOrEmpty(m_orderProcessingRule
-						.getConfirmedStatus())) {
-					for (OimOrders order : orderFetched) {
-						if (updatedOrders.contains(order.getStoreOrderId())) {
-							confirmedOrders.add(order);
-						}
+			StringReader str = new StringReader(response);
+			List updatedOrders = parseUpdateResponse(str);
+			Set confirmedOrders = new HashSet();
+			if (!StringHandle.isNullOrEmpty(m_orderProcessingRule
+					.getConfirmedStatus())) {
+				for (OimOrders order : orderFetched) {
+					if (updatedOrders.contains(order.getStoreOrderId())) {
+						confirmedOrders.add(order);
 					}
-					batch.setOimOrderses(confirmedOrders);
 				}
-
-				// Save everything
-				Transaction tx = m_dbSession.getTransaction();
-				if (tx != null && tx.isActive())
-					tx.commit();
-				tx = m_dbSession.beginTransaction();
-				batch.setInsertionTm(new Date());
-				batch.setCreationTm(new Date());
-				m_dbSession.save(batch);
-
-				LOG.debug("Saved batch id: {}", batch.getBatchId());
-
-				boolean ordersSaved = false;
-				int importCount = 0;
-				for (Iterator oit = batch.getOimOrderses().iterator(); oit
-						.hasNext();) {
-					OimOrders order = (OimOrders) oit.next();
-					if (orderAlreadyImported(order.getStoreOrderId())) {
-						LOG.warn(
-								"Order skipping as already exists. Store order id : {}",
-								order.getStoreOrderId());
-						continue;
-					}
-
-					order.setOimOrderBatches(batch);
-					order.setOrderFetchTm(new Date());
-					order.setInsertionTm(new Date());
-					String shippingDetails = order.getShippingDetails();
-					Integer supportedChannelId = m_channel
-							.getOimSupportedChannels().getSupportedChannelId();
-					Criteria findCriteria = m_dbSession
-							.createCriteria(OimChannelShippingMap.class);
-					findCriteria.add(Restrictions.eq(
-							"oimSupportedChannel.supportedChannelId",
-							supportedChannelId));
-					List<OimChannelShippingMap> list = findCriteria.list();
-					for (OimChannelShippingMap entity : list) {
-						String shippingRegEx = entity.getShippingRegEx();
-						Pattern p = Pattern.compile(shippingRegEx,
-								Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
-						Matcher m = p.matcher(shippingDetails);
-						if (m.find() && m.groupCount() >= 2) {
-							order.setOimShippingMethod(entity
-									.getOimShippingMethod());
-							LOG.info("Shipping set to "
-									+ entity.getOimShippingMethod());
-							break;
-						}
-					}
-					if (order.getOimShippingMethod() == null)
-						LOG.warn("Shipping can't be mapped for order "
-								+ order.getStoreOrderId());
-					m_dbSession.save(order);
-					LOG.info("Saved order id: " + order.getOrderId());
-
-					for (Iterator dit = order.getOimOrderDetailses().iterator(); dit
-							.hasNext();) {
-						OimOrderDetails detail = (OimOrderDetails) dit.next();
-						detail.setOimOrders(order);
-						detail.setInsertionTm(new Date());
-						detail.setOimOrderStatuses(new OimOrderStatuses(
-								OimConstants.ORDER_STATUS_UNPROCESSED));
-
-						m_dbSession.save(detail);
-						LOG.info("Saved detail id: " + detail.getDetailId());
-						ordersSaved = true;
-					}
-					importCount++;
-				}
-				if (ordersSaved) {
-					tx.commit();
-					logStream
-							.println("Order Import Process Complete. Number of Orders imported from the store: "
-									+ importCount);
-				} else {
-					logStream.println("No new order found on store.");
-				}
-			} else {
-				LOG.error("FAILURE_GETPRODUCT_NULL_RESPONSE");
+				batch.setOimOrderses(confirmedOrders);
 			}
+
+			// Save everything
+			Transaction tx = m_dbSession.getTransaction();
+			if (tx != null && tx.isActive())
+				tx.commit();
+			tx = m_dbSession.beginTransaction();
+			batch.setInsertionTm(new Date());
+			batch.setCreationTm(new Date());
+			m_dbSession.save(batch);
+
+			LOG.debug("Saved batch id: {}", batch.getBatchId());
+
+			boolean ordersSaved = false;
+			int importCount = 0;
+			for (Iterator oit = batch.getOimOrderses().iterator(); oit
+					.hasNext();) {
+				OimOrders order = (OimOrders) oit.next();
+				if (orderAlreadyImported(order.getStoreOrderId())) {
+					LOG.warn(
+							"Order skipping as already exists. Store order id : {}",
+							order.getStoreOrderId());
+					continue;
+				}
+
+				order.setOimOrderBatches(batch);
+				order.setOrderFetchTm(new Date());
+				order.setInsertionTm(new Date());
+				String shippingDetails = order.getShippingDetails();
+				Integer supportedChannelId = m_channel
+						.getOimSupportedChannels().getSupportedChannelId();
+				Criteria findCriteria = m_dbSession
+						.createCriteria(OimChannelShippingMap.class);
+				findCriteria.add(Restrictions.eq(
+						"oimSupportedChannel.supportedChannelId",
+						supportedChannelId));
+				List<OimChannelShippingMap> list = findCriteria.list();
+				for (OimChannelShippingMap entity : list) {
+					String shippingRegEx = entity.getShippingRegEx();
+					Pattern p = Pattern.compile(shippingRegEx,
+							Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
+					Matcher m = p.matcher(shippingDetails);
+					if (m.find() && m.groupCount() >= 2) {
+						order.setOimShippingMethod(entity
+								.getOimShippingMethod());
+						LOG.info("Shipping set to "
+								+ entity.getOimShippingMethod());
+						break;
+					}
+				}
+				if (order.getOimShippingMethod() == null)
+					LOG.warn("Shipping can't be mapped for order "
+							+ order.getStoreOrderId());
+				m_dbSession.save(order);
+				LOG.info("Saved order id: " + order.getOrderId());
+
+				for (Iterator dit = order.getOimOrderDetailses().iterator(); dit
+						.hasNext();) {
+					OimOrderDetails detail = (OimOrderDetails) dit.next();
+					detail.setOimOrders(order);
+					detail.setInsertionTm(new Date());
+					detail.setOimOrderStatuses(new OimOrderStatuses(
+							OimConstants.ORDER_STATUS_UNPROCESSED));
+
+					m_dbSession.save(detail);
+					LOG.info("Saved detail id: " + detail.getDetailId());
+					ordersSaved = true;
+				}
+				importCount++;
+			}
+
 		} catch (Exception e) {
 			LOG.info(e.getMessage(), e);
 		}
@@ -288,19 +276,19 @@ public class CREOrderImport extends ChannelBase implements IOrderImport {
 						order.setDeliverySuburb(getTagValue("suburb", e));
 						order.setDeliveryCity(getTagValue("city", e));
 						order.setDeliveryState(getTagValue("state", e));
-						//order.setDeliveryStateCode(getTagValue("state", e));
+						// order.setDeliveryStateCode(getTagValue("state", e));
 						order.setDeliveryCountry(getTagValue("country", e));
 						order.setDeliveryZip(getTagValue("zip", e));
 						order.setDeliveryCompany(getTagValue("company", e));
 						order.setDeliveryPhone(getTagValue("phone", e));
 						order.setDeliveryEmail(getTagValue("email", e));
-						
+
 						if (getTagValue("state", e).length() == 2) {
 							order.setDeliveryStateCode(getTagValue("state", e));
 						} else {
 							String stateCode = validateAndGetStateCode(order);
-							if (stateCode != "") 
-								order.setDeliveryStateCode(stateCode); 
+							if (stateCode != "")
+								order.setDeliveryStateCode(stateCode);
 						}
 					}
 
@@ -606,7 +594,7 @@ public class CREOrderImport extends ChannelBase implements IOrderImport {
 		}
 
 		xmlrequest.append("</xmlPopulate>");
-		String 	response = sendRequest(xmlrequest.toString());
+		String response = sendRequest(xmlrequest.toString());
 	}
 
 	@Override

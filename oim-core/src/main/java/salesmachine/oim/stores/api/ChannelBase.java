@@ -17,7 +17,7 @@ import salesmachine.hibernatedb.OimChannels;
 import salesmachine.hibernatedb.OimOrderProcessingRule;
 import salesmachine.hibernatedb.OimOrders;
 import salesmachine.hibernatedb.OimSuppliers;
-import salesmachine.util.OimLogStream;
+import salesmachine.oim.stores.exception.ChannelConfigurationException;
 import salesmachine.util.StateCodeProperty;
 import salesmachine.util.StringHandle;
 
@@ -28,22 +28,19 @@ public abstract class ChannelBase implements IOrderImport {
 	protected OimChannels m_channel;
 	protected OimOrderProcessingRule m_orderProcessingRule;
 	protected Map<String, OimSuppliers> supplierMap;
-	@Deprecated
-	protected OimLogStream logStream;
 
 	@Override
-	public boolean init(int channelID, Session dbSession, OimLogStream logStream) {
+	public boolean init(int channelID, Session dbSession)
+			throws ChannelConfigurationException {
 		m_dbSession = dbSession;
-		if (logStream != null)
-			this.logStream = logStream;
-		else
-			this.logStream = new OimLogStream();
 
 		m_channel = (OimChannels) m_dbSession.get(OimChannels.class, channelID);
 
 		if (m_channel == null) {
 			log.error("No channel found with channel id: {}", channelID);
-			return false;
+			throw new ChannelConfigurationException(
+					"No channel found with channel id: " + channelID);
+
 		}
 		log.info("Initializing Channel : {}", m_channel.getChannelName());
 		Query query = m_dbSession
@@ -52,6 +49,10 @@ public abstract class ChannelBase implements IOrderImport {
 		Iterator iter = query.iterate();
 		if (iter.hasNext()) {
 			m_orderProcessingRule = (OimOrderProcessingRule) iter.next();
+		} else {
+			throw new ChannelConfigurationException(
+					"No associated order processing rule found  with : "
+							+ m_channel.getChannelName());
 		}
 		Set suppliers = m_channel.getOimChannelSupplierMaps();
 		supplierMap = new HashMap<String, OimSuppliers>();
@@ -94,12 +95,13 @@ public abstract class ChannelBase implements IOrderImport {
 		return obj instanceof OimOrders;
 
 	}
-	
+
 	protected String validateAndGetStateCode(OimOrders order) {
-		log.info("Getting state code for - {}",order.getDeliveryState());
-		String stateCode = StateCodeProperty.getProperty(order.getDeliveryState());
+		log.info("Getting state code for - {}", order.getDeliveryState());
+		String stateCode = StateCodeProperty.getProperty(order
+				.getDeliveryState());
 		stateCode = StringHandle.removeNull(stateCode);
-		log.info("state code for {} is {}",order.getDeliveryState(),stateCode);
+		log.info("state code for {} is {}", order.getDeliveryState(), stateCode);
 		return stateCode;
 	}
 

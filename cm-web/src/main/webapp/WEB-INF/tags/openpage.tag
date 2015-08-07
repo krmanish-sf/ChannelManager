@@ -68,22 +68,26 @@
 				<a href="${pageContext.request.contextPath}" class="navbar-brand">
 					<small> <img
 						src="${pageContext.request.contextPath}/static/images/isbrandlogo.png"
-						alt="logo"> Inventory Source
+						alt="logo"> Channel Manager: <small style="font-size: 16px;">Simplify
+							Your Order Management, Simplify Your Success.</small>
 				</small>
 				</a>
 			</div>
 			<div class="pull-right">
-				<a data-toggle="modal" href="#learn-more"
+				<!-- <a data-toggle="modal" href="#learn-more"
 					class="navbar-brand small14"><i class="icon-info"></i>&nbsp;Learn
-					more</a> <a
-					href="${pageContext.request.contextPath}/static/about-us.jsp"
+					more</a> -->
+				<a href="${pageContext.request.contextPath}/static/about-us.jsp"
 					class="navbar-brand small14 ">About us</a> <a
 					href="${pageContext.request.contextPath}/static/how-order-automation-works.jsp"
 					class="navbar-brand small14 ">How it works</a> <a
 					href="${pageContext.request.contextPath}/static/contact-us.jsp"
 					class="navbar-brand small14 ">Contact us</a> <a
+					href="${pageContext.request.contextPath}/login"
+					class="navbar-brand small14 ">Sign In</a>
+				<%-- <a
 					href="${pageContext.request.contextPath}/static/ecommerce-testimonials.jsp"
-					class="navbar-brand small14 ">Testimonials</a>
+					class="navbar-brand small14 ">Testimonials</a> --%>
 			</div>
 		</div>
 		<!-- /.container -->
@@ -91,7 +95,7 @@
 	<div class="main-container" id="main-container">
 		<jsp:invoke fragment="maincontent" />
 	</div>
-	<div class="navbar navbar-bottom footer navbar-fixed-bottom">
+	<div class="navbar navbar-bottom footer">
 		<div class="navbar-inner">
 			<div class="navbar-container">
 				<div class="navbar-header pull-left">

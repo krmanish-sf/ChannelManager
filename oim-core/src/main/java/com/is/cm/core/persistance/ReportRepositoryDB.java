@@ -18,6 +18,7 @@ import org.hibernate.criterion.Restrictions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import salesmachine.hibernatedb.OimOrderBatches;
 import salesmachine.hibernatedb.OimOrderDetails;
 import salesmachine.hibernatedb.OimOrders;
 import salesmachine.hibernatedb.OimSuppliers;
@@ -28,6 +29,7 @@ import salesmachine.oim.api.OimConstants;
 import salesmachine.oim.suppliers.Supplier;
 import salesmachine.util.StringHandle;
 
+import com.is.cm.core.domain.OrderBatch;
 import com.is.cm.core.domain.ProductSalesData;
 import com.is.cm.core.domain.ReportDataWrapper;
 import com.is.cm.core.domain.VendorsuppOrderhistory;
@@ -1041,7 +1043,8 @@ public class ReportRepositoryDB extends RepositoryBase implements
 				.createCriteria(OimVendorsuppOrderhistory.class)
 				// .setFirstResult(pageNum).setMaxResults(recordCount)
 				// .add(Restrictions.isNotNull("description"))
-				// .add(Restrictions.isNotNull("oimSuppliers"))
+				.add(Restrictions.isNotNull("oimSuppliers"))
+				.add(Restrictions.ne("errorCode", 0))
 				.add(Restrictions.ge("processingTm", startDate))
 				// .add(Restrictions.le("processingTm", endDate))
 				.addOrder(Order.desc("processingTm"));
@@ -1060,11 +1063,26 @@ public class ReportRepositoryDB extends RepositoryBase implements
 	@Override
 	public List getSystemAlerts() {
 		StringBuilder sb = new StringBuilder(
-				"select error_code,count(error_code) from OIM_VENDORSUPP_ORDERHISTORY where processing_tm > trunc(sysdate-1) group by error_code");
+				"select error_code,count(error_code) from OIM_VENDORSUPP_ORDERHISTORY where error_code>0 and processing_tm > trunc(sysdate-2) group by error_code");
 		Session dbSession = SessionManager.currentSession();
 		SQLQuery reportQuery = dbSession.createSQLQuery(sb.toString());
-
 		List list = reportQuery.list();
 		return list;
+	}
+
+	@Override
+	public List<OrderBatch> getChannelPullHistory(Date startDate, Date endDate) {
+		Session dbSession = SessionManager.currentSession();
+		Criteria criteria = dbSession.createCriteria(OimOrderBatches.class)
+				// TODO uncomment it .add(Restrictions.isNotNull("description"))
+				.add(Restrictions.ge("insertionTm", startDate))
+				.add(Restrictions.le("insertionTm", endDate));
+		List<OrderBatch> batchesHistory = new ArrayList<OrderBatch>();
+		List<OimOrderBatches> list = criteria.list();
+		for (OimOrderBatches oimOrderBatches : list) {
+			OrderBatch batch = OrderBatch.from(oimOrderBatches);
+			batchesHistory.add(batch);
+		}
+		return batchesHistory;
 	}
 }

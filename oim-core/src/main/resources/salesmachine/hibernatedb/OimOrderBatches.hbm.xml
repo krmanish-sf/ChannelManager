@@ -31,6 +31,9 @@
 		<property name="description" type="string">
 			<column name="DESCRIPTION" length="1000" />
 		</property>
+		<property name="errorCode" type="java.lang.Integer">
+			<column name="ERROR_CODE" precision="22" scale="0" />
+		</property>
 		<set name="oimUploadedFileses" inverse="true" lazy="true"
 			table="OIM_UPLOADED_FILES" fetch="select">
 			<key>

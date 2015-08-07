@@ -7,59 +7,33 @@
 			<div class="container">
 				<div class="row">
 					<div class="col-sm-8">
-						<h2>Channel Manager - Your dropship order management
-							solution.</h2>
-						<p>Welcome to Chanel Manager, developed exclusively by the
-							team at InventorySource.com. Inventory Source is the leader in
-							Drop Ship Inventory Management Solutions, giving you easy to use
-							automated controls to sell more and work less while you run your
-							eCommerce business. At Inventory Source, we understand the
-							challenges that resellers face, and provide services and
-							solutions to make selling a simpler experience. Since 2003,
-							Inventory Source has provided data integration services between
-							wholesale distributors and eCommerce sales channels used by our
-							members, and we have provided integration solutions for all major
-							website platforms and marketplaces.</p>
-						<h3 class="hdrcolor">Are you looking for a better way to
-							manage your sales?</h3>
-						<p>Streamline your operations while reducing the costs and
-							time spent managing your eCommerce sales and order processing.
-							Utilize a control panel and managed service designed and priced
-							for small-to-medium businesses like yours. The Inventory Source
-							Channel Manager solution is exactly what your business needs.</p>
+						<h2>Channel Manager - Your Multi-Channel Order Management Solution</h2>
+						<h3>A Big Solution For Small Business</h3>
+						<p>Small and medium size online sellers still have big needs when it comes to their channel solutions. That is why we designed Channel Manager as a way to give even the smallest online seller an empowering service against the competitive eCommerce industry.</p>
+						<strong>What We Provide</strong>
 						<ul>
-							<li>Developed by Inventory Source which has helped thousands
-								of small-to-medium size Web merchants like you for over 10
-								years.</li>
-							<li>Ideal for multi-channel retailers. Combine orders from
-								sale platforms out to supplier sources with shared inventory and
-								customer lists while retaining the branding of your different
-								sites.</li>
-							<li>Fast implementation, superior support and responsive
-								developers.</li>
+							<li><strong>Quick Launch-</strong> Managed on-boarding and training to ensure your success.</li>
+							<li><strong>Pull Orders In-</strong> Automatically pull yours orders from multiple store platforms and marketplaces into your centralized order hub.</li>
+							<li><strong>Manage Orders-</strong> Monitor your order and supply-chain data, and easily adjust for any processing issues from a centralized control panel.</li>
+							<li><strong>Post Orders Out-</strong> Automatically submit single orders, or submit in bulk, directly to your account at your distributors in the exact format they need.</li>
+							<li><strong>Update Customers With Tracking-</strong> Capture your shipping and tracking data from your suppliers and send them back into your sales channel for your customers to see the order progress and shipping tracking codes.</li>
+							<li><strong>Grow Sales &amp; Achieve Success-</strong> Track your order data to learn about the most profitable sales channels and product types so you can grow your business and your profits</li>
 						</ul>
-						<h3 class="hdrcolor">Effective</h3>
-						<p>A solution like Inventory Source's Channel Manager is the
-							most effective and scalable way to manage and process your
-							orders, while getting the most value for your money. Channel
-							Manager is used by resellers from some of the larger and most
-							popular wholesale distributor programs across all major store
-							platforms and marketplaces as a vital link in their supply chain
-							management needs.</p>
-
-						<h3 class="hdrcolor">Easy</h3>
-						<p>We have custom integrations with a variety of suppliers and
-							sales channels to help you process your orders at the click of a
-							button. Inventory Source's Channel Manager is designed with
-							simplicity in mind, giving you a dynamic and scalable order
-							management solution with the core features you need, easy to edit
-							controls, and order processing at the push of a button.</p>
-					</div>
+						
+						<p>Save time and avoid the headaches with an simple automated solution for order review in from multiple sales channels and order posting out to multiple wholesale dropship distributors all from a centralized dashboard and service.</p>
+						<p>Get priority order fulfillment by being able to process more orders in less time and avoid out of stock hassles  When you simplify your order management you simplify your success with InventorySource.com's Channel Manager order automation utility.</p>
+						</div>
+						
 					<c:if test="${reps==null }">
 					<div class="col-sm-4 login-form">
-						<h2>Login</h2>
+						<br>
+						<div class="row">
+						<div class="col-sm-12"
+									style="background: #40b9ec none repeat scroll 0 0; border: 1px solid #369dc8; box-shadow: 1px 5px 5px 1px #666666; color: white;">
+						<h3>Order Management Members Area</h3>
 						<form class="form-horizontal" data-role="form"
-								action="${pageContext.request.contextPath}/login" method="post">
+										action="${pageContext.request.contextPath}/login"
+										method="post">
 							<input type="hidden" name="done" value="${param.done}" />
 							<div class="form-group">
 							<label class="col-sm-12 control-label no-padding-right">
@@ -68,7 +42,7 @@
 							</div>
 							<div class="form-group">
 								<label for="username"
-										class="col-sm-5 control-label no-padding-right">User
+												class="col-sm-5 control-label no-padding-right">User
 									Name </label>
 								<div class="col-sm-7">
 									<input type="text" name="username" placeholder="Email" />
@@ -76,7 +50,7 @@
 							</div>
 							<div class="form-group">
 								<label for="password"
-										class="col-sm-5 control-label no-padding-right">Password
+												class="col-sm-5 control-label no-padding-right">Password
 								</label>
 								<div class="col-sm-7">
 									<input type="password" name="password" placeholder="Password" />
@@ -85,17 +59,19 @@
 							<div class="form-group">
 								<div class="col-sm-7 pull-right">
 									<input class="btn btn-success btn-sm pull-left width-90"
-											type="submit" value="Login" />
+													type="submit" value="Login" />
 								</div>
 							</div>
 							<div class="form-group">
 								<div class="col-sm-7 pull-right">
-									 <a href="${pageContext.request.contextPath}/signup">New User? Sign up</a>
+									 <a href="${pageContext.request.contextPath}/signup">Activate A New Account?</a>
 										<br><a href="javascript:;"
-											onclick="$('.login-form').hide();$('.forgot-password').show();">Forgot password?</a>
+													onclick="$('.login-form').hide();$('.forgot-password').show();">Forgot password?</a>
 								</div>
 							</div>
 						</form>
+						</div>
+						</div>
 					</div>
 					<div class="col-sm-4 forgot-password" style="display: none;">
 						<h2>Forgot Password</h2>
@@ -141,6 +117,14 @@
 							</div>
 					</div>
 					</c:if>
+					<div class="col-sm-4">
+					<br>
+					<div class="row">
+						<img alt="Happy Customer"
+								src="static/images/large_article_im1951_happy_woman_in_warehouse.jpg"
+								style="width: 100%;">
+					</div>
+					</div>
 				</div>
 			</div>
 		</div>

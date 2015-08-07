@@ -6,28 +6,22 @@
 		<div class="container">
 			<div class="row">
 				<div class="col-sm-8">
-					<h2>Get Started With Channel Manager</h2>
-					<p>To get started automating your sales and take your business
-						to the next level, create an account below. If you already use the
-						Inventory Source inventory automation services, you may login to
-						Channel Manager with your existing Inventory Source login.</p>
+					<h2>Getting Started With Channel Manager</h2>
+					<p>InventorySource.com's Channel Manager Utility will help you "Simplify your order management, and simplify your success."</p>
+					<p>
+							<img alt="" src="static/images/19.jpg" style="width: 90%;">
+					</p>
+					<p>The Channel Manager service is currently offered by invitation only.  However, if you are ready to get started with an order management service, just fill in the form on the right and our team will review your details and contact you shortly about the options for your order integration approach.</p>
 					<ul>
-						<li>Create your account or login with your InventorySource
-							account below</li>
-						<li>Request activation of your Channel Manager setup process</li>
-						<li>Our account management team will contact you to
-							personally set up your channels and provide additional
-							information to activate your account and begin automating your
-							orders</li>
+						<li>Enter your contact details.  If you already have an InventorySource.com provide your email ID for that account.</li>
+						<li>In the "Wholesale Suppliers" field, list any dropship distributors where you need order management integrated.</li>
+						<li>In the "Sales Channels" field, include the name of your website cart platform (i.e., Bigcommerce, 3dCart, Zen Cart, etc.) and/or any marketplaces (i.e., Amazon, eBay, etc) where you currently get orders.</li>
+						<li>Our account management team will contact you to personally with the steps needed to sync your product sources and sales channels, as well as more information on our Channel Manager service.</li>
 					</ul>
-					<h3>Pricing</h3>
-					<strong>Setup</strong>: $500<br> <strong>Monthly</strong>: $99<br>
-					<br> Includes personal account setup, training, and ongoing
-					support for your Channel Manager service.
 				</div>
 				<div class="col-sm-4">
-					<a href="${pageContext.request.contextPath}/login.jsp">Sign Up using
-						existing Inventory Source account </a>
+					<%-- <a href="${pageContext.request.contextPath}/login.jsp">Sign Up using
+						existing Inventory Source account </a> --%>
 					<h3>Account Information</h3>
 					<form class="form-horizontal" data-role="form"
 							action="${pageContext.request.contextPath}/signup" method="post">
@@ -59,21 +53,21 @@
 								<input type="text" value="" name="last_name" class="required" />
 							</div>
 						</div>
-						<div class="form-group">
+						<!-- <div class="form-group">
 							<label for="company_name"
 									class="col-sm-5 control-label no-padding-right">Company
 								Name</label>
 							<div class="col-sm-7">
 								<input type="text" value="" name="company_name" class="required" />
 							</div>
-						</div>
+						</div> 
 						<div class="form-group">
 							<label for="phone"
 									class="col-sm-5 control-label no-padding-right">Phone</label>
 							<div class="col-sm-7">
 								<input type="text" value="" name="phone" class="required" />
 							</div>
-						</div>
+						</div>-->
 						<div class="form-group">
 							<label for="email"
 									class="col-sm-5 control-label no-padding-right">Email</label>
@@ -82,10 +76,17 @@
 							</div>
 						</div>
 						<div class="form-group">
-							<label for="password"
-									class="col-sm-5 control-label no-padding-right">Password</label>
+							<label for="suppliers"
+									class="col-sm-5 control-label no-padding-right">Wholesale Suppliers</label>
 							<div class="col-sm-7">
-								<input type="password" value="" name="password" class="required" />
+								<textarea name="suppliers" class="required"></textarea>
+							</div>
+						</div>
+						<div class="form-group">
+							<label for="sales-changes"
+									class="col-sm-5 control-label no-padding-right">Sales Changes</label>
+							<div class="col-sm-7">
+								<textarea name="sales-changes" class="required"></textarea>
 							</div>
 						</div>
 						<div class="form-group">

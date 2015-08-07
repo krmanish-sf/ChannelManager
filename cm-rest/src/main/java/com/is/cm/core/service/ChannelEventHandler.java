@@ -10,6 +10,7 @@ import salesmachine.hibernatedb.OimOrderBatchesTypes;
 import salesmachine.hibernatehelper.SessionManager;
 import salesmachine.oim.api.OimConstants;
 import salesmachine.oim.stores.api.IOrderImport;
+import salesmachine.oim.stores.exception.ChannelConfigurationException;
 import salesmachine.util.OimLogStream;
 
 import com.is.cm.core.domain.Channel;
@@ -137,19 +138,23 @@ public class ChannelEventHandler implements ChannelService {
 		stream.println(channelName + " : ");
 		if (coi != null) {
 			LOG.debug("Created the iorderimport object");
-			if (!coi.init(channelId, SessionManager.currentSession(), stream)) {
-				LOG.debug("Failed initializing the channel with Id:{}",
-						channelId);
-			} else {
-				LOG.debug("Pulling orders for channel id: {}", channelId);
-				try {
-					coi.getVendorOrders(new OimOrderBatchesTypes(
-							OimConstants.ORDERBATCH_TYPE_ID_MANUAL));
-				} catch (Throwable e) {
-					LOG.error("Error in pulling orders for channel id: {}",
-							channelId, e);
-					stream.println("Error in pulling orders from channel.");
+			try {
+				if (!coi.init(channelId, SessionManager.currentSession())) {
+					LOG.debug("Failed initializing the channel with Id:{}",
+							channelId);
+				} else {
+					LOG.debug("Pulling orders for channel id: {}", channelId);
+					try {
+						coi.getVendorOrders(new OimOrderBatchesTypes(
+								OimConstants.ORDERBATCH_TYPE_ID_MANUAL));
+					} catch (Throwable e) {
+						LOG.error("Error in pulling orders for channel id: {}",
+								channelId, e);
+						stream.println("Error in pulling orders from channel.");
+					}
 				}
+			} catch (ChannelConfigurationException e) {
+				stream.println(e.getMessage());
 			}
 		} else {
 			LOG.error("Could not find a bean to work with this Channel.");

@@ -30,13 +30,13 @@ import salesmachine.hibernatehelper.PojoHelper;
 import salesmachine.oim.api.OimConstants;
 import salesmachine.oim.stores.api.ChannelBase;
 import salesmachine.oim.stores.api.IOrderImport;
+import salesmachine.oim.stores.exception.ChannelConfigurationException;
 import salesmachine.oim.stores.modal.shop.order.status.ADIOSHEADER;
 import salesmachine.oim.stores.modal.shop.order.status.ADIOSORDERSTATUSDETAIL;
 import salesmachine.oim.stores.modal.shop.order.status.ADIOSORDERSTATUSTRANSMISSION;
 import salesmachine.oim.stores.modal.shop.order.status.ADIOSSTATUS;
 import salesmachine.oim.stores.modal.shop.order.status.OrderStatus;
 import salesmachine.oim.suppliers.modal.TrackingData;
-import salesmachine.util.OimLogStream;
 import salesmachine.util.StringHandle;
 
 public class ShopOrderImport extends ChannelBase implements IOrderImport {
@@ -46,16 +46,17 @@ public class ShopOrderImport extends ChannelBase implements IOrderImport {
 	private String catalogId;
 
 	@Override
-	public boolean init(int channelID, Session dbSession, OimLogStream log) {
-		super.init(channelID, dbSession, log);
+	public boolean init(int channelID, Session dbSession)
+			throws ChannelConfigurationException {
+		super.init(channelID, dbSession);
 		catalogId = StringHandle.removeNull(PojoHelper
 				.getChannelAccessDetailValue(m_channel,
 						OimConstants.CHANNEL_ACCESSDETAIL_SHOP_CATALOGID));
 		if (StringHandle.isNullOrEmpty(catalogId)) {
 			LOG.error("Channel setup is not correct. Please provide this details.");
-			this.logStream
-					.println("Channel setup is not correct. Please provide this details.");
-			return false;
+			throw new ChannelConfigurationException(
+					"Channel setup is not correct. Please provide this details.");
+
 		}
 		return true;
 	}

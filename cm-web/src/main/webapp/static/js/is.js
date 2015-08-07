@@ -773,6 +773,9 @@ function evalArray(obj, expr) {
 		$('#tableShippingMap')
 				.DataTable(
 						{
+							"language" : {
+								"emptyTable" : "Shipping Overides not permitted for the Supplier."
+							},
 							"sDom" : 't',
 							"sAjaxSource" : "aggregators/suppliers/"
 									+ supplierId + "/shippingcarriers/" + d.id,

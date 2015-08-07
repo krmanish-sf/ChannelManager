@@ -84,7 +84,8 @@
 			<div class="navbar-header pull-left">
 				<a href="#" class="navbar-brand"> <small> <img
 						src="static/images/isbrandlogo.png" alt="logo"> <!--<i class="icon-leaf"></i>-->
-						Inventory Source
+						Channel Manager:<small style="font-size: 16px;"> Simplify
+							Your Order Management, Simplify Your Success.</small>
 				</small>
 				</a>
 				<!-- /.brand -->
@@ -125,16 +126,18 @@
 			</div>
 			<!-- /.navbar-header -->
 			<div class="pull-right">
-				<a data-toggle="modal" href="#learn-more"
+				<!-- <a data-toggle="modal" href="#learn-more"
 					class="navbar-brand small14"><i class="icon-info"></i>&nbsp;Learn
-					more</a> <a href="static/about-us.jsp" target="_blank"
+					more</a> -->
+				<a href="static/about-us.jsp" target="_blank"
 					class="navbar-brand small14 ">About us</a> <a
 					href="static/how-order-automation-works.jsp" target="_blank"
 					class="navbar-brand small14 ">How it works</a> <a
 					href="static/contact-us.jsp" target="_blank"
-					class="navbar-brand small14 ">Contact us</a> <a
+					class="navbar-brand small14 ">Contact us</a>
+				<!-- <a
 					href="static/ecommerce-testimonials.jsp" target="_blank"
-					class="navbar-brand small14 ">Testimonials</a>
+					class="navbar-brand small14 ">Testimonials</a> -->
 			</div>
 
 		</div>

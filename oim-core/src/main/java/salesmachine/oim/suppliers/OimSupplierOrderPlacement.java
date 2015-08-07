@@ -47,6 +47,7 @@ import salesmachine.hibernatehelper.PojoHelper;
 import salesmachine.hibernatehelper.SessionManager;
 import salesmachine.oim.api.OimConstants;
 import salesmachine.oim.stores.api.IOrderImport;
+import salesmachine.oim.stores.exception.ChannelConfigurationException;
 import salesmachine.oim.stores.impl.OrderImportManager;
 import salesmachine.oim.suppliers.exception.InvalidAddressException;
 import salesmachine.oim.suppliers.modal.OrderStatus;
@@ -1243,12 +1244,16 @@ public class OimSupplierOrderPlacement {
 		OimLogStream stream = new OimLogStream();
 		if (iOrderImport != null) {
 			log.debug("Created the iorderimport object");
-			if (!iOrderImport.init(channelId, SessionManager.currentSession(),
-					stream)) {
-				log.debug("Failed initializing the channel with Id:{}",
-						channelId);
-			} else {
-				iOrderImport.updateStoreOrder(oimOrderDetails, orderStatus);
+			try {
+				if (!iOrderImport.init(channelId,
+						SessionManager.currentSession())) {
+					log.debug("Failed initializing the channel with Id:{}",
+							channelId);
+				} else {
+					iOrderImport.updateStoreOrder(oimOrderDetails, orderStatus);
+				}
+			} catch (ChannelConfigurationException e) {
+				stream.println(e.getMessage());
 			}
 		} else {
 			log.error("Could not find a bean to work with this Channel.");

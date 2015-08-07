@@ -23,6 +23,9 @@ public class OrderBatch extends DomainBase implements java.io.Serializable {
 	private Date creationTm;
 	private Date insertionTm;
 	private Date deleteTm;
+	private String description;
+	private Integer errorCode;
+
 	@JsonDeserialize(as = HashSet.class)
 	// @JsonManagedReference("UploadedFile-OrderBatch")
 	private Set<UploadedFile> oimUploadedFileses;
@@ -34,13 +37,15 @@ public class OrderBatch extends DomainBase implements java.io.Serializable {
 		if (oimOrderBatches == null)
 			return null;
 		OrderBatch batch = new OrderBatch();
+		batch.errorCode = oimOrderBatches.getErrorCode() == null ? 0
+				: oimOrderBatches.getErrorCode();
 		BeanUtils.copyProperties(oimOrderBatches, batch, new String[] {
 				"oimOrderBatchesTypes", "oimChannels", "oimUploadedFileses",
-				"oimOrderses" });
+				"oimOrderses", "errorCode" });
 		batch.oimOrderBatchesTypes = OrderBatchesType.from(oimOrderBatches
 				.getOimOrderBatchesTypes());
 		batch.oimChannels = Channel.from(oimOrderBatches.getOimChannels());
-		
+
 		batch.oimUploadedFileses = new HashSet<UploadedFile>();
 		if (oimOrderBatches.getOimUploadedFileses() != null) {
 			for (OimUploadedFiles file : (Set<OimUploadedFiles>) oimOrderBatches
@@ -125,5 +130,40 @@ public class OrderBatch extends DomainBase implements java.io.Serializable {
 				"oimOrderBatchesTypes", "oimChannels", "oimUploadedFileses",
 				"oimOrderses" });
 		return target;
+	}
+
+	public String getDescription() {
+		return description;
+	}
+
+	public void setDescription(String description) {
+		this.description = description;
+	}
+
+	public int getErrorCode() {
+		return errorCode;
+	}
+
+	public void setErrorCode(int errorCode) {
+		this.errorCode = errorCode;
+	}
+
+	public final String getErrorDesc() {
+		String msg;
+		switch (errorCode) {
+		case 1:
+			msg = "Channel Configuration Error";
+			break;
+		case 2:
+			msg = "Channel Communication Error";
+			break;
+		case 3:
+			msg = "Order Format Error";
+			break;
+		default:
+			msg = "";
+			break;
+		}
+		return msg;
 	}
 }

@@ -4,6 +4,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
+import com.is.cm.core.domain.OrderBatch;
 import com.is.cm.core.domain.ReportDataWrapper;
 import com.is.cm.core.domain.VendorsuppOrderhistory;
 
@@ -26,4 +27,6 @@ public interface ReportRepository {
 			int recordCount, Date startDate, Date endDate);
 
 	List getSystemAlerts();
+
+	List<OrderBatch> getChannelPullHistory(Date startDate, Date endDate);
 }

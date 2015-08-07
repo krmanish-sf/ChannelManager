@@ -23,7 +23,8 @@
 								<div class="row">
 									<div class="col-sm-5 pull-right">
 										<img alt="InventorySource Headquarter"
-											src="${pageContext.request.contextPath}/static/images/Jacksonville.jpg">
+											src="${pageContext.request.contextPath}/static/images/Jacksonville.jpg"
+											style="width: 100%;">
 									</div>
 									<div class="col-sm-7">
 										<p>

@@ -23,6 +23,7 @@ import salesmachine.hibernatedb.OimShippingMethod;
 import salesmachine.hibernatedb.OimSupplierShippingOverride;
 import salesmachine.hibernatehelper.SessionManager;
 
+import com.is.cm.core.domain.OrderBatch;
 import com.is.cm.core.domain.OrderDetailMod;
 import com.is.cm.core.domain.VendorsuppOrderhistory;
 import com.is.cm.core.persistance.OrderRepository;
@@ -138,4 +139,25 @@ public class HibernateTest {
 		List<VendorsuppOrderhistory> vendorSupplierHistory = repo
 				.getVendorSupplierHistory(0, 100, startDate, endDate);
 	}
+
+	@Test
+	public void testGetChannelPullHistory() throws ParseException {
+		ReportRepository repo = new ReportRepositoryDB();
+		SimpleDateFormat df = new SimpleDateFormat("MM/dd/yyyy");
+		String st = "08/01/2015";
+		String ed = "08/01/2015";
+		Date startDate, endDate;
+		startDate = df.parse(st);
+		endDate = df.parse(ed);
+		endDate.setHours(23);
+		endDate.setMinutes(59);
+		endDate.setSeconds(59);
+
+		List<OrderBatch> channelPullHistory = repo.getChannelPullHistory(
+				startDate, endDate);
+		Assert.assertNotNull(channelPullHistory);
+		log.info("Order Batches Count: {}", channelPullHistory.size());
+		Assert.assertTrue(channelPullHistory.size() > 0);
+	}
+
 }

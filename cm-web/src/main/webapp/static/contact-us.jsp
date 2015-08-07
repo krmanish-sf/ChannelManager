@@ -11,7 +11,7 @@
 			</div>
 			<div class="container">
 				<div class="row">
-					<div class="col-sm-6">
+					<div class="col-sm-12">
 						<div class="widget-box">
 							<div class="widget-header widget-header-flat">
 								<h4 id="analyze" class="widget-title">
@@ -21,7 +21,7 @@
 							<div class="widget-body">
 								<div class="widget-main">
 									<div class="row">
-										<div class="col-sm-12">
+										<div class="col-sm-6">
 											<p>To speak with us or get more information about the
 												Channel Manager system and what it can do for you, or to ask
 												about special integrations or questions you have, please use
@@ -63,23 +63,24 @@
 														Comments/<br>Questions</label>
 													<div class="col-sm-9">
 														<textarea class="col-xs-10 col-sm-8" id="comments"
-															name="comments"></textarea>
+															rows="8" name="comments"></textarea>
 													</div>
 												</div>
-												<div class="clearfix form-actions">
-													<div class="col-md-offset-3 col-md-9">
-														<button type="button" class="btn btn-info">
+												<div class="form-group">
+													<div class="col-md-offset-3 col-md-6">
+														<button type="button" class="btn btn-info width-100">
 															<i class="icon-ok"></i> Submit
-														</button>
-
-														&nbsp; &nbsp; &nbsp;
-														<button type="reset" class="btn">
-															<i class="icon-undo"></i> Reset
 														</button>
 													</div>
 												</div>
 											</form>
 										</div>
+										<div class="col-sm-6">
+					<div class="widget-box">
+					<img alt="" style="width: 100%;"
+													src="${pageContext.request.contextPath}/static/images/CM_orders_dropship_support.jpg">
+					</div>
+					</div>
 									</div>
 								</div>
 							</div>

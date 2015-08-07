@@ -38,9 +38,9 @@ import salesmachine.hibernatehelper.PojoHelper;
 import salesmachine.oim.api.OimConstants;
 import salesmachine.oim.stores.api.ChannelBase;
 import salesmachine.oim.stores.api.IOrderImport;
+import salesmachine.oim.stores.exception.ChannelConfigurationException;
 import salesmachine.oim.suppliers.modal.OrderStatus;
 import salesmachine.oim.suppliers.modal.TrackingData;
-import salesmachine.util.OimLogStream;
 import salesmachine.util.StringHandle;
 
 public class ShopifyOrderImport extends ChannelBase implements IOrderImport {
@@ -51,8 +51,9 @@ public class ShopifyOrderImport extends ChannelBase implements IOrderImport {
 	private String storeUrl;
 
 	@Override
-	public boolean init(int channelID, Session dbSession, OimLogStream logStream) {
-		super.init(channelID, dbSession, logStream);
+	public boolean init(int channelID, Session dbSession)
+			throws ChannelConfigurationException {
+		super.init(channelID, dbSession);
 		storeUrl = StringHandle.removeNull(PojoHelper
 				.getChannelAccessDetailValue(m_channel,
 						OimConstants.CHANNEL_ACCESSDETAIL_CHANNEL_URL));
@@ -62,9 +63,8 @@ public class ShopifyOrderImport extends ChannelBase implements IOrderImport {
 
 		if (storeUrl.length() == 0 || shopifyToken.length() == 0) {
 			log.error("Channel setup is not correct. Please provide correct details.");
-			this.logStream
-					.println("Channel setup is not correct. Please provide correct details.");
-			return false;
+			throw new ChannelConfigurationException(
+					"Channel setup is not correct. Please provide correct details.");
 		}
 		return true;
 	}
@@ -159,7 +159,7 @@ public class ShopifyOrderImport extends ChannelBase implements IOrderImport {
 		HttpClient client = new HttpClient();
 		String requestUrl = null;
 		if (getMaxStoreOrderId() != null) {
-			log.info("Max store id -- ",getMaxStoreOrderId());
+			log.info("Max store id -- ", getMaxStoreOrderId());
 			requestUrl = storeUrl + "/admin/orders.json?since_id="
 					+ getMaxStoreOrderId();
 		} else {
@@ -412,8 +412,6 @@ public class ShopifyOrderImport extends ChannelBase implements IOrderImport {
 			}
 			log.info("Fetched {} order(s)", orderArr.size());
 			tx.commit();
-			logStream.println("Imported " + numOrdersSaved + " Orders");
-
 			log.debug("Finished importing orders...");
 		} else {
 			log.error(

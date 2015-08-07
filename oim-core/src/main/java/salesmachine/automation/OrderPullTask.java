@@ -70,8 +70,7 @@ public class OrderPullTask extends TimerTask {
 
 							log.debug("Created the orderimport object");
 							if (!iOrderImport.init(channel.getChannelId(),
-									SessionManager.currentSession(),
-									new OimLogStream())) {
+									SessionManager.currentSession())) {
 								log.error(
 										"Failed initializing the channel with channelId {},",
 										channel.getChannelId());
@@ -105,7 +104,7 @@ public class OrderPullTask extends TimerTask {
 			log.error("FATAL ERROR", e);
 			AutomationManager.sendNotification(
 					"ORDER PULL ERROR: " + e.getMessage(), e.toString());
-			
+
 		}
 	}
 }

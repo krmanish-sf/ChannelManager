@@ -356,11 +356,9 @@ public class BF extends Supplier implements HasTracking {
 								Integer channelId = oimChannels.getChannelId();
 								IOrderImport iOrderImport = OrderImportManager
 										.getIOrderImport(channelId);
-								OimLogStream stream = new OimLogStream();
 								if (iOrderImport != null) {
 									log.debug("Created the iorderimport object");
-									if (!iOrderImport.init(channelId, session,
-											stream)) {
+									if (!iOrderImport.init(channelId, session)) {
 										log.debug(
 												"Failed initializing the channel with Id:{}",
 												channelId);
@@ -376,7 +374,6 @@ public class BF extends Supplier implements HasTracking {
 									}
 								} else {
 									log.error("Could not find a bean to work with this Channel.");
-									stream.println("This Channel type is not supported for pushing order updates.");
 								}
 							}
 						}

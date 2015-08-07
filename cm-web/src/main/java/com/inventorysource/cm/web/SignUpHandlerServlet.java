@@ -205,26 +205,41 @@ public class SignUpHandlerServlet extends HttpServlet {
 		HttpSession session = request.getSession();
 
 		String email = request.getParameter("email");
-		if (uniqueEmail(dbSession, email)) {
-			session.setAttribute("email", email);
-			session.setAttribute("first_name",
-					request.getParameter("first_name"));
-			session.setAttribute("last_name", request.getParameter("last_name"));
-			session.setAttribute("company_name",
-					request.getParameter("company_name"));
-			session.setAttribute("phone", request.getParameter("phone"));
-			session.setAttribute("password", request.getParameter("password"));
-			response.sendRedirect("/payment.jsp");
-		} else {
-			request.setAttribute(
-					"error",
-					"This email is already registered. Don't remember the account details? <a href='signup?cmd=resend&email="
-							+ email
-							+ "'>Click here</a> to receive login details on your email.");
-			RequestDispatcher rd = request.getServletContext()
-					.getRequestDispatcher("/signup.jsp");
-			rd.include(request, response);
-		}
+		// if (uniqueEmail(dbSession, email)) {
+
+		StringBuilder sb = new StringBuilder();
+		sb.append("Name : ").append(request.getParameter("first_name"))
+				.append(" ").append(request.getParameter("last_name"))
+				.append("\n Email : ").append(request.getParameter("email"))
+				.append("\n Wholesale Suppliers:")
+				.append(request.getParameter("suppliers"))
+				.append("\n Sales Changes : ")
+				.append(request.getParameter("sales-changes"));
+
+		EmailUtil.sendEmail("support@inventorysource.com",
+				"support@inventorysource.com", "", "Channel Manager Signup",
+				sb.toString());
+		/*
+		 * session.setAttribute("email", email);
+		 * session.setAttribute("first_name",
+		 * request.getParameter("first_name"));
+		 * session.setAttribute("last_name", request.getParameter("last_name"));
+		 * session.setAttribute("company_name",
+		 * request.getParameter("company_name")); session.setAttribute("phone",
+		 * request.getParameter("phone")); session.setAttribute("password",
+		 * request.getParameter("password")); session.setAttribute("password",
+		 * request.getParameter("password"));
+		 */
+		response.sendRedirect("login.jsp");
+		/*
+		 * } else { request.setAttribute( "error",
+		 * "This email is already registered. Don't remember the account details? <a href='signup?cmd=resend&email="
+		 * + email +
+		 * "'>Click here</a> to receive login details on your email.");
+		 * RequestDispatcher rd = request.getServletContext()
+		 * .getRequestDispatcher("/signup.jsp"); rd.include(request, response);
+		 * }
+		 */
 		SessionManager.closeSession();
 	}
 

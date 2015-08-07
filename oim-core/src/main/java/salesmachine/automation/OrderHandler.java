@@ -97,7 +97,7 @@ public class OrderHandler {
 
 				log.debug("Created the orderimport object");
 				if (!iOrderImport.init(channel.getChannelId(),
-						SessionManager.currentSession(), new OimLogStream())) {
+						SessionManager.currentSession())) {
 					log.error(
 							"Failed initializing the channel with channelId {},",
 							channel.getChannelId());

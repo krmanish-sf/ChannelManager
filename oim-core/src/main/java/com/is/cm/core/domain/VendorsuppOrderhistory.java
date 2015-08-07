@@ -13,6 +13,8 @@ public class VendorsuppOrderhistory extends DomainBase {
 	private Date processingTm;
 	private Integer errorCode;
 	private String description;
+	private int detailId;
+	private String storeOrderId = "N/A";
 
 	public VendorsuppOrderhistory(OimVendorsuppOrderhistory source) {
 		this.description = StringHandle.removeNull(source.getDescription());
@@ -21,6 +23,11 @@ public class VendorsuppOrderhistory extends DomainBase {
 		this.processingTm = source.getProcessingTm();
 		this.vendors = Vendor.from(source.getVendors());
 		this.vsoHistoryId = source.getVsoHistoryId();
+		if (source.getOimOrderDetails() != null) {
+			this.detailId = source.getOimOrderDetails().getDetailId();
+			this.storeOrderId = source.getOimOrderDetails().getOimOrders()
+					.getStoreOrderId();
+		}
 	}
 
 	public VendorsuppOrderhistory() {
@@ -72,6 +79,22 @@ public class VendorsuppOrderhistory extends DomainBase {
 
 	public void setDescription(String description) {
 		this.description = description;
+	}
+
+	public int getDetailId() {
+		return detailId;
+	}
+
+	public void setDetailId(int detailId) {
+		this.detailId = detailId;
+	}
+
+	public String getStoreOrderId() {
+		return storeOrderId;
+	}
+
+	public void setStoreOrderId(String storeOrderId) {
+		this.storeOrderId = storeOrderId;
 	}
 
 }
