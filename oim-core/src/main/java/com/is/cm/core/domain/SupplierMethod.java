@@ -21,6 +21,15 @@ public class SupplierMethod extends DomainBase implements java.io.Serializable,
 	private Supplier oimSuppliers;
 	private Date insertionTm;
 	private Date deleteTm;
+	private Vendor oimVendors;
+	public Vendor getOimVendors() {
+		return oimVendors;
+	}
+
+	public void setOimVendors(Vendor oimVendors) {
+		this.oimVendors = oimVendors;
+	}
+
 	@JsonDeserialize(as = TreeSet.class)
 	private Set<SupplierMethodAttrValue> oimSupplierMethodattrValueses = new TreeSet<SupplierMethodAttrValue>();
 	private static final String[] IGNORE_PROPERTIES = {
@@ -102,6 +111,7 @@ public class SupplierMethod extends DomainBase implements java.io.Serializable,
 			attrValues.add(SupplierMethodAttrValue.from(it));
 		}
 		supplierMethod.setOimSupplierMethodattrValueses(attrValues);
+		supplierMethod.setOimVendors(Vendor.from(methods.getVendor()));
 		return supplierMethod;
 	}
 
