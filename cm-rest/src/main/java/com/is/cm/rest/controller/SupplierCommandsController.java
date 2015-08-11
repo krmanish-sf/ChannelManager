@@ -42,6 +42,18 @@ public class SupplierCommandsController extends BaseController {
 		return new ResponseEntity<VendorSupplier>(event.getEntity(),
 				HttpStatus.OK);
 	}
+	
+	@RequestMapping(method = RequestMethod.PUT, value = "/updateHG/{vendorSupplierId}")
+	public ResponseEntity<VendorSupplier> updateHG(
+			@PathVariable int vendorSupplierId,
+			@RequestBody Map<String, String> vendorSupplierData) {
+		LOG.debug("Recieved request to update {}", vendorSupplierId);
+		UpdatedEvent<VendorSupplier> event = supplierService
+				.update(new UpdateEvent<Map<String, String>>(vendorSupplierId,
+						vendorSupplierData));
+		return new ResponseEntity<VendorSupplier>(event.getEntity(),
+				HttpStatus.OK);
+	}
 
 	@RequestMapping(method = RequestMethod.DELETE, value = "/subscriptions/{vendorSupplierId}")
 	public ResponseEntity<VendorSupplier> removeSubscription(

@@ -220,8 +220,8 @@ If you have not yet configured your supplier, click "Add Supplier" to do it now.
                     <div class="row">
                       <div class="container">
                         <form class="form-horizontal" role="form"
-												action="/aggregators/suppliers" method="PUT"
-												id="supplierform">
+												action="aggregators/suppliers/updateHG" method="PUT"
+												id="supplierformHG">
                            	<div class="panel panel-default honestGreen-settings hide">
 									<div class="panel-heading">
 										<h4 class="panel-title">
@@ -330,9 +330,20 @@ If you have not yet configured your supplier, click "Add Supplier" to do it now.
 										</div>
 							</div>
 					</div>
+					 <div class="form-group">
+                              <label
+														class="col-sm-5 control-label no-padding-right">Test Mode</label>
+                              <div class="col-sm-7">
+                              <select class="width-70" name="testmode"
+															data-bind-vendorsupplier="testMode">
+                                <option value="1" selected>Enabled</option>
+                                <option value="0">Disabled</option>
+                              </select>
+                            </div>
+												</div>
                             <div class="form-group center">
                              <button class="btn btn-info btn-sm hideHGSpecificDiv"
-														id="update" type="button"> <i class="icon-ok "></i>Update</button>
+														id="updateHG" type="button"> <i class="icon-ok "></i>Update</button>
                             </div>
                          
                          
@@ -681,7 +692,7 @@ $(document).on('click', '.hideHGSpecificDiv', function(e) {
 		
 		var vendorSupplierTemp = JSON.parse(JSON.stringify(vendorSupplier));
 		console.log(vendorSupplierTemp);
-		//console.log(vendorSupplierTemp.oimSuppliers[vendorSupplierTemp.oimSuppliers.oimSupplierMethodses[vendorSupplierTemp.oimSuppliers.oimSupplierMethodses.oimVendors.vendorId=vendorSupplierTemp.vendors.vendorId]].oimSupplierMethodses[oimSupplierMethodTypes.methodTypeId=3].oimSupplierMethodattrValueses[oimSupplierMethodattrNames.attrId=2].attributeValue);
+		//console.log(vendorSupplierTemp.oimSuppliers.oimSupplierMethodses[vendorSupplierTemp.oimSuppliers.oimSupplierMethodses.oimSupplierMethodTypes.methodTypeId=3].oimSupplierMethodattrValueses[oimSupplierMethodattrNames.attrId=2].attributeValue);
 		//var rowIndex = table_vendorSuppliers.fnGetPosition(e[0]);
 		GenericBinder('vendorsupplier', vendorSupplierTemp);
 		if (vendorSupplier.oimSuppliers.isCustom) {
@@ -711,11 +722,13 @@ $(document).on('click', '.hideHGSpecificDiv', function(e) {
 								data : JSON.stringify(data)
 							});
 				});
-		$('#supplierform').validate();
-		$('#supplierform').prop('action',
-				'aggregators/suppliers/' + vendorSupplier.vendorSupplierId);
-		$('#update').off("click").on("click", function(e) {
-			$('#supplierform').submit();
+		$('#supplierformHG').validate();
+		$('#supplierformHG').prop('action',
+				'aggregators/suppliers/updateHG/' + vendorSupplier.vendorSupplierId);
+		$('#supplierformHG').prop('method',
+				'PUT');
+		$('#updateHG').off("click").on("click", function(e) {
+			$('#supplierformHG').submit();
 		});
 	}
 
@@ -1011,6 +1024,65 @@ $(document).on('click', '.hideHGSpecificDiv', function(e) {
 								$(e).remove();
 							}
 						});
+		
+		$('#supplierformHG')
+		.validate(
+				{
+					invalidHandler : function(event, validator) {
+						// 'this' refers to the form
+						var errors = validator.numberOfInvalids();
+						if (errors) {
+							var message = errors == 1 ? 'You missed 1 field. It has been highlighted'
+									: 'You missed '
+											+ errors
+											+ ' fields. They have been highlighted';
+							$.gritter.add({
+								title : "Supplier information",
+								text : message
+							});
+						}
+					},
+					submitHandler : function(form) {
+						var formArray = $(form).serializeArray();
+						var formObject = {};
+						$.each(formArray, function(i, v) {
+							formObject[v.name] = v.value;
+						});
+						$(this)
+								.CRUD(
+										{
+											url : $(form)
+													.attr('action'),
+											method : "PUT",
+											data : JSON
+													.stringify(formObject),
+											success : function(a, b, c) {
+ 												$('.modal').modal(
+ 														'hide');
+
+												$.gritter
+														.add({
+															title : 'Update Supplier',
+															text : 'Supplier updated successfully.'
+														});
+												table_vendorSuppliers
+														.fnReloadAjax();
+											}
+										});
+					},
+					highlight : function(e) {
+						$(e).closest('.form-group').removeClass(
+								'has-info').addClass('has-error');
+					},
+					success : function(e) {
+						$(e).closest('.form-group').removeClass(
+								'has-error').addClass('has-info');
+						$(e).remove();
+					}
+				});
+		
+		
+		
 		$('#supplierAddForm')
 				.validate(
 						{

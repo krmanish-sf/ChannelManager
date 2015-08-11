@@ -222,14 +222,15 @@ public class AmazonOrderImport extends ChannelBase implements IOrderImport {
 					log.info(
 							"Order#{} is already imported in the system, updating Order.",
 							amazonOrderId);
-					Query query = m_dbSession
+					continue;
+					/*Query query = m_dbSession
 							.createQuery("select o from salesmachine.hibernatedb.OimOrders o where o.oimOrderBatches.oimChannels=:chan and o.storeOrderId=:storeOrderId");
 					query.setEntity("chan", m_channel);
 					query.setString("storeOrderId", amazonOrderId);
 					Iterator iter = query.iterate();
 					while (iter.hasNext()) {
 						oimOrders = (OimOrders) iter.next();
-					}
+					}*/
 				}
 				if (oimOrders == null) {
 					oimOrders = new OimOrders();
@@ -354,6 +355,7 @@ public class AmazonOrderImport extends ChannelBase implements IOrderImport {
 						.getListOrderItemsResult();
 				if (newOrder) {
 					Set<OimOrderDetails> detailSet = new HashSet<OimOrderDetails>();
+					Thread.currentThread().sleep(1000);
 					for (OrderItem orderItem : listOrderItemsResult
 							.getOrderItems()) {
 						OimOrderDetails details = new OimOrderDetails();
