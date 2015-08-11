@@ -1108,10 +1108,11 @@ public class HonestGreen extends Supplier implements HasTracking {
 				if (oimSupplierMethods.getOimSupplierMethodTypes()
 						.getMethodTypeId().intValue() == OimConstants.SUPPLIER_METHOD_TYPE_HG_HVA) {
 					log.info("found configured HVA Location ");
+					if(oimSupplierMethods.getVendor()!=null && oimSupplierMethods.getVendor().getVendorId().intValue()==ovs.getVendors().getVendorId().intValue()){
 					for (Iterator<OimSupplierMethodattrValues> iterator = oimSupplierMethods
 							.getOimSupplierMethodattrValueses().iterator(); iterator
 							.hasNext();) {
-						if(oimSupplierMethods.getVendor()!=null && oimSupplierMethods.getVendor().getVendorId().intValue()==ovs.getVendors().getVendorId().intValue()){
+						
 						OimSupplierMethodattrValues oimSupplierMethodattrValues = iterator
 								.next();
 						if (oimSupplierMethodattrValues
@@ -1149,10 +1150,11 @@ public class HonestGreen extends Supplier implements HasTracking {
 				if (oimSupplierMethods.getOimSupplierMethodTypes()
 						.getMethodTypeId().intValue() == OimConstants.SUPPLIER_METHOD_TYPE_HG_PHI) {
 					log.info("found configured PHI Location ");
+					if(oimSupplierMethods.getVendor()!=null && oimSupplierMethods.getVendor().getVendorId().intValue()==ovs.getVendors().getVendorId().intValue()){
 					for (Iterator<OimSupplierMethodattrValues> iterator = oimSupplierMethods
 							.getOimSupplierMethodattrValueses().iterator(); iterator
 							.hasNext();) {
-						if(oimSupplierMethods.getVendor()!=null && oimSupplierMethods.getVendor().getVendorId().intValue()==ovs.getVendors().getVendorId().intValue()){
+						
 						OimSupplierMethodattrValues oimSupplierMethodattrValues = iterator
 								.next();
 						if (oimSupplierMethodattrValues
@@ -1198,12 +1200,13 @@ public class HonestGreen extends Supplier implements HasTracking {
 					.getMethodTypeId().intValue() == compareValue) {
 				log.info("found configured Location for {}", isPHI ? "PHI"
 						: "HVA");
+				if(oimSupplierMethods.getVendor()!=null && oimSupplierMethods.getVendor().getVendorId().intValue()==ovs.getVendors().getVendorId().intValue()){
 				for (Iterator<OimSupplierMethodattrValues> iterator = oimSupplierMethods
 						.getOimSupplierMethodattrValueses().iterator(); iterator
 						.hasNext();) {
 					OimSupplierMethodattrValues oimSupplierMethodattrValues = iterator
 							.next();
-					if(oimSupplierMethods.getVendor()!=null && oimSupplierMethods.getVendor().getVendorId().intValue()==ovs.getVendors().getVendorId().intValue()){
+					
 						if (oimSupplierMethodattrValues.getOimSupplierMethodattrNames().getAttrId().intValue() == OimConstants.SUPPLIER_METHOD_ATTRIBUTES_FTPACCOUNT)
 							ftpDetails.setAccountNumber(oimSupplierMethodattrValues
 									.getAttributeValue());
