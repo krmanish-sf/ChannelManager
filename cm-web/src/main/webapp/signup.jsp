@@ -19,7 +19,9 @@
 						<li>Our account management team will contact you to personally with the steps needed to sync your product sources and sales channels, as well as more information on our Channel Manager service.</li>
 					</ul>
 				</div>
-				<div class="col-sm-4">
+				<br>
+				<div class="col-sm-4"
+						style="background: #438eb9 none repeat scroll 0 0; border: 1px solid #369dc8; box-shadow: 1px 5px 5px 1px #666666; color: white;">
 					<%-- <a href="${pageContext.request.contextPath}/login.jsp">Sign Up using
 						existing Inventory Source account </a> --%>
 					<h3>Account Information</h3>
