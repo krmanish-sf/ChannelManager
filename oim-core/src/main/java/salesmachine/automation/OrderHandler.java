@@ -15,7 +15,6 @@ import salesmachine.hibernatehelper.SessionManager;
 import salesmachine.oim.api.OimConstants;
 import salesmachine.oim.stores.api.IOrderImport;
 import salesmachine.oim.suppliers.OimSupplierOrderPlacement;
-import salesmachine.util.OimLogStream;
 
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;

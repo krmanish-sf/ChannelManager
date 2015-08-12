@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -67,9 +68,10 @@ public class HonestGreen extends Supplier implements HasTracking {
 	// private static final byte BLANK_SPACE = ' ';
 	private static final byte[] NEW_LINE = new byte[] { '\r', '\n' };
 	private static final byte[] HG_EOF = new byte[] { '*', '*', '*', 'E', 'O',
-		'F', '*', '*', '*' };
+			'F', '*', '*', '*' };
 	private static final byte[] FIL = new byte[] { 'F', 'I', 'L' };
 	private static final byte[] COMMA = new byte[] { ',' };
+	private static final String SHIP_DATE = "SHIP_DATE";
 	private static JAXBContext jaxbContext;
 	protected Map<String, OimOrderDetails> HvaMap = new HashMap<String, OimOrderDetails>();
 	protected Map<String, OimOrderDetails> PhiMap = new HashMap<String, OimOrderDetails>();
@@ -144,43 +146,48 @@ public class HonestGreen extends Supplier implements HasTracking {
 							if (oimSupplierMethods.getOimSupplierMethodTypes()
 									.getMethodTypeId().intValue() == OimConstants.SUPPLIER_METHOD_TYPE_HG_HVA) {
 								log.info("found configured HVA Location ");
-								if(oimSupplierMethods.getVendor()!=null && oimSupplierMethods.getVendor().getVendorId().intValue()==ovs.getVendors().getVendorId().intValue()){
-								for (Iterator<OimSupplierMethodattrValues> iterator = oimSupplierMethods
-										.getOimSupplierMethodattrValueses()
-										.iterator(); iterator.hasNext();) {
-									
+								if (oimSupplierMethods.getVendor() != null
+										&& oimSupplierMethods.getVendor()
+												.getVendorId().intValue() == ovs
+												.getVendors().getVendorId()
+												.intValue()) {
+									for (Iterator<OimSupplierMethodattrValues> iterator = oimSupplierMethods
+											.getOimSupplierMethodattrValueses()
+											.iterator(); iterator.hasNext();) {
+
 										OimSupplierMethodattrValues oimSupplierMethodattrValues = iterator
 												.next();
 										if (oimSupplierMethodattrValues
 												.getOimSupplierMethodattrNames()
 												.getAttrId().intValue() == OimConstants.SUPPLIER_METHOD_ATTRIBUTES_FTPACCOUNT)
 											ftpDetails
-											.setAccountNumber(oimSupplierMethodattrValues
-													.getAttributeValue());
+													.setAccountNumber(oimSupplierMethodattrValues
+															.getAttributeValue());
 										if (oimSupplierMethodattrValues
 												.getOimSupplierMethodattrNames()
 												.getAttrId().intValue() == OimConstants.SUPPLIER_METHOD_ATTRIBUTES_FTPSERVER)
 											ftpDetails
-											.setUrl(oimSupplierMethodattrValues
-													.getAttributeValue());
+													.setUrl(oimSupplierMethodattrValues
+															.getAttributeValue());
 										if (oimSupplierMethodattrValues
 												.getOimSupplierMethodattrNames()
 												.getAttrId().intValue() == OimConstants.SUPPLIER_METHOD_ATTRIBUTES_FTPLOGIN)
 											ftpDetails
-											.setUserName(oimSupplierMethodattrValues
-													.getAttributeValue());
+													.setUserName(oimSupplierMethodattrValues
+															.getAttributeValue());
 										if (oimSupplierMethodattrValues
 												.getOimSupplierMethodattrNames()
 												.getAttrId().intValue() == OimConstants.SUPPLIER_METHOD_ATTRIBUTES_FTPPASSWORD)
 											ftpDetails
-											.setPassword(oimSupplierMethodattrValues
-													.getAttributeValue());
+													.setPassword(oimSupplierMethodattrValues
+															.getAttributeValue());
 									}
 								}
 							}
 						}
 						String fileName = createOrderFile(order, ovs,
-								orderDetailMap, ftpDetails,isOrderFromAmazonStore);
+								orderDetailMap, ftpDetails,
+								isOrderFromAmazonStore);
 						try {
 							sendToFTP(fileName, ovs, ftpDetails, true, false);
 							if (emailNotification) {
@@ -213,43 +220,48 @@ public class HonestGreen extends Supplier implements HasTracking {
 							if (oimSupplierMethods.getOimSupplierMethodTypes()
 									.getMethodTypeId().intValue() == OimConstants.SUPPLIER_METHOD_TYPE_HG_PHI) {
 								log.info("found configured PHI Location ");
-								if(oimSupplierMethods.getVendor()!=null && oimSupplierMethods.getVendor().getVendorId().intValue()==ovs.getVendors().getVendorId().intValue()){
-								for (Iterator<OimSupplierMethodattrValues> iterator = oimSupplierMethods
-										.getOimSupplierMethodattrValueses()
-										.iterator(); iterator.hasNext();) {
-									
+								if (oimSupplierMethods.getVendor() != null
+										&& oimSupplierMethods.getVendor()
+												.getVendorId().intValue() == ovs
+												.getVendors().getVendorId()
+												.intValue()) {
+									for (Iterator<OimSupplierMethodattrValues> iterator = oimSupplierMethods
+											.getOimSupplierMethodattrValueses()
+											.iterator(); iterator.hasNext();) {
+
 										OimSupplierMethodattrValues oimSupplierMethodattrValues = iterator
 												.next();
 										if (oimSupplierMethodattrValues
 												.getOimSupplierMethodattrNames()
 												.getAttrId().intValue() == OimConstants.SUPPLIER_METHOD_ATTRIBUTES_FTPACCOUNT)
 											ftpDetails
-											.setAccountNumber(oimSupplierMethodattrValues
-													.getAttributeValue());
+													.setAccountNumber(oimSupplierMethodattrValues
+															.getAttributeValue());
 										if (oimSupplierMethodattrValues
 												.getOimSupplierMethodattrNames()
 												.getAttrId().intValue() == OimConstants.SUPPLIER_METHOD_ATTRIBUTES_FTPSERVER)
 											ftpDetails
-											.setUrl(oimSupplierMethodattrValues
-													.getAttributeValue());
+													.setUrl(oimSupplierMethodattrValues
+															.getAttributeValue());
 										if (oimSupplierMethodattrValues
 												.getOimSupplierMethodattrNames()
 												.getAttrId().intValue() == OimConstants.SUPPLIER_METHOD_ATTRIBUTES_FTPLOGIN)
 											ftpDetails
-											.setUserName(oimSupplierMethodattrValues
-													.getAttributeValue());
+													.setUserName(oimSupplierMethodattrValues
+															.getAttributeValue());
 										if (oimSupplierMethodattrValues
 												.getOimSupplierMethodattrNames()
 												.getAttrId().intValue() == OimConstants.SUPPLIER_METHOD_ATTRIBUTES_FTPPASSWORD)
 											ftpDetails
-											.setPassword(oimSupplierMethodattrValues
-													.getAttributeValue());
+													.setPassword(oimSupplierMethodattrValues
+															.getAttributeValue());
 									}
 								}
 							}
 						}
 						String fileName = createOrderFile(order, ovs,
-								orderDetailMap, ftpDetails,isOrderFromAmazonStore);
+								orderDetailMap, ftpDetails,
+								isOrderFromAmazonStore);
 						try {
 							sendToFTP(fileName, ovs, ftpDetails, false, true);
 							if (emailNotification) {
@@ -295,11 +307,14 @@ public class HonestGreen extends Supplier implements HasTracking {
 										.getOimSupplierMethodTypes()
 										.getMethodTypeId().intValue() == OimConstants.SUPPLIER_METHOD_TYPE_HG_HVA) {
 									log.info("found configured HVA Location ");
-									if(oimSupplierMethods.getVendor()!=null && oimSupplierMethods.getVendor().getVendorId().intValue()==ovs.getVendors().getVendorId().intValue()){
-									for (Iterator<OimSupplierMethodattrValues> iterator = oimSupplierMethods
-											.getOimSupplierMethodattrValueses()
-											.iterator(); iterator.hasNext();) {
-										
+									if (oimSupplierMethods.getVendor() != null
+											&& oimSupplierMethods.getVendor()
+													.getVendorId().intValue() == ovs
+													.getVendors().getVendorId()
+													.intValue()) {
+										for (Iterator<OimSupplierMethodattrValues> iterator = oimSupplierMethods
+												.getOimSupplierMethodattrValueses()
+												.iterator(); iterator.hasNext();) {
 
 											OimSupplierMethodattrValues oimSupplierMethodattrValues = iterator
 													.next();
@@ -307,32 +322,33 @@ public class HonestGreen extends Supplier implements HasTracking {
 													.getOimSupplierMethodattrNames()
 													.getAttrId().intValue() == OimConstants.SUPPLIER_METHOD_ATTRIBUTES_FTPACCOUNT)
 												ftpDetails
-												.setAccountNumber(oimSupplierMethodattrValues
-														.getAttributeValue());
+														.setAccountNumber(oimSupplierMethodattrValues
+																.getAttributeValue());
 											if (oimSupplierMethodattrValues
 													.getOimSupplierMethodattrNames()
 													.getAttrId().intValue() == OimConstants.SUPPLIER_METHOD_ATTRIBUTES_FTPSERVER)
 												ftpDetails
-												.setUrl(oimSupplierMethodattrValues
-														.getAttributeValue());
+														.setUrl(oimSupplierMethodattrValues
+																.getAttributeValue());
 											if (oimSupplierMethodattrValues
 													.getOimSupplierMethodattrNames()
 													.getAttrId().intValue() == OimConstants.SUPPLIER_METHOD_ATTRIBUTES_FTPLOGIN)
 												ftpDetails
-												.setUserName(oimSupplierMethodattrValues
-														.getAttributeValue());
+														.setUserName(oimSupplierMethodattrValues
+																.getAttributeValue());
 											if (oimSupplierMethodattrValues
 													.getOimSupplierMethodattrNames()
 													.getAttrId().intValue() == OimConstants.SUPPLIER_METHOD_ATTRIBUTES_FTPPASSWORD)
 												ftpDetails
-												.setPassword(oimSupplierMethodattrValues
-														.getAttributeValue());
+														.setPassword(oimSupplierMethodattrValues
+																.getAttributeValue());
 										}
 									}
 								}
 							}
 							fileName = createOrderFile(order, ovs,
-									orderDetailHVAMap, ftpDetails,isOrderFromAmazonStore);
+									orderDetailHVAMap, ftpDetails,
+									isOrderFromAmazonStore);
 							try {
 								sendToFTP(fileName, ovs, ftpDetails, true,
 										false);
@@ -360,50 +376,55 @@ public class HonestGreen extends Supplier implements HasTracking {
 										.getOimSupplierMethodTypes()
 										.getMethodTypeId().intValue() == OimConstants.SUPPLIER_METHOD_TYPE_HG_PHI) {
 									log.info("found configured PHI Location ");
-									if(oimSupplierMethods.getVendor()!=null && oimSupplierMethods.getVendor().getVendorId().intValue()==ovs.getVendors().getVendorId().intValue()){
-									for (Iterator<OimSupplierMethodattrValues> iterator = oimSupplierMethods
-											.getOimSupplierMethodattrValueses()
-											.iterator(); iterator.hasNext();) {
-										
+									if (oimSupplierMethods.getVendor() != null
+											&& oimSupplierMethods.getVendor()
+													.getVendorId().intValue() == ovs
+													.getVendors().getVendorId()
+													.intValue()) {
+										for (Iterator<OimSupplierMethodattrValues> iterator = oimSupplierMethods
+												.getOimSupplierMethodattrValueses()
+												.iterator(); iterator.hasNext();) {
+
 											OimSupplierMethodattrValues oimSupplierMethodattrValues = iterator
 													.next();
 											if (oimSupplierMethodattrValues
 													.getOimSupplierMethodattrNames()
-													.getAttrId().intValue() == OimConstants.SUPPLIER_METHOD_ATTRIBUTES_FTPACCOUNT
-													)
+													.getAttrId().intValue() == OimConstants.SUPPLIER_METHOD_ATTRIBUTES_FTPACCOUNT)
 												ftpDetails
-												.setAccountNumber(oimSupplierMethodattrValues
-														.getAttributeValue());
+														.setAccountNumber(oimSupplierMethodattrValues
+																.getAttributeValue());
 											if (oimSupplierMethodattrValues
 													.getOimSupplierMethodattrNames()
 													.getAttrId().intValue() == OimConstants.SUPPLIER_METHOD_ATTRIBUTES_FTPSERVER)
 												ftpDetails
-												.setUrl(oimSupplierMethodattrValues
-														.getAttributeValue());
+														.setUrl(oimSupplierMethodattrValues
+																.getAttributeValue());
 											if (oimSupplierMethodattrValues
 													.getOimSupplierMethodattrNames()
 													.getAttrId().intValue() == OimConstants.SUPPLIER_METHOD_ATTRIBUTES_FTPLOGIN)
 												ftpDetails
-												.setUserName(oimSupplierMethodattrValues
-														.getAttributeValue());
+														.setUserName(oimSupplierMethodattrValues
+																.getAttributeValue());
 											if (oimSupplierMethodattrValues
 													.getOimSupplierMethodattrNames()
 													.getAttrId().intValue() == OimConstants.SUPPLIER_METHOD_ATTRIBUTES_FTPPASSWORD)
 												ftpDetails
-												.setPassword(oimSupplierMethodattrValues
-														.getAttributeValue());
+														.setPassword(oimSupplierMethodattrValues
+																.getAttributeValue());
 										}
 									}
 								}
 							}
 							fileName = createOrderFile(order, ovs,
-									orderDetailPHIMap, ftpDetails,isOrderFromAmazonStore);
+									orderDetailPHIMap, ftpDetails,
+									isOrderFromAmazonStore);
 							try {
-								sendToFTP(fileName, ovs, ftpDetails, false, true);
+								sendToFTP(fileName, ovs, ftpDetails, false,
+										true);
 
 								if (emailNotification) {
-									sendEmail(emailContent, ftpDetails, fileName,
-											r.getLogin());
+									sendEmail(emailContent, ftpDetails,
+											fileName, r.getLogin());
 								}
 							} catch (Exception e) {
 								log.error(
@@ -439,7 +460,8 @@ public class HonestGreen extends Supplier implements HasTracking {
 		for (Object object : orders) {
 			if (object instanceof OimOrders) {
 				OimOrders order = (OimOrders) object;
-				if(order.getOimOrderBatches().getOimChannels().getOimSupportedChannels().getSupportedChannelId()==4)
+				if (order.getOimOrderBatches().getOimChannels()
+						.getOimSupportedChannels().getSupportedChannelId() == 4)
 					return true;
 			}
 		}
@@ -573,9 +595,11 @@ public class HonestGreen extends Supplier implements HasTracking {
 	private Map<String, String> parseShippingConfirmation(
 			Map<Integer, String> shippingConfirmationMap) {
 		String[] lineArray4 = shippingConfirmationMap.get(4).split(",");
+		String[] lineArray1 = shippingConfirmationMap.get(1).split(",");
 		Map<String, String> orderData = new HashMap<String, String>();
 		orderData.put(QTY_ORDERED, lineArray4[3]);
 		orderData.put(QTY_SHIPPED, lineArray4[4]);
+		orderData.put(SHIP_DATE, lineArray1[lineArray1.length - 1]);
 		return orderData;
 	}
 
@@ -717,10 +741,10 @@ public class HonestGreen extends Supplier implements HasTracking {
 						} else {
 							OrderStatus orderStatus = new OrderStatus();
 							orderStatus
-							.setStatus(((OimOrderProcessingRule) oimChannels
-									.getOimOrderProcessingRules()
-									.iterator().next())
-									.getProcessedStatus());
+									.setStatus(((OimOrderProcessingRule) oimChannels
+											.getOimOrderProcessingRules()
+											.iterator().next())
+											.getProcessedStatus());
 							iOrderImport.updateStoreOrder(od, orderStatus);
 						}
 					} catch (ChannelConfigurationException e) {
@@ -745,7 +769,8 @@ public class HonestGreen extends Supplier implements HasTracking {
 	}
 
 	private String createOrderFile(OimOrders order, OimVendorSuppliers ovs,
-			Map<Integer, OimOrderDetails> detailMap, FtpDetails ftpDetails, boolean isAmazon) {
+			Map<Integer, OimOrderDetails> detailMap, FtpDetails ftpDetails,
+			boolean isAmazon) {
 		SimpleDateFormat sdf = new SimpleDateFormat("yyMMddHHmm");
 		String uploadfilename = "HG_" + ftpDetails.getAccountNumber() + "_"
 				+ sdf.format(new Date()) + ".txt";
@@ -754,7 +779,7 @@ public class HonestGreen extends Supplier implements HasTracking {
 		log.debug("Creating order file for OrderId:{}", order.getOrderId());
 		try {
 			FileOutputStream fOut = new FileOutputStream(f);
-			String poNum=null;
+			String poNum = null;
 			// Integer orderSize = order.getOimOrderDetailses().size();
 			fOut.write("1".getBytes(ASCII));
 			fOut.write(NEW_LINE);
@@ -762,10 +787,11 @@ public class HonestGreen extends Supplier implements HasTracking {
 			fOut.write(COMMA);
 			// fOut.write(BLANK_SPACE);
 			fOut.write(COMMA);
-			if(isAmazon)
-				poNum =order.getStoreOrderId();
+			if (isAmazon)
+				poNum = order.getStoreOrderId();
 			else
-				poNum = ovs.getVendors().getVendorId()+"-"+order.getStoreOrderId();
+				poNum = ovs.getVendors().getVendorId() + "-"
+						+ order.getStoreOrderId();
 			fOut.write(poNum.getBytes(ASCII));
 			fOut.write(COMMA);
 			// fOut.write(BLANK_SPACE);
@@ -852,10 +878,10 @@ public class HonestGreen extends Supplier implements HasTracking {
 						} else {
 							OrderStatus orderStatus = new OrderStatus();
 							orderStatus
-							.setStatus(((OimOrderProcessingRule) oimChannels
-									.getOimOrderProcessingRules()
-									.iterator().next())
-									.getProcessedStatus());
+									.setStatus(((OimOrderProcessingRule) oimChannels
+											.getOimOrderProcessingRules()
+											.iterator().next())
+											.getProcessedStatus());
 							iOrderImport.updateStoreOrder(od, orderStatus);
 						}
 					} catch (ChannelConfigurationException e) {
@@ -915,20 +941,20 @@ public class HonestGreen extends Supplier implements HasTracking {
 		// getting item sku by which we can distinguish that this item can be
 		// track from hva or phi location.
 		Session session = SessionManager.currentSession();
-		
+
 		OimOrderDetails detail = (OimOrderDetails) session
 				.createCriteria(OimOrderDetails.class)
 				.add(Restrictions.eq("supplierOrderNumber",
 						trackingMeta.toString())).uniqueResult();
-		
-		
-		
+
 		if (detail != null) {
 			List<OimOrders> oimOrderList = new ArrayList<OimOrders>();
 			oimOrderList.add(detail.getOimOrders());
 			boolean isAmazon = isOrderFromAmazonStore(oimOrderList);
-			String tempTrackingMeta = isAmazon?new String((String)trackingMeta):ovs.getVendors().getVendorId()+"-"+new String((String)trackingMeta);
-			
+			String tempTrackingMeta = isAmazon ? new String(
+					(String) trackingMeta) : ovs.getVendors().getVendorId()
+					+ "-" + new String((String) trackingMeta);
+
 			Map<String, FtpDetails> ftpDetailMap = new HashMap<String, FtpDetails>();
 			isRestricted(detail.getSku(), detail, ovs.getVendors()
 					.getVendorId());
@@ -957,21 +983,25 @@ public class HonestGreen extends Supplier implements HasTracking {
 								ftpDetails.getPassword());
 						ftp.setTimeout(60 * 1000 * 60 * 7);
 						FTPFile[] ftpFiles = ftp.dirDetails("confirmations");
-						Arrays.sort(ftpFiles, new Comparator() 
-						{
-							public int compare(Object o1, Object o2) {
-								FTPFile f1 = (FTPFile) o1;
-								FTPFile f2 = (FTPFile) o2;
-								return f2.lastModified().compareTo(f1.lastModified());
+						Arrays.sort(ftpFiles, new Comparator<FTPFile>() {
+							public int compare(FTPFile f1, FTPFile f2) {
+								return f2.lastModified().compareTo(
+										f1.lastModified());
 							}
 						});
 						for (FTPFile ftpFile : ftpFiles) {
-							String confirmationFile= ftpFile.getName();
-							if(confirmationFile.equals("..") || confirmationFile.equals("."))
+							String confirmationFile = ftpFile.getName();
+							if (confirmationFile.equals("..")
+									|| confirmationFile.equals("."))
 								continue;
-							log.info("Confirmation file path: {}",
-									ftpFile.getName());
 
+							log.info(
+									"Confirmation file path: {} Last Modified: {} Order Processing Time: {}",
+									ftpFile.getName(), ftpFile.lastModified(),
+									detail.getProcessingTm());
+							if (ftpFile.lastModified().before(
+									detail.getProcessingTm()))
+								break;
 							byte[] confirmationFileData = ftp
 									.get("confirmations/" + confirmationFile);
 							Map<Integer, String> orderDataMap = parseFileData(confirmationFileData);
@@ -983,10 +1013,12 @@ public class HonestGreen extends Supplier implements HasTracking {
 								log.debug("Order Invoice Data Found");
 								String unfiOrderNo = orderData.get(UNFIORDERNO);
 								String trackingFilePath = getTrackingFilePath(
-										ftpDetails.getAccountNumber(), unfiOrderNo);
+										ftpDetails.getAccountNumber(),
+										unfiOrderNo);
 								orderStatus.setStatus("In-Process");
 								String shippingFilePath = getShippingFilePath(
-										ftpDetails.getAccountNumber(), unfiOrderNo);
+										ftpDetails.getAccountNumber(),
+										unfiOrderNo);
 								byte[] shippingFileData = ftp
 										.get(shippingFilePath);
 								Map<Integer, String> shippingDataMap = parseFileData(shippingFileData);
@@ -997,15 +1029,15 @@ public class HonestGreen extends Supplier implements HasTracking {
 										trackingFileData = ftp
 												.get(trackingFilePath);
 									} catch (FTPException e) {
-										// TODO Auto-generated catch block
-										e.printStackTrace();
+										log.error(e.getMessage(), e);
 										trackingFileData = null;
 									}
-									if(trackingFileData!=null){
+									if (trackingFileData != null) {
 										Unmarshaller unmarshaller = jaxbContext
 												.createUnmarshaller();
 										String s = new String(trackingFileData);
-										StringReader reader = new StringReader(s);
+										StringReader reader = new StringReader(
+												s);
 										log.info(s);
 										TrackingData orderTrackingResponse = (TrackingData) unmarshaller
 												.unmarshal(reader);
@@ -1016,61 +1048,58 @@ public class HonestGreen extends Supplier implements HasTracking {
 											trackingData.setCarrierCode("UPS");
 											trackingData.setCarrierName("UPS");
 											trackingData
-											.setShippingMethod("Ground");
+													.setShippingMethod("Ground");
 
 										} else {
 											trackingData
-											.setCarrierCode(orderTrackingResponse
-													.getPO().getShipVia());
+													.setCarrierName(orderTrackingResponse
+															.getPO()
+															.getShipVia());
 										}
 										trackingData
-										.setShipperTrackingNumber(orderTrackingResponse
-												.getPOTracking()
-												.getTrackingNumber());
+												.setShipperTrackingNumber(orderTrackingResponse
+														.getPOTracking()
+														.getTrackingNumber());
 
-										trackingData.setQuantity(Integer
-												.parseInt(parseShippingConfirmation
-														.get(QTY_SHIPPED)));
-										orderStatus.addTrackingData(trackingData);
+										trackingData
+												.setQuantity(Integer
+														.parseInt(parseShippingConfirmation
+																.get(QTY_SHIPPED)));
+										String dateshipped = parseShippingConfirmation
+												.get(SHIP_DATE);
+										// FORMAT 08/11/2015 MM/DD/YYYY
+										int year = Integer.parseInt(dateshipped
+												.substring(6, 10));
+										int month = Integer
+												.parseInt(dateshipped
+														.substring(0, 2));
+										int dayOfMonth = Integer
+												.parseInt(dateshipped
+														.substring(3, 5));
+										trackingData
+												.setShipDate(new GregorianCalendar(
+														year, month, dayOfMonth));
+										orderStatus
+												.addTrackingData(trackingData);
 										log.info("Tracking details: {} {}",
 												orderTrackingResponse.getPO()
-												.getShipVia(),
+														.getShipVia(),
 												orderTrackingResponse
-												.getPOTracking()
-												.getTrackingNumber());
-									}
-									else{
-										log.info("Tracking Details not updated for - {}",trackingMeta.toString());
+														.getPOTracking()
+														.getTrackingNumber());
+									} else {
+										log.info(
+												"Tracking Details not updated for - {}",
+												trackingMeta.toString());
 									}
 								} catch (JAXBException e) {
 									log.error(
 											"Tracking XML recieved from server could not be parsed.",
 											e);
-								} 
-								//								catch (FTPException e) {
-								//									log.error(e.getMessage());
-								//									orderStatus.setStatus("Not shipped yet.");
-								//									e.printStackTrace();
-								//								}
-								finally {
-
-									ftp.cdup();
-									ftp.chdir("confirmations");
 								}
 								break;
 							}
 						}
-						// byte[] confirmationFileData =
-						// ftp.get(getConfirmationFilePath(
-						// ovs.getAccountNumber(), trackingMeta.toString()));
-						// Map<Integer, String> confirmationDataMap =
-						// parseFileData(confirmationFileData);
-						// Map<String, String> orderConfirmationMap =
-						// parseOrderConfirmation(confirmationDataMap);
-						// log.info("Confirmation File Data Map: {}",
-						// confirmationDataMap);
-						// log.info("Order Confirmation Data: {}",
-						// orderConfirmationMap);
 						ftp.quit();
 					} catch (Exception e) {
 						log.error(e.getMessage(), e);
@@ -1108,35 +1137,40 @@ public class HonestGreen extends Supplier implements HasTracking {
 				if (oimSupplierMethods.getOimSupplierMethodTypes()
 						.getMethodTypeId().intValue() == OimConstants.SUPPLIER_METHOD_TYPE_HG_HVA) {
 					log.info("found configured HVA Location ");
-					if(oimSupplierMethods.getVendor()!=null && oimSupplierMethods.getVendor().getVendorId().intValue()==ovs.getVendors().getVendorId().intValue()){
-					for (Iterator<OimSupplierMethodattrValues> iterator = oimSupplierMethods
-							.getOimSupplierMethodattrValueses().iterator(); iterator
-							.hasNext();) {
-						
-						OimSupplierMethodattrValues oimSupplierMethodattrValues = iterator
-								.next();
-						if (oimSupplierMethodattrValues
-								.getOimSupplierMethodattrNames().getAttrId()
-								.intValue() == OimConstants.SUPPLIER_METHOD_ATTRIBUTES_FTPACCOUNT)
-							ftpDetails
-							.setAccountNumber(oimSupplierMethodattrValues
-									.getAttributeValue());
-						if (oimSupplierMethodattrValues
-								.getOimSupplierMethodattrNames().getAttrId()
-								.intValue() == OimConstants.SUPPLIER_METHOD_ATTRIBUTES_FTPSERVER)
-							ftpDetails.setUrl(oimSupplierMethodattrValues
-									.getAttributeValue());
-						if (oimSupplierMethodattrValues
-								.getOimSupplierMethodattrNames().getAttrId()
-								.intValue() == OimConstants.SUPPLIER_METHOD_ATTRIBUTES_FTPLOGIN)
-							ftpDetails.setUserName(oimSupplierMethodattrValues
-									.getAttributeValue());
-						if (oimSupplierMethodattrValues
-								.getOimSupplierMethodattrNames().getAttrId()
-								.intValue() == OimConstants.SUPPLIER_METHOD_ATTRIBUTES_FTPPASSWORD)
-							ftpDetails.setPassword(oimSupplierMethodattrValues
-									.getAttributeValue());
-					}
+					if (oimSupplierMethods.getVendor() != null
+							&& oimSupplierMethods.getVendor().getVendorId()
+									.intValue() == ovs.getVendors()
+									.getVendorId().intValue()) {
+						for (Iterator<OimSupplierMethodattrValues> iterator = oimSupplierMethods
+								.getOimSupplierMethodattrValueses().iterator(); iterator
+								.hasNext();) {
+
+							OimSupplierMethodattrValues oimSupplierMethodattrValues = iterator
+									.next();
+							if (oimSupplierMethodattrValues
+									.getOimSupplierMethodattrNames()
+									.getAttrId().intValue() == OimConstants.SUPPLIER_METHOD_ATTRIBUTES_FTPACCOUNT)
+								ftpDetails
+										.setAccountNumber(oimSupplierMethodattrValues
+												.getAttributeValue());
+							if (oimSupplierMethodattrValues
+									.getOimSupplierMethodattrNames()
+									.getAttrId().intValue() == OimConstants.SUPPLIER_METHOD_ATTRIBUTES_FTPSERVER)
+								ftpDetails.setUrl(oimSupplierMethodattrValues
+										.getAttributeValue());
+							if (oimSupplierMethodattrValues
+									.getOimSupplierMethodattrNames()
+									.getAttrId().intValue() == OimConstants.SUPPLIER_METHOD_ATTRIBUTES_FTPLOGIN)
+								ftpDetails
+										.setUserName(oimSupplierMethodattrValues
+												.getAttributeValue());
+							if (oimSupplierMethodattrValues
+									.getOimSupplierMethodattrNames()
+									.getAttrId().intValue() == OimConstants.SUPPLIER_METHOD_ATTRIBUTES_FTPPASSWORD)
+								ftpDetails
+										.setPassword(oimSupplierMethodattrValues
+												.getAttributeValue());
+						}
 					}
 				}
 			}
@@ -1150,35 +1184,40 @@ public class HonestGreen extends Supplier implements HasTracking {
 				if (oimSupplierMethods.getOimSupplierMethodTypes()
 						.getMethodTypeId().intValue() == OimConstants.SUPPLIER_METHOD_TYPE_HG_PHI) {
 					log.info("found configured PHI Location ");
-					if(oimSupplierMethods.getVendor()!=null && oimSupplierMethods.getVendor().getVendorId().intValue()==ovs.getVendors().getVendorId().intValue()){
-					for (Iterator<OimSupplierMethodattrValues> iterator = oimSupplierMethods
-							.getOimSupplierMethodattrValueses().iterator(); iterator
-							.hasNext();) {
-						
-						OimSupplierMethodattrValues oimSupplierMethodattrValues = iterator
-								.next();
-						if (oimSupplierMethodattrValues
-								.getOimSupplierMethodattrNames().getAttrId()
-								.intValue() == OimConstants.SUPPLIER_METHOD_ATTRIBUTES_FTPACCOUNT)
-							ftpDetails
-							.setAccountNumber(oimSupplierMethodattrValues
-									.getAttributeValue());
-						if (oimSupplierMethodattrValues
-								.getOimSupplierMethodattrNames().getAttrId()
-								.intValue() == OimConstants.SUPPLIER_METHOD_ATTRIBUTES_FTPSERVER)
-							ftpDetails.setUrl(oimSupplierMethodattrValues
-									.getAttributeValue());
-						if (oimSupplierMethodattrValues
-								.getOimSupplierMethodattrNames().getAttrId()
-								.intValue() == OimConstants.SUPPLIER_METHOD_ATTRIBUTES_FTPLOGIN)
-							ftpDetails.setUserName(oimSupplierMethodattrValues
-									.getAttributeValue());
-						if (oimSupplierMethodattrValues
-								.getOimSupplierMethodattrNames().getAttrId()
-								.intValue() == OimConstants.SUPPLIER_METHOD_ATTRIBUTES_FTPPASSWORD)
-							ftpDetails.setPassword(oimSupplierMethodattrValues
-									.getAttributeValue());
-					}
+					if (oimSupplierMethods.getVendor() != null
+							&& oimSupplierMethods.getVendor().getVendorId()
+									.intValue() == ovs.getVendors()
+									.getVendorId().intValue()) {
+						for (Iterator<OimSupplierMethodattrValues> iterator = oimSupplierMethods
+								.getOimSupplierMethodattrValueses().iterator(); iterator
+								.hasNext();) {
+
+							OimSupplierMethodattrValues oimSupplierMethodattrValues = iterator
+									.next();
+							if (oimSupplierMethodattrValues
+									.getOimSupplierMethodattrNames()
+									.getAttrId().intValue() == OimConstants.SUPPLIER_METHOD_ATTRIBUTES_FTPACCOUNT)
+								ftpDetails
+										.setAccountNumber(oimSupplierMethodattrValues
+												.getAttributeValue());
+							if (oimSupplierMethodattrValues
+									.getOimSupplierMethodattrNames()
+									.getAttrId().intValue() == OimConstants.SUPPLIER_METHOD_ATTRIBUTES_FTPSERVER)
+								ftpDetails.setUrl(oimSupplierMethodattrValues
+										.getAttributeValue());
+							if (oimSupplierMethodattrValues
+									.getOimSupplierMethodattrNames()
+									.getAttrId().intValue() == OimConstants.SUPPLIER_METHOD_ATTRIBUTES_FTPLOGIN)
+								ftpDetails
+										.setUserName(oimSupplierMethodattrValues
+												.getAttributeValue());
+							if (oimSupplierMethodattrValues
+									.getOimSupplierMethodattrNames()
+									.getAttrId().intValue() == OimConstants.SUPPLIER_METHOD_ATTRIBUTES_FTPPASSWORD)
+								ftpDetails
+										.setPassword(oimSupplierMethodattrValues
+												.getAttributeValue());
+						}
 					}
 				}
 			}
@@ -1194,29 +1233,41 @@ public class HonestGreen extends Supplier implements HasTracking {
 		for (Iterator<OimSupplierMethods> itr = ovs.getOimSuppliers()
 				.getOimSupplierMethodses().iterator(); itr.hasNext();) {
 			OimSupplierMethods oimSupplierMethods = itr.next();
-			int compareValue= isHVA ? OimConstants.SUPPLIER_METHOD_TYPE_HG_HVA
-					: OimConstants.SUPPLIER_METHOD_TYPE_HG_PHI; 
+			int compareValue = isHVA ? OimConstants.SUPPLIER_METHOD_TYPE_HG_HVA
+					: OimConstants.SUPPLIER_METHOD_TYPE_HG_PHI;
 			if (oimSupplierMethods.getOimSupplierMethodTypes()
 					.getMethodTypeId().intValue() == compareValue) {
 				log.info("found configured Location for {}", isPHI ? "PHI"
 						: "HVA");
-				if(oimSupplierMethods.getVendor()!=null && oimSupplierMethods.getVendor().getVendorId().intValue()==ovs.getVendors().getVendorId().intValue()){
-				for (Iterator<OimSupplierMethodattrValues> iterator = oimSupplierMethods
-						.getOimSupplierMethodattrValueses().iterator(); iterator
-						.hasNext();) {
-					OimSupplierMethodattrValues oimSupplierMethodattrValues = iterator
-							.next();
-					
-						if (oimSupplierMethodattrValues.getOimSupplierMethodattrNames().getAttrId().intValue() == OimConstants.SUPPLIER_METHOD_ATTRIBUTES_FTPACCOUNT)
-							ftpDetails.setAccountNumber(oimSupplierMethodattrValues
-									.getAttributeValue());
-						if (oimSupplierMethodattrValues.getOimSupplierMethodattrNames().getAttrId().intValue() == OimConstants.SUPPLIER_METHOD_ATTRIBUTES_FTPSERVER)
+				if (oimSupplierMethods.getVendor() != null
+						&& oimSupplierMethods.getVendor().getVendorId()
+								.intValue() == ovs.getVendors().getVendorId()
+								.intValue()) {
+					for (Iterator<OimSupplierMethodattrValues> iterator = oimSupplierMethods
+							.getOimSupplierMethodattrValueses().iterator(); iterator
+							.hasNext();) {
+						OimSupplierMethodattrValues oimSupplierMethodattrValues = iterator
+								.next();
+
+						if (oimSupplierMethodattrValues
+								.getOimSupplierMethodattrNames().getAttrId()
+								.intValue() == OimConstants.SUPPLIER_METHOD_ATTRIBUTES_FTPACCOUNT)
+							ftpDetails
+									.setAccountNumber(oimSupplierMethodattrValues
+											.getAttributeValue());
+						if (oimSupplierMethodattrValues
+								.getOimSupplierMethodattrNames().getAttrId()
+								.intValue() == OimConstants.SUPPLIER_METHOD_ATTRIBUTES_FTPSERVER)
 							ftpDetails.setUrl(oimSupplierMethodattrValues
 									.getAttributeValue());
-						if (oimSupplierMethodattrValues.getOimSupplierMethodattrNames().getAttrId().intValue() == OimConstants.SUPPLIER_METHOD_ATTRIBUTES_FTPLOGIN)
+						if (oimSupplierMethodattrValues
+								.getOimSupplierMethodattrNames().getAttrId()
+								.intValue() == OimConstants.SUPPLIER_METHOD_ATTRIBUTES_FTPLOGIN)
 							ftpDetails.setUserName(oimSupplierMethodattrValues
 									.getAttributeValue());
-						if (oimSupplierMethodattrValues.getOimSupplierMethodattrNames().getAttrId().intValue() == OimConstants.SUPPLIER_METHOD_ATTRIBUTES_FTPPASSWORD)
+						if (oimSupplierMethodattrValues
+								.getOimSupplierMethodattrNames().getAttrId()
+								.intValue() == OimConstants.SUPPLIER_METHOD_ATTRIBUTES_FTPPASSWORD)
 							ftpDetails.setPassword(oimSupplierMethodattrValues
 									.getAttributeValue());
 					}

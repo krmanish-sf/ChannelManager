@@ -10,7 +10,6 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -22,7 +21,6 @@ import javax.xml.datatype.XMLGregorianCalendar;
 import org.apache.axis.encoding.Base64;
 import org.apache.axis.utils.ByteArrayOutputStream;
 import org.hibernate.Criteria;
-import org.hibernate.Query;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
 import org.hibernate.criterion.Restrictions;
@@ -220,17 +218,9 @@ public class AmazonOrderImport extends ChannelBase implements IOrderImport {
 				OimOrders oimOrders = null;
 				if (orderAlreadyImported(amazonOrderId)) {
 					log.info(
-							"Order#{} is already imported in the system, updating Order.",
+							"Order#{} is already imported in the system, skipping it.",
 							amazonOrderId);
 					continue;
-					/*Query query = m_dbSession
-							.createQuery("select o from salesmachine.hibernatedb.OimOrders o where o.oimOrderBatches.oimChannels=:chan and o.storeOrderId=:storeOrderId");
-					query.setEntity("chan", m_channel);
-					query.setString("storeOrderId", amazonOrderId);
-					Iterator iter = query.iterate();
-					while (iter.hasNext()) {
-						oimOrders = (OimOrders) iter.next();
-					}*/
 				}
 				if (oimOrders == null) {
 					oimOrders = new OimOrders();
@@ -416,9 +406,9 @@ public class AmazonOrderImport extends ChannelBase implements IOrderImport {
 			orderAckSubmitFeedRequest.setContentMD5(Base64
 					.encode((MessageDigest.getInstance("MD5").digest(os
 							.toByteArray()))));
-			service.submitFeed(orderAckSubmitFeedRequest);
 			m_dbSession.persist(batch);
 			tx.commit();
+			service.submitFeed(orderAckSubmitFeedRequest);
 			log.debug("Finished importing orders...");
 		} catch (Exception e) {
 			if (tx != null && tx.isActive())
