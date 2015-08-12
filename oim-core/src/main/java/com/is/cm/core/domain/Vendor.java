@@ -214,7 +214,8 @@ public class Vendor extends DomainBase implements java.io.Serializable {
 
 	public static Vendor from(Vendors vendors) {
 		Vendor vendor = new Vendor();
-		BeanUtils.copyProperties(vendors, vendor, excludeFromAutoCopy);
+		if(vendors!=null)
+			BeanUtils.copyProperties(vendors, vendor, excludeFromAutoCopy);
 		return vendor;
 	}
 
