@@ -29,7 +29,7 @@
 						<br>
 						<div class="row">
 						<div class="col-sm-12"
-									style="background: #40b9ec none repeat scroll 0 0; border: 1px solid #369dc8; box-shadow: 1px 5px 5px 1px #666666; color: white;">
+									style="background: #438eb9 none repeat scroll 0 0; border: 1px solid #369dc8; box-shadow: 1px 5px 5px 1px #666666; color: white;">
 						<h3>Order Management Members Area</h3>
 						<form class="form-horizontal" data-role="form"
 										action="${pageContext.request.contextPath}/login"
@@ -64,9 +64,11 @@
 							</div>
 							<div class="form-group">
 								<div class="col-sm-7 pull-right">
-									 <a href="${pageContext.request.contextPath}/signup">Activate A New Account?</a>
+									 <a href="${pageContext.request.contextPath}/signup"
+													style="color: white;">Activate A New Account?</a>
 										<br><a href="javascript:;"
-													onclick="$('.login-form').hide();$('.forgot-password').show();">Forgot password?</a>
+													onclick="$('.login-form').hide();$('.forgot-password').show();"
+													style="color: white;">Forgot password?</a>
 								</div>
 							</div>
 						</form>
