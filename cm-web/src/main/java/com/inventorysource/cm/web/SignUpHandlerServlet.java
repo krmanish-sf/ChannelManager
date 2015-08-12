@@ -23,6 +23,7 @@ import org.springframework.web.client.RestTemplate;
 import salesmachine.email.EmailUtil;
 import salesmachine.hibernatedb.Reps;
 import salesmachine.hibernatehelper.SessionManager;
+import salesmachine.util.StringHandle;
 
 import com.inventorysource.cm.web.config.ApplicationProperties;
 
@@ -40,7 +41,8 @@ public class SignUpHandlerServlet extends HttpServlet {
 			RequestDispatcher rd = req.getServletContext()
 					.getRequestDispatcher("/login.jsp");
 			rd.include(req, resp);
-		} else {
+		}
+		else {
 			RequestDispatcher rd = req.getServletContext()
 					.getRequestDispatcher("/signup.jsp");
 			rd.include(req, resp);
@@ -61,6 +63,16 @@ public class SignUpHandlerServlet extends HttpServlet {
 					.getRequestDispatcher("/login.jsp");
 			rd.include(req, resp);
 		}
+		else if("contactus".equalsIgnoreCase(cmd)){
+				sendContactInfo(req, resp);
+				req.setAttribute("error",
+						"Your request is processed...");
+				RequestDispatcher rd = req.getServletContext()
+						.getRequestDispatcher("/login.jsp");
+				
+				rd.include(req, resp);
+			}
+		
 	}
 
 	private void resendLoginDetails(HttpServletRequest request,
@@ -264,5 +276,37 @@ public class SignUpHandlerServlet extends HttpServlet {
 			LOG.error(e.getMessage(), e);
 		}
 		return r;
+	}
+	
+	private void sendContactInfo(HttpServletRequest request,
+			HttpServletResponse response) {
+		String name = request.getParameter("name");
+		String email = request.getParameter("email");
+		String phone = request.getParameter("phone");
+		String comments = request.getParameter("comments");
+		LOG.info("name - {}",name);
+		LOG.info("email - {}",email);
+		LOG.info("phone - {}",phone);
+		LOG.info("comments - {}",comments);
+		if(!StringHandle.removeNull(name).trim().equals("") && !StringHandle.removeNull(email).trim().equals("") && !StringHandle.removeNull(phone).trim().equals("")
+				&& !StringHandle.removeNull(comments).trim().equals("")){
+			StringBuilder sb = new StringBuilder();
+			sb.append("Name : ").append(name)
+			.append("<br> Email : ").append(email)
+			.append("<br> Phone:")
+			.append(phone)
+			.append("<br> Comment ")
+			.append(comments);
+			EmailUtil.sendEmail("support@inventorysource.com",
+					"support@inventorysource.com", "", "Channel Manager - Order Integration Questions.",
+					sb.toString());
+			LOG.info("Email sent to support@inventorysource.com");
+		}
+		
+		try {
+			response.sendRedirect("login.jsp");
+		} catch (IOException e) {
+			LOG.error(e.getMessage(),e);
+		}
 	}
 }

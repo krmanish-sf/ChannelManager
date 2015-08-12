@@ -27,16 +27,22 @@
 												about special integrations or questions you have, please use
 												the form below.</p>
 											<hr>
-											<form id="infoform" method="POST" class="form-horizontal"
+											<form id="infoform" action="${pageContext.request.contextPath}/signup"
+											method="post" class="form-horizontal"
 												role="form">
-												<input type="hidden" name="cmd" value="moreinfo">
+												<input type="hidden" name="cmd" value="contactus">
+												<div class="form-group">
+													<label class="col-sm-12 control-label no-padding-right">
+														<font color="green">${processed}</font>
+													</label>
+												</div>
 												<div class="form-group">
 													<label for="name"
 														class="col-sm-3 control-label no-padding-right">
 														Name </label>
 													<div class="col-sm-9">
 														<input type="text" class="col-xs-12 col-sm-8"
-															id="form-field-1" name="name">
+															id="form-field-1" name="name" required="required">
 													</div>
 												</div>
 												<div class="form-group">
@@ -45,7 +51,7 @@
 														Email </label>
 													<div class="col-sm-9">
 														<input type="email" class="col-xs-10 col-sm-8" id="email"
-															name="email">
+															name="email" required="required">
 													</div>
 												</div>
 												<div class="form-group">
@@ -54,7 +60,7 @@
 														Phone </label>
 													<div class="col-sm-9">
 														<input type="tel" class="col-xs-10 col-sm-8" id="phone"
-															name="phone">
+															name="phone" required="required">
 													</div>
 												</div>
 												<div class="form-group">
@@ -63,14 +69,15 @@
 														Comments/<br>Questions</label>
 													<div class="col-sm-9">
 														<textarea class="col-xs-10 col-sm-8" id="comments"
-															rows="8" name="comments"></textarea>
+															rows="8" name="comments" required="required"></textarea>
 													</div>
 												</div>
 												<div class="form-group">
 													<div class="col-md-offset-3 col-md-6">
-														<button type="button" class="btn btn-info width-100">
-															<i class="icon-ok"></i> Submit
-														</button>
+														<input type="submit" class="btn btn-info width-100" value="Submit"
+															/>
+															
+														
 													</div>
 												</div>
 											</form>
@@ -91,3 +98,58 @@
 		</div>
 
 	</jsp:attribute></t:openpage>
+<script src="js/jquery.validate.min.js"></script>
+<script type="text/javascript">
+	function sendEmail() {
+		$('#infoform').submit();
+	}
+// 	$(document)
+// 			.ready(
+// 					function() {
+// 						$('#infoform')
+// 								.validate(
+// 										{
+// 											invalidHandler : function(event,
+// 													validator) {
+// 												// 'this' refers to the form
+// 												var errors = validator
+// 														.numberOfInvalids();
+// 												if (errors) {
+// 													var message = errors == 1 ? 'You missed 1 field. It has been highlighted'
+// 															: 'You missed '
+// 																	+ errors
+// 																	+ ' fields. They have been highlighted';
+// // 													$.gritter.add({
+// // 														title : "Contact Us",
+// // 														text : message
+// // 													});
+// 													alert(message);
+// 												}
+// 											},
+// 											submitHandler : function(form) {
+// 												var formArray = $(form)
+// 														.serializeArray();
+// 												var formObject = {};
+// 												$
+// 														.each(
+// 																formArray,
+// 																function(i, v) {
+// 																	formObject[v.name] = v.value;
+// 																});
+// 											},
+// 											highlight : function(e) {
+// 												$(e)
+// 														.closest('.form-group')
+// 														.removeClass('has-info')
+// 														.addClass('has-error');
+// 											},
+// 											success : function(e) {
+// 												$(e).closest('.form-group')
+// 														.removeClass(
+// 																'has-error')
+// 														.addClass('has-info');
+// 												$(e).remove();
+// 											}
+// 										});
+// 					});
+</script>
