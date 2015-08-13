@@ -276,7 +276,7 @@ public class PCS extends Supplier {
 					"",
 					"Logs of order processing for order : "
 							+ order.getStoreOrderId(), logEmailContent);
-			updateVendorSupplierOrderHistory(vendorId, ovs, response,
+			updateVendorSupplierOrderHistory(vendorId, ovs.getOimSuppliers(), response,
 					ERROR_ORDER_PROCESSING);
 		} // Iterate over all orders
 

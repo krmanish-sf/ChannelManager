@@ -50,6 +50,9 @@ import salesmachine.oim.stores.api.IOrderImport;
 import salesmachine.oim.stores.exception.ChannelConfigurationException;
 import salesmachine.oim.stores.impl.OrderImportManager;
 import salesmachine.oim.suppliers.exception.InvalidAddressException;
+import salesmachine.oim.suppliers.exception.SupplierCommunicationException;
+import salesmachine.oim.suppliers.exception.SupplierConfigurationException;
+import salesmachine.oim.suppliers.exception.SupplierOrderException;
 import salesmachine.oim.suppliers.modal.OrderStatus;
 import salesmachine.orderfile.DatabaseFile;
 import salesmachine.orderfile.DefaultCsvFile;
@@ -163,7 +166,9 @@ public class OimSupplierOrderPlacement {
 		}
 	}
 
-	public boolean processVendorOrder(Integer vendorId, OimOrders oimOrders) {
+	public boolean processVendorOrder(Integer vendorId, OimOrders oimOrders)
+			throws SupplierConfigurationException,
+			SupplierCommunicationException, SupplierOrderException {
 		return processVendorOrder(
 				vendorId,
 				oimOrders,
@@ -171,7 +176,9 @@ public class OimSupplierOrderPlacement {
 	}
 
 	public boolean processVendorOrder(Integer vendorId, OimOrders oimOrders,
-			OimOrderBatchesTypes processingType) {
+			OimOrderBatchesTypes processingType)
+			throws SupplierConfigurationException,
+			SupplierCommunicationException, SupplierOrderException {
 		log.debug("Processing orders for VendorId: {}", vendorId);
 
 		if (oimOrders.getDeliveryStateCode() == null)
@@ -218,7 +225,15 @@ public class OimSupplierOrderPlacement {
 									oimChannels.getChannelName(), detail
 											.getOimSuppliers()
 											.getSupplierName());
-							continue;
+							Supplier.updateVendorSupplierOrderHistory(vendorId,
+									detail.getOimSuppliers(),
+									"Order processing rule not found for Channel: "
+											+ oimChannels.getChannelName()
+											+ " Supplier: "
+											+ detail.getOimSuppliers()
+													.getSupplierName(),
+									Supplier.ERROR_UNCONFIGURED_SUPPLIER);
+							return false;
 						} else {
 							log.info("Channel Supplier Mapping : {}", list);
 							for (OimChannelSupplierMap oimChannelSupplierMap : list) {
@@ -343,7 +358,9 @@ public class OimSupplierOrderPlacement {
 	}
 
 	private boolean sendOrderToSupplier(Integer vendorId, OimOrders oimOrders,
-			List<Integer> successfulOrders, List<Integer> failedOrders) {
+			List<Integer> successfulOrders, List<Integer> failedOrders)
+			throws SupplierConfigurationException,
+			SupplierCommunicationException, SupplierOrderException {
 		List<OimOrders> orders = new ArrayList<OimOrders>();
 		orders.add(oimOrders);
 		for (OimOrderDetails oimOrderDetails : (Set<OimOrderDetails>) oimOrders
@@ -448,10 +465,30 @@ public class OimSupplierOrderPlacement {
 					break;
 				}
 				if (s != null) {
-					s.setLogStream(logStream);
-					s.sendOrders(vendorId, ovs, orders);
-					successfulOrders.addAll(s.successfulOrders);
-					failedOrders.addAll(s.failedOrders);
+					try {
+						s.setLogStream(logStream);
+						s.sendOrders(vendorId, ovs, orders);
+						successfulOrders.addAll(s.successfulOrders);
+						failedOrders.addAll(s.failedOrders);
+					} catch (SupplierConfigurationException e) {
+						Supplier.updateVendorSupplierOrderHistory(vendorId,
+								ovs.getOimSuppliers(), e.getMessage(),
+								Supplier.ERROR_UNCONFIGURED_SUPPLIER);
+						log.error(e.getMessage(), e);
+						throw e;
+					} catch (SupplierCommunicationException e) {
+						Supplier.updateVendorSupplierOrderHistory(vendorId,
+								ovs.getOimSuppliers(), e.getMessage(),
+								Supplier.ERROR_PING_FAILURE);
+						log.error(e.getMessage(), e);
+						throw e;
+					} catch (SupplierOrderException e) {
+						Supplier.updateVendorSupplierOrderHistory(vendorId,
+								ovs.getOimSuppliers(), e.getMessage(),
+								Supplier.ERROR_ORDER_PROCESSING);
+						log.error(e.getMessage(), e);
+						throw e;
+					}
 				} else {
 					log.debug("Unknown Supplier Id: " + supplierId);
 				}
@@ -665,295 +702,6 @@ public class OimSupplierOrderPlacement {
 				}
 			}
 		}
-		return true;
-	}
-
-	private boolean sendOrdersToSupplier(Integer vendorId,
-			OimVendorSuppliers ovs, List orders, List successfulOrders,
-			List failedOrders) {
-		Integer supplierMethodNameId = m_supplierMethods
-				.getOimSupplierMethodNames().getMethodNameId();
-		log.debug("Supplier Method Id: " + supplierMethodNameId);
-		if (OimConstants.SUPPLIER_METHOD_NAME_CUSTOM
-				.equals(supplierMethodNameId)) {
-			log.debug("!!! Custom method called");
-			Supplier s = null;
-			int supplierId = ovs.getOimSuppliers().getSupplierId();
-			switch (supplierId) {
-			case PCS:
-				log.debug("!!! SENDING ORDERS TO PCS");
-				s = new PCS();
-				break;
-			case MOBILELINE:
-				log.debug("!!! SENDING ORDERS TO Mobileline");
-				s = new Mobileline();
-				break;
-			case PETRA:
-				log.debug("!!! SENDING ORDERS TO Petra");
-				s = new Petra();
-				break;
-			case ICELLA:
-				log.debug("!!! SENDING ORDERS TO iCella");
-				s = new Icella();
-				break;
-			case PCI:
-				log.debug("!!! SENDING ORDERS TO Progressive Concepts");
-				s = new ProgressiveConcepts();
-				break;
-			case MOTENG:
-				log.debug("!!! SENDING ORDERS TO Moteng");
-				s = new Moteng();
-				break;
-			case DRBOTT:
-				log.debug("!!! SENDING ORDERS TO DrBott");
-				s = new DrBott();
-				break;
-			case RAX:
-				log.debug("!!! SENDING ORDERS TO Rax");
-				s = new Rax();
-				break;
-			case DROPSHIPDIRECT:
-				log.debug("!!! SENDING ORDERS TO Dropship Direct");
-				s = new DropshipDirect();
-				break;
-			case DROPSHIPDIRECTAUTOMOTIVES:
-				logStream
-						.println("!!! SENDING ORDERS TO Dropship Direct Automotives");
-				s = new DropshipDirect();
-				break;
-			case BnF:
-				log.debug("!!! SENDING ORDERS TO BnF USA");
-				s = new BF();
-				break;
-			case DandH:
-				log.debug("!!! SENDING ORDERS TO DandH");
-				s = new DandH();
-				break;
-			case BRADLEYCALDWELL:
-				log.debug("!!! SENDING ORDERS TO BRADLEYCALDWELL");
-				s = new BradleyCaldwell();
-				break;
-			case HONESTGREEN:
-				log.debug("SENDING ORDERS TO HONEST GREEN");
-				s = new HonestGreen();
-				break;
-			}
-			if (s != null) {
-				s.setLogStream(logStream);
-				s.sendOrders(vendorId, ovs, orders);
-				successfulOrders.addAll(s.getSuccessfulOrders());
-				failedOrders.addAll(s.getFailedOrders());
-			} else {
-				log.debug("Unknown Supplier Id: " + supplierId);
-			}
-		} else if (OimConstants.SUPPLIER_METHOD_NAME_EMAIL
-				.equals(supplierMethodNameId)
-				|| OimConstants.SUPPLIER_METHOD_NAME_FTP
-						.equals(supplierMethodNameId)) {
-			String tmp = PojoHelper.getSupplierMethodAttributeValue(
-					m_supplierMethods,
-					OimConstants.SUPPLIER_METHOD_ATTRIBUTES_FILETYPEID);
-
-			// Find if there is an associated file
-			OimFiletypes oimFile = null;
-			if (tmp != null && tmp.length() > 0) {
-				Integer fileid = Integer.valueOf(tmp);
-				log.debug("Using File Id: " + fileid
-						+ " for generating supplier order file");
-				Query query = m_dbSession
-						.createQuery("select f from OimFiletypes f where f.fileTypeId=:fileId and f.deleteTm is null");
-				Iterator it = query.setInteger("fileId", fileid.intValue())
-						.iterate();
-				if (!it.hasNext()) {
-					logStream
-							.println("No file defined for this supplier file id: "
-									+ fileid);
-				} else {
-					oimFile = (OimFiletypes) it.next();
-				}
-			}
-
-			int fileFormat = 1;
-			try {
-				fileFormat = Integer
-						.parseInt(PojoHelper
-								.getSupplierMethodAttributeValue(
-										m_supplierMethods,
-										OimConstants.SUPPLIER_METHOD_ATTRIBUTES_FILEFORMAT));
-			} catch (Exception e) {
-				e.printStackTrace();
-				fileFormat = 1;
-			}
-
-			OrderFile ofile = null;
-			if (fileFormat == OimConstants.FILE_FORMAT_XLS) {
-				ofile = new DefaultXlsFile(m_dbSession);
-			} else {
-				ofile = new DefaultCsvFile(m_dbSession);
-			}
-			if (oimFile != null) {
-				ofile = new DatabaseFile(m_dbSession, oimFile);
-			}
-			ofile.build();
-
-			String name = (String) ofile.getFileFormatParams().get(
-					OimConstants.FILE_FORMAT_PARAMS_NAME);
-			if (name != null && name.length() > 0) {
-				if (name.indexOf("#SupplierAccountNumber") != -1) {
-					String accountNumber = ovs.getAccountNumber();
-					name = name.replaceAll("#SupplierAccountNumber",
-							accountNumber);
-				}
-			}
-			String fileName = "";
-			if (fileFormat == OimConstants.FILE_FORMAT_XLS) {
-				fileName = "" + vendorId + "-" + m_supplier.getSupplierId()
-						+ ".xls";
-				log.debug("Generating file " + fileName);
-				try {
-					generateXlsFile(orders, ofile.getFileFieldMaps(), fileName,
-							ofile.getFileFormatParams(),
-							ofile.getSpecificsProvider(ovs));
-				} catch (Exception e) {
-					log.error(e.getMessage(), e);
-				}
-			} else if (fileFormat == OimConstants.FILE_FORMAT_CSV) {
-				fileName = "" + vendorId + "-" + m_supplier.getSupplierId()
-						+ ".csv";
-				if (name != null && name.length() > 0)
-					fileName = name;
-				log.debug("Generating file " + fileName);
-				try {
-					generateCsvFile(orders, ofile.getFileFieldMaps(), fileName,
-							ofile.getFileFormatParams(),
-							ofile.getSpecificsProvider(ovs));
-				} catch (Exception e) {
-					log.error(e.getMessage(), e);
-				}
-			}
-
-			// Get the reps object to get the email id and name of the vendor to
-			// whom the order status email will go in case the emaiNotification
-			// is set for him.
-			Query q = m_dbSession
-					.createQuery("select r from salesmachine.hibernatedb.Reps r where r.vendorId = "
-							+ vendorId);
-			Reps r = new Reps();
-			Iterator repsIt = q.iterate();
-			if (repsIt.hasNext()) {
-				r = (Reps) repsIt.next();
-			}
-
-			if (OimConstants.SUPPLIER_METHOD_NAME_FTP
-					.equals(supplierMethodNameId)) {
-				String ftpServer = PojoHelper.getSupplierMethodAttributeValue(
-						m_supplierMethods,
-						OimConstants.SUPPLIER_METHOD_ATTRIBUTES_FTPSERVER);
-				String ftpLogin = PojoHelper.getSupplierMethodAttributeValue(
-						m_supplierMethods,
-						OimConstants.SUPPLIER_METHOD_ATTRIBUTES_FTPLOGIN);
-				String ftpPassword = PojoHelper
-						.getSupplierMethodAttributeValue(
-								m_supplierMethods,
-								OimConstants.SUPPLIER_METHOD_ATTRIBUTES_FTPPASSWORD);
-
-				if ("#accountspecific".equals(ftpLogin))
-					ftpLogin = ovs.getLogin();
-				if ("#accountspecific".equals(ftpPassword))
-					ftpPassword = ovs.getPassword();
-
-				String ftpFolder = PojoHelper.getSupplierMethodAttributeValue(
-						m_supplierMethods,
-						OimConstants.SUPPLIER_METHOD_ATTRIBUTES_FTPFOLDER);
-
-				FtpFileUploader uploader = new FtpFileUploader(ftpServer,
-						ftpLogin, ftpPassword, 5, 0);
-				try {
-					uploader.Upload(ftpFolder, fileName, fileName);
-				} catch (Exception e) {
-					log.error(e.getMessage(), e);
-					return false;
-				}
-
-			} else if (OimConstants.SUPPLIER_METHOD_NAME_EMAIL
-					.equals(supplierMethodNameId)) {
-				String emailAddress = PojoHelper
-						.getSupplierMethodAttributeValue(
-								m_supplierMethods,
-								OimConstants.SUPPLIER_METHOD_ATTRIBUTES_EMAILADDRESS);
-				if (fileFormat == OimConstants.FILE_FORMAT_SEND_PLAIN_TEXT_IN_EMAIL) {
-					try {
-						String vendor_name = StringHandle.removeNull(r
-								.getFirstName())
-								+ " "
-								+ StringHandle.removeNull(r.getLastName());
-						String emailContent = "Dear " + vendor_name + "<br>";
-						emailContent += "<br>Following is the status of the orders processed for the supplier "
-								+ ovs.getOimSuppliers().getSupplierName()
-								+ " : - <br>";
-						emailContent += generateMailBody(orders,
-								ofile.getFileFieldMaps(),
-								new StandardFileSpecificsProvider(m_dbSession,
-										ovs, new Vendors(vendorId)));
-						EmailUtil.sendEmail(emailAddress,
-								"support@inventorysource.com", r.getLogin(),
-								"oim@inventorysource.com",
-								m_supplier.getSupplierName() + " Orders",
-								emailContent, "text/html");
-					} catch (Exception e1) {
-						log.error(e1.getMessage(), e1);
-					}
-				} else {
-					EmailUtil
-							.sendEmailWithAttachment(emailAddress,
-									"support@inventorysource.com",
-									r.getLogin(), "oim@inventorysource.com",
-									m_supplier.getSupplierName() + " Orders",
-									"Find attached the orders from my store.",
-									fileName);
-				}
-			}
-
-			String nameEmail = StringHandle.removeNull(r.getFirstName()) + " "
-					+ StringHandle.removeNull(r.getLastName());
-			String emailContent = "Dear " + nameEmail + "<br>";
-			emailContent += "<br>Following is the status of the orders processed for the supplier "
-					+ ovs.getOimSuppliers().getSupplierName() + " : - <br>";
-			boolean emailNotification = false;
-
-			// In both these cases i.e. Ftp File Upload and Email, orders can
-			// not fail at this stage
-			// So all of them need to be marked placed
-			for (int i = 0; i < orders.size(); i++) {
-				OimOrders order = (OimOrders) orders.get(i);
-				for (Iterator detailIt = order.getOimOrderDetailses()
-						.iterator(); detailIt.hasNext();) {
-					OimOrderDetails detail = (OimOrderDetails) detailIt.next();
-					successfulOrders.add(detail.getDetailId());
-				}
-
-				// Send Email Notifications if is set to true.
-				if (order.getOimOrderBatches().getOimChannels()
-						.getEmailNotifications() == 1) {
-					emailNotification = true;
-					String orderStatus = "Successfully Placed";
-					emailContent += "<b>Store Order ID "
-							+ order.getStoreOrderId() + "</b> -> "
-							+ orderStatus + " ";
-					emailContent += "<br>";
-				}
-			}
-			if (emailNotification) {
-				emailContent += "<br>Thanks, <br>Inventorysource support<br>";
-				logStream
-						.println("!! Sending email to user about order processing");
-				EmailUtil.sendEmail(r.getLogin(),
-						"support@inventorysource.com", "",
-						"Order processing update results", emailContent,
-						"text/html");
-			}
-		}
-
 		return true;
 	}
 

@@ -17,6 +17,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import salesmachine.hibernatedb.OimChannels;
+import salesmachine.hibernatedb.OimOrderDetails;
 import salesmachine.hibernatedb.OimShippingMethod;
 import salesmachine.hibernatedb.OimSupplierShippingMethod;
 import salesmachine.hibernatedb.OimSuppliers;
@@ -25,6 +26,9 @@ import salesmachine.hibernatedb.OimVendorSuppliers;
 import salesmachine.hibernatedb.OimVendorsuppOrderhistory;
 import salesmachine.hibernatedb.Vendors;
 import salesmachine.hibernatehelper.SessionManager;
+import salesmachine.oim.suppliers.exception.SupplierCommunicationException;
+import salesmachine.oim.suppliers.exception.SupplierConfigurationException;
+import salesmachine.oim.suppliers.exception.SupplierOrderException;
 import salesmachine.util.OimLogStream;
 import salesmachine.util.StringHandle;
 
@@ -55,7 +59,8 @@ public abstract class Supplier {
 	}
 
 	public abstract void sendOrders(Integer vendorId, OimVendorSuppliers ovs,
-			List orders);
+			List orders) throws SupplierConfigurationException,
+			SupplierCommunicationException, SupplierOrderException;
 
 	protected String getUSStateFullName(String stateCode) {
 		if (stateCodeMapping.containsKey(stateCode))
@@ -64,16 +69,24 @@ public abstract class Supplier {
 	}
 
 	public static final void updateVendorSupplierOrderHistory(Integer vid,
-			OimVendorSuppliers ovs, Object response, int errorCode) {
+			OimSuppliers oimSuppliers, Object response, int errorCode) {
+		updateVendorSupplierOrderHistory(vid, oimSuppliers, response,
+				errorCode, null);
+	}
+
+	public static final void updateVendorSupplierOrderHistory(Integer vid,
+			OimSuppliers oimSuppliers, Object response, int errorCode,
+			OimOrderDetails oimOrderDetails) {
 		Session session = SessionManager.currentSession();
 		OimVendorsuppOrderhistory history = new OimVendorsuppOrderhistory();
 		Vendors vendor = new Vendors();
 		vendor.setVendorId(vid);
 		history.setVendors(vendor);
-		history.setOimSuppliers(ovs.getOimSuppliers());
+		history.setOimSuppliers(oimSuppliers);
 		history.setProcessingTm(new Date());
 		history.setErrorCode(errorCode);
-
+		if (oimOrderDetails != null)
+			history.setOimOrderDetails(oimOrderDetails);
 		if (response != null) {
 			if (response instanceof OrderReturnInfo) {
 				history.setDescription(((OrderReturnInfo) response)

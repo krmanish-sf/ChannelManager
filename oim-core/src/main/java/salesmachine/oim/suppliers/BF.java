@@ -40,6 +40,7 @@ import salesmachine.hibernatedb.Reps;
 import salesmachine.hibernatedb.Vendors;
 import salesmachine.hibernatehelper.SessionManager;
 import salesmachine.oim.stores.api.IOrderImport;
+import salesmachine.oim.stores.exception.ChannelConfigurationException;
 import salesmachine.oim.stores.impl.OrderImportManager;
 import salesmachine.oim.suppliers.exception.SupplierCommunicationException;
 import salesmachine.oim.suppliers.exception.SupplierConfigurationException;
@@ -129,7 +130,9 @@ public class BF extends Supplier implements HasTracking {
 
 	private void createAndPostXMLRequest(List<OimOrders> orders,
 			List fileFieldMaps, IFileSpecificsProvider fileSpecifics,
-			OimVendorSuppliers ovs, Integer vendorId, Reps r) throws Exception {
+			OimVendorSuppliers ovs, Integer vendorId, Reps r)
+			throws SupplierConfigurationException, SupplierOrderException,
+			SupplierCommunicationException, ChannelConfigurationException {
 		String USERID = ovs.getLogin();
 		String PASSWORD = ovs.getPassword();
 		String lincenceKey = ovs.getAccountNumber();
@@ -286,8 +289,6 @@ public class BF extends Supplier implements HasTracking {
 					}
 				}
 			}// END for (Iterator
-				// detailIt=order.getOimOrderDetailses().iterator();
-				// detailIt.hasNext();) {
 			String action = ovs.getTestMode() == 1 ? "TEST" : "PROCESS";
 			String xmlRequest = "<orderxml><AccessRequest>\n" + "<XMLlickey>"
 					+ lincenceKey + "</XMLlickey>\n" + "<UserId>" + USERID
@@ -295,113 +296,113 @@ public class BF extends Supplier implements HasTracking {
 					+ "<Version>1.1</Version>\n" + "<xml_action>" + action
 					+ "</xml_action>\n" + "</AccessRequest>" + val
 					+ "</items></orderxml>";
-			// System.out.println("Post Request : "+xmlRequest);
 			String xmlResponse = null;
 			try {
 				xmlResponse = postRequest(xmlRequest, r, "cart");
-			} catch (RuntimeException e) {
-				log.error(e.getMessage(), e);
-			} catch (SupplierConfigurationException e) {
-				log.error(e.getMessage(), e);
-				updateVendorSupplierOrderHistory(vendorId, ovs, e.getMessage(),
-						ERROR_UNCONFIGURED_SUPPLIER);
-			} catch (SupplierCommunicationException e) {
-				log.error(e.getMessage(), e);
-				updateVendorSupplierOrderHistory(vendorId, ovs, e.getMessage(),
-						ERROR_PING_FAILURE);
-			} catch (SupplierOrderException e) {
-				log.error(e.getMessage(), e);
-				updateVendorSupplierOrderHistory(vendorId, ovs, e.getMessage(),
-						ERROR_ORDER_PROCESSING);
-			}
-			// Output the response
-			JAXBContext jaxbContext;
-			jaxbContext = JAXBContext.newInstance(OrderXMLresp.class);
-			Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
-			Marshaller marshaller = jaxbContext.createMarshaller();
-			Object unmarshal = unmarshaller.unmarshal(new StringReader(
-					xmlResponse));
-			Set<String> failedStatus = new HashSet<String>();
-			failedStatus.add("Not Available");
-			failedStatus.add("Invalid Part Number");
-			if (unmarshal instanceof OrderXMLresp) {
-				OrderXMLresp orderXMLresp = (OrderXMLresp) unmarshal;
-				if (orderXMLresp.getOrder() != null) {
-					log.info("Recieved order submit reponse for Order# {}",
-							orderXMLresp.getOrder().getId());
-					for (Item item : orderXMLresp.getItems().getItem()) {
-						String itemId = item.getItemId();
-						String status = item.getAction();
+
+				// Output the response
+				JAXBContext jaxbContext;
+				jaxbContext = JAXBContext.newInstance(OrderXMLresp.class);
+				Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
+				Marshaller marshaller = jaxbContext.createMarshaller();
+				Object unmarshal = unmarshaller.unmarshal(new StringReader(
+						xmlResponse));
+				Set<String> failedStatus = new HashSet<String>();
+				failedStatus.add("Not Available");
+				failedStatus.add("Invalid Part Number");
+				if (unmarshal instanceof OrderXMLresp) {
+					OrderXMLresp orderXMLresp = (OrderXMLresp) unmarshal;
+					if (orderXMLresp.getOrder() != null) {
+						log.info("Recieved order submit reponse for Order# {}",
+								orderXMLresp.getOrder().getId());
+						for (Item item : orderXMLresp.getItems().getItem()) {
+							String itemId = item.getItemId();
+							String status = item.getAction();
+							for (Iterator detailIt = order
+									.getOimOrderDetailses().iterator(); detailIt
+									.hasNext();) {
+								OimOrderDetails detail = (OimOrderDetails) detailIt
+										.next();
+								if (detail.getSku().contains(itemId)) {
+									detail.setSupplierOrderStatus(status);
+									detail.setSupplierOrderNumber(String
+											.valueOf(orderXMLresp.getOrder()
+													.getProcessing()
+													.getInvNum()));
+									if (failedStatus.contains(status)) {
+										failedOrders.add(detail.getDetailId());
+									} else {
+										successfulOrders.add(detail
+												.getDetailId());
+									}
+									Session session = SessionManager
+											.currentSession();
+									session.update(detail);
+
+									OimChannels oimChannels = order
+											.getOimOrderBatches()
+											.getOimChannels();
+									Integer channelId = oimChannels
+											.getChannelId();
+									IOrderImport iOrderImport = OrderImportManager
+											.getIOrderImport(channelId);
+									if (iOrderImport != null) {
+										log.debug("Created the iorderimport object");
+										if (!iOrderImport.init(channelId,
+												session)) {
+											log.debug(
+													"Failed initializing the channel with Id:{}",
+													channelId);
+										} else {
+											salesmachine.oim.suppliers.modal.OrderStatus orderStatus = new salesmachine.oim.suppliers.modal.OrderStatus();
+											orderStatus
+													.setStatus(((OimOrderProcessingRule) oimChannels
+															.getOimOrderProcessingRules()
+															.iterator().next())
+															.getProcessedStatus());
+											iOrderImport.updateStoreOrder(
+													detail, orderStatus);
+										}
+									} else {
+										log.error("Could not find a bean to work with this Channel.");
+									}
+								}
+							}
+
+						}
+					} else if (orderXMLresp.getErrorResponse() != null) {
+
 						for (Iterator detailIt = order.getOimOrderDetailses()
 								.iterator(); detailIt.hasNext();) {
 							OimOrderDetails detail = (OimOrderDetails) detailIt
 									.next();
-							if (detail.getSku().contains(itemId)) {
-								detail.setSupplierOrderStatus(status);
-								detail.setSupplierOrderNumber(String
-										.valueOf(orderXMLresp.getOrder()
-												.getProcessing().getInvNum()));
-								if (failedStatus.contains(status)) {
-									failedOrders.add(detail.getDetailId());
-								} else {
-									successfulOrders.add(detail.getDetailId());
-								}
-								Session session = SessionManager
-										.currentSession();
-								session.update(detail);
-
-								OimChannels oimChannels = order
-										.getOimOrderBatches().getOimChannels();
-								Integer channelId = oimChannels.getChannelId();
-								IOrderImport iOrderImport = OrderImportManager
-										.getIOrderImport(channelId);
-								if (iOrderImport != null) {
-									log.debug("Created the iorderimport object");
-									if (!iOrderImport.init(channelId, session)) {
-										log.debug(
-												"Failed initializing the channel with Id:{}",
-												channelId);
-									} else {
-										salesmachine.oim.suppliers.modal.OrderStatus orderStatus = new salesmachine.oim.suppliers.modal.OrderStatus();
-										orderStatus
-												.setStatus(((OimOrderProcessingRule) oimChannels
-														.getOimOrderProcessingRules()
-														.iterator().next())
-														.getProcessedStatus());
-										iOrderImport.updateStoreOrder(detail,
-												orderStatus);
-									}
-								} else {
-									log.error("Could not find a bean to work with this Channel.");
-								}
-							}
+							detail.setSupplierOrderStatus(orderXMLresp
+									.getErrorResponse().getMSG().get(0));
+							failedOrders.add(detail.getDetailId());
 						}
-
+						updateVendorSupplierOrderHistory(vendorId,
+								ovs.getOimSuppliers(), orderXMLresp
+										.getErrorResponse().getMSG().get(0),
+								ERROR_ORDER_PROCESSING);
 					}
-				} else if (orderXMLresp.getErrorResponse() != null) {
-
+				} else {
 					for (Iterator detailIt = order.getOimOrderDetailses()
 							.iterator(); detailIt.hasNext();) {
 						OimOrderDetails detail = (OimOrderDetails) detailIt
 								.next();
-						detail.setSupplierOrderStatus(orderXMLresp
-								.getErrorResponse().getMSG().get(0));
 						failedOrders.add(detail.getDetailId());
 					}
-					updateVendorSupplierOrderHistory(vendorId, ovs,
-							orderXMLresp.getErrorResponse().getMSG().get(0),
-							ERROR_ORDER_PROCESSING);
+					updateVendorSupplierOrderHistory(vendorId,
+							ovs.getOimSuppliers(), xmlResponse.toString(),
+							ERROR_PING_FAILURE);
 				}
-			} else {
-				for (Iterator detailIt = order.getOimOrderDetailses()
-						.iterator(); detailIt.hasNext();) {
-					OimOrderDetails detail = (OimOrderDetails) detailIt.next();
-					failedOrders.add(detail.getDetailId());
-				}
-				updateVendorSupplierOrderHistory(vendorId, ovs,
-						xmlResponse.toString(), ERROR_PING_FAILURE);
+			} catch (RuntimeException e) {
+				log.error(e.getMessage(), e);
+			} catch (JAXBException e) {
+				log.error(e.getMessage(), e);
+				throw new SupplierCommunicationException(
+						"Response could not be parsed.");
 			}
-
 			// Send Email Notifications if is set to true.
 			if (order.getOimOrderBatches().getOimChannels()
 					.getEmailNotifications() == 1) {

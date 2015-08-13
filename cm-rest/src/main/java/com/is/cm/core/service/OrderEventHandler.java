@@ -14,6 +14,9 @@ import salesmachine.hibernatedb.OimOrderStatuses;
 import salesmachine.hibernatedb.OimOrders;
 import salesmachine.oim.api.OimConstants;
 import salesmachine.oim.stores.modal.shop.order.CCTRANSMISSION;
+import salesmachine.oim.suppliers.exception.SupplierCommunicationException;
+import salesmachine.oim.suppliers.exception.SupplierConfigurationException;
+import salesmachine.oim.suppliers.exception.SupplierOrderException;
 
 import com.is.cm.core.domain.Order;
 import com.is.cm.core.domain.OrderDetail;
@@ -104,7 +107,9 @@ public class OrderEventHandler implements OrderService {
 	}
 
 	@Override
-	public UpdatedEvent<Order> processOrder(UpdateEvent<Order> event) {
+	public UpdatedEvent<Order> processOrder(UpdateEvent<Order> event)
+			throws SupplierConfigurationException,
+			SupplierCommunicationException, SupplierOrderException {
 		Order order = event.getEntity();
 		if (processOrderInternal(order)) {
 			return new UpdatedEvent<Order>(event.getEntity().getOrderId(),
@@ -114,13 +119,17 @@ public class OrderEventHandler implements OrderService {
 		}
 	}
 
-	private boolean processOrderInternal(Order order) {
+	private boolean processOrderInternal(Order order)
+			throws SupplierConfigurationException,
+			SupplierCommunicationException, SupplierOrderException {
 		return orderRepository.processOrders(order);
 	}
 
 	@Override
 	public UpdatedEvent<List<Order>> bulkProcessOrder(
-			UpdateEvent<List<Order>> event) {
+			UpdateEvent<List<Order>> event)
+			throws SupplierConfigurationException,
+			SupplierCommunicationException, SupplierOrderException {
 		List<Order> orders = event.getEntity();
 		LOG.debug("Order Size: {}", orders.size());
 		Object order2 = orders.get(0);
@@ -211,19 +220,21 @@ public class OrderEventHandler implements OrderService {
 		return new ReadCollectionEvent<OrderDetailMod>(
 				findOrderDetailModifications);
 	}
-	
+
 	@Override
-	public ReadCollectionEvent<OrderDetail> getOrderDetailByOrderId(ReadEvent<String> requestReadEvent){
-		//Order order = orderRepository.findById(Integer.parseInt(requestReadEvent.getEntity()));
-		OimOrders order = orderRepository.getById(Integer.parseInt(requestReadEvent.getEntity()));
+	public ReadCollectionEvent<OrderDetail> getOrderDetailByOrderId(
+			ReadEvent<String> requestReadEvent) {
+		// Order order =
+		// orderRepository.findById(Integer.parseInt(requestReadEvent.getEntity()));
+		OimOrders order = orderRepository.getById(Integer
+				.parseInt(requestReadEvent.getEntity()));
 		List<OrderDetail> list = new ArrayList<OrderDetail>();
-		for(Iterator<OimOrderDetails> itr = order.getOimOrderDetailses().iterator();itr.hasNext();){
+		for (Iterator<OimOrderDetails> itr = order.getOimOrderDetailses()
+				.iterator(); itr.hasNext();) {
 			OimOrderDetails details = itr.next();
 			list.add(OrderDetail.from(details));
 		}
 		return new ReadCollectionEvent<OrderDetail>(list);
 	}
-	
-	
 
 }
