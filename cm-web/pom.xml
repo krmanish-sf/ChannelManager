@@ -73,13 +73,48 @@
 			<type>jar</type>
 		</dependency>
 	</dependencies>
-	<properties>
-		<spring.version>4.1.4.RELEASE</spring.version>
-		<java.version>1.8</java.version>
-		<hibernate.version>4.3.10.Final</hibernate.version>
-		<downloadSources>true</downloadSources>
-		<downloadJavadocs>true</downloadJavadocs>
-	</properties>
+	<profiles>
+		<profile>
+			<id>live</id>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.apache.tomcat.maven</groupId>
+						<artifactId>tomcat7-maven-plugin</artifactId>
+						<version>2.2</version>
+						<configuration>
+							<path>/admin</path>
+							<port>8080</port>
+							<detail>true</detail>
+							<mode>war</mode>
+							<url>http://vmw06:8080/manager/text</url>
+							<server>vmw06</server>
+						</configuration>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+		<profile>
+			<id>staging</id>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.apache.tomcat.maven</groupId>
+						<artifactId>tomcat7-maven-plugin</artifactId>
+						<version>2.2</version>
+						<configuration>
+							<path>/cm-admin</path>
+							<port>8080</port>
+							<detail>true</detail>
+							<mode>war</mode>
+							<url>http://vma01:8080/manager/text</url>
+							<server>vma01</server>
+						</configuration>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+	</profiles>
 	<build>
 		<finalName>cm-admin</finalName>
 		<plugins>
@@ -98,19 +133,6 @@
 				<version>2.3</version>
 				<configuration>
 					<failOnMissingWebXml>false</failOnMissingWebXml>
-				</configuration>
-			</plugin>
-			<plugin>
-				<groupId>org.apache.tomcat.maven</groupId>
-				<artifactId>tomcat7-maven-plugin</artifactId>
-				<version>2.2</version>
-				<configuration>
-					<path>/admin</path>
-					<port>8080</port>
-					<detail>true</detail>
-					<mode>war</mode>
-					<url>http://vmw06:8080/manager/text</url>
-					<server>vmw06</server>
 				</configuration>
 			</plugin>
 			<plugin>

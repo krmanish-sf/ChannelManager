@@ -5,6 +5,89 @@
 	<packaging>war</packaging>
 	<version>1.0.0</version>
 	<name>cm restful api services</name>
+	<profiles>
+		<profile>
+			<id>live</id>
+			<build>
+				<plugins>
+					<!-- <plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-antrun-plugin</artifactId>
+						<version>1.1</version>
+						<executions>
+							<execution>
+								<phase>compile</phase>
+								<goals>
+									<goal>run</goal>
+								</goals>
+								<configuration>
+									<tasks>
+										<echo>Using config.live.properties</echo>
+										<delete file="${project.build.outputDirectory}/config.properties" />
+										<copy file="src/main/resources/config.live.properties"
+											tofile="${project.build.outputDirectory}/config.properties" />
+									</tasks>
+								</configuration>
+							</execution>
+						</executions>
+					</plugin> -->
+					<plugin>
+						<groupId>org.apache.tomcat.maven</groupId>
+						<artifactId>tomcat7-maven-plugin</artifactId>
+						<version>2.2</version>
+						<configuration>
+							<path>/cm-rest</path>
+							<port>8080</port>
+							<detail>true</detail>
+							<mode>war</mode>
+							<url>http://vmw06:8080/manager/text</url>
+							<server>vmw06</server>
+						</configuration>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+		<profile>
+			<id>staging</id>
+			<build>
+				<plugins>
+					<!-- <plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-antrun-plugin</artifactId>
+						<version>1.1</version>
+						<executions>
+							<execution>
+								<phase>compile</phase>
+								<goals>
+									<goal>run</goal>
+								</goals>
+								<configuration>
+									<tasks>
+										<echo>Using config.staging.properties</echo>
+										<copy file="src/main/resources/config.staging.properties"
+											tofile="${project.build.outputDirectory}/config.properties" />
+									</tasks>
+								</configuration>
+							</execution>
+						</executions>
+					</plugin> -->
+					<plugin>
+						<groupId>org.apache.tomcat.maven</groupId>
+						<artifactId>tomcat7-maven-plugin</artifactId>
+						<version>2.2</version>
+						<configuration>
+							<path>/cm-rest</path>
+							<port>8080</port>
+							<detail>true</detail>
+							<mode>war</mode>
+							<url>http://vma01:8080/manager/text</url>
+							<server>vma01</server>
+						</configuration>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+	</profiles>
 	<build>
 		<finalName>cm-rest</finalName>
 		<plugins>
@@ -25,20 +108,40 @@
 					<failOnMissingWebXml>false</failOnMissingWebXml>
 				</configuration>
 			</plugin>
-			<plugin>
-				<groupId>org.apache.tomcat.maven</groupId>
-				<artifactId>tomcat7-maven-plugin</artifactId>
-				<version>2.2</version>
-				<configuration>
-					<path>/cm-rest</path>
-					<port>8080</port>
-					<detail>true</detail>
-					<mode>war</mode>
-					<url>http://vmw06:8080/manager/text</url>
-					<server>vmw06</server>
-				</configuration>
-			</plugin>
 		</plugins>
+		<pluginManagement>
+			<plugins>
+				<plugin>
+					<groupId>org.eclipse.m2e</groupId>
+					<artifactId>lifecycle-mapping</artifactId>
+					<version>1.0.0</version>
+					<configuration>
+						<lifecycleMappingMetadata>
+							<pluginExecutions>
+								<pluginExecution>
+									<pluginExecutionFilter>
+										<groupId>org.apache.maven.plugins</groupId>
+										<artifactId>maven-antrun-plugin</artifactId>
+										<versionRange>[1.0.0,)</versionRange>
+										<goals>
+											<goal>run</goal>
+										</goals>
+									</pluginExecutionFilter>
+									<action>
+										<execute>
+											<!-- set to true, otherwise changes are not seen, e.g., to a css 
+												file, and you would need to perform a project update each time. -->
+											<runOnIncremental>true</runOnIncremental>
+
+										</execute>
+									</action>
+								</pluginExecution>
+							</pluginExecutions>
+						</lifecycleMappingMetadata>
+					</configuration>
+				</plugin>
+			</plugins>
+		</pluginManagement>
 	</build>
 	<dependencies>
 		<!-- Spring 3 dependencies -->

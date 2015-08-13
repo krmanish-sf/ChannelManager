@@ -11,5 +11,12 @@
 		<module>./cm-rest</module>
 		<module>./cm-web</module>
 	</modules>
+	<properties>
+		<spring.version>4.1.4.RELEASE</spring.version>
+		<java.version>1.8</java.version>
+		<hibernate.version>4.3.10.Final</hibernate.version>
+		<downloadSources>true</downloadSources>
+		<downloadJavadocs>true</downloadJavadocs>
+	</properties>
 	<name>InventorySource Channel Manager</name>
 </project>

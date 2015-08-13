@@ -54,7 +54,6 @@ import salesmachine.oim.suppliers.modal.bf.StatusXML.Status;
 import salesmachine.oim.suppliers.modal.bf.Trackxml;
 import salesmachine.oim.suppliers.modal.bf.Trackxml.Tracking;
 import salesmachine.oim.suppliers.modal.bf.Trackxmlresp;
-import salesmachine.util.OimLogStream;
 import salesmachine.util.StringHandle;
 
 public class BF extends Supplier implements HasTracking {

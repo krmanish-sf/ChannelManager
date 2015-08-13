@@ -938,6 +938,7 @@ public class HonestGreen extends Supplier implements HasTracking {
 			throw new IllegalArgumentException(
 					"trackingMeta is expected to be a String value containing UNFI Order number.");
 		OrderStatus orderStatus = new OrderStatus();
+		orderStatus.setStatus("Sent to supplier.");
 		// getting item sku by which we can distinguish that this item can be
 		// track from hva or phi location.
 		Session session = SessionManager.currentSession();
