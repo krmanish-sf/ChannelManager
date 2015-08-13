@@ -176,7 +176,7 @@ div.flot-x-axis>div.flot-tick-label {
 							success : function(data, textStatus, jqXHR) {
 								$("#tasks").empty();
 								$("#tasks1").empty();
-								$("#tasks2").empty();
+								//$("#tasks2").empty();
 								var productsales = data.productsales;
 								var suppliersales = data.suppliersales;
 								var channelsales = data.channelsales;
@@ -199,14 +199,30 @@ div.flot-x-axis>div.flot-tick-label {
 									$(row).appendTo("#tasks1");
 								}
 								var prodSalesPieData = [];
-								for (var i = 0; i < productsales.length; i++) {
-									var row = '<li class="item-orange clearfix"><label class="inline"> <span>'
-											+ productsales[i].sku
-											+ '</span> </label><div class="pull-right">$'
-											+ productsales[i].totalSales
-											+ '</div></li>';
-									$(row).appendTo("#tasks2");
-								}
+// 								for (var i = 0; i < productsales.length; i++) {
+// 									var row = '<li class="item-orange clearfix"><label class="inline"> <span>'
+// 											+ productsales[i].sku
+// 											+ '</span> </label><div class="pull-right">$'
+// 											+ productsales[i].totalSales
+// 											+ '</div></li>';
+// 									$(row).appendTo("#tasks2");
+// 								}
+									$('#tasks2').DataTable({
+										 	"data": productsales,
+										 	"bDestroy": true,
+										  	"deferRender": true,
+										  "columns": [
+										              { "data": "sku", 
+														 "sWidth" : "20%",
+														 "sClass": "alignJustify"
+										              }, 
+										             {
+										            	  "data": "totalSales",
+														"sWidth" : "20%",
+														"sClass": "totalSales"
+													 }
+										            ]
+									});
 
 								$(this).drawLineChart('sales-charts', data,
 										'formatSalesData');
