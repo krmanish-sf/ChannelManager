@@ -207,22 +207,7 @@ div.flot-x-axis>div.flot-tick-label {
 // 											+ '</div></li>';
 // 									$(row).appendTo("#tasks2");
 // 								}
-									$('#tasks2').DataTable({
-										 	"data": productsales,
-										 	"bDestroy": true,
-										  	"deferRender": true,
-										  "columns": [
-										              { "data": "sku", 
-														 "sWidth" : "20%",
-														 "sClass": "alignJustify"
-										              }, 
-										             {
-										            	  "data": "totalSales",
-														"sWidth" : "20%",
-														"sClass": "totalSales"
-													 }
-										            ]
-									});
+									drawSalesReportTable(productsales);
 
 								$(this).drawLineChart('sales-charts', data,
 										'formatSalesData');
@@ -300,6 +285,19 @@ div.flot-x-axis>div.flot-tick-label {
 		for (var i = 0; i < data.overAllSales.length; i++) {
 			salesData.push(data.overAllSales[i]);
 		}
+	}
+	function drawSalesReportTable(data) {
+		 
+		var table = $('#tasks2').DataTable();
+		table.clear().draw();
+		for (var i = 0; i < data.length; i++) {
+			drawRow(data[i]);		
+		}
+ 	}
+ function drawRow(rowData) {
+		var t = $('#tasks2').DataTable();
+		t.row.add(
+				[ rowData.sku,"$"+rowData.totalSales]).draw();
 	}
 </script>
 	</jsp:attribute>

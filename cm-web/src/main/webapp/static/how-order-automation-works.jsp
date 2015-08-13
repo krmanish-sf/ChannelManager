@@ -65,6 +65,7 @@
 											<div class="pull-right">
 												<a href="#process">Read More</a>
 											</div>
+											<br><br><br>
 										</div>
 									</div>
 								</div>
@@ -91,6 +92,7 @@
 											<div class="pull-right">
 												<a href="#analyze">Read More</a>
 											</div>
+											<br><br>
 										</div>
 									</div>
 								</div>
