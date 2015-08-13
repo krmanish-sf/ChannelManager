@@ -289,4 +289,9 @@
 		</pluginRepository>
 	</pluginRepositories>
 
+	<parent>
+		<groupId>com.is.cm</groupId>
+		<artifactId>isource-cm</artifactId>
+		<version>1.0</version>
+	</parent>
 </project>
