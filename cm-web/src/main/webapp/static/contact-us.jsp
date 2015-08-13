@@ -32,10 +32,11 @@
 												role="form">
 												<input type="hidden" name="cmd" value="contactus">
 												<div class="form-group">
-													<label class="col-sm-12 control-label no-padding-right">
-														<font color="green">${processed}</font>
+													<label class="col-sm-9 pull-right">
+														<font color="red">${message}</font>
 													</label>
 												</div>
+												
 												<div class="form-group">
 													<label for="name"
 														class="col-sm-3 control-label no-padding-right">
@@ -79,6 +80,11 @@
 															
 														
 													</div>
+												</div>
+												<div class="form-group">
+													<label class="col-sm-9 pull-right">
+														<font color="red">All fields are mandatory</font>
+													</label>
 												</div>
 											</form>
 										</div>

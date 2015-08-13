@@ -222,6 +222,7 @@ If you have not yet configured your supplier, click "Add Supplier" to do it now.
                         <form class="form-horizontal" role="form"
 												action="aggregators/suppliers/updateHG" method="PUT"
 												id="supplierformHG">
+						<div id="accordion" class="accordion-style1 panel-group">
                            	<div class="panel panel-default honestGreen-settings hide">
 									<div class="panel-heading">
 										<h4 class="panel-title">
@@ -265,8 +266,10 @@ If you have not yet configured your supplier, click "Add Supplier" to do it now.
 				                            </div>
 																</div>
 				                            <div class="form-group">
+				                             <div class="col-sm-5">
 				                              <label
-																		class="col-sm-5 control-label no-padding-right">Account</label>
+																		class="col-sm-offset-8 control-label no-padding-right">Account</label>
+											</div>
 				                              <div class="col-sm-7">
 				                              <input class="width-70" name="phi-accountno"
 																			type="text" data-bind-vendorsupplier="customMapper:oimSuppliers.oimSupplierMethodses[oimSupplierMethodTypes.methodTypeId=3].oimSupplierMethodattrValueses[oimSupplierMethodattrNames.attrId=9].attributeValue" />
@@ -320,8 +323,10 @@ If you have not yet configured your supplier, click "Add Supplier" to do it now.
 				                            </div>
 																</div>
 				                            <div class="form-group">
+				                             <div class="col-sm-5">
 				                              <label
-																		class="col-sm-5 control-label no-padding-right">Account</label>
+																		class="col-sm-offset-8 control-label no-padding-right">Account</label>
+											</div>
 				                              <div class="col-sm-7">
 				                              <input class="width-70" name="hva-accountno"
 																			type="text" data-bind-vendorsupplier="customMapper:oimSuppliers.oimSupplierMethodses[oimSupplierMethodTypes.methodTypeId=4].oimSupplierMethodattrValueses[oimSupplierMethodattrNames.attrId=9].attributeValue" />
@@ -330,6 +335,7 @@ If you have not yet configured your supplier, click "Add Supplier" to do it now.
 										</div>
 							</div>
 					</div>
+					<br>
 					 <div class="form-group">
                               <label
 														class="col-sm-5 control-label no-padding-right">Test Mode</label>
@@ -346,7 +352,7 @@ If you have not yet configured your supplier, click "Add Supplier" to do it now.
 														id="updateHG" type="button"> <i class="icon-ok "></i>Update</button>
                             </div>
                          
-                         
+                      </div>   
                         </form>
                         <!-- PAGE CONTENT BEGINS --> 
                         
@@ -386,11 +392,12 @@ If you have not yet configured your supplier, click "Add Supplier" to do it now.
                               </select>
                             </div>
 						</div>
+						<div id="accordion2" class="accordion-style1 panel-group honestGreen-settings hide">
 						<div class="panel panel-default honestGreen-settings hide">
 									<div class="panel-heading">
 										<h4 class="panel-title">
 											<a class="accordion-toggle collapsed" data-toggle="collapse"
-												data-parent="#accordion" href="#collapseOne"> <i
+												data-parent="#accordion2" href="#collapseOne"> <i
 												class="icon-angle-right bigger-110"
 												data-icon-hide="icon-angle-down"
 												data-icon-show="icon-angle-right"></i> &nbsp;PHI Details
@@ -429,8 +436,10 @@ If you have not yet configured your supplier, click "Add Supplier" to do it now.
 				                            </div>
 																</div>
 				                            <div class="form-group">
+				                             <div class="col-sm-5">
 				                              <label
-																		class="col-sm-5 control-label no-padding-right">Account</label>
+																		class="col-sm-offset-8 control-label no-padding-right">Account</label>
+											</div>
 				                              <div class="col-sm-7">
 				                              <input class="width-70" name="phi-accountno"
 																			type="text" value="" required />
@@ -445,7 +454,7 @@ If you have not yet configured your supplier, click "Add Supplier" to do it now.
 							<div class="panel-heading">
 								<h4 class="panel-title">
 									<a class="accordion-toggle collapsed" data-toggle="collapse"
-												data-parent="#accordion" href="#collapseTwo"> <i
+												data-parent="#accordion2" href="#collapseTwo"> <i
 												class="icon-angle-right bigger-110"
 												data-icon-hide="icon-angle-down"
 												data-icon-show="icon-angle-right"></i> &nbsp;HVA Details
@@ -484,8 +493,10 @@ If you have not yet configured your supplier, click "Add Supplier" to do it now.
 				                            </div>
 																</div>
 				                            <div class="form-group">
+				                             <div class="col-sm-5">
 				                              <label
-																		class="col-sm-5 control-label no-padding-right">Account</label>
+																		class="col-sm-offset-8 control-label no-padding-right">Account</label>
+											</div>
 				                              <div class="col-sm-7">
 				                              <input class="width-70" name="hva-accountno"
 																			type="text" value="" required />
@@ -495,7 +506,7 @@ If you have not yet configured your supplier, click "Add Supplier" to do it now.
 							</div>
 					</div>
 						
-						
+					</div>	
 						
 												 <div class="form-group supplier-class" id="customname">
                             <div class="col-sm-5">
@@ -544,6 +555,7 @@ If you have not yet configured your supplier, click "Add Supplier" to do it now.
 															name="defshippingmc" type="text" value="" required />
                             </div>
 												</div>
+							<br>
                             <div class="form-group">
                               <label
 														class="col-sm-5 control-label no-padding-right">Test Mode</label>

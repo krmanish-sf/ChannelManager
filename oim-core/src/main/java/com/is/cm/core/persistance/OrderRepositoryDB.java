@@ -1069,6 +1069,7 @@ public class OrderRepositoryDB extends RepositoryBase implements
 		Criteria orderDetailCriteria = currentSession
 				.createCriteria(OimOrderDetailsMods.class)
 				.add(Restrictions.eq("detailId", orderDetailId))
+				.add(Restrictions.ne("operation","null "))
 				.addOrder(org.hibernate.criterion.Order.asc("insertionTm"));
 		List<OrderDetailMod> modList = new ArrayList<OrderDetailMod>();
 		for (OimOrderDetailsMods mods : (List<OimOrderDetailsMods>) orderDetailCriteria
