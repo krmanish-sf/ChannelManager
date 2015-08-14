@@ -6,6 +6,9 @@ import java.util.Map;
 import salesmachine.hibernatedb.OimOrderDetails;
 import salesmachine.hibernatedb.OimOrders;
 import salesmachine.oim.stores.modal.shop.order.CCTRANSMISSION;
+import salesmachine.oim.suppliers.exception.SupplierCommunicationException;
+import salesmachine.oim.suppliers.exception.SupplierConfigurationException;
+import salesmachine.oim.suppliers.exception.SupplierOrderException;
 
 import com.is.cm.core.domain.Order;
 import com.is.cm.core.domain.OrderDetail;
@@ -33,7 +36,7 @@ public interface OrderRepository {
 
 	List<Order> findUnresolvedOrders();
 
-	boolean processOrders(Order order);
+	boolean processOrders(Order order) throws SupplierConfigurationException, SupplierCommunicationException, SupplierOrderException;
 
 	List<Order> find(Map<String, String> map);
 

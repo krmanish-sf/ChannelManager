@@ -36,6 +36,9 @@ import salesmachine.oim.stores.modal.shop.order.CCORDER;
 import salesmachine.oim.stores.modal.shop.order.CCTRANSMISSION;
 import salesmachine.oim.stores.modal.shop.order.ITEMS;
 import salesmachine.oim.suppliers.OimSupplierOrderPlacement;
+import salesmachine.oim.suppliers.exception.SupplierCommunicationException;
+import salesmachine.oim.suppliers.exception.SupplierConfigurationException;
+import salesmachine.oim.suppliers.exception.SupplierOrderException;
 import salesmachine.util.StateCodeProperty;
 import salesmachine.util.StringHandle;
 
@@ -601,7 +604,9 @@ public class OrderRepositoryDB extends RepositoryBase implements
 	}
 
 	@Override
-	public boolean processOrders(Order order) {
+	public boolean processOrders(Order order)
+			throws SupplierConfigurationException,
+			SupplierCommunicationException, SupplierOrderException {
 		Session dbSession = SessionManager.currentSession();
 		OimSupplierOrderPlacement osop = new OimSupplierOrderPlacement(
 				dbSession);
@@ -935,18 +940,18 @@ public class OrderRepositoryDB extends RepositoryBase implements
 						.getCUPHONE());
 				order.setDeliveryState(ccorder.getSHIPPINGLABEL().getADDRESS()
 						.getADSTATE());
-//				order.setDeliveryStateCode(ccorder.getSHIPPINGLABEL().getADDRESS()
-//						.getADSTATE());
-				if (ccorder.getSHIPPINGLABEL().getADDRESS()
-						.getADSTATE().length() == 2) {
-					order.setDeliveryStateCode(ccorder.getSHIPPINGLABEL().getADDRESS()
-							.getADSTATE());
+				// order.setDeliveryStateCode(ccorder.getSHIPPINGLABEL().getADDRESS()
+				// .getADSTATE());
+				if (ccorder.getSHIPPINGLABEL().getADDRESS().getADSTATE()
+						.length() == 2) {
+					order.setDeliveryStateCode(ccorder.getSHIPPINGLABEL()
+							.getADDRESS().getADSTATE());
 				} else {
 					String stateCode = validateAndGetStateCode(order);
-					if (stateCode != "") 
-						order.setDeliveryStateCode(stateCode); 
+					if (stateCode != "")
+						order.setDeliveryStateCode(stateCode);
 				}
-				
+
 				order.setDeliveryStreetAddress(ccorder.getSHIPPINGLABEL()
 						.getADDRESS().getADADDRESS1());
 				order.setDeliverySuburb(ccorder.getSHIPPINGLABEL().getADDRESS()
@@ -1069,7 +1074,7 @@ public class OrderRepositoryDB extends RepositoryBase implements
 		Criteria orderDetailCriteria = currentSession
 				.createCriteria(OimOrderDetailsMods.class)
 				.add(Restrictions.eq("detailId", orderDetailId))
-				.add(Restrictions.ne("operation","null "))
+				.add(Restrictions.ne("operation", "null "))
 				.addOrder(org.hibernate.criterion.Order.asc("insertionTm"));
 		List<OrderDetailMod> modList = new ArrayList<OrderDetailMod>();
 		for (OimOrderDetailsMods mods : (List<OimOrderDetailsMods>) orderDetailCriteria
@@ -1079,12 +1084,13 @@ public class OrderRepositoryDB extends RepositoryBase implements
 		}
 		return modList;
 	}
-	
+
 	protected String validateAndGetStateCode(OimOrders order) {
-		LOG.info("Getting state code for - {}",order.getDeliveryState());
-		String stateCode = StateCodeProperty.getProperty(order.getDeliveryState());
+		LOG.info("Getting state code for - {}", order.getDeliveryState());
+		String stateCode = StateCodeProperty.getProperty(order
+				.getDeliveryState());
 		stateCode = StringHandle.removeNull(stateCode);
-		LOG.info("state code for {} is {}",order.getDeliveryState(),stateCode);
+		LOG.info("state code for {} is {}", order.getDeliveryState(), stateCode);
 		return stateCode;
 	}
 }

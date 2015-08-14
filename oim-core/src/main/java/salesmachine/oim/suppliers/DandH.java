@@ -28,7 +28,6 @@ import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
 
-import org.hibernate.HibernateException;
 import org.hibernate.Session;
 import org.hibernate.criterion.Restrictions;
 import org.slf4j.Logger;
@@ -80,9 +79,14 @@ public class DandH extends Supplier implements HasTracking {
 	 *            Order vendor supplier
 	 * @param orders
 	 *            list of orders containing order info.
+	 * @throws SupplierOrderException
+	 * @throws SupplierCommunicationException
+	 * @throws SupplierConfigurationException
 	 */
 
-	public void sendOrders(Integer vendorId, OimVendorSuppliers ovs, List orders) {
+	public void sendOrders(Integer vendorId, OimVendorSuppliers ovs, List orders)
+			throws SupplierConfigurationException,
+			SupplierCommunicationException, SupplierOrderException {
 		logStream.println("Started sending orders to DandH");
 
 		// populate orderSkuPrefixMap with channel id and the prefix to be used
@@ -99,13 +103,9 @@ public class DandH extends Supplier implements HasTracking {
 			createAndPostXMLRequest(orders, getFileFieldMap(),
 					new StandardFileSpecificsProvider(session, ovs, v), ovs,
 					vendorId, r);
-		} catch (HibernateException e) {
-			log.error(e.getLocalizedMessage(), e);
-
 		} catch (RuntimeException e1) {
 			log.error("Error in sending orders", e1);
-
-			updateVendorSupplierOrderHistory(vendorId, ovs,
+			updateVendorSupplierOrderHistory(vendorId, ovs.getOimSuppliers(),
 					"Error in sending orders", ERROR_ORDER_PROCESSING);
 		}
 	}
@@ -138,7 +138,8 @@ public class DandH extends Supplier implements HasTracking {
 	private void createAndPostXMLRequest(List orders,
 			List<OimFileFieldMap> fileFieldMaps,
 			IFileSpecificsProvider fileSpecifics, OimVendorSuppliers ovs,
-			Integer vendorId, Reps r) {
+			Integer vendorId, Reps r) throws SupplierConfigurationException,
+			SupplierCommunicationException, SupplierOrderException {
 		String USERID = ovs.getLogin();
 		String PASSWORD = ovs.getPassword();
 		String lincenceKey = ovs.getAccountNumber();
@@ -248,8 +249,10 @@ public class DandH extends Supplier implements HasTracking {
 				} catch (RuntimeException e) {
 					log.error(e.getMessage(), e);
 					String message = "Error in posting order";
-					updateVendorSupplierOrderHistory(vendorId, ovs, message
-							+ ": " + e.getMessage(), ERROR_ORDER_PROCESSING);
+					updateVendorSupplierOrderHistory(vendorId,
+							ovs.getOimSuppliers(),
+							message + ": " + e.getMessage(),
+							ERROR_ORDER_PROCESSING);
 					failedOrders.add(detail.getDetailId());
 					detail.setSupplierOrderStatus(message);
 					Session session = SessionManager.currentSession();
@@ -273,18 +276,6 @@ public class DandH extends Supplier implements HasTracking {
 				xmlResponse = postRequest(xmlRequest, r);
 			} catch (RuntimeException e) {
 				log.error(e.getMessage(), e);
-			} catch (SupplierConfigurationException e) {
-				log.error(e.getMessage(), e);
-				updateVendorSupplierOrderHistory(vendorId, ovs, e.getMessage(),
-						ERROR_UNCONFIGURED_SUPPLIER);
-			} catch (SupplierCommunicationException e) {
-				log.error(e.getMessage(), e);
-				updateVendorSupplierOrderHistory(vendorId, ovs, e.getMessage(),
-						ERROR_PING_FAILURE);
-			} catch (SupplierOrderException e) {
-				log.error(e.getMessage(), e);
-				updateVendorSupplierOrderHistory(vendorId, ovs, e.getMessage(),
-						ERROR_ORDER_PROCESSING);
 			}
 			String orderMessage = "";
 			if (xmlResponse == null) {
@@ -388,7 +379,7 @@ public class DandH extends Supplier implements HasTracking {
 				}
 				updateVendorSupplierOrderHistory(
 						vendorId,
-						ovs,
+						ovs.getOimSuppliers(),
 						orderMessage,
 						orderMessage.contains("login") ? ERROR_UNCONFIGURED_SUPPLIER
 								: ERROR_ORDER_PROCESSING);

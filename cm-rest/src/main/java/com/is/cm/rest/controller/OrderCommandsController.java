@@ -15,6 +15,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import salesmachine.oim.suppliers.exception.SupplierCommunicationException;
+import salesmachine.oim.suppliers.exception.SupplierConfigurationException;
+import salesmachine.oim.suppliers.exception.SupplierOrderException;
+
 import com.is.cm.core.domain.Order;
 import com.is.cm.core.domain.OrderDetail;
 import com.is.cm.core.event.UpdateEvent;
@@ -74,7 +78,9 @@ public class OrderCommandsController {
 
 	@RequestMapping(method = { RequestMethod.POST }, value = "/processed/{orderId}")
 	public ResponseEntity<Order> processOrder(@RequestBody Order order,
-			UriComponentsBuilder builder, @PathVariable int orderId) {
+			UriComponentsBuilder builder, @PathVariable int orderId)
+			throws SupplierConfigurationException,
+			SupplierCommunicationException, SupplierOrderException {
 		UpdatedEvent<Order> event = orderService
 				.processOrder(new UpdateEvent<Order>(orderId, order));
 		if (event.isUpdateCompleted()) {
@@ -84,22 +90,24 @@ public class OrderCommandsController {
 					HttpStatus.FORBIDDEN);
 		}
 	}
+
 	@RequestMapping(method = { RequestMethod.GET }, value = "/processed/ifs/{orderId}")
 	public ResponseEntity<Order> processOrderForIFS(
 			UriComponentsBuilder builder, @PathVariable int orderId) {
-		
-//		UpdatedEvent<Order> event = orderService
-//				.processOrder(new UpdateEvent<Order>(orderId, order));
-//		if (event.isUpdateCompleted()) {
-//			return new ResponseEntity<Order>(event.getEntity(), HttpStatus.OK);
-//		} else {
-//			return new ResponseEntity<Order>(event.getEntity(),
-//					HttpStatus.FORBIDDEN);
-//		}
-		
+
+		// UpdatedEvent<Order> event = orderService
+		// .processOrder(new UpdateEvent<Order>(orderId, order));
+		// if (event.isUpdateCompleted()) {
+		// return new ResponseEntity<Order>(event.getEntity(), HttpStatus.OK);
+		// } else {
+		// return new ResponseEntity<Order>(event.getEntity(),
+		// HttpStatus.FORBIDDEN);
+		// }
+
 		LOG.info("processOrderForIFS called..................................");
 		return null;
 	}
+
 	@RequestMapping(method = { RequestMethod.POST }, value = "/processed/bulk/{action}")
 	public ResponseEntity<List<Order>> processOrder(
 			@PathVariable String action, @RequestBody List<Integer> orders) {

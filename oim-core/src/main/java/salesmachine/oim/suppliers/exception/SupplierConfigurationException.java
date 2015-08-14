@@ -1,12 +1,18 @@
 package salesmachine.oim.suppliers.exception;
 
-import java.net.MalformedURLException;
-
 public class SupplierConfigurationException extends Exception {
+	private static final String MSG = "Supplier configuration information invalid.";
 
-	public SupplierConfigurationException(String message,
-			MalformedURLException e) {
-		super(message, e);
+	public SupplierConfigurationException() {
+		super(MSG);
+	}
+
+	public SupplierConfigurationException(String message) {
+		super(message);
+	}
+
+	public SupplierConfigurationException(String message, Throwable cause) {
+		super(message, cause);
 	}
 
 	private static final long serialVersionUID = 1L;

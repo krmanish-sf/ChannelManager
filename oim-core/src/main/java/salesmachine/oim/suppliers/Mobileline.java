@@ -270,8 +270,9 @@ public class Mobileline extends Supplier {
 								.next();
 						failedOrders.add(detail.getDetailId());
 					}
-					updateVendorSupplierOrderHistory(vendorId, ovs,
-							answer.toString(), ERROR_ORDER_PROCESSING);
+					updateVendorSupplierOrderHistory(vendorId,
+							ovs.getOimSuppliers(), answer.toString(),
+							ERROR_ORDER_PROCESSING);
 				}
 
 			} catch (MalformedURLException ex) {

@@ -4,6 +4,9 @@ import java.util.List;
 import java.util.Map;
 
 import salesmachine.oim.stores.modal.shop.order.CCTRANSMISSION;
+import salesmachine.oim.suppliers.exception.SupplierCommunicationException;
+import salesmachine.oim.suppliers.exception.SupplierConfigurationException;
+import salesmachine.oim.suppliers.exception.SupplierOrderException;
 
 import com.is.cm.core.domain.Order;
 import com.is.cm.core.domain.OrderDetail;
@@ -36,12 +39,16 @@ public interface OrderService {
 
 	ReadCollectionEvent<Order> findOrderByStatus(RequestReadEvent<String> event);
 
-	UpdatedEvent<Order> processOrder(UpdateEvent<Order> event);
+	UpdatedEvent<Order> processOrder(UpdateEvent<Order> event)
+			throws SupplierConfigurationException,
+			SupplierCommunicationException, SupplierOrderException;
 
 	ReadCollectionEvent<Order> find(
 			RequestReadEvent<Map<String, String>> requestReadEvent);
 
-	UpdatedEvent<List<Order>> bulkProcessOrder(UpdateEvent<List<Order>> event);
+	UpdatedEvent<List<Order>> bulkProcessOrder(UpdateEvent<List<Order>> event)
+			throws SupplierConfigurationException,
+			SupplierCommunicationException, SupplierOrderException;
 
 	UpdatedEvent<List<Order>> bulkProcessOrder1(String status,
 			UpdateEvent<List<Integer>> event);
@@ -52,9 +59,8 @@ public interface OrderService {
 
 	ReadCollectionEvent<OrderDetailMod> getOrderDetailModifications(
 			ReadEvent<OrderDetailMod> readEvent);
-	
+
 	ReadCollectionEvent<OrderDetail> getOrderDetailByOrderId(
 			ReadEvent<String> requestReadEvent);
-	
 
 }
