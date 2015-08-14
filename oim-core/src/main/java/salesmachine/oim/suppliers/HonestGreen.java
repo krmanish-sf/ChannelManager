@@ -48,6 +48,8 @@ import salesmachine.oim.api.OimConstants;
 import salesmachine.oim.stores.api.IOrderImport;
 import salesmachine.oim.stores.exception.ChannelConfigurationException;
 import salesmachine.oim.stores.impl.OrderImportManager;
+import salesmachine.oim.suppliers.exception.SupplierCommunicationException;
+import salesmachine.oim.suppliers.exception.SupplierConfigurationException;
 import salesmachine.oim.suppliers.modal.OrderStatus;
 import salesmachine.oim.suppliers.modal.hg.TrackingData;
 import salesmachine.util.OimLogStream;
@@ -86,7 +88,9 @@ public class HonestGreen extends Supplier implements HasTracking {
 	}
 
 	@Override
-	public void sendOrders(Integer vendorId, OimVendorSuppliers ovs, List orders) {
+	public void sendOrders(Integer vendorId, OimVendorSuppliers ovs, List orders)
+			throws SupplierCommunicationException,
+			SupplierConfigurationException {
 		log.info("Sending orders of Account: {}", ovs.getAccountNumber());
 		if (ovs.getTestMode().equals(1))
 			return;
@@ -194,12 +198,11 @@ public class HonestGreen extends Supplier implements HasTracking {
 								sendEmail(emailContent, ftpDetails, fileName,
 										r.getLogin());
 							}
-						} catch (Exception e) {
+						} catch (RuntimeException e) {
 							log.error(
 									"could not connect to ftp server {} for user {} for HVA.",
 									ftpDetails.getUrl(),
 									ftpDetails.getUserName());
-							e.printStackTrace();
 						}
 
 					}
@@ -438,7 +441,7 @@ public class HonestGreen extends Supplier implements HasTracking {
 					}
 					// ***************************************************
 
-				} catch (Exception e) {
+				} catch (RuntimeException e) {
 					log.error(e.getMessage(), e);
 				}
 				// if (emailNotification) {
@@ -511,7 +514,9 @@ public class HonestGreen extends Supplier implements HasTracking {
 	}
 
 	private void sendToFTP(String fileName, OimVendorSuppliers ovs,
-			FtpDetails ftpDetails, boolean isHva, boolean isPhi) {
+			FtpDetails ftpDetails, boolean isHva, boolean isPhi)
+			throws SupplierCommunicationException,
+			SupplierConfigurationException {
 		FTPClient ftp = new FTPClient();
 		File file = new File(fileName);
 		try {
@@ -523,11 +528,11 @@ public class HonestGreen extends Supplier implements HasTracking {
 			ftp.put(fileName, file.getName());
 			ftp.quit();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			log.error(e.getMessage(), e);
+			throw new SupplierCommunicationException(e.getMessage(), e);
 		} catch (FTPException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			log.error(e.getMessage(), e);
+			throw new SupplierConfigurationException(e.getMessage(), e);
 		}
 	}
 

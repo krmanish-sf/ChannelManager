@@ -767,6 +767,8 @@ public class ReportRepositoryDB extends RepositoryBase implements
 			if (oimOrders.getOimOrderDetailses() != null) {
 				firstSupplier = null;
 				isUnresolved = false;
+				if (oimOrders.getDeliveryStateCode() == null)
+					isUnresolved = true;
 				Set<OimOrderDetails> listDetails = oimOrders
 						.getOimOrderDetailses();
 				for (OimOrderDetails details : listDetails) {

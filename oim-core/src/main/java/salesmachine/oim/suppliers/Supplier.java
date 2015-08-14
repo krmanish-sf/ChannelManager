@@ -26,6 +26,7 @@ import salesmachine.hibernatedb.OimVendorSuppliers;
 import salesmachine.hibernatedb.OimVendorsuppOrderhistory;
 import salesmachine.hibernatedb.Vendors;
 import salesmachine.hibernatehelper.SessionManager;
+import salesmachine.oim.stores.exception.ChannelConfigurationException;
 import salesmachine.oim.suppliers.exception.SupplierCommunicationException;
 import salesmachine.oim.suppliers.exception.SupplierConfigurationException;
 import salesmachine.oim.suppliers.exception.SupplierOrderException;
@@ -60,7 +61,8 @@ public abstract class Supplier {
 
 	public abstract void sendOrders(Integer vendorId, OimVendorSuppliers ovs,
 			List orders) throws SupplierConfigurationException,
-			SupplierCommunicationException, SupplierOrderException;
+			SupplierCommunicationException, SupplierOrderException,
+			ChannelConfigurationException;
 
 	protected String getUSStateFullName(String stateCode) {
 		if (stateCodeMapping.containsKey(stateCode))

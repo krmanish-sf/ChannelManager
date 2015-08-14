@@ -82,7 +82,9 @@ public class BF extends Supplier implements HasTracking {
 	private Reps r;
 
 	@Override
-	public void sendOrders(Integer vendorId, OimVendorSuppliers ovs, List orders) {
+	public void sendOrders(Integer vendorId, OimVendorSuppliers ovs, List orders)
+			throws SupplierConfigurationException, SupplierOrderException,
+			SupplierCommunicationException, ChannelConfigurationException {
 		log.info("Started sending orders to BnF USA");
 		// populate orderSkuPrefixMap with channel id and the prefix to be used
 		// for the given supplier.
@@ -96,9 +98,9 @@ public class BF extends Supplier implements HasTracking {
 			createAndPostXMLRequest(orders, getFileFieldMap(),
 					new StandardFileSpecificsProvider(session, ovs, v), ovs,
 					vendorId, r);
-		} catch (Exception e1) {
+		} catch (RuntimeException e1) {
 			log.error("Error in sending order ", e1);
-			throw new RuntimeException(e1);
+			throw new SupplierOrderException(e1.getMessage(), e1);
 		}
 	}
 

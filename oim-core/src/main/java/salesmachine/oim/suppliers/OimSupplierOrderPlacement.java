@@ -488,6 +488,13 @@ public class OimSupplierOrderPlacement {
 								Supplier.ERROR_ORDER_PROCESSING);
 						log.error(e.getMessage(), e);
 						throw e;
+					} catch (ChannelConfigurationException e) {
+						log.error(e.getMessage(), e);
+						Supplier.updateVendorSupplierOrderHistory(
+								vendorId,
+								ovs.getOimSuppliers(),
+								"Error occured in updating store order status due to ChannelConfiguration Error.",
+								Supplier.ERROR_ORDER_PROCESSING);
 					}
 				} else {
 					log.debug("Unknown Supplier Id: " + supplierId);
