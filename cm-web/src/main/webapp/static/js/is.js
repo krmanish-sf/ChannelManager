@@ -648,17 +648,26 @@ function evalArray(obj, expr) {
 
 									var prodSalesPieData = [];
 									for (var i = 0; i < productsales.length; i++) {
-										var row = '<li class="item-orange clearfix"><label class="inline"> <span>'
-												+ productsales[i].sku
-												+ '</span> </label><div class="pull-right">$'
-												+ productsales[i].totalSales
-												+ '</div></li>';
-										$(row).appendTo("#tasks2");
 										prodSalesPieData.push({
 											label : productsales[i].sku,
 											data : productsales[i].totalSales
 										});
 									}
+									drawSalesReportTable(productsales);
+									function drawSalesReportTable(data) {
+										var table = $('#tasks2').DataTable();
+										table.clear().draw();
+										for (var i = 0; i < data.length; i++) {
+											t.row
+													.add(
+															[
+																	data[i].sku,
+																	"$"
+																			+ data[i].totalSales ])
+													.draw();
+										}
+									}
+
 									$(
 											'#unprocessedCount span.infobox-data-number')
 											.html(
