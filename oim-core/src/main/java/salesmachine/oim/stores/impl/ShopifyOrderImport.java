@@ -158,10 +158,11 @@ public class ShopifyOrderImport extends ChannelBase implements IOrderImport {
 		Transaction tx = m_dbSession.getTransaction();
 		HttpClient client = new HttpClient();
 		String requestUrl = null;
-		if (getMaxStoreOrderId() != null) {
-			log.info("Max store id -- ", getMaxStoreOrderId());
+		Integer maxStoreID = getMaxStoreOrderId();
+		if (maxStoreID != null) {
+			log.info("Max store id -- ", maxStoreID);
 			requestUrl = storeUrl + "/admin/orders.json?since_id="
-					+ getMaxStoreOrderId();
+					+ maxStoreID;
 		} else {
 			requestUrl = storeUrl + "/admin/orders.json";
 		}
@@ -435,7 +436,7 @@ public class ShopifyOrderImport extends ChannelBase implements IOrderImport {
 		log.info("Max store order id -- {}", maxStoreOrderId);
 
 		return maxStoreOrderId == null ? null : Integer
-				.getInteger(maxStoreOrderId);
+				.parseInt(maxStoreOrderId);
 
 	}
 
