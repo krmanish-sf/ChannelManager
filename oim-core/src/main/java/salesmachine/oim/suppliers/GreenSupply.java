@@ -26,8 +26,13 @@ import salesmachine.hibernatedb.Reps;
 import salesmachine.hibernatedb.Vendors;
 import salesmachine.hibernatehelper.SessionManager;
 import salesmachine.oim.stores.api.IOrderImport;
+import salesmachine.oim.stores.exception.ChannelCommunicationException;
 import salesmachine.oim.stores.exception.ChannelConfigurationException;
+import salesmachine.oim.stores.exception.ChannelOrderFormatException;
 import salesmachine.oim.stores.impl.OrderImportManager;
+import salesmachine.oim.suppliers.exception.SupplierCommunicationException;
+import salesmachine.oim.suppliers.exception.SupplierConfigurationException;
+import salesmachine.oim.suppliers.exception.SupplierOrderException;
 import salesmachine.oim.suppliers.modal.OrderStatus;
 import salesmachine.util.OimLogStream;
 import salesmachine.util.StringHandle;
@@ -42,7 +47,11 @@ public class GreenSupply extends Supplier {
 	private static final String COMMA = ",";
 
 	@Override
-	public void sendOrders(Integer vendorId, OimVendorSuppliers ovs, List orders) {
+	public void sendOrders(Integer vendorId, OimVendorSuppliers ovs, List orders)
+			throws SupplierConfigurationException,
+			SupplierCommunicationException, SupplierOrderException,
+			ChannelConfigurationException, ChannelCommunicationException,
+			ChannelOrderFormatException {
 		log.info("Sending orders of Account: {}", ovs.getAccountNumber());
 		if (ovs.getTestMode().equals(1))
 			return;
@@ -142,7 +151,8 @@ public class GreenSupply extends Supplier {
 
 	private String createOrderFile(List orders, OimVendorSuppliers ovs,
 			List<OimFileFieldMap> fileFieldMaps,
-			IFileSpecificsProvider fileSpecifics) {
+			IFileSpecificsProvider fileSpecifics)
+			throws ChannelCommunicationException, ChannelOrderFormatException {
 
 		SimpleDateFormat sdf = new SimpleDateFormat("yyMMddHHmm");
 		String uploadfilename = "GS_" + ovs.getAccountNumber() + "_"

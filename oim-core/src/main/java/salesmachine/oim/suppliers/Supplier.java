@@ -12,6 +12,7 @@ import java.util.StringTokenizer;
 
 import org.hibernate.Query;
 import org.hibernate.Session;
+import org.hibernate.Transaction;
 import org.hibernate.criterion.Restrictions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,7 +27,9 @@ import salesmachine.hibernatedb.OimVendorSuppliers;
 import salesmachine.hibernatedb.OimVendorsuppOrderhistory;
 import salesmachine.hibernatedb.Vendors;
 import salesmachine.hibernatehelper.SessionManager;
+import salesmachine.oim.stores.exception.ChannelCommunicationException;
 import salesmachine.oim.stores.exception.ChannelConfigurationException;
+import salesmachine.oim.stores.exception.ChannelOrderFormatException;
 import salesmachine.oim.suppliers.exception.SupplierCommunicationException;
 import salesmachine.oim.suppliers.exception.SupplierConfigurationException;
 import salesmachine.oim.suppliers.exception.SupplierOrderException;
@@ -47,6 +50,8 @@ public abstract class Supplier {
 	public static final Integer ERROR_ORDER_PROCESSING = 3;
 	public static final Integer ERROR_UNCONFIGURED_SUPPLIER = 1;
 	public static final Integer ERROR_PING_FAILURE = 2;
+	public static final Integer ERROR_ORDER_TRACKING = 4;
+	
 
 	public Supplier() {
 		log.debug("Creating instance");
@@ -62,7 +67,7 @@ public abstract class Supplier {
 	public abstract void sendOrders(Integer vendorId, OimVendorSuppliers ovs,
 			List orders) throws SupplierConfigurationException,
 			SupplierCommunicationException, SupplierOrderException,
-			ChannelConfigurationException;
+			ChannelConfigurationException, ChannelCommunicationException, ChannelOrderFormatException;
 
 	protected String getUSStateFullName(String stateCode) {
 		if (stateCodeMapping.containsKey(stateCode))
@@ -80,6 +85,8 @@ public abstract class Supplier {
 			OimSuppliers oimSuppliers, Object response, int errorCode,
 			OimOrderDetails oimOrderDetails) {
 		Session session = SessionManager.currentSession();
+		Transaction tx = session.getTransaction();
+		tx = session.beginTransaction();
 		OimVendorsuppOrderhistory history = new OimVendorsuppOrderhistory();
 		Vendors vendor = new Vendors();
 		vendor.setVendorId(vid);
@@ -99,6 +106,7 @@ public abstract class Supplier {
 		}
 
 		session.save(history);
+		tx.commit();
 		log.debug("Added the order processing output to vendor supplier order history");
 	}
 

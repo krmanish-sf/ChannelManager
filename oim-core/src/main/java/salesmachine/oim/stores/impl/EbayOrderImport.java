@@ -7,7 +7,9 @@ import salesmachine.hibernatedb.OimOrderBatchesTypes;
 import salesmachine.hibernatedb.OimOrderDetails;
 import salesmachine.oim.stores.api.ChannelBase;
 import salesmachine.oim.stores.api.IOrderImport;
+import salesmachine.oim.stores.exception.ChannelCommunicationException;
 import salesmachine.oim.stores.exception.ChannelConfigurationException;
+import salesmachine.oim.stores.exception.ChannelOrderFormatException;
 import salesmachine.oim.suppliers.modal.OrderStatus;
 
 /***
@@ -28,14 +30,16 @@ public class EbayOrderImport extends ChannelBase implements IOrderImport {
 	}
 
 	@Override
-	public OimOrderBatches getVendorOrders(OimOrderBatchesTypes batchesTypes) {
+	public void getVendorOrders(OimOrderBatchesTypes batchesTypes,
+			OimOrderBatches batch) throws ChannelCommunicationException,
+			ChannelOrderFormatException, ChannelConfigurationException {
 		// Provide the Order pulling logic form Ebay API.
-		return null;
 	}
 
 	@Override
 	public boolean updateStoreOrder(OimOrderDetails oimOrderDetails,
-			OrderStatus orderStatus) {
+			OrderStatus orderStatus) throws ChannelCommunicationException,
+			ChannelOrderFormatException {
 		// Provide logic to update the Ebay store with Order status.
 		return false;
 	}

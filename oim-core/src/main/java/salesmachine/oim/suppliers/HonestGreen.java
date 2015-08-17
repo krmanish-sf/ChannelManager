@@ -46,10 +46,13 @@ import salesmachine.hibernatedb.Vendors;
 import salesmachine.hibernatehelper.SessionManager;
 import salesmachine.oim.api.OimConstants;
 import salesmachine.oim.stores.api.IOrderImport;
+import salesmachine.oim.stores.exception.ChannelCommunicationException;
 import salesmachine.oim.stores.exception.ChannelConfigurationException;
+import salesmachine.oim.stores.exception.ChannelOrderFormatException;
 import salesmachine.oim.stores.impl.OrderImportManager;
 import salesmachine.oim.suppliers.exception.SupplierCommunicationException;
 import salesmachine.oim.suppliers.exception.SupplierConfigurationException;
+import salesmachine.oim.suppliers.exception.SupplierOrderException;
 import salesmachine.oim.suppliers.modal.OrderStatus;
 import salesmachine.oim.suppliers.modal.hg.TrackingData;
 import salesmachine.util.OimLogStream;
@@ -89,8 +92,10 @@ public class HonestGreen extends Supplier implements HasTracking {
 
 	@Override
 	public void sendOrders(Integer vendorId, OimVendorSuppliers ovs, List orders)
-			throws SupplierCommunicationException,
-			SupplierConfigurationException {
+			throws SupplierConfigurationException,
+			SupplierCommunicationException, SupplierOrderException,
+			ChannelConfigurationException, ChannelCommunicationException,
+			ChannelOrderFormatException {
 		log.info("Sending orders of Account: {}", ovs.getAccountNumber());
 		if (ovs.getTestMode().equals(1))
 			return;
@@ -192,19 +197,12 @@ public class HonestGreen extends Supplier implements HasTracking {
 						String fileName = createOrderFile(order, ovs,
 								orderDetailMap, ftpDetails,
 								isOrderFromAmazonStore);
-						try {
-							sendToFTP(fileName, ovs, ftpDetails, true, false);
-							if (emailNotification) {
-								sendEmail(emailContent, ftpDetails, fileName,
-										r.getLogin());
-							}
-						} catch (RuntimeException e) {
-							log.error(
-									"could not connect to ftp server {} for user {} for HVA.",
-									ftpDetails.getUrl(),
-									ftpDetails.getUserName());
+						sendToFTP(fileName, ovs, ftpDetails, true, false);
+						if (emailNotification) {
+							sendEmail(emailContent, ftpDetails, fileName,
+									r.getLogin());
 						}
-
+						
 					}
 					if (PhiMap.size() > 0) {
 						// create order file and send order to PHI configured
@@ -265,19 +263,12 @@ public class HonestGreen extends Supplier implements HasTracking {
 						String fileName = createOrderFile(order, ovs,
 								orderDetailMap, ftpDetails,
 								isOrderFromAmazonStore);
-						try {
-							sendToFTP(fileName, ovs, ftpDetails, false, true);
-							if (emailNotification) {
-								sendEmail(emailContent, ftpDetails, fileName,
-										r.getLogin());
-							}
-						} catch (Exception e) {
-							log.error(
-									"could not connect to ftp server {} for user {} for HVA.",
-									ftpDetails.getUrl(),
-									ftpDetails.getUserName());
-							e.printStackTrace();
+						sendToFTP(fileName, ovs, ftpDetails, false, true);
+						if (emailNotification) {
+							sendEmail(emailContent, ftpDetails, fileName,
+									r.getLogin());
 						}
+						
 					}
 					if (HVAPhiMap.size() > 0) {
 						// check quantity of hva and phi. based on that send
@@ -352,20 +343,12 @@ public class HonestGreen extends Supplier implements HasTracking {
 							fileName = createOrderFile(order, ovs,
 									orderDetailHVAMap, ftpDetails,
 									isOrderFromAmazonStore);
-							try {
-								sendToFTP(fileName, ovs, ftpDetails, true,
-										false);
-								if (emailNotification) {
-									sendEmail(emailContent, ftpDetails,
-											fileName, r.getLogin());
-								}
-							} catch (Exception e) {
-								log.error(
-										"could not connect to ftp server {} for user {} for HVA.",
-										ftpDetails.getUrl(),
-										ftpDetails.getUserName());
-								e.printStackTrace();
+							sendToFTP(fileName, ovs, ftpDetails, true, false);
+							if (emailNotification) {
+								sendEmail(emailContent, ftpDetails, fileName,
+										r.getLogin());
 							}
+							
 						}
 						if (orderDetailPHIMap.size() > 0) {
 							FtpDetails ftpDetails = new FtpDetails();
@@ -421,20 +404,11 @@ public class HonestGreen extends Supplier implements HasTracking {
 							fileName = createOrderFile(order, ovs,
 									orderDetailPHIMap, ftpDetails,
 									isOrderFromAmazonStore);
-							try {
-								sendToFTP(fileName, ovs, ftpDetails, false,
-										true);
+							sendToFTP(fileName, ovs, ftpDetails, false, true);
 
-								if (emailNotification) {
-									sendEmail(emailContent, ftpDetails,
-											fileName, r.getLogin());
-								}
-							} catch (Exception e) {
-								log.error(
-										"could not connect to ftp server {} for user {} for HVA.",
-										ftpDetails.getUrl(),
-										ftpDetails.getUserName());
-								e.printStackTrace();
+							if (emailNotification) {
+								sendEmail(emailContent, ftpDetails, fileName,
+										r.getLogin());
 							}
 						}
 
@@ -444,17 +418,6 @@ public class HonestGreen extends Supplier implements HasTracking {
 				} catch (RuntimeException e) {
 					log.error(e.getMessage(), e);
 				}
-				// if (emailNotification) {
-				// emailContent +=
-				// "<br>Thanks, <br>Inventorysource support<br>";
-				// logStream
-				// .println("Sending email to user about order processing");
-				// log.debug("Sending email to user about order processing");
-				// EmailUtil.sendEmail(r.getLogin(),
-				// "support@inventorysource.com", "",
-				// "Order processing update results", emailContent,
-				// "text/html");
-				// }
 			}
 		}
 	}
@@ -529,10 +492,12 @@ public class HonestGreen extends Supplier implements HasTracking {
 			ftp.quit();
 		} catch (IOException e) {
 			log.error(e.getMessage(), e);
-			throw new SupplierCommunicationException(e.getMessage(), e);
+			throw new SupplierCommunicationException(
+					"Could not connect to FTP while sending orderfile to HG - " + e.getMessage(), e);
 		} catch (FTPException e) {
 			log.error(e.getMessage(), e);
-			throw new SupplierConfigurationException(e.getMessage(), e);
+			throw new SupplierConfigurationException(
+					"Could not connect to FTP while sending orderfile to HG - " + e.getMessage(), e);
 		}
 	}
 
@@ -645,139 +610,12 @@ public class HonestGreen extends Supplier implements HasTracking {
 		return fileData;
 	}
 
-	private String createOrderFile(OimOrders order, OimVendorSuppliers ovs) {
-		SimpleDateFormat sdf = new SimpleDateFormat("yyMMddHHmm");
-		String uploadfilename = "HG_" + ovs.getAccountNumber() + "_"
-				+ sdf.format(new Date()) + ".txt";
-		File f = new File(uploadfilename);
-		log.info("created file name for HG:{}", f.getName());
-		log.debug("Creating order file for OrderId:{}", order.getOrderId());
-		try {
-			FileOutputStream fOut = new FileOutputStream(f);
-			// Integer orderSize = order.getOimOrderDetailses().size();
-			fOut.write("1".getBytes(ASCII));
-			fOut.write(NEW_LINE);
-			fOut.write(ovs.getAccountNumber().getBytes(ASCII));
-			fOut.write(COMMA);
-			// fOut.write(BLANK_SPACE);
-			fOut.write(COMMA);
-			String poNum = ovs.getVendors().getVendorId() + "-"
-					+ order.getStoreOrderId();
-			fOut.write(poNum.getBytes(ASCII));
-			fOut.write(COMMA);
-			// fOut.write(BLANK_SPACE);
-			fOut.write(COMMA);
-			fOut.write(FIL);
-			fOut.write(COMMA);
-			// fOut.write(BLANK_SPACE);
-			fOut.write(NEW_LINE);
-			fOut.write(StringHandle.removeNull(order.getDeliveryName())
-					.toUpperCase().getBytes(ASCII));
-			fOut.write(COMMA);
-			fOut.write(StringHandle
-					.removeNull(order.getDeliveryStreetAddress()).toUpperCase()
-					.getBytes(ASCII));
-			fOut.write(COMMA);
-			fOut.write(StringHandle.removeNull(order.getDeliverySuburb())
-					.toUpperCase().getBytes(ASCII));
-			fOut.write(COMMA);
-			fOut.write(StringHandle.removeNull(order.getDeliveryCity())
-					.toUpperCase().getBytes(ASCII));
-			fOut.write(COMMA);
-			fOut.write(StringHandle.removeNull(order.getDeliveryStateCode())
-					.toUpperCase().getBytes(ASCII));
-			fOut.write(COMMA);
-			fOut.write(StringHandle.removeNull(order.getDeliveryZip())
-					.toUpperCase().getBytes(ASCII));
-			fOut.write(COMMA);
-			fOut.write(StringHandle.removeNull(order.getDeliveryPhone())
-					.toUpperCase().getBytes(ASCII));
-			fOut.write(COMMA);
-			fOut.write('A');
-			fOut.write(COMMA);
-			fOut.write("5001".getBytes(ASCII));
-			fOut.write(NEW_LINE);
-			for (OimOrderDetails od : ((Set<OimOrderDetails>) order
-					.getOimOrderDetailses())) {
-				if (!od.getOimSuppliers().getSupplierId()
-						.equals(ovs.getOimSuppliers().getSupplierId()))
-					continue;
-				String skuPrefix = null, sku = od.getSku();
-				if (!orderSkuPrefixMap.isEmpty()) {
-					skuPrefix = orderSkuPrefixMap.values().toArray()[0]
-							.toString();
-				}
-				skuPrefix = StringHandle.removeNull(skuPrefix);
-				if (sku.startsWith(skuPrefix)) {
-					sku = sku.substring(skuPrefix.length());
-				}
-				fOut.write(sku.getBytes(ASCII));
-				fOut.write(COMMA);
-				// fOut.write(BLANK_SPACE);
-				fOut.write(COMMA);
-				fOut.write(od.getQuantity().toString().getBytes(ASCII));
-				fOut.write(COMMA);
-				// fOut.write(BLANK_SPACE);
-				fOut.write(COMMA);
-				// fOut.write(BLANK_SPACE);
-				fOut.write(COMMA);
-				// fOut.write(BLANK_SPACE);
-				// fOut.write(COMMA);
-				fOut.write(NEW_LINE);
-				od.setSupplierOrderNumber(poNum);
-				od.setSupplierOrderStatus("Sent to supplier.");
-				Session session = SessionManager.currentSession();
-				session.update(od);
-				successfulOrders.add(od.getDetailId());
-				OimChannels oimChannels = order.getOimOrderBatches()
-						.getOimChannels();
-				Integer channelId = oimChannels.getChannelId();
-				IOrderImport iOrderImport = OrderImportManager
-						.getIOrderImport(channelId);
-				OimLogStream stream = new OimLogStream();
-				if (iOrderImport != null) {
-					log.debug("Created the iorderimport object");
-					try {
-						if (!iOrderImport.init(channelId,
-								SessionManager.currentSession())) {
-							log.debug(
-									"Failed initializing the channel with Id:{}",
-									channelId);
-						} else {
-							OrderStatus orderStatus = new OrderStatus();
-							orderStatus
-									.setStatus(((OimOrderProcessingRule) oimChannels
-											.getOimOrderProcessingRules()
-											.iterator().next())
-											.getProcessedStatus());
-							iOrderImport.updateStoreOrder(od, orderStatus);
-						}
-					} catch (ChannelConfigurationException e) {
-						log.error(e.getMessage(), e);
-						stream.println(e.getMessage());
-					}
-				} else {
-					log.error("Could not find a bean to work with this Channel.");
-					stream.println("This Channel type is not supported for pushing order updates.");
-				}
-			}
-			fOut.write(HG_EOF);
-			fOut.write(NEW_LINE);
-			fOut.flush();
-			fOut.close();
-		} catch (FileNotFoundException e) {
-			log.error(e.getMessage(), e);
-		} catch (IOException e) {
-			log.error(e.getMessage(), e);
-		}
-		return uploadfilename;
-	}
-
 	private String createOrderFile(OimOrders order, OimVendorSuppliers ovs,
 			Map<Integer, OimOrderDetails> detailMap, FtpDetails ftpDetails,
-			boolean isAmazon) {
+			boolean isAmazon) throws ChannelCommunicationException,
+			ChannelOrderFormatException {
 		SimpleDateFormat sdf = new SimpleDateFormat("yyMMddHHmm");
-		String uploadfilename = "HG_" + ftpDetails.getAccountNumber() + "_"
+		String uploadfilename = "/home/manish-kumar/Desktop/"+"HG_" + ftpDetails.getAccountNumber() + "_"
 				+ sdf.format(new Date()) + ".txt";
 		File f = new File(uploadfilename);
 		log.info("created file name for HG:{}", f.getName());

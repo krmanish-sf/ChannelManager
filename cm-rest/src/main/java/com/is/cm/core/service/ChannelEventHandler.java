@@ -3,6 +3,8 @@ package com.is.cm.core.service;
 import java.util.List;
 import java.util.Map;
 
+import org.hibernate.Session;
+import org.hibernate.Transaction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -11,7 +13,9 @@ import salesmachine.hibernatedb.OimOrderBatchesTypes;
 import salesmachine.hibernatehelper.SessionManager;
 import salesmachine.oim.api.OimConstants;
 import salesmachine.oim.stores.api.IOrderImport;
+import salesmachine.oim.stores.exception.ChannelCommunicationException;
 import salesmachine.oim.stores.exception.ChannelConfigurationException;
+import salesmachine.oim.stores.exception.ChannelOrderFormatException;
 import salesmachine.util.OimLogStream;
 
 import com.is.cm.core.domain.Channel;
@@ -139,26 +143,63 @@ public class ChannelEventHandler implements ChannelService {
 		stream.println(channelName + " : ");
 		if (coi != null) {
 			LOG.debug("Created the iorderimport object");
+			OimOrderBatches oimOrderBatches = new OimOrderBatches();
+			OimOrderBatchesTypes oimOrderBatchesTypes = new OimOrderBatchesTypes(
+					OimConstants.ORDERBATCH_TYPE_ID_MANUAL);
 			try {
 				if (!coi.init(channelId, SessionManager.currentSession())) {
 					LOG.debug("Failed initializing the channel with Id:{}",
 							channelId);
 				} else {
 					LOG.debug("Pulling orders for channel id: {}", channelId);
-					try {
-//						coi.getVendorOrders(new OimOrderBatchesTypes(
-//								OimConstants.ORDERBATCH_TYPE_ID_MANUAL));
-						OimOrderBatches oimOrderBatches =  coi.getVendorOrders(new OimOrderBatchesTypes(
-								OimConstants.ORDERBATCH_TYPE_ID_MANUAL));
-						stream.println("Pulled " + oimOrderBatches.getOimOrderses().size() + " orders.");
-					} catch (Throwable e) {
-						LOG.error("Error in pulling orders for channel id: {}",
-								channelId, e);
-						stream.println("Error in pulling orders from channel.");
-					}
+					// coi.getVendorOrders(new OimOrderBatchesTypes(
+					// OimConstants.ORDERBATCH_TYPE_ID_MANUAL));
+					coi.getVendorOrders(oimOrderBatchesTypes, oimOrderBatches);
+					stream.println("Pulled "
+							+ oimOrderBatches.getOimOrderses().size()
+							+ " orders.");
+
 				}
+			} catch (RuntimeException e) {
+				LOG.error("Error in pulling orders for channel id: {}",
+						channelId, e);
+				stream.println("Error in pulling orders from channel.");
 			} catch (ChannelConfigurationException e) {
+				LOG.error("Error in pulling orders for channel id: {}",
+						channelId, e);
 				stream.println(e.getMessage());
+				oimOrderBatches
+						.setDescription("Error occured in pulling order due to ChannelConfiguration Error."
+								+ e.getMessage());
+				oimOrderBatches.setErrorCode(ChannelCommunicationException
+						.getErrorcode());
+			} catch (ChannelCommunicationException e) {
+				LOG.error("Error in pulling orders for channel id: {}",
+						channelId, e);
+				stream.println(e.getMessage());
+				oimOrderBatches
+						.setDescription("Error occured in pulling order due to ChannelComunication Error."
+								+ e.getMessage());
+				oimOrderBatches.setErrorCode(ChannelCommunicationException
+						.getErrorcode());
+			} catch (ChannelOrderFormatException e) {
+				LOG.error("Error in pulling orders for channel id: {}",
+						channelId, e);
+				stream.println(e.getMessage());
+				oimOrderBatches
+						.setDescription("Error occured in pulling order due to ChannelOrderFormat Error."
+								+ e.getMessage());
+				oimOrderBatches.setErrorCode(ChannelOrderFormatException
+						.getErrorcode());
+			} finally {
+				Session m_dbSession = SessionManager.currentSession();
+				Transaction tx = m_dbSession.getTransaction();
+				if (tx != null && tx.isActive())
+					tx.commit();
+				tx = m_dbSession.beginTransaction();
+
+				m_dbSession.save(oimOrderBatches);
+				tx.commit();
 			}
 		} else {
 			LOG.error("Could not find a bean to work with this Channel.");

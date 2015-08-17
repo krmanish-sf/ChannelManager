@@ -40,7 +40,9 @@ import salesmachine.hibernatedb.Reps;
 import salesmachine.hibernatedb.Vendors;
 import salesmachine.hibernatehelper.SessionManager;
 import salesmachine.oim.stores.api.IOrderImport;
+import salesmachine.oim.stores.exception.ChannelCommunicationException;
 import salesmachine.oim.stores.exception.ChannelConfigurationException;
+import salesmachine.oim.stores.exception.ChannelOrderFormatException;
 import salesmachine.oim.stores.impl.OrderImportManager;
 import salesmachine.oim.suppliers.exception.SupplierCommunicationException;
 import salesmachine.oim.suppliers.exception.SupplierConfigurationException;
@@ -83,8 +85,9 @@ public class BF extends Supplier implements HasTracking {
 
 	@Override
 	public void sendOrders(Integer vendorId, OimVendorSuppliers ovs, List orders)
-			throws SupplierConfigurationException, SupplierOrderException,
-			SupplierCommunicationException, ChannelConfigurationException {
+			throws SupplierConfigurationException,
+			SupplierCommunicationException, SupplierOrderException,
+			ChannelConfigurationException, ChannelCommunicationException, ChannelOrderFormatException{
 		log.info("Started sending orders to BnF USA");
 		// populate orderSkuPrefixMap with channel id and the prefix to be used
 		// for the given supplier.
@@ -134,7 +137,7 @@ public class BF extends Supplier implements HasTracking {
 			List fileFieldMaps, IFileSpecificsProvider fileSpecifics,
 			OimVendorSuppliers ovs, Integer vendorId, Reps r)
 			throws SupplierConfigurationException, SupplierOrderException,
-			SupplierCommunicationException, ChannelConfigurationException {
+			SupplierCommunicationException, ChannelConfigurationException, ChannelCommunicationException, ChannelOrderFormatException {
 		String USERID = ovs.getLogin();
 		String PASSWORD = ovs.getPassword();
 		String lincenceKey = ovs.getAccountNumber();

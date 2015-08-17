@@ -47,7 +47,9 @@ import salesmachine.hibernatehelper.PojoHelper;
 import salesmachine.hibernatehelper.SessionManager;
 import salesmachine.oim.api.OimConstants;
 import salesmachine.oim.stores.api.IOrderImport;
+import salesmachine.oim.stores.exception.ChannelCommunicationException;
 import salesmachine.oim.stores.exception.ChannelConfigurationException;
+import salesmachine.oim.stores.exception.ChannelOrderFormatException;
 import salesmachine.oim.stores.impl.OrderImportManager;
 import salesmachine.oim.suppliers.exception.InvalidAddressException;
 import salesmachine.oim.suppliers.exception.SupplierCommunicationException;
@@ -493,7 +495,24 @@ public class OimSupplierOrderPlacement {
 						Supplier.updateVendorSupplierOrderHistory(
 								vendorId,
 								ovs.getOimSuppliers(),
-								"Error occured in updating store order status due to ChannelConfiguration Error.",
+								"Error occured in updating store order status due to ChannelConfiguration Error. "
+										+ e.getMessage(),
+								Supplier.ERROR_ORDER_PROCESSING);
+					} catch (ChannelCommunicationException e) {
+						log.error(e.getMessage(), e);
+						Supplier.updateVendorSupplierOrderHistory(
+								vendorId,
+								ovs.getOimSuppliers(),
+								"Error occured in updating store order status due to ChannelComunication Error. "
+										+ e.getMessage(),
+								Supplier.ERROR_ORDER_PROCESSING);
+					} catch (ChannelOrderFormatException e) {
+						log.error(e.getMessage(), e);
+						Supplier.updateVendorSupplierOrderHistory(
+								vendorId,
+								ovs.getOimSuppliers(),
+								"Error occured in updating store order status due to ChannelOrderFormat Error. "
+										+ e.getMessage(),
 								Supplier.ERROR_ORDER_PROCESSING);
 					}
 				} else {
@@ -1009,6 +1028,33 @@ public class OimSupplierOrderPlacement {
 				}
 			} catch (ChannelConfigurationException e) {
 				stream.println(e.getMessage());
+				log.error(e.getMessage(), e);
+				Supplier.updateVendorSupplierOrderHistory(
+						vendorId,
+						oimVendorSuppliers.getOimSuppliers(),
+						"Error occured in updating store order status due to ChannelConfiguration Error. "
+								+ e.getMessage(),
+						Supplier.ERROR_ORDER_TRACKING);
+			}
+			catch (ChannelCommunicationException e) {
+				stream.println(e.getMessage());
+				log.error(e.getMessage(), e);
+				Supplier.updateVendorSupplierOrderHistory(
+						vendorId,
+						oimVendorSuppliers.getOimSuppliers(),
+						"Error occured in updating store order status due to ChannelCommunication Error. "
+								+ e.getMessage(),
+						Supplier.ERROR_ORDER_TRACKING);
+			}
+			catch (ChannelOrderFormatException e) {
+				stream.println(e.getMessage());
+				log.error(e.getMessage(), e);
+				Supplier.updateVendorSupplierOrderHistory(
+						vendorId,
+						oimVendorSuppliers.getOimSuppliers(),
+						"Error occured in updating store order status due to ChannelOrderFormat Error. "
+								+ e.getMessage(),
+						Supplier.ERROR_ORDER_TRACKING);
 			}
 		} else {
 			log.error("Could not find a bean to work with this Channel.");

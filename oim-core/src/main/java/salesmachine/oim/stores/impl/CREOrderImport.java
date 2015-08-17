@@ -81,12 +81,20 @@ public class CREOrderImport extends ChannelBase implements IOrderImport {
 	}
 
 	@Override
-	public OimOrderBatches getVendorOrders(OimOrderBatchesTypes batchesTypes) {
-		OimOrderBatches batch = new OimOrderBatches();
+	public void getVendorOrders(OimOrderBatchesTypes batchesTypes,
+			OimOrderBatches batch) throws ChannelCommunicationException,
+			ChannelOrderFormatException, ChannelConfigurationException {
+		Transaction tx = m_dbSession.getTransaction();
 		batch.setOimChannels(m_channel);
 		batch.setOimOrderBatchesTypes(batchesTypes);
+		if (tx != null && tx.isActive())
+			tx.commit();
+		tx = m_dbSession.beginTransaction();
+		batch.setInsertionTm(new Date());
+		batch.setCreationTm(new Date());
+		m_dbSession.save(batch);
 		List<OimOrders> orderFetched = null;
-		try {
+		//try {
 			if (!pingTest()) {
 				throw new ChannelCommunicationException("Channel ping failed.");
 			}
@@ -107,7 +115,8 @@ public class CREOrderImport extends ChannelBase implements IOrderImport {
 			LOG.info("Finished GetProduct step in {} seconds", time / 1000);
 
 			if (orderFetched.size() == 0) {
-				return batch;
+				throw new ChannelCommunicationException(
+						"Recieved empty response in order fetch");
 			}
 
 			// Update status
@@ -131,13 +140,6 @@ public class CREOrderImport extends ChannelBase implements IOrderImport {
 			}
 
 			// Save everything
-			Transaction tx = m_dbSession.getTransaction();
-			if (tx != null && tx.isActive())
-				tx.commit();
-			tx = m_dbSession.beginTransaction();
-			batch.setInsertionTm(new Date());
-			batch.setCreationTm(new Date());
-			m_dbSession.save(batch);
 
 			LOG.debug("Saved batch id: {}", batch.getBatchId());
 
@@ -154,6 +156,7 @@ public class CREOrderImport extends ChannelBase implements IOrderImport {
 				}
 
 				order.setOimOrderBatches(batch);
+				batch.getOimOrderses().add(order);
 				order.setOrderFetchTm(new Date());
 				order.setInsertionTm(new Date());
 				String shippingDetails = order.getShippingDetails();
@@ -199,12 +202,11 @@ public class CREOrderImport extends ChannelBase implements IOrderImport {
 				importCount++;
 			}
 
-		} catch (Exception e) {
-			LOG.info(e.getMessage(), e);
-		}
+//		} catch (Exception e) {
+//			LOG.info(e.getMessage(), e);
+//		}
 		LOG.info("Returning Order batch with size: {}", batch.getOimOrderses()
 				.size());
-		return batch;
 	}
 
 	public boolean pingTest() {
@@ -599,7 +601,8 @@ public class CREOrderImport extends ChannelBase implements IOrderImport {
 
 	@Override
 	public boolean updateStoreOrder(OimOrderDetails oimOrderDetails,
-			OrderStatus orderStatus) {
+			OrderStatus orderStatus) throws ChannelCommunicationException,
+			ChannelOrderFormatException {
 		if (!orderStatus.isShipped()) {
 			return true;
 		}

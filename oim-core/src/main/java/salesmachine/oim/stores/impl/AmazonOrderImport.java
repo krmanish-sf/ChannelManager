@@ -38,7 +38,9 @@ import salesmachine.hibernatehelper.PojoHelper;
 import salesmachine.oim.api.OimConstants;
 import salesmachine.oim.stores.api.ChannelBase;
 import salesmachine.oim.stores.api.IOrderImport;
+import salesmachine.oim.stores.exception.ChannelCommunicationException;
 import salesmachine.oim.stores.exception.ChannelConfigurationException;
+import salesmachine.oim.stores.exception.ChannelOrderFormatException;
 import salesmachine.oim.stores.modal.amazon.AmazonEnvelope;
 import salesmachine.oim.stores.modal.amazon.AmazonEnvelope.Message;
 import salesmachine.oim.stores.modal.amazon.Header;
@@ -133,9 +135,10 @@ public class AmazonOrderImport extends ChannelBase implements IOrderImport {
 	}
 
 	@Override
-	public OimOrderBatches getVendorOrders(OimOrderBatchesTypes batchesTypes) {
+	public void getVendorOrders(OimOrderBatchesTypes batchesTypes,
+			OimOrderBatches batch) throws ChannelCommunicationException,
+			ChannelOrderFormatException, ChannelConfigurationException {
 		Transaction tx = m_dbSession.getTransaction();
-		OimOrderBatches batch = new OimOrderBatches();
 		try {
 			batch.setOimChannels(m_channel);
 			batch.setOimOrderBatchesTypes(batchesTypes);
@@ -187,7 +190,13 @@ public class AmazonOrderImport extends ChannelBase implements IOrderImport {
 			ackAmazonEnvelope.setHeader(header);
 			ackAmazonEnvelope.setMessageType("OrderAcknowledgement");
 
-			Marshaller marshaller = jaxbContext.createMarshaller();
+			Marshaller marshaller = null;
+			try {
+				marshaller = jaxbContext.createMarshaller();
+			} catch (JAXBException e1) {
+				// TODO Auto-generated catch block
+				log.error(e1.getMessage(), e1);
+			}
 			Calendar c = Calendar.getInstance();
 			c.setTime(new Date());
 			c.add(Calendar.DATE, -30);
@@ -299,6 +308,7 @@ public class AmazonOrderImport extends ChannelBase implements IOrderImport {
 					}
 					oimOrders.setInsertionTm(new Date());
 					oimOrders.setOimOrderBatches(batch);
+					batch.getOimOrderses().add(oimOrders);
 					// oimOrders.setOrderComment(order2.);
 					oimOrders.setOrderFetchTm(new Date());
 					oimOrders.setOrderTm(order2.getPurchaseDate()
@@ -354,7 +364,12 @@ public class AmazonOrderImport extends ChannelBase implements IOrderImport {
 							.getListOrderItemsResult();
 					if (newOrder) {
 						Set<OimOrderDetails> detailSet = new HashSet<OimOrderDetails>();
-						Thread.currentThread().sleep(1000);
+						try {
+							Thread.currentThread().sleep(1000);
+						} catch (InterruptedException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
 						for (OrderItem orderItem : listOrderItemsResult
 								.getOrderItems()) {
 							OimOrderDetails details = new OimOrderDetails();
@@ -432,32 +447,56 @@ public class AmazonOrderImport extends ChannelBase implements IOrderImport {
 			} while (nextToken != null || lastPass);
 
 			ByteArrayOutputStream os = new ByteArrayOutputStream();
-			marshaller.marshal(ackAmazonEnvelope, os);
+			if (marshaller != null) {
+				try {
+					marshaller.marshal(ackAmazonEnvelope, os);
+				} catch (JAXBException e) {
+					log.error(e.getMessage(), e);
+					throw new ChannelOrderFormatException(
+							"Error in parsing ackAmazonEnvelope - "
+									+ e.getMessage(), e);
+				}
+			}
 			InputStream orderAcknowledgement = new ByteArrayInputStream(
 					os.toByteArray());
 			orderAckSubmitFeedRequest.setFeedContent(orderAcknowledgement);
 
-			orderAckSubmitFeedRequest.setContentMD5(Base64
-					.encode((MessageDigest.getInstance("MD5").digest(os
-							.toByteArray()))));
+			try {
+				orderAckSubmitFeedRequest.setContentMD5(Base64
+						.encode((MessageDigest.getInstance("MD5").digest(os
+								.toByteArray()))));
+			} catch (NoSuchAlgorithmException e) {
+				log.error(e.getMessage(), e);
+				throw new ChannelCommunicationException(
+						"Error in sending order acknowledgement - "
+								+ e.getMessage(), e);
+			}
 			m_dbSession.persist(batch);
 			tx.commit();
-			service.submitFeed(orderAckSubmitFeedRequest);
+			try {
+				service.submitFeed(orderAckSubmitFeedRequest);
+			} catch (MarketplaceWebServiceException e) {
+				log.error(e.getMessage(), e);
+				throw new ChannelCommunicationException(
+						"Error in sending order acknoledgement - "
+								+ e.getMessage(), e);
+			}
 			log.debug("Finished importing orders...");
-		} catch (Exception e) {
+		} catch (RuntimeException e) {
 			if (tx != null && tx.isActive())
 				tx.rollback();
 			log.error(e.getMessage(), e);
+			throw new ChannelOrderFormatException(e.getMessage(), e);
 
 		}
 		log.info("Returning Order batch with size: {}", batch.getOimOrderses()
 				.size());
-		return batch;
 	}
 
 	@Override
 	public boolean updateStoreOrder(OimOrderDetails oimOrderDetails,
-			OrderStatus orderStatus) {
+			OrderStatus orderStatus) throws ChannelCommunicationException,
+			ChannelOrderFormatException {
 		if (!orderStatus.isShipped()) {
 			return true;
 		}
@@ -467,7 +506,13 @@ public class AmazonOrderImport extends ChannelBase implements IOrderImport {
 		submitFeedRequest.setMarketplaceIdList(new IdList(marketPlaceIdList));
 		submitFeedRequest.setFeedType("_POST_ORDER_FULFILLMENT_DATA_");
 		try {
-			Marshaller marshaller = jaxbContext.createMarshaller();
+			Marshaller marshaller = null;
+			try {
+				marshaller = jaxbContext.createMarshaller();
+			} catch (JAXBException e) {
+				log.error(e.getMessage(), e);
+				throw new ChannelOrderFormatException(e.getMessage(), e);
+			}
 			AmazonEnvelope envelope = new AmazonEnvelope();
 			Header header = new Header();
 			header.setDocumentVersion("1.01");
@@ -509,22 +554,44 @@ public class AmazonOrderImport extends ChannelBase implements IOrderImport {
 			}
 
 			ByteArrayOutputStream os = new ByteArrayOutputStream();
-			marshaller.marshal(envelope, os);
+			if (marshaller != null) {
+				try {
+					marshaller.marshal(envelope, os);
+				} catch (JAXBException e) {
+					log.error(e.getMessage(), e);
+					throw new ChannelOrderFormatException(
+							"Error in Updating Store order - " + e.getMessage(),
+							e);
+				}
+			}
 			InputStream inputStream = new ByteArrayInputStream(os.toByteArray());
 			submitFeedRequest.setFeedContent(inputStream);
-			submitFeedRequest.setContentMD5(Base64.encode((MessageDigest
-					.getInstance("MD5").digest(os.toByteArray()))));
+			try {
+				submitFeedRequest.setContentMD5(Base64.encode((MessageDigest
+						.getInstance("MD5").digest(os.toByteArray()))));
+			} catch (NoSuchAlgorithmException e) {
+				log.error(e.getMessage(),e);
+				throw new ChannelCommunicationException(
+						"Error in submiting feed request while updating order to store - "
+								+ e.getMessage(), e);
+			}
 			log.info("SubmitFeedRequest: {}", os.toString());
-			SubmitFeedResponse submitFeed = service
-					.submitFeed(submitFeedRequest);
-			log.info(submitFeed.toXML());
+			SubmitFeedResponse submitFeed = null;
+			try {
+				submitFeed = service
+						.submitFeed(submitFeedRequest);
+				log.info(submitFeed.toXML());
+			} catch (MarketplaceWebServiceException e) {
+				log.error(e.getMessage(),e);
+				throw new ChannelCommunicationException(
+						"Error in submiting feed request while updating order to store - "
+								+ e.getMessage(), e);
+			}
+			
 			return true;
-		} catch (JAXBException | NoSuchAlgorithmException e) {
+		} catch (RuntimeException e) {
 			log.error(e.getMessage(), e);
-		} catch (MarketplaceWebServiceException e) {
-			log.error(e.getMessage(), e);
+			throw new ChannelOrderFormatException(e.getMessage(), e);
 		}
-		return false;
 	}
-
 }

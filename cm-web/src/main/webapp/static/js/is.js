@@ -658,7 +658,7 @@ function evalArray(obj, expr) {
 										var table = $('#tasks2').DataTable();
 										table.clear().draw();
 										for (var i = 0; i < data.length; i++) {
-											t.row
+											table.row
 													.add(
 															[
 																	data[i].sku,

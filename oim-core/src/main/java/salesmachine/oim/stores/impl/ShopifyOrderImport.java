@@ -38,7 +38,9 @@ import salesmachine.hibernatehelper.PojoHelper;
 import salesmachine.oim.api.OimConstants;
 import salesmachine.oim.stores.api.ChannelBase;
 import salesmachine.oim.stores.api.IOrderImport;
+import salesmachine.oim.stores.exception.ChannelCommunicationException;
 import salesmachine.oim.stores.exception.ChannelConfigurationException;
+import salesmachine.oim.stores.exception.ChannelOrderFormatException;
 import salesmachine.oim.suppliers.modal.OrderStatus;
 import salesmachine.oim.suppliers.modal.TrackingData;
 import salesmachine.util.StringHandle;
@@ -71,7 +73,8 @@ public class ShopifyOrderImport extends ChannelBase implements IOrderImport {
 
 	@Override
 	public boolean updateStoreOrder(OimOrderDetails oimOrderDetails,
-			OrderStatus orderStatus) {
+			OrderStatus orderStatus) throws ChannelCommunicationException,
+			ChannelOrderFormatException {
 		// this method is implemented for tracking purpose
 		log.info("order id is - {}", oimOrderDetails.getOimOrders()
 				.getOrderId());
@@ -120,7 +123,9 @@ public class ShopifyOrderImport extends ChannelBase implements IOrderImport {
 			requestEntity = new StringRequestEntity(jsonObject.toJSONString(),
 					"application/json", "UTF-8");
 		} catch (UnsupportedEncodingException e) {
-			log.error("error in parsing json request payload {}", e);
+			log.error("Error in parsing tracking request json {}", e);
+			throw new ChannelOrderFormatException(
+					"Error in parsing tracking request json", e);
 		}
 		postMethod.setRequestEntity(requestEntity);
 		int statusCode = 0;
@@ -130,10 +135,14 @@ public class ShopifyOrderImport extends ChannelBase implements IOrderImport {
 
 		} catch (HttpException e) {
 			log.error("error in posting request for fullfillment {}", e);
-			return false;
+			throw new ChannelCommunicationException(
+					"Error in posting request for fullfillment", e);
+			// return false;
 		} catch (IOException e) {
 			log.error("error in parsing json response payload {}", e);
-			return false;
+			throw new ChannelCommunicationException(
+					"Error in parsing json response payload", e);
+			// return false;
 		}
 
 		// closing the order
@@ -152,24 +161,12 @@ public class ShopifyOrderImport extends ChannelBase implements IOrderImport {
 	}
 
 	@Override
-	public OimOrderBatches getVendorOrders(OimOrderBatchesTypes batchesTypes) {
+	public void getVendorOrders(OimOrderBatchesTypes batchesTypes,
+			OimOrderBatches batch) throws ChannelCommunicationException,
+			ChannelOrderFormatException, ChannelConfigurationException {
 		// on the basis of access token, we will pull orders from vendors
-		OimOrderBatches batch = new OimOrderBatches();
+		// OimOrderBatches batch = new OimOrderBatches();
 		Transaction tx = m_dbSession.getTransaction();
-		HttpClient client = new HttpClient();
-		String requestUrl = null;
-		Integer maxStoreID = getMaxStoreOrderId();
-		if (maxStoreID != null) {
-			log.info("Max store id -- ", maxStoreID);
-			requestUrl = storeUrl + "/admin/orders.json?since_id="
-					+ maxStoreID;
-		} else {
-			requestUrl = storeUrl + "/admin/orders.json";
-		}
-		String jsonString = null;
-		GetMethod getOrderJson = new GetMethod(requestUrl);
-		getOrderJson.addRequestHeader("X-Shopify-Access-Token", shopifyToken);
-
 		batch.setOimChannels(m_channel);
 		batch.setOimOrderBatchesTypes(batchesTypes);
 		if (tx != null && tx.isActive())
@@ -179,6 +176,18 @@ public class ShopifyOrderImport extends ChannelBase implements IOrderImport {
 		batch.setCreationTm(new Date());
 		m_dbSession.save(batch);
 		tx.commit();
+		HttpClient client = new HttpClient();
+		String requestUrl = null;
+		Integer maxStoreID = getMaxStoreOrderId();
+		if (maxStoreID != null) {
+			log.info("Max store id -- ", maxStoreID.intValue());
+			requestUrl = storeUrl + "/admin/orders.json?since_id=" + maxStoreID.intValue();
+		} else {
+			requestUrl = storeUrl + "/admin/orders.json";
+		}
+		String jsonString = null;
+		GetMethod getOrderJson = new GetMethod(requestUrl);
+		getOrderJson.addRequestHeader("X-Shopify-Access-Token", shopifyToken);
 
 		tx = m_dbSession.beginTransaction();
 
@@ -188,7 +197,10 @@ public class ShopifyOrderImport extends ChannelBase implements IOrderImport {
 		} catch (IOException e) {
 			log.error("Unable to get response from shopify. Please check the store url and access token");
 			log.error(e.getMessage(), e);
-			return null;
+			throw new ChannelConfigurationException(
+					"Unable to get response from shopify. Please check the store url and access token "
+							+ e.getMessage(), e);
+			// return null;
 		}
 
 		if (responseCode == 200) {
@@ -197,7 +209,8 @@ public class ShopifyOrderImport extends ChannelBase implements IOrderImport {
 				log.info("order json --- {}", jsonString);
 			} catch (IOException e) {
 				log.error(e.getMessage(), e);
-				return null;
+				throw new ChannelCommunicationException(e.getMessage(), e);
+
 			}
 			JSONObject jsonObject = null;
 			JSONParser parser = new JSONParser();
@@ -207,7 +220,9 @@ public class ShopifyOrderImport extends ChannelBase implements IOrderImport {
 				e.printStackTrace();
 			}
 			if (jsonObject == null)
-				return null;
+				throw new ChannelCommunicationException(
+						"Error in parsing response string for order pulling");
+
 			JSONArray orderArr = (JSONArray) jsonObject.get("orders");
 			int numOrdersSaved = 0;
 			for (int i = 0; i < orderArr.size(); i++) {
@@ -323,6 +338,7 @@ public class ShopifyOrderImport extends ChannelBase implements IOrderImport {
 
 				oimOrders.setInsertionTm(new Date());
 				oimOrders.setOimOrderBatches(batch);
+				batch.getOimOrderses().add(oimOrders);
 				// oimOrders.setOrderComment(order2.);
 				oimOrders.setOrderFetchTm(new Date());
 				SimpleDateFormat df = new SimpleDateFormat(
@@ -418,10 +434,13 @@ public class ShopifyOrderImport extends ChannelBase implements IOrderImport {
 			log.error(
 					"Got response code {} .Please check the request parameters",
 					responseCode);
+			throw new ChannelConfigurationException(
+					"Please check the request parameters. Got response code - "
+							+ responseCode);
+
 		}
 		log.info("Returning Order batch with size: {}", batch.getOimOrderses()
 				.size());
-		return batch;
 	}
 
 	private Integer getMaxStoreOrderId() {
@@ -442,7 +461,8 @@ public class ShopifyOrderImport extends ChannelBase implements IOrderImport {
 
 	private boolean sendAcknowledgementToStore(String requestUrl,
 			String storeOrderId, String status, boolean isSendTrackingDetails,
-			OrderStatus orderStatus) {
+			OrderStatus orderStatus) throws ChannelCommunicationException,
+			ChannelOrderFormatException {
 		HttpClient httpclient = new HttpClient();
 		PutMethod postMethod = new PutMethod(requestUrl);
 		postMethod.addRequestHeader("X-Shopify-Access-Token", shopifyToken);
@@ -472,8 +492,13 @@ public class ShopifyOrderImport extends ChannelBase implements IOrderImport {
 			requestEntity = new StringRequestEntity(jObject.toJSONString(),
 					"application/json", "UTF-8");
 		} catch (UnsupportedEncodingException e) {
-			log.error("error in parsing json request payload {}", e);
-			return false;
+			log.error(
+					"Error in creating json request on sending acknowledgement {}",
+					e);
+			throw new ChannelCommunicationException(
+					"Error in creating json request on sending acknowledgement for store order id -"
+							+ storeOrderId, e);
+			// return false;
 		}
 		postMethod.setRequestEntity(requestEntity);
 		int statusCode = 0;
@@ -487,15 +512,19 @@ public class ShopifyOrderImport extends ChannelBase implements IOrderImport {
 
 		} catch (HttpException e) {
 			log.error("error in posting acknowledgement/tracking {}", e);
-			return false;
+			throw new ChannelCommunicationException(
+					"Error in posting acknowledgement/tracking ", e);
 		} catch (IOException e) {
 			log.error("error in parsing json response payload {}", e);
-			return false;
+			throw new ChannelCommunicationException(
+					"Error in posting acknowledgement/tracking ", e);
+			// return false;
 		}
 		return true;
 	}
 
-	private boolean closeOrder(OimOrderDetails oimOrderDetails) {
+	private boolean closeOrder(OimOrderDetails oimOrderDetails)
+			throws ChannelCommunicationException {
 
 		// POST /admin/orders/#{id}/close.json
 		String requestCloseUrl = storeUrl + "/admin/orders/"
@@ -522,10 +551,17 @@ public class ShopifyOrderImport extends ChannelBase implements IOrderImport {
 
 		} catch (HttpException e) {
 			log.error("error in posting request for fullfillment {}", e);
-			return false;
+			throw new ChannelCommunicationException(
+					"Error in posting request for fullfillment for store order id "
+							+ oimOrderDetails.getOimOrders().getStoreOrderId(),
+					e);
+			// return false;
 		} catch (IOException e) {
 			log.error("error in parsing json response payload {}", e);
-			return false;
+			throw new ChannelCommunicationException(
+					"Error in posting request for fullfillment for store order id "
+							+ oimOrderDetails.getOimOrders().getStoreOrderId(),
+					e);
 		}
 		return true;
 

@@ -47,7 +47,9 @@ import salesmachine.hibernatedb.Reps;
 import salesmachine.hibernatedb.Vendors;
 import salesmachine.hibernatehelper.SessionManager;
 import salesmachine.oim.stores.api.IOrderImport;
+import salesmachine.oim.stores.exception.ChannelCommunicationException;
 import salesmachine.oim.stores.exception.ChannelConfigurationException;
+import salesmachine.oim.stores.exception.ChannelOrderFormatException;
 import salesmachine.oim.stores.impl.OrderImportManager;
 import salesmachine.oim.suppliers.exception.SupplierCommunicationException;
 import salesmachine.oim.suppliers.exception.SupplierConfigurationException;
@@ -82,11 +84,13 @@ public class DandH extends Supplier implements HasTracking {
 	 * @throws SupplierOrderException
 	 * @throws SupplierCommunicationException
 	 * @throws SupplierConfigurationException
+	 * @throws ChannelOrderFormatException 
+	 * @throws ChannelCommunicationException 
 	 */
 
 	public void sendOrders(Integer vendorId, OimVendorSuppliers ovs, List orders)
 			throws SupplierConfigurationException,
-			SupplierCommunicationException, SupplierOrderException {
+			SupplierCommunicationException, SupplierOrderException, ChannelConfigurationException,ChannelCommunicationException, ChannelOrderFormatException {
 		logStream.println("Started sending orders to DandH");
 
 		// populate orderSkuPrefixMap with channel id and the prefix to be used
@@ -139,7 +143,7 @@ public class DandH extends Supplier implements HasTracking {
 			List<OimFileFieldMap> fileFieldMaps,
 			IFileSpecificsProvider fileSpecifics, OimVendorSuppliers ovs,
 			Integer vendorId, Reps r) throws SupplierConfigurationException,
-			SupplierCommunicationException, SupplierOrderException {
+			SupplierCommunicationException, SupplierOrderException, ChannelCommunicationException, ChannelOrderFormatException {
 		String USERID = ovs.getLogin();
 		String PASSWORD = ovs.getPassword();
 		String lincenceKey = ovs.getAccountNumber();

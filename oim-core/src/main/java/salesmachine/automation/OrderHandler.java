@@ -1,6 +1,7 @@
 package salesmachine.automation;
 
 import org.hibernate.Session;
+import org.hibernate.Transaction;
 import org.hibernate.criterion.Restrictions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,6 +15,9 @@ import salesmachine.hibernatedb.OimOrders;
 import salesmachine.hibernatehelper.SessionManager;
 import salesmachine.oim.api.OimConstants;
 import salesmachine.oim.stores.api.IOrderImport;
+import salesmachine.oim.stores.exception.ChannelCommunicationException;
+import salesmachine.oim.stores.exception.ChannelConfigurationException;
+import salesmachine.oim.stores.exception.ChannelOrderFormatException;
 import salesmachine.oim.suppliers.OimSupplierOrderPlacement;
 
 import com.google.common.eventbus.EventBus;
@@ -95,23 +99,64 @@ public class OrderHandler {
 				iOrderImport = (IOrderImport) theClass.newInstance();
 
 				log.debug("Created the orderimport object");
-				if (!iOrderImport.init(channel.getChannelId(),
-						SessionManager.currentSession())) {
-					log.error(
-							"Failed initializing the channel with channelId {},",
-							channel.getChannelId());
-				} else {
-					log.info("Pulling orders for channel id: {}",
-							channel.getChannelId());
-					OimOrderBatches vendorOrders = iOrderImport
-							.getVendorOrders(new OimOrderBatchesTypes(
-									OimConstants.ORDERBATCH_TYPE_ID_AUTOMATED));
-					if (vendorOrders != null)
-						eventBus.post(vendorOrders);
+				OimOrderBatches vendorOrders = new OimOrderBatches();
+				OimOrderBatchesTypes oimOrderBatchesTypes = new OimOrderBatchesTypes(
+						OimConstants.ORDERBATCH_TYPE_ID_AUTOMATED);
+				try {
+					if (!iOrderImport.init(channel.getChannelId(),
+							SessionManager.currentSession())) {
+						log.error(
+								"Failed initializing the channel with channelId {},",
+								channel.getChannelId());
+					} else {
+						log.info("Pulling orders for channel id: {}",
+								channel.getChannelId());
+						// OimOrderBatches vendorOrders = new OimOrderBatches();
+						iOrderImport.getVendorOrders(oimOrderBatchesTypes,
+								vendorOrders);
+						if (vendorOrders != null)
+							eventBus.post(vendorOrders);
+					}
+				} catch (ChannelConfigurationException
+						| ChannelCommunicationException
+						| ChannelOrderFormatException e) {
+					if (e instanceof ChannelConfigurationException) {
+						log.error(e.getMessage(), e);
+						vendorOrders
+								.setDescription("Error occured in pulling order due to ChannelConfiguration Error."
+										+ e.getMessage());
+						vendorOrders.setErrorCode(ChannelConfigurationException.getErrorcode());
+					}
+					if (e instanceof ChannelCommunicationException) {
+						log.error(e.getMessage(), e);
+						vendorOrders
+								.setDescription("Error occured in pulling order due to ChannelCommunication Error."
+										+ e.getMessage());
+						vendorOrders.setErrorCode(ChannelCommunicationException.getErrorcode());
+					}
+					if (e instanceof ChannelOrderFormatException) {
+						log.error(e.getMessage(), e);
+						vendorOrders
+								.setDescription("Error occured in pulling order due to ChannelOrderFormat Error."
+										+ e.getMessage());
+						vendorOrders.setErrorCode(ChannelOrderFormatException.getErrorcode());
+					}
+				} finally {
+					Session m_dbSession = SessionManager.currentSession();
+					Transaction tx = m_dbSession.getTransaction();
+					if (tx != null && tx.isActive())
+						tx.commit();
+					tx = m_dbSession.beginTransaction();
+
+					m_dbSession.save(vendorOrders);
+					tx.commit();
 				}
 
-			} catch (InstantiationException | IllegalAccessException e) {
-				log.error("CONFIG ERROR: Error in Instantiating Channel Bean.");
+			} catch (InstantiationException | IllegalAccessException
+					| ClassNotFoundException e) {
+				log.error(
+						"CONFIG ERROR: Error in Instantiating Channel Bean. {}",
+						e.getMessage());
 			} catch (Exception e) {
 				log.error(e.getMessage(), e);
 			}

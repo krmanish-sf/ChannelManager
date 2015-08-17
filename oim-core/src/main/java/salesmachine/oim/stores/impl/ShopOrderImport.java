@@ -30,7 +30,9 @@ import salesmachine.hibernatehelper.PojoHelper;
 import salesmachine.oim.api.OimConstants;
 import salesmachine.oim.stores.api.ChannelBase;
 import salesmachine.oim.stores.api.IOrderImport;
+import salesmachine.oim.stores.exception.ChannelCommunicationException;
 import salesmachine.oim.stores.exception.ChannelConfigurationException;
+import salesmachine.oim.stores.exception.ChannelOrderFormatException;
 import salesmachine.oim.stores.modal.shop.order.status.ADIOSHEADER;
 import salesmachine.oim.stores.modal.shop.order.status.ADIOSORDERSTATUSDETAIL;
 import salesmachine.oim.stores.modal.shop.order.status.ADIOSORDERSTATUSTRANSMISSION;
@@ -66,13 +68,16 @@ public class ShopOrderImport extends ChannelBase implements IOrderImport {
 	 * real time by shop.com to our listener url.
 	 * */
 	@Override
-	public OimOrderBatches getVendorOrders(OimOrderBatchesTypes batchesTypes) {
-		return null;
+	public void getVendorOrders(OimOrderBatchesTypes batchesTypes,
+			OimOrderBatches batch) throws ChannelCommunicationException,
+			ChannelOrderFormatException, ChannelConfigurationException {
+
 	}
 
 	@Override
 	public boolean updateStoreOrder(OimOrderDetails oimOrderDetails,
-			salesmachine.oim.suppliers.modal.OrderStatus orderStatus) {
+			salesmachine.oim.suppliers.modal.OrderStatus orderStatus)
+			throws ChannelCommunicationException, ChannelOrderFormatException {
 		if (!orderStatus.isShipped()) {
 			return true;
 		}
