@@ -93,6 +93,7 @@ public class CREOrderImport extends ChannelBase implements IOrderImport {
 		batch.setInsertionTm(new Date());
 		batch.setCreationTm(new Date());
 		m_dbSession.save(batch);
+		tx.commit();
 		List<OimOrders> orderFetched = null;
 		//try {
 			if (!pingTest()) {
