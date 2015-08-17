@@ -21,8 +21,10 @@ import salesmachine.oim.suppliers.exception.SupplierOrderException;
 import com.is.cm.core.domain.Order;
 import com.is.cm.core.domain.OrderDetail;
 import com.is.cm.core.domain.OrderDetailMod;
+import com.is.cm.core.domain.PagedDataResult;
 import com.is.cm.core.event.CreateEvent;
 import com.is.cm.core.event.CreatedEvent;
+import com.is.cm.core.event.PagedDataResultEvent;
 import com.is.cm.core.event.ReadCollectionEvent;
 import com.is.cm.core.event.ReadEvent;
 import com.is.cm.core.event.RequestReadEvent;
@@ -191,10 +193,12 @@ public class OrderEventHandler implements OrderService {
 	}
 
 	@Override
-	public ReadCollectionEvent<Order> find(
-			RequestReadEvent<Map<String, String>> requestReadEvent) {
-		List<Order> orders = orderRepository.find(requestReadEvent.getEntity());
-		return new ReadCollectionEvent<Order>(orders);
+	public PagedDataResultEvent<Order> find(
+			RequestReadEvent<Map<String, String>> requestReadEvent,
+			int pageNum, int pageSize) {
+		PagedDataResult<Order> orders = orderRepository.find(
+				requestReadEvent.getEntity(), pageSize, pageNum);
+		return new PagedDataResultEvent<Order>(orders);
 	}
 
 	@Override

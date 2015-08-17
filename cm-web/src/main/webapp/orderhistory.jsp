@@ -791,9 +791,11 @@
 							{
 								"order" : [ [ 2, "desc" ] ],
 								"processing" : true,
-								"serverSide" : false,
+								"serverSide" : true,
 								"sAjaxDataProp" : "",
 								"ajax" : function(data, callback, settings) {
+									//console.log(settings);
+									console.log(data);
 									var id = $('#tabs-1').is(':visible') ? '#tabs-1'
 											: '#tabs-2';
 									var map = {};

@@ -13,6 +13,7 @@ import com.is.cm.core.domain.OrderDetail;
 import com.is.cm.core.domain.OrderDetailMod;
 import com.is.cm.core.event.CreateEvent;
 import com.is.cm.core.event.CreatedEvent;
+import com.is.cm.core.event.PagedDataResultEvent;
 import com.is.cm.core.event.ReadCollectionEvent;
 import com.is.cm.core.event.ReadEvent;
 import com.is.cm.core.event.RequestReadEvent;
@@ -43,8 +44,9 @@ public interface OrderService {
 			throws SupplierConfigurationException,
 			SupplierCommunicationException, SupplierOrderException;
 
-	ReadCollectionEvent<Order> find(
-			RequestReadEvent<Map<String, String>> requestReadEvent);
+	PagedDataResultEvent<Order> find(
+			RequestReadEvent<Map<String, String>> requestReadEvent,
+			int pageNum, int pageSize);
 
 	UpdatedEvent<List<Order>> bulkProcessOrder(UpdateEvent<List<Order>> event)
 			throws SupplierConfigurationException,

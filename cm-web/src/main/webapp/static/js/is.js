@@ -196,6 +196,14 @@ function evalArray(obj, expr) {
 		}
 	}
 };
+
+function drawSalesReportTable(data) {
+	var table = $('#tasks2').DataTable();
+	table.clear().draw();
+	for (var i = 0; i < data.length; i++) {
+		table.row.add([ data[i].sku, "$" + data[i].totalSales ]).draw();
+	}
+};
 (function($) {
 	$("select.select-time-range")
 			.each(
@@ -654,20 +662,6 @@ function evalArray(obj, expr) {
 										});
 									}
 									drawSalesReportTable(productsales);
-									function drawSalesReportTable(data) {
-										var table = $('#tasks2').DataTable();
-										table.clear().draw();
-										for (var i = 0; i < data.length; i++) {
-											table.row
-													.add(
-															[
-																	data[i].sku,
-																	"$"
-																			+ data[i].totalSales ])
-													.draw();
-										}
-									}
-
 									$(
 											'#unprocessedCount span.infobox-data-number')
 											.html(

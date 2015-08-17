@@ -45,6 +45,7 @@ import salesmachine.util.StringHandle;
 import com.is.cm.core.domain.Order;
 import com.is.cm.core.domain.OrderDetail;
 import com.is.cm.core.domain.OrderDetailMod;
+import com.is.cm.core.domain.PagedDataResult;
 
 public class OrderRepositoryDB extends RepositoryBase implements
 		OrderRepository {
@@ -99,12 +100,12 @@ public class OrderRepositoryDB extends RepositoryBase implements
 		// creating subqueries for all the possible inputs (orderdate,
 		// supplierid, statusid, batchid, channelid)
 		String orderdatequerysubstring = "";
-		if (datefrom.length() > 0)
-			orderdatequerysubstring += "o.orderTm >= to_date('" + datefrom
-					+ "','yyyy-mm-dd') and ";
-		if (dateto.length() > 0)
-			orderdatequerysubstring += "o.orderTm <= to_date('" + dateto
-					+ "','yyyy-mm-dd') and ";
+		if (datefrom.trim().length() > 0)
+			orderdatequerysubstring += "o.orderTm >= to_date('"
+					+ datefrom.trim() + "','MM/DD/YYYY') and ";
+		if (dateto.trim().length() > 0)
+			orderdatequerysubstring += "o.orderTm <= to_date('" + dateto.trim()
+					+ " 23:59:59', 'MM/DD/YYYY HH24:MI:SS') and ";
 
 		String supplierquerysubstring = "";
 		if (supplier.length() > 0)
@@ -615,7 +616,8 @@ public class OrderRepositoryDB extends RepositoryBase implements
 	}
 
 	@Override
-	public List<Order> find(Map<String, String> map) {
+	public PagedDataResult<Order> find(Map<String, String> map, int pageSize,
+			int pageNum) {
 
 		Date d = new Date();
 		// basic search
@@ -650,12 +652,12 @@ public class OrderRepositoryDB extends RepositoryBase implements
 		// creating subqueries for all the possible inputs (orderdate,
 		// supplierid, statusid, batchid, channelid)
 		String orderdatequerysubstring = "";
-		if (datefrom.length() > 0)
-			orderdatequerysubstring += "o.orderTm >= to_date('" + datefrom
-					+ "','mm-dd-yyyy') and ";
-		if (dateto.length() > 0)
-			orderdatequerysubstring += "o.orderTm <= to_date('" + dateto
-					+ "','mm-dd-yyyy') and ";
+		if (datefrom.trim().length() > 0)
+			orderdatequerysubstring += "o.orderTm >= to_date('"
+					+ datefrom.trim() + "','MM/DD/YYYY') and ";
+		if (dateto.trim().length() > 0)
+			orderdatequerysubstring += "o.orderTm <= to_date('" + dateto.trim()
+					+ " 23:59:59', 'MM/DD/YYYY HH24:MI:SS') and ";
 
 		String supplierquerysubstring = "";
 		if (supplier.length() > 0)
@@ -722,6 +724,7 @@ public class OrderRepositoryDB extends RepositoryBase implements
 			sku_search = "d.sku = '" + sku + "' and ";
 
 		List<Order> orders = new ArrayList<Order>();
+		Long totalRecords = 0L;
 		Session dbSession = SessionManager.currentSession();
 		Transaction tx = null;
 		try {
@@ -740,14 +743,9 @@ public class OrderRepositoryDB extends RepositoryBase implements
 							+ sku_search
 							+ "o.oimOrderBatches.oimChannels.vendors.vendorId=:vid "
 							+ sort_query);
-			// query.setCacheable(true);
 			query.setInteger("vid", getVendorId());
-			/*
-			 * TODO:: Implement pagination to handle bulk query response
-			 * query.setFirstResult(page * page_size);
-			 * query.setMaxResults(page_size);
-			 */
-			// oimorders = query.list();
+			query.setFirstResult(pageNum * pageSize);
+			query.setMaxResults(pageSize);
 
 			for (Iterator iter = query.list().iterator(); iter.hasNext();) {
 				OimOrders oimorder = (OimOrders) iter.next();
@@ -767,13 +765,31 @@ public class OrderRepositoryDB extends RepositoryBase implements
 				order.setOimOrderDetailses(details);
 			}
 
+			Query countQuery = dbSession
+					.createQuery("select count( distinct o.orderId) from salesmachine.hibernatedb.OimOrders o "
+							+ "left join o.oimOrderDetailses d "
+							+ "where o.deleteTm is null and "
+							+ "d.deleteTm is null and "
+							+ orderdatequerysubstring
+							+ supplierquerysubstring
+							+ statusquerysubstring
+							+ channelquerysubstring
+							+ customer_search
+							+ price_search
+							+ sku_search
+							+ "o.oimOrderBatches.oimChannels.vendors.vendorId=:vid "
+							+ sort_query);
+			countQuery.setInteger("vid", getVendorId());
+			Object uniqueResult = countQuery.uniqueResult();
+			totalRecords = (long) uniqueResult;
 			Date d1 = new Date();
 			LOG.info("It took: {} miliseconds to fetch {} Order(s)",
 					d1.getTime() - d.getTime(), orders.size());
 		} catch (RuntimeException e) {
 			LOG.error("Erorr in fetching orders", e);
 		}
-		return orders;
+		return new PagedDataResult<Order>(pageNum, pageSize, totalRecords,
+				orders);
 	}
 
 	@Override

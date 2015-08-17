@@ -13,6 +13,7 @@ import salesmachine.oim.suppliers.exception.SupplierOrderException;
 import com.is.cm.core.domain.Order;
 import com.is.cm.core.domain.OrderDetail;
 import com.is.cm.core.domain.OrderDetailMod;
+import com.is.cm.core.domain.PagedDataResult;
 
 public interface OrderRepository {
 
@@ -36,9 +37,11 @@ public interface OrderRepository {
 
 	List<Order> findUnresolvedOrders();
 
-	boolean processOrders(Order order) throws SupplierConfigurationException, SupplierCommunicationException, SupplierOrderException;
+	boolean processOrders(Order order) throws SupplierConfigurationException,
+			SupplierCommunicationException, SupplierOrderException;
 
-	List<Order> find(Map<String, String> map);
+	PagedDataResult<Order> find(Map<String, String> map, int pageSize,
+			int pageNum);
 
 	void update(OimOrderDetails orderDetail);
 
