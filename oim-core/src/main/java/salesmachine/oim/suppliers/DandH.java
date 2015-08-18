@@ -54,6 +54,7 @@ import salesmachine.oim.stores.impl.OrderImportManager;
 import salesmachine.oim.suppliers.exception.SupplierCommunicationException;
 import salesmachine.oim.suppliers.exception.SupplierConfigurationException;
 import salesmachine.oim.suppliers.exception.SupplierOrderException;
+import salesmachine.oim.suppliers.exception.SupplierOrderTrackingException;
 import salesmachine.oim.suppliers.modal.OrderStatus;
 import salesmachine.oim.suppliers.modal.TrackingData;
 import salesmachine.oim.suppliers.modal.dh.XMLRESPONSE;
@@ -84,13 +85,15 @@ public class DandH extends Supplier implements HasTracking {
 	 * @throws SupplierOrderException
 	 * @throws SupplierCommunicationException
 	 * @throws SupplierConfigurationException
-	 * @throws ChannelOrderFormatException 
-	 * @throws ChannelCommunicationException 
+	 * @throws ChannelOrderFormatException
+	 * @throws ChannelCommunicationException
 	 */
 
 	public void sendOrders(Integer vendorId, OimVendorSuppliers ovs, List orders)
 			throws SupplierConfigurationException,
-			SupplierCommunicationException, SupplierOrderException, ChannelConfigurationException,ChannelCommunicationException, ChannelOrderFormatException {
+			SupplierCommunicationException, SupplierOrderException,
+			ChannelConfigurationException, ChannelCommunicationException,
+			ChannelOrderFormatException {
 		logStream.println("Started sending orders to DandH");
 
 		// populate orderSkuPrefixMap with channel id and the prefix to be used
@@ -143,7 +146,8 @@ public class DandH extends Supplier implements HasTracking {
 			List<OimFileFieldMap> fileFieldMaps,
 			IFileSpecificsProvider fileSpecifics, OimVendorSuppliers ovs,
 			Integer vendorId, Reps r) throws SupplierConfigurationException,
-			SupplierCommunicationException, SupplierOrderException, ChannelCommunicationException, ChannelOrderFormatException {
+			SupplierCommunicationException, SupplierOrderException,
+			ChannelCommunicationException, ChannelOrderFormatException {
 		String USERID = ovs.getLogin();
 		String PASSWORD = ovs.getPassword();
 		String lincenceKey = ovs.getAccountNumber();
@@ -505,7 +509,7 @@ public class DandH extends Supplier implements HasTracking {
 
 	@Override
 	public OrderStatus getOrderStatus(OimVendorSuppliers oimVendorSuppliers,
-			Object trackingMeta) {
+			Object trackingMeta) throws SupplierOrderTrackingException {
 		if (!(trackingMeta instanceof String))
 			throw new IllegalArgumentException(
 					"trackingMeta is expected to be a String value containing D&H ORDERNUM.");
@@ -533,14 +537,17 @@ public class DandH extends Supplier implements HasTracking {
 					.unmarshal(reader);
 			log.info(orderStatusResponse.getSTATUS());
 			if ("success".equalsIgnoreCase(orderStatusResponse.getSTATUS())) {
-				log.info("Invoice:{}", orderStatusResponse.getORDERSTATUS()
-						.get(0).getINVOICE());
 
 				for (ORDERSTATUS orderstatus2 : orderStatusResponse
 						.getORDERSTATUS()) {
+					log.info("Invoice:{}", orderstatus2.getINVOICE());
 					if (!trackingMeta.toString().equals(
 							orderstatus2.getORDERNUM()))
 						continue;
+					if (!StringHandle.isNullOrEmpty(orderstatus2.getMessage())) {
+						orderStatus.setStatus(orderstatus2.getMessage());
+						break;
+					}
 					String invoice = orderstatus2.getINVOICE();
 					if ("In Process".equalsIgnoreCase(invoice)) {
 						response = invoice;
@@ -613,16 +620,25 @@ public class DandH extends Supplier implements HasTracking {
 			} else {
 				orderStatus.setStatus(orderStatusResponse.getMESSAGE());
 			}
+
 		} catch (JAXBException e) {
 			log.error(e.getMessage(), e);
 		} catch (SupplierConfigurationException e) {
 			log.error(e.getMessage(), e);
 		} catch (SupplierCommunicationException e) {
 			log.error(e.getMessage(), e);
-		} catch (Exception e) {
+		} catch (SupplierOrderException e) {
 			log.error(e.getMessage(), e);
 		}
 
+		if (orderStatus.getStatus() == null) {
+			throw new SupplierOrderTrackingException(
+					"Error in getting order status from Supplier while tracking Tracking Id- "
+							+ trackingMeta);
+		} else if (orderStatus.getTrackingData() == null)
+			throw new SupplierOrderTrackingException(
+					"Error in getting order tracking details from Supplier while tracking Tracking Id- "
+							+ trackingMeta);
 		return orderStatus;
 	}
 

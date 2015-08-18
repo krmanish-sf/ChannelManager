@@ -47,6 +47,7 @@ import salesmachine.oim.stores.impl.OrderImportManager;
 import salesmachine.oim.suppliers.exception.SupplierCommunicationException;
 import salesmachine.oim.suppliers.exception.SupplierConfigurationException;
 import salesmachine.oim.suppliers.exception.SupplierOrderException;
+import salesmachine.oim.suppliers.exception.SupplierOrderTrackingException;
 import salesmachine.oim.suppliers.modal.TrackingData;
 import salesmachine.oim.suppliers.modal.bf.OrderXMLresp;
 import salesmachine.oim.suppliers.modal.bf.OrderXMLresp.Items.Item;
@@ -529,7 +530,7 @@ public class BF extends Supplier implements HasTracking {
 
 	@Override
 	public salesmachine.oim.suppliers.modal.OrderStatus getOrderStatus(
-			OimVendorSuppliers oimVendorSuppliers, Object trackingMeta) {
+			OimVendorSuppliers oimVendorSuppliers, Object trackingMeta)  throws SupplierOrderTrackingException{
 		salesmachine.oim.suppliers.modal.OrderStatus orderStatus = new salesmachine.oim.suppliers.modal.OrderStatus();
 		if (!(trackingMeta instanceof String))
 			throw new IllegalArgumentException(
@@ -635,6 +636,12 @@ public class BF extends Supplier implements HasTracking {
 
 				}
 			}
+				if(orderStatus.getStatus()==null ){
+					throw new SupplierOrderTrackingException("Error in getting order status from Supplier while tracking Tracking Id- "+trackingMeta);
+				}
+			if(orderStatus.getTrackingData()==null)
+				throw new SupplierOrderTrackingException("Error in getting tracking details from Supplier while tracking Tracking Id- "+trackingMeta);
+				
 		} catch (JAXBException | SupplierConfigurationException
 				| SupplierOrderException | SupplierCommunicationException e) {
 			log.error(e.getMessage(), e);

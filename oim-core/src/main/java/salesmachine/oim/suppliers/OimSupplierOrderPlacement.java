@@ -55,6 +55,7 @@ import salesmachine.oim.suppliers.exception.InvalidAddressException;
 import salesmachine.oim.suppliers.exception.SupplierCommunicationException;
 import salesmachine.oim.suppliers.exception.SupplierConfigurationException;
 import salesmachine.oim.suppliers.exception.SupplierOrderException;
+import salesmachine.oim.suppliers.exception.SupplierOrderTrackingException;
 import salesmachine.oim.suppliers.modal.OrderStatus;
 import salesmachine.orderfile.DatabaseFile;
 import salesmachine.orderfile.DefaultCsvFile;
@@ -952,7 +953,8 @@ public class OimSupplierOrderPlacement {
 	public String trackOrder(Integer vendorId, Integer orderDetailId) {
 		Session session = m_dbSession;
 		Transaction tx = session.getTransaction();
-		OrderStatus orderStatus;
+		OimLogStream stream = new OimLogStream();
+		OrderStatus orderStatus = null;
 		if (tx != null && tx.isActive())
 			tx.commit();
 		tx = session.beginTransaction();
@@ -971,34 +973,59 @@ public class OimSupplierOrderPlacement {
 			oimVendorSuppliers = (OimVendorSuppliers) it;
 		switch (oimOrderDetails.getOimSuppliers().getSupplierId()) {
 		case DandH:
-			s = new DandH();
-			orderStatus = s.getOrderStatus(oimVendorSuppliers,
-					oimOrderDetails.getSupplierOrderNumber());
-			oimOrderDetails.setSupplierOrderStatus(orderStatus.toString());
-			if (orderStatus.isShipped())
-				oimOrderDetails.setOimOrderStatuses(new OimOrderStatuses(
-						OimConstants.ORDER_STATUS_SHIPPED));
-			session.update(oimOrderDetails);
+			try {
+				s = new DandH();
+				orderStatus = s.getOrderStatus(oimVendorSuppliers,
+						oimOrderDetails.getSupplierOrderNumber());
+
+				oimOrderDetails.setSupplierOrderStatus(orderStatus.toString());
+				if (orderStatus.isShipped())
+					oimOrderDetails.setOimOrderStatuses(new OimOrderStatuses(
+							OimConstants.ORDER_STATUS_SHIPPED));
+				session.update(oimOrderDetails);
+			} catch (SupplierOrderTrackingException e1) {
+				log.error(e1.getMessage(), e1);
+				stream.println(e1.getMessage());
+				Supplier.updateVendorSupplierOrderHistory(vendorId,
+						oimVendorSuppliers.getOimSuppliers(), e1.getMessage(),
+						Supplier.ERROR_ORDER_TRACKING);
+			}
 			break;
 		case BnF:
-			s = new BF();
-			orderStatus = s.getOrderStatus(oimVendorSuppliers,
-					oimOrderDetails.getSupplierOrderNumber());
-			oimOrderDetails.setSupplierOrderStatus(orderStatus.toString());
-			if (orderStatus.isShipped())
-				oimOrderDetails.setOimOrderStatuses(new OimOrderStatuses(
-						OimConstants.ORDER_STATUS_SHIPPED));
-			session.update(oimOrderDetails);
+			try {
+				s = new BF();
+				orderStatus = s.getOrderStatus(oimVendorSuppliers,
+						oimOrderDetails.getSupplierOrderNumber());
+				oimOrderDetails.setSupplierOrderStatus(orderStatus.toString());
+				if (orderStatus.isShipped())
+					oimOrderDetails.setOimOrderStatuses(new OimOrderStatuses(
+							OimConstants.ORDER_STATUS_SHIPPED));
+				session.update(oimOrderDetails);
+			} catch (SupplierOrderTrackingException e1) {
+				log.error(e1.getMessage(), e1);
+				stream.println(e1.getMessage());
+				Supplier.updateVendorSupplierOrderHistory(vendorId,
+						oimVendorSuppliers.getOimSuppliers(), e1.getMessage(),
+						Supplier.ERROR_ORDER_TRACKING);
+			}
 			break;
 		case HONESTGREEN:
-			s = new HonestGreen();
-			orderStatus = s.getOrderStatus(oimVendorSuppliers,
-					oimOrderDetails.getSupplierOrderNumber());
-			oimOrderDetails.setSupplierOrderStatus(orderStatus.toString());
-			if (orderStatus.isShipped())
-				oimOrderDetails.setOimOrderStatuses(new OimOrderStatuses(
-						OimConstants.ORDER_STATUS_SHIPPED));
-			session.update(oimOrderDetails);
+			try {
+				s = new HonestGreen();
+				orderStatus = s.getOrderStatus(oimVendorSuppliers,
+						oimOrderDetails.getSupplierOrderNumber());
+				oimOrderDetails.setSupplierOrderStatus(orderStatus.toString());
+				if (orderStatus.isShipped())
+					oimOrderDetails.setOimOrderStatuses(new OimOrderStatuses(
+							OimConstants.ORDER_STATUS_SHIPPED));
+				session.update(oimOrderDetails);
+			} catch (SupplierOrderTrackingException e1) {
+				log.error(e1.getMessage(), e1);
+				stream.println(e1.getMessage());
+				Supplier.updateVendorSupplierOrderHistory(vendorId,
+						oimVendorSuppliers.getOimSuppliers(), e1.getMessage(),
+						Supplier.ERROR_ORDER_TRACKING);
+			}
 			break;
 		default:
 			orderStatus = new OrderStatus();
@@ -1015,7 +1042,7 @@ public class OimSupplierOrderPlacement {
 		Integer channelId = oimChannels.getChannelId();
 		IOrderImport iOrderImport = OrderImportManager
 				.getIOrderImport(channelId);
-		OimLogStream stream = new OimLogStream();
+		
 		if (iOrderImport != null) {
 			log.debug("Created the iorderimport object");
 			try {
@@ -1024,7 +1051,9 @@ public class OimSupplierOrderPlacement {
 					log.debug("Failed initializing the channel with Id:{}",
 							channelId);
 				} else {
-					iOrderImport.updateStoreOrder(oimOrderDetails, orderStatus);
+					if (orderStatus != null)
+						iOrderImport.updateStoreOrder(oimOrderDetails,
+								orderStatus);
 				}
 			} catch (ChannelConfigurationException e) {
 				stream.println(e.getMessage());
@@ -1033,34 +1062,30 @@ public class OimSupplierOrderPlacement {
 						vendorId,
 						oimVendorSuppliers.getOimSuppliers(),
 						"Error occured in updating store order status due to ChannelConfiguration Error. "
-								+ e.getMessage(),
-						Supplier.ERROR_ORDER_TRACKING);
-			}
-			catch (ChannelCommunicationException e) {
+								+ e.getMessage(), Supplier.ERROR_ORDER_TRACKING);
+			} catch (ChannelCommunicationException e) {
 				stream.println(e.getMessage());
 				log.error(e.getMessage(), e);
 				Supplier.updateVendorSupplierOrderHistory(
 						vendorId,
 						oimVendorSuppliers.getOimSuppliers(),
 						"Error occured in updating store order status due to ChannelCommunication Error. "
-								+ e.getMessage(),
-						Supplier.ERROR_ORDER_TRACKING);
-			}
-			catch (ChannelOrderFormatException e) {
+								+ e.getMessage(), Supplier.ERROR_ORDER_TRACKING);
+			} catch (ChannelOrderFormatException e) {
 				stream.println(e.getMessage());
 				log.error(e.getMessage(), e);
 				Supplier.updateVendorSupplierOrderHistory(
 						vendorId,
 						oimVendorSuppliers.getOimSuppliers(),
 						"Error occured in updating store order status due to ChannelOrderFormat Error. "
-								+ e.getMessage(),
-						Supplier.ERROR_ORDER_TRACKING);
+								+ e.getMessage(), Supplier.ERROR_ORDER_TRACKING);
 			}
 		} else {
 			log.error("Could not find a bean to work with this Channel.");
 			stream.println("This Channel type is not supported for pushing order updates.");
 		}
-
-		return orderStatus.toString();
+		if(orderStatus!=null)
+			stream.println(orderStatus.toString());
+		return stream.toString();
 	}
 }

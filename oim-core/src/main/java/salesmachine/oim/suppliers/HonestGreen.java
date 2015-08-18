@@ -53,6 +53,7 @@ import salesmachine.oim.stores.impl.OrderImportManager;
 import salesmachine.oim.suppliers.exception.SupplierCommunicationException;
 import salesmachine.oim.suppliers.exception.SupplierConfigurationException;
 import salesmachine.oim.suppliers.exception.SupplierOrderException;
+import salesmachine.oim.suppliers.exception.SupplierOrderTrackingException;
 import salesmachine.oim.suppliers.modal.OrderStatus;
 import salesmachine.oim.suppliers.modal.hg.TrackingData;
 import salesmachine.util.OimLogStream;
@@ -774,7 +775,7 @@ public class HonestGreen extends Supplier implements HasTracking {
 
 	@Override
 	public OrderStatus getOrderStatus(OimVendorSuppliers ovs,
-			Object trackingMeta) {
+			Object trackingMeta) throws SupplierOrderTrackingException{
 		clearCache();
 		log.info("Tracking request for PONUM: {}", trackingMeta);
 		if (!(trackingMeta instanceof String))
@@ -951,6 +952,12 @@ public class HonestGreen extends Supplier implements HasTracking {
 				}
 			}
 		}
+		if(orderStatus.getStatus()==null ){
+			throw new SupplierOrderTrackingException("Error in getting order status from Supplier while tracking Tracking Id- "+trackingMeta);
+		}
+	if(orderStatus.getTrackingData()==null)
+		throw new SupplierOrderTrackingException("Error in getting tracking details from Supplier while tracking Tracking Id- "+trackingMeta);
+	
 		return orderStatus;
 	}
 

@@ -356,8 +356,8 @@ public class XMLRESPONSE {
 	 */
 	@XmlAccessorType(XmlAccessType.FIELD)
 	@XmlType(name = "", propOrder = { "date", "branch", "ponum", "ordernum",
-			"invoice", "invtotal", "soldto", "shipto", "orderdetail",
-			"_package" })
+			"invoice", "invtotal", "message", "soldto", "shipto",
+			"orderdetail", "_package" })
 	public static class ORDERSTATUS {
 
 		@XmlElement(name = "DATE", required = true)
@@ -370,6 +370,17 @@ public class XMLRESPONSE {
 		protected String ordernum;
 		@XmlElement(name = "INVOICE")
 		protected String invoice;
+		@XmlElement(name = "MESSAGE")
+		protected String message;
+
+		public String getMessage() {
+			return message;
+		}
+
+		public void setMessage(String message) {
+			this.message = message;
+		}
+
 		@XmlElement(name = "INVTOTAL", required = true)
 		protected XMLRESPONSE.ORDERSTATUS.INVTOTAL invtotal;
 		@XmlElement(name = "SOLDTO", required = true)
