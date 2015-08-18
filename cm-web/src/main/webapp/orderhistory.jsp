@@ -791,9 +791,11 @@
 							{
 								"order" : [ [ 2, "desc" ] ],
 								"processing" : true,
-								"serverSide" : false,
-								"sAjaxDataProp" : "",
+								"serverSide" : true,
+								"sAjaxDataProp" : "data",
 								"ajax" : function(data, callback, settings) {
+									console.log(settings);
+									console.log(data);
 									var id = $('#tabs-1').is(':visible') ? '#tabs-1'
 											: '#tabs-2';
 									var map = {};
@@ -804,16 +806,25 @@
 											map[this.name] = this.value;
 										}
 									});
-									$(this).CRUD({
-										"method" : "POST",
-										"cache" : true,
-										"url" : 'aggregators/orders/search',
-										"data" : JSON.stringify(map),
-										"message" : true,
-										"success" : function(d) {
-											callback(d);
-										}
-									});
+									map['draw'] = data.draw;
+									//if(data.start>)
+									map['pageNum'] =Math.floor( (data.start + data.length)
+											/ data.length);
+									map['pageSize'] = data.length;
+									map['search'] = data.search.value;
+									$(this)
+											.CRUD(
+													{
+														"method" : "POST",
+														"cache" : true,
+														"url" : 'aggregators/orders/search',
+														"data" : JSON
+																.stringify(map),
+														"message" : true,
+														"success" : function(d) {
+															callback(d);
+														}
+													});
 								},
 								"bDestroy" : true,
 								"aoColumns" : [

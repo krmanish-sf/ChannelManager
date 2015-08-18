@@ -3,69 +3,82 @@
 "http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd">
 <!-- Generated 30 Mar, 2010 7:26:11 PM by Hibernate Tools 3.2.4.GA -->
 <hibernate-mapping>
-    <class name="salesmachine.hibernatedb.OimChannels" table="OIM_CHANNELS" schema="KDYER">
-        <id name="channelId" type="java.lang.Integer">
-            <column name="CHANNEL_ID" precision="22" scale="0" />
-            <generator class="sequence">
-                <param name="sequence">OIM_CHANNELS_SEQ</param>
-            </generator>
-        </id>
-        <many-to-one name="vendors" class="salesmachine.hibernatedb.Vendors" fetch="select">
-            <column name="VENDOR_ID" precision="22" scale="0" />
-        </many-to-one>
-        <many-to-one name="oimSupportedChannels" class="salesmachine.hibernatedb.OimSupportedChannels" fetch="select">
-            <column name="SUPPORTED_CHANNEL_ID" precision="22" scale="0" />
-        </many-to-one>
-        <property name="channelName" type="string">
-            <column name="CHANNEL_NAME" length="100" />
-        </property>
-        <property name="emailNotifications" type="java.lang.Integer">
-            <column name="EMAIL_NOTIFICATIONS" precision="22" scale="0" />
-        </property>
-        <property name="enableOrderAutomation" type="java.lang.Integer">
-            <column name="ENABLE_ORDER_AUTOMATION" precision="22" scale="0" />
-        </property>
-        <property name="insertionTm" type="java.util.Date">
-            <column name="INSERTION_TM" length="7" />
-        </property>
-        <property name="deleteTm" type="java.util.Date">
-            <column name="DELETE_TM" length="7" />
-        </property>
-        <set name="oimChannelAccessDetailses" inverse="true" lazy="true" table="OIM_CHANNEL_ACCESS_DETAILS" fetch="select">
-            <key>
-                <column name="CHANNEL_ID" precision="22" scale="0" />
-            </key>
-            <one-to-many class="salesmachine.hibernatedb.OimChannelAccessDetails" />
-        </set>
-        <set name="oimOrderBatcheses" inverse="true" lazy="true" table="OIM_ORDER_BATCHES" fetch="select">
-            <key>
-                <column name="CHANNEL_ID" precision="22" scale="0" />
-            </key>
-            <one-to-many class="salesmachine.hibernatedb.OimOrderBatches" />
-        </set>
-        <set name="oimOrderProcessingRules" inverse="true" lazy="true" table="OIM_ORDER_PROCESSING_RULE" fetch="select">
-            <key>
-                <column name="CHANNEL_ID" precision="22" scale="0" />
-            </key>
-            <one-to-many class="salesmachine.hibernatedb.OimOrderProcessingRule" />
-        </set>
-        <set name="oimUploadedFileses" inverse="true" lazy="true" table="OIM_UPLOADED_FILES" fetch="select">
-            <key>
-                <column name="CHANNEL_ID" precision="22" scale="0" />
-            </key>
-            <one-to-many class="salesmachine.hibernatedb.OimUploadedFiles" />
-        </set>
-        <set name="oimChannelSupplierMaps" inverse="true" lazy="true" table="OIM_CHANNEL_SUPPLIER_MAP" fetch="select">
-            <key>
-                <column name="CHANNEL_ID" precision="22" scale="0" />
-            </key>
-            <one-to-many class="salesmachine.hibernatedb.OimChannelSupplierMap" />
-        </set>
-        <set name="oimChannelFileses" inverse="true" lazy="true" table="OIM_CHANNEL_FILES" fetch="select">
-            <key>
-                <column name="CHANNEL_ID" precision="22" scale="0" />
-            </key>
-            <one-to-many class="salesmachine.hibernatedb.OimChannelFiles" />
-        </set>
-    </class>
+	<class name="salesmachine.hibernatedb.OimChannels" table="OIM_CHANNELS"
+		schema="KDYER">
+		<id name="channelId" type="java.lang.Integer">
+			<column name="CHANNEL_ID" precision="22" scale="0" />
+			<generator class="sequence">
+				<param name="sequence">OIM_CHANNELS_SEQ</param>
+			</generator>
+		</id>
+		<many-to-one name="vendors" class="salesmachine.hibernatedb.Vendors"
+			fetch="select">
+			<column name="VENDOR_ID" precision="22" scale="0" />
+		</many-to-one>
+		<many-to-one name="oimSupportedChannels"
+			class="salesmachine.hibernatedb.OimSupportedChannels" fetch="select">
+			<column name="SUPPORTED_CHANNEL_ID" precision="22" scale="0" />
+		</many-to-one>
+		<property name="channelName" type="string">
+			<column name="CHANNEL_NAME" length="100" />
+		</property>
+		<property name="emailNotifications" type="java.lang.Integer">
+			<column name="EMAIL_NOTIFICATIONS" precision="22" scale="0" />
+		</property>
+		<property name="enableOrderAutomation" type="java.lang.Integer">
+			<column name="ENABLE_ORDER_AUTOMATION" precision="22" scale="0" />
+		</property>
+		<property name="insertionTm" type="java.util.Date">
+			<column name="INSERTION_TM" length="7" />
+		</property>
+		<property name="deleteTm" type="java.util.Date">
+			<column name="DELETE_TM" length="7" />
+		</property>
+		<property name="lastFetchTm" type="java.util.Date">
+			<column name="LAST_FETCH_TM" length="7" />
+		</property>
+
+		<set name="oimChannelAccessDetailses" inverse="true" lazy="true"
+			table="OIM_CHANNEL_ACCESS_DETAILS" fetch="select">
+			<key>
+				<column name="CHANNEL_ID" precision="22" scale="0" />
+			</key>
+			<one-to-many class="salesmachine.hibernatedb.OimChannelAccessDetails" />
+		</set>
+		<set name="oimOrderBatcheses" inverse="true" lazy="true"
+			table="OIM_ORDER_BATCHES" fetch="select">
+			<key>
+				<column name="CHANNEL_ID" precision="22" scale="0" />
+			</key>
+			<one-to-many class="salesmachine.hibernatedb.OimOrderBatches" />
+		</set>
+		<set name="oimOrderProcessingRules" inverse="true" lazy="true"
+			table="OIM_ORDER_PROCESSING_RULE" fetch="select">
+			<key>
+				<column name="CHANNEL_ID" precision="22" scale="0" />
+			</key>
+			<one-to-many class="salesmachine.hibernatedb.OimOrderProcessingRule" />
+		</set>
+		<set name="oimUploadedFileses" inverse="true" lazy="true"
+			table="OIM_UPLOADED_FILES" fetch="select">
+			<key>
+				<column name="CHANNEL_ID" precision="22" scale="0" />
+			</key>
+			<one-to-many class="salesmachine.hibernatedb.OimUploadedFiles" />
+		</set>
+		<set name="oimChannelSupplierMaps" inverse="true" lazy="true"
+			table="OIM_CHANNEL_SUPPLIER_MAP" fetch="select">
+			<key>
+				<column name="CHANNEL_ID" precision="22" scale="0" />
+			</key>
+			<one-to-many class="salesmachine.hibernatedb.OimChannelSupplierMap" />
+		</set>
+		<set name="oimChannelFileses" inverse="true" lazy="true"
+			table="OIM_CHANNEL_FILES" fetch="select">
+			<key>
+				<column name="CHANNEL_ID" precision="22" scale="0" />
+			</key>
+			<one-to-many class="salesmachine.hibernatedb.OimChannelFiles" />
+		</set>
+	</class>
 </hibernate-mapping>

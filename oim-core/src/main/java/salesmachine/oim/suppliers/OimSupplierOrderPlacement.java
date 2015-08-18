@@ -235,7 +235,8 @@ public class OimSupplierOrderPlacement {
 											+ " Supplier: "
 											+ detail.getOimSuppliers()
 													.getSupplierName(),
-									Supplier.ERROR_UNCONFIGURED_SUPPLIER);
+									Supplier.ERROR_UNCONFIGURED_SUPPLIER,
+									detail);
 							return false;
 						} else {
 							log.info("Channel Supplier Mapping : {}", list);
@@ -393,7 +394,7 @@ public class OimSupplierOrderPlacement {
 			} catch (RuntimeException e) {
 				if (tx != null && tx.isActive())
 					tx.rollback();
-				e.printStackTrace();
+				log.error(e.getMessage(), e);
 			}
 
 			Integer supplierMethodNameId = m_supplierMethods

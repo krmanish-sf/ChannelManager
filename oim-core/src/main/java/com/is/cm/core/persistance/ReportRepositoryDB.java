@@ -1057,7 +1057,7 @@ public class ReportRepositoryDB extends RepositoryBase implements
 			VendorsuppOrderhistory e = new VendorsuppOrderhistory(object);
 			list.add(e);
 		}
-		LOG.info("History Size : {} and Elements {}", list.size(),
+		LOG.trace("History Size : {} and Elements {}", list.size(),
 				list.toString());
 		return list;
 	}

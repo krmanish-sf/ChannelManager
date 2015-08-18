@@ -10,9 +10,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.StringTokenizer;
 
+import org.hibernate.HibernateException;
 import org.hibernate.Query;
 import org.hibernate.Session;
-import org.hibernate.Transaction;
 import org.hibernate.criterion.Restrictions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,7 +51,6 @@ public abstract class Supplier {
 	public static final Integer ERROR_UNCONFIGURED_SUPPLIER = 1;
 	public static final Integer ERROR_PING_FAILURE = 2;
 	public static final Integer ERROR_ORDER_TRACKING = 4;
-	
 
 	public Supplier() {
 		log.debug("Creating instance");
@@ -67,7 +66,8 @@ public abstract class Supplier {
 	public abstract void sendOrders(Integer vendorId, OimVendorSuppliers ovs,
 			List orders) throws SupplierConfigurationException,
 			SupplierCommunicationException, SupplierOrderException,
-			ChannelConfigurationException, ChannelCommunicationException, ChannelOrderFormatException;
+			ChannelConfigurationException, ChannelCommunicationException,
+			ChannelOrderFormatException;
 
 	protected String getUSStateFullName(String stateCode) {
 		if (stateCodeMapping.containsKey(stateCode))
@@ -84,30 +84,36 @@ public abstract class Supplier {
 	public static final void updateVendorSupplierOrderHistory(Integer vid,
 			OimSuppliers oimSuppliers, Object response, int errorCode,
 			OimOrderDetails oimOrderDetails) {
-		Session session = SessionManager.currentSession();
-		Transaction tx = session.getTransaction();
-		tx = session.beginTransaction();
-		OimVendorsuppOrderhistory history = new OimVendorsuppOrderhistory();
-		Vendors vendor = new Vendors();
-		vendor.setVendorId(vid);
-		history.setVendors(vendor);
-		history.setOimSuppliers(oimSuppliers);
-		history.setProcessingTm(new Date());
-		history.setErrorCode(errorCode);
-		if (oimOrderDetails != null)
-			history.setOimOrderDetails(oimOrderDetails);
-		if (response != null) {
-			if (response instanceof OrderReturnInfo) {
-				history.setDescription(((OrderReturnInfo) response)
-						.getReturnValue());
-			} else {
-				history.setDescription(response.toString());
+		org.hibernate.Transaction tx = null;
+		try {
+			Session session = SessionManager.currentSession();
+			tx = session.beginTransaction();
+			OimVendorsuppOrderhistory history = new OimVendorsuppOrderhistory();
+			Vendors vendor = new Vendors();
+			vendor.setVendorId(vid);
+			history.setVendors(vendor);
+			history.setOimSuppliers(oimSuppliers);
+			history.setProcessingTm(new Date());
+			history.setErrorCode(errorCode);
+			if (oimOrderDetails != null)
+				history.setOimOrderDetails(oimOrderDetails);
+			if (response != null) {
+				if (response instanceof OrderReturnInfo) {
+					history.setDescription(((OrderReturnInfo) response)
+							.getReturnValue());
+				} else {
+					history.setDescription(response.toString());
+				}
 			}
+			session.save(history);
+			tx.commit();
+			log.debug("Added the order processing output to vendor supplier order history");
+		} catch (HibernateException e) {
+			if (tx != null && tx.isActive()) {
+				tx.rollback();
+			}
+			log.error(e.getMessage(), e);
 		}
-
-		session.save(history);
-		tx.commit();
-		log.debug("Added the order processing output to vendor supplier order history");
 	}
 
 	/***

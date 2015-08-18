@@ -25,6 +25,7 @@ public class Channel extends DomainBase implements Serializable {
 	private Integer enableOrderAutomation;
 	private Date insertionTm;
 	private Date deleteTm;
+	private Date lastFetchTm;
 	@JsonDeserialize(as = HashSet.class)
 	private Set<ChannelAccessDetail> oimChannelAccessDetailses;
 	@JsonDeserialize(as = HashSet.class)
@@ -166,6 +167,8 @@ public class Channel extends DomainBase implements Serializable {
 		target.setEnableOrderAutomation(oimChannel.getEnableOrderAutomation());
 		target.setOimSupportedChannels(SupportedChannel.from(oimChannel
 				.getOimSupportedChannels()));
+		target.setLastFetchTm(oimChannel.getLastFetchTm());
+		target.setInsertionTm(oimChannel.getInsertionTm());
 		if (oimChannel.getOimChannelAccessDetailses() != null) {
 			Set<ChannelAccessDetail> channelAccessDetails = new HashSet<ChannelAccessDetail>();
 			for (Iterator<OimChannelAccessDetails> i = oimChannel
@@ -196,6 +199,14 @@ public class Channel extends DomainBase implements Serializable {
 			}
 		}
 		return target;
+	}
+
+	public Date getLastFetchTm() {
+		return lastFetchTm;
+	}
+
+	public void setLastFetchTm(Date lastFetchTm) {
+		this.lastFetchTm = lastFetchTm;
 	}
 
 }

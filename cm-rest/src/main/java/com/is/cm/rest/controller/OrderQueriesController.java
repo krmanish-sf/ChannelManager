@@ -19,7 +19,9 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import com.is.cm.core.domain.Order;
 import com.is.cm.core.domain.OrderDetail;
 import com.is.cm.core.domain.OrderDetailMod;
+import com.is.cm.core.domain.PagedDataResult;
 import com.is.cm.core.domain.VendorContext;
+import com.is.cm.core.event.PagedDataResultEvent;
 import com.is.cm.core.event.ReadCollectionEvent;
 import com.is.cm.core.event.ReadEvent;
 import com.is.cm.core.event.RequestReadEvent;
@@ -60,12 +62,14 @@ public class OrderQueriesController {
 	@RequestMapping(method = RequestMethod.POST, value = "/search")
 	@ResponseStatus(HttpStatus.OK)
 	@ResponseBody
-	public Collection<Order> searchOrders(
+	public PagedDataResult<Order> searchOrders(
 			@RequestBody Map<String, String> filters) {
 		LOG.debug("Getting orders for vid: {}", VendorContext.get());
-		Map<String, String> o = (Map<String, String>) filters;
-		ReadCollectionEvent<Order> details = orderService
-				.find(new RequestReadEvent<Map<String, String>>(o));
+		PagedDataResultEvent<Order> details = orderService.find(
+				new RequestReadEvent<Map<String, String>>(filters),
+				Integer.parseInt(filters.get("pageNum")),
+				Integer.parseInt(filters.get("pageSize")));
+		details.getEntity().setDraw(Integer.parseInt(filters.get("draw")));
 		return details.getEntity();
 	}
 
@@ -78,14 +82,14 @@ public class OrderQueriesController {
 		return new ResponseEntity<Collection<OrderDetailMod>>(
 				event.getEntity(), HttpStatus.OK);
 	}
-	
+
 	@RequestMapping(method = { RequestMethod.GET }, value = "/system/{orderId}/modifications")
 	public ResponseEntity<Collection<OrderDetail>> getOrderDetailByOrderId(
 			@PathVariable int orderId) {
 		LOG.info("getOrderDetailByOrderId called------------------");
 		ReadCollectionEvent<OrderDetail> event = orderService
 				.getOrderDetailByOrderId(new ReadEvent<String>(orderId));
-		return new ResponseEntity<Collection<OrderDetail>>(
-				event.getEntity(), HttpStatus.OK);
+		return new ResponseEntity<Collection<OrderDetail>>(event.getEntity(),
+				HttpStatus.OK);
 	}
 }
