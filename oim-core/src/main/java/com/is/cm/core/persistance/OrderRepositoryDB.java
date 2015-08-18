@@ -744,8 +744,8 @@ public class OrderRepositoryDB extends RepositoryBase implements
 							+ "o.oimOrderBatches.oimChannels.vendors.vendorId=:vid "
 							+ sort_query);
 			query.setInteger("vid", getVendorId());
-			query.setFirstResult(pageNum * pageSize);
-			query.setMaxResults(pageSize);
+			query.setFirstResult((pageNum - 1) * pageSize).setMaxResults(
+					pageSize);
 
 			for (Iterator iter = query.list().iterator(); iter.hasNext();) {
 				OimOrders oimorder = (OimOrders) iter.next();

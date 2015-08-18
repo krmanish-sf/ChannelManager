@@ -65,9 +65,11 @@ public class OrderQueriesController {
 	public PagedDataResult<Order> searchOrders(
 			@RequestBody Map<String, String> filters) {
 		LOG.debug("Getting orders for vid: {}", VendorContext.get());
-		Map<String, String> o = (Map<String, String>) filters;
 		PagedDataResultEvent<Order> details = orderService.find(
-				new RequestReadEvent<Map<String, String>>(filters), 1, 10);
+				new RequestReadEvent<Map<String, String>>(filters),
+				Integer.parseInt(filters.get("pageNum")),
+				Integer.parseInt(filters.get("pageSize")));
+		details.getEntity().setDraw(Integer.parseInt(filters.get("draw")));
 		return details.getEntity();
 	}
 

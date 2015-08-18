@@ -6,17 +6,18 @@ import java.util.List;
 public class PagedDataResult<T> implements Serializable {
 	private static final long serialVersionUID = 1L;
 	private final int pageNum, pageSize;
-	private final long totalRecords;
+	private final long recordsTotal, recordsFiltered;
+	private int draw;
+	private final List<T> data;
 
 	public PagedDataResult(int pageNum, int pageSize, long totalRecords,
 			List<T> data) {
-		this.totalRecords = totalRecords;
+		this.recordsTotal = totalRecords;
+		this.recordsFiltered = totalRecords;
 		this.pageNum = pageNum;
 		this.pageSize = pageSize;
 		this.data = data;
 	}
-
-	private final List<T> data;
 
 	public int getPageSize() {
 		return pageSize;
@@ -26,11 +27,23 @@ public class PagedDataResult<T> implements Serializable {
 		return pageNum;
 	}
 
-	public long getTotalRecords() {
-		return totalRecords;
+	public long getRecordsTotal() {
+		return recordsTotal;
 	}
 
 	public List<T> getData() {
 		return data;
+	}
+
+	public int getDraw() {
+		return draw;
+	}
+
+	public void setDraw(int draw) {
+		this.draw = draw;
+	}
+
+	public long getRecordsFiltered() {
+		return recordsFiltered;
 	}
 }

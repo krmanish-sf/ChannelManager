@@ -14,6 +14,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
+import salesmachine.util.ApplicationProperties;
+
 @Component
 public class SimpleCORSFilter implements Filter {
 
@@ -23,9 +25,11 @@ public class SimpleCORSFilter implements Filter {
 	@Override
 	public void doFilter(ServletRequest req, ServletResponse res,
 			FilterChain chain) throws IOException, ServletException {
-		log.info("Adding CORS Header");
+		log.debug("Adding CORS Header to request path: {}",
+				req.getServletContext());
 		HttpServletResponse response = (HttpServletResponse) res;
-		response.setHeader("Access-Control-Allow-Origin", "http://staging.inventorysource.com");
+		response.setHeader("Access-Control-Allow-Origin",
+				ApplicationProperties.getProperty("cm.auth.CORS.url"));
 		response.setHeader("Access-Control-Allow-Methods",
 				"POST, GET, OPTIONS, DELETE");
 		response.setHeader("Access-Control-Max-Age", "3600");
