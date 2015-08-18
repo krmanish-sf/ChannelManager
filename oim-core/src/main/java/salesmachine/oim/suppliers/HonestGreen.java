@@ -203,7 +203,7 @@ public class HonestGreen extends Supplier implements HasTracking {
 							sendEmail(emailContent, ftpDetails, fileName,
 									r.getLogin());
 						}
-						
+
 					}
 					if (PhiMap.size() > 0) {
 						// create order file and send order to PHI configured
@@ -269,7 +269,7 @@ public class HonestGreen extends Supplier implements HasTracking {
 							sendEmail(emailContent, ftpDetails, fileName,
 									r.getLogin());
 						}
-						
+
 					}
 					if (HVAPhiMap.size() > 0) {
 						// check quantity of hva and phi. based on that send
@@ -349,7 +349,7 @@ public class HonestGreen extends Supplier implements HasTracking {
 								sendEmail(emailContent, ftpDetails, fileName,
 										r.getLogin());
 							}
-							
+
 						}
 						if (orderDetailPHIMap.size() > 0) {
 							FtpDetails ftpDetails = new FtpDetails();
@@ -473,7 +473,6 @@ public class HonestGreen extends Supplier implements HasTracking {
 		query.setString("sku", sku);
 		System.out.println(query.list());
 		Object quantity = query.uniqueResult();
-		dbSession.close();
 		return ((Integer) quantity).intValue();
 	}
 
@@ -494,11 +493,13 @@ public class HonestGreen extends Supplier implements HasTracking {
 		} catch (IOException e) {
 			log.error(e.getMessage(), e);
 			throw new SupplierCommunicationException(
-					"Could not connect to FTP while sending orderfile to HG - " + e.getMessage(), e);
+					"Could not connect to FTP while sending orderfile to HG - "
+							+ e.getMessage(), e);
 		} catch (FTPException e) {
 			log.error(e.getMessage(), e);
 			throw new SupplierConfigurationException(
-					"Could not connect to FTP while sending orderfile to HG - " + e.getMessage(), e);
+					"Could not connect to FTP while sending orderfile to HG - "
+							+ e.getMessage(), e);
 		}
 	}
 
@@ -616,7 +617,7 @@ public class HonestGreen extends Supplier implements HasTracking {
 			boolean isAmazon) throws ChannelCommunicationException,
 			ChannelOrderFormatException {
 		SimpleDateFormat sdf = new SimpleDateFormat("yyMMddHHmm");
-		String uploadfilename = "/home/manish-kumar/Desktop/"+"HG_" + ftpDetails.getAccountNumber() + "_"
+		String uploadfilename = "HG_" + ftpDetails.getAccountNumber() + "_"
 				+ sdf.format(new Date()) + ".txt";
 		File f = new File(uploadfilename);
 		log.info("created file name for HG:{}", f.getName());
@@ -775,7 +776,7 @@ public class HonestGreen extends Supplier implements HasTracking {
 
 	@Override
 	public OrderStatus getOrderStatus(OimVendorSuppliers ovs,
-			Object trackingMeta) throws SupplierOrderTrackingException{
+			Object trackingMeta) throws SupplierOrderTrackingException {
 		clearCache();
 		log.info("Tracking request for PONUM: {}", trackingMeta);
 		if (!(trackingMeta instanceof String))
@@ -952,12 +953,16 @@ public class HonestGreen extends Supplier implements HasTracking {
 				}
 			}
 		}
-		if(orderStatus.getStatus()==null ){
-			throw new SupplierOrderTrackingException("Error in getting order status from Supplier while tracking Tracking Id- "+trackingMeta);
+		if (orderStatus.getStatus() == null) {
+			throw new SupplierOrderTrackingException(
+					"Error in getting order status from Supplier while tracking Tracking Id- "
+							+ trackingMeta);
 		}
-	if(orderStatus.getTrackingData()==null)
-		throw new SupplierOrderTrackingException("Error in getting tracking details from Supplier while tracking Tracking Id- "+trackingMeta);
-	
+		if (orderStatus.getTrackingData() == null)
+			throw new SupplierOrderTrackingException(
+					"Error in getting tracking details from Supplier while tracking Tracking Id- "
+							+ trackingMeta);
+
 		return orderStatus;
 	}
 
