@@ -41,6 +41,7 @@ import salesmachine.hibernatedb.OimOrders;
 import salesmachine.hibernatedb.OimSupplierMethodattrValues;
 import salesmachine.hibernatedb.OimSupplierMethods;
 import salesmachine.hibernatedb.OimVendorSuppliers;
+import salesmachine.hibernatedb.Product;
 import salesmachine.hibernatedb.Reps;
 import salesmachine.hibernatedb.Vendors;
 import salesmachine.hibernatehelper.SessionManager;
@@ -62,6 +63,7 @@ import salesmachine.util.StringHandle;
 import com.enterprisedt.net.ftp.FTPClient;
 import com.enterprisedt.net.ftp.FTPException;
 import com.enterprisedt.net.ftp.FTPFile;
+import com.enterprisedt.net.ftp.FTPTransferType;
 
 public class HonestGreen extends Supplier implements HasTracking {
 	private static final String UNFIORDERNO = "UNFIORDERNO";
@@ -72,7 +74,7 @@ public class HonestGreen extends Supplier implements HasTracking {
 	private static final Logger log = LoggerFactory
 			.getLogger(HonestGreen.class);
 	// private static final byte BLANK_SPACE = ' ';
-	private static final byte[] NEW_LINE = new byte[] { '\r', '\n' };
+	private static final byte[] NEW_LINE = new byte[] { '\n' };
 	private static final byte[] HG_EOF = new byte[] { '*', '*', '*', 'E', 'O',
 			'F', '*', '*', '*' };
 	private static final byte[] FIL = new byte[] { 'F', 'I', 'L' };
@@ -198,11 +200,10 @@ public class HonestGreen extends Supplier implements HasTracking {
 						String fileName = createOrderFile(order, ovs,
 								orderDetailMap, ftpDetails,
 								isOrderFromAmazonStore);
-						sendToFTP(fileName, ovs, ftpDetails, true, false);
-						if (emailNotification) {
-							sendEmail(emailContent, ftpDetails, fileName,
-									r.getLogin());
-						}
+						sendToFTP(fileName, ovs, ftpDetails);
+						// if (emailNotification) {
+						sendEmail(emailContent, ftpDetails, fileName, "");
+						// }
 
 					}
 					if (PhiMap.size() > 0) {
@@ -264,11 +265,10 @@ public class HonestGreen extends Supplier implements HasTracking {
 						String fileName = createOrderFile(order, ovs,
 								orderDetailMap, ftpDetails,
 								isOrderFromAmazonStore);
-						sendToFTP(fileName, ovs, ftpDetails, false, true);
-						if (emailNotification) {
-							sendEmail(emailContent, ftpDetails, fileName,
-									r.getLogin());
-						}
+						sendToFTP(fileName, ovs, ftpDetails);
+						// if (emailNotification) {
+						sendEmail(emailContent, ftpDetails, fileName, "");
+						// }
 
 					}
 					if (HVAPhiMap.size() > 0) {
@@ -344,11 +344,10 @@ public class HonestGreen extends Supplier implements HasTracking {
 							fileName = createOrderFile(order, ovs,
 									orderDetailHVAMap, ftpDetails,
 									isOrderFromAmazonStore);
-							sendToFTP(fileName, ovs, ftpDetails, true, false);
-							if (emailNotification) {
-								sendEmail(emailContent, ftpDetails, fileName,
-										r.getLogin());
-							}
+							sendToFTP(fileName, ovs, ftpDetails);
+							// if (emailNotification) {
+							sendEmail(emailContent, ftpDetails, fileName, "");
+							// }
 
 						}
 						if (orderDetailPHIMap.size() > 0) {
@@ -405,12 +404,11 @@ public class HonestGreen extends Supplier implements HasTracking {
 							fileName = createOrderFile(order, ovs,
 									orderDetailPHIMap, ftpDetails,
 									isOrderFromAmazonStore);
-							sendToFTP(fileName, ovs, ftpDetails, false, true);
+							sendToFTP(fileName, ovs, ftpDetails);
 
-							if (emailNotification) {
-								sendEmail(emailContent, ftpDetails, fileName,
-										r.getLogin());
-							}
+							// if (emailNotification) {
+							sendEmail(emailContent, ftpDetails, fileName, "");
+							// }
 						}
 
 					}
@@ -444,11 +442,11 @@ public class HonestGreen extends Supplier implements HasTracking {
 				"support@inventorysource.com", login, emailSubject, emailBody,
 				fileName);
 
-		emailContent += "<br>Thanks, <br>Inventorysource support<br>";
-		logStream.println("Sending email to user about order processing");
-		log.debug("Sending email to user about order processing");
-		EmailUtil.sendEmail(login, "support@inventorysource.com", "",
-				"Order processing update results", emailContent, "text/html");
+		// emailContent += "<br>Thanks, <br>Inventorysource support<br>";
+		// logStream.println("Sending email to user about order processing");
+		// log.debug("Sending email to user about order processing");
+		// EmailUtil.sendEmail(login, "support@inventorysource.com", "",
+		// "Order processing update results", emailContent, "text/html");
 
 	}
 
@@ -459,9 +457,10 @@ public class HonestGreen extends Supplier implements HasTracking {
 		query.setString("sku", sku);
 		query.setInteger("vendorID", vendorId);
 		Object q = query.uniqueResult();
+		log.info("PHI Quantity: {}", q.toString());
 		int tempQuantity = 0;
 		if (q != null)
-			tempQuantity = ((Integer) q).intValue();
+			tempQuantity = Integer.parseInt(q.toString());
 
 		return tempQuantity - hvaQuantity;
 	}
@@ -469,24 +468,25 @@ public class HonestGreen extends Supplier implements HasTracking {
 	private int getHvaQuantity(String sku) {
 		Session dbSession = SessionManager.currentSession();
 		Query query = dbSession
-				.createQuery("select p.quantity from salesmachine.hibernatedb.Product p where p.sku=:sku");
+				.createQuery("select p from salesmachine.hibernatedb.Product p where p.sku=:sku");
+
 		query.setString("sku", sku);
 		System.out.println(query.list());
-		Object quantity = query.uniqueResult();
-		return ((Integer) quantity).intValue();
+		Product p = (Product) query.uniqueResult();
+		return p.getQuantity();
 	}
 
 	private void sendToFTP(String fileName, OimVendorSuppliers ovs,
-			FtpDetails ftpDetails, boolean isHva, boolean isPhi)
-			throws SupplierCommunicationException,
+			FtpDetails ftpDetails) throws SupplierCommunicationException,
 			SupplierConfigurationException {
 		FTPClient ftp = new FTPClient();
 		File file = new File(fileName);
 		try {
 			ftp.setRemoteHost(ftpDetails.getUrl());
-			ftp.setDetectTransferMode(true);
+			ftp.setDetectTransferMode(false);
 			ftp.connect();
 			ftp.login(ftpDetails.getUserName(), ftpDetails.getPassword());
+			ftp.setType(FTPTransferType.ASCII);
 			ftp.setTimeout(60 * 1000 * 60 * 5);
 			ftp.put(fileName, file.getName());
 			ftp.quit();
@@ -617,6 +617,7 @@ public class HonestGreen extends Supplier implements HasTracking {
 			boolean isAmazon) throws ChannelCommunicationException,
 			ChannelOrderFormatException {
 		SimpleDateFormat sdf = new SimpleDateFormat("yyMMddHHmm");
+
 		String uploadfilename = "HG_" + ftpDetails.getAccountNumber() + "_"
 				+ sdf.format(new Date()) + ".txt";
 		File f = new File(uploadfilename);
