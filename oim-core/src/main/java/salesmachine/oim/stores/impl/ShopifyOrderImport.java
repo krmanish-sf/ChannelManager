@@ -6,7 +6,6 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Set;
 
 import org.apache.commons.httpclient.HttpClient;
@@ -15,11 +14,9 @@ import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.methods.PostMethod;
 import org.apache.commons.httpclient.methods.PutMethod;
 import org.apache.commons.httpclient.methods.StringRequestEntity;
-import org.hibernate.Criteria;
 import org.hibernate.Query;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
-import org.hibernate.criterion.Restrictions;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -357,16 +354,7 @@ public class ShopifyOrderImport extends ChannelBase implements IOrderImport {
 				String shippingDetails = (String) ((JSONObject) ((JSONArray) orderObj
 						.get("shipping_lines")).get(0)).get("title");
 				oimOrders.setShippingDetails(shippingDetails);
-
-				Integer supportedChannelId = m_channel
-						.getOimSupportedChannels().getSupportedChannelId();
-				Criteria findCriteria = m_dbSession
-						.createCriteria(OimChannelShippingMap.class);
-				findCriteria.add(Restrictions.eq(
-						"oimSupportedChannel.supportedChannelId",
-						supportedChannelId));
-				List<OimChannelShippingMap> list = findCriteria.list();
-				for (OimChannelShippingMap entity : list) {
+				for (OimChannelShippingMap entity : oimChannelShippingMapList) {
 					String shippingRegEx = entity.getShippingRegEx();
 					if (shippingDetails.equalsIgnoreCase(shippingRegEx)) {
 						oimOrders.setOimShippingMethod(entity

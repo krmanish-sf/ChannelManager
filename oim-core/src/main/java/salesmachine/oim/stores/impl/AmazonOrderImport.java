@@ -318,15 +318,7 @@ public class AmazonOrderImport extends ChannelBase implements IOrderImport {
 					oimOrders.setPayMethod(order2.getPaymentMethod());
 					oimOrders.setShippingDetails(order2.getShipServiceLevel());
 					String shippingDetails = order2.getShipServiceLevel();
-					Integer supportedChannelId = m_channel
-							.getOimSupportedChannels().getSupportedChannelId();
-					Criteria findCriteria = m_dbSession
-							.createCriteria(OimChannelShippingMap.class);
-					findCriteria.add(Restrictions.eq(
-							"oimSupportedChannel.supportedChannelId",
-							supportedChannelId));
-					List<OimChannelShippingMap> list = findCriteria.list();
-					for (OimChannelShippingMap entity : list) {
+					for (OimChannelShippingMap entity : oimChannelShippingMapList) {
 						String shippingRegEx = entity.getShippingRegEx();
 						if (shippingDetails.equalsIgnoreCase(shippingRegEx)) {
 							oimOrders.setOimShippingMethod(entity

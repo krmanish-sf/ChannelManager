@@ -161,15 +161,7 @@ public class CREOrderImport extends ChannelBase implements IOrderImport {
 				order.setOrderFetchTm(new Date());
 				order.setInsertionTm(new Date());
 				String shippingDetails = order.getShippingDetails();
-				Integer supportedChannelId = m_channel
-						.getOimSupportedChannels().getSupportedChannelId();
-				Criteria findCriteria = m_dbSession
-						.createCriteria(OimChannelShippingMap.class);
-				findCriteria.add(Restrictions.eq(
-						"oimSupportedChannel.supportedChannelId",
-						supportedChannelId));
-				List<OimChannelShippingMap> list = findCriteria.list();
-				for (OimChannelShippingMap entity : list) {
+				for (OimChannelShippingMap entity : oimChannelShippingMapList) {
 					String shippingRegEx = entity.getShippingRegEx();
 					Pattern p = Pattern.compile(shippingRegEx,
 							Pattern.CASE_INSENSITIVE | Pattern.DOTALL);

@@ -61,6 +61,15 @@ public class StringHandle {
 		return value;
 	}
 
+	public static String removeNull(Object obj) {
+		String value = null;
+		if (obj == null)
+			value = "";
+		else
+			value = obj.toString().trim();
+		return value;
+	}
+
 	public static String maxSize(String str, int size) {
 		if (str != null) {
 			if (str.length() > size) {

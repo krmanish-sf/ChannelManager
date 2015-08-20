@@ -21,6 +21,8 @@ public class OimConstants {
 	public static final Integer CHANNEL_ACCESSDETAIL_AMAZON_MWS_AUTH_TOKEN = new Integer(15);
 	public static final Integer CHANNEL_ACCESSDETAIL_AMAZON_MWS_MARKETPLACE_ID= new Integer(16);
 	public static final Integer CHANNEL_ACCESSDETAIL_SHOPIFY_ACCESS_CODE = new Integer(17);
+	public static final Integer CHANNEL_ACCESSDETAIL_BIGCOMMERCE_AUTH_TOKEN = new Integer(18);
+	public static final Integer CHANNEL_ACCESSDETAIL_BIGCOMMERCE_STORE_ID = new Integer(19);
 	
 	
 	
