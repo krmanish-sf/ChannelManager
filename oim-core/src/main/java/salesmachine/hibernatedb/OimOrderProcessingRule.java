@@ -11,13 +11,17 @@ public class OimOrderProcessingRule implements java.io.Serializable {
 	private static final long serialVersionUID = -332108451906463228L;
 	private Integer ruleId;
 	private OimChannels oimChannels;
-	@Deprecated	private Integer processAll;
-	@Deprecated private String processWithStatus;
-	@Deprecated private Integer updateStoreOrderStatus;
+	@Deprecated
+	private Integer processAll;
+	@Deprecated
+	private String processWithStatus;
+	@Deprecated
+	private Integer updateStoreOrderStatus;
 	private Date insertionTm;
 	private Date deleteTm;
 	private Integer supplierId;
-	@Deprecated private String updateWithStatus;
+	@Deprecated
+	private String updateWithStatus;
 	private String pullWithStatus;
 	private String confirmedStatus;
 	private String processedStatus;
@@ -26,10 +30,8 @@ public class OimOrderProcessingRule implements java.io.Serializable {
 	public OimOrderProcessingRule() {
 	}
 
-	public OimOrderProcessingRule(OimChannels oimChannels, Integer processAll,
-			String processWithStatus, Integer updateStoreOrderStatus,
-			Date insertionTm, Date deleteTm, Integer supplierId,
-			String updateWithStatus) {
+	public OimOrderProcessingRule(OimChannels oimChannels, Integer processAll, String processWithStatus, Integer updateStoreOrderStatus,
+			Date insertionTm, Date deleteTm, Integer supplierId, String updateWithStatus) {
 		this.oimChannels = oimChannels;
 		this.processAll = processAll;
 		this.processWithStatus = processWithStatus;
@@ -56,26 +58,32 @@ public class OimOrderProcessingRule implements java.io.Serializable {
 		this.oimChannels = oimChannels;
 	}
 
+	@Deprecated
 	public Integer getProcessAll() {
 		return this.processAll;
 	}
 
+	@Deprecated
 	public void setProcessAll(Integer processAll) {
 		this.processAll = processAll;
 	}
 
+	@Deprecated
 	public String getProcessWithStatus() {
 		return this.processWithStatus;
 	}
 
+	@Deprecated
 	public void setProcessWithStatus(String processWithStatus) {
 		this.processWithStatus = processWithStatus;
 	}
 
+	@Deprecated
 	public Integer getUpdateStoreOrderStatus() {
 		return this.updateStoreOrderStatus;
 	}
 
+	@Deprecated
 	public void setUpdateStoreOrderStatus(Integer updateStoreOrderStatus) {
 		this.updateStoreOrderStatus = updateStoreOrderStatus;
 	}
@@ -104,10 +112,12 @@ public class OimOrderProcessingRule implements java.io.Serializable {
 		this.supplierId = supplierId;
 	}
 
+	@Deprecated
 	public String getUpdateWithStatus() {
 		return this.updateWithStatus;
 	}
 
+	@Deprecated
 	public void setUpdateWithStatus(String updateWithStatus) {
 		this.updateWithStatus = updateWithStatus;
 	}

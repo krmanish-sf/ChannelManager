@@ -6,6 +6,8 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -38,6 +40,7 @@ import salesmachine.oim.stores.exception.ChannelCommunicationException;
 import salesmachine.oim.stores.exception.ChannelConfigurationException;
 import salesmachine.oim.stores.exception.ChannelOrderFormatException;
 import salesmachine.oim.suppliers.modal.OrderStatus;
+import salesmachine.oim.suppliers.modal.TrackingData;
 import salesmachine.util.ApplicationProperties;
 
 public class BigcommerceOrderImport extends ChannelBase {
@@ -49,6 +52,9 @@ public class BigcommerceOrderImport extends ChannelBase {
 	private String storeID;
 	private static SimpleDateFormat sdf = new SimpleDateFormat("EEE, d MMM yyyy HH:mm:ss Z");
 	private static HashMap<String, Integer> orderStatusIDMap = new HashMap<String, Integer>(0);
+	private static String storeBaseURL = "";
+	private String confirmedOrderStatusJSON;
+	private Integer pullStatusID = null;
 
 	static {
 		apiUrl = ApplicationProperties.getProperty(ApplicationProperties.BIGCOMMERCE_CLIENT_API_URL);
@@ -79,44 +85,139 @@ public class BigcommerceOrderImport extends ChannelBase {
 			log.error("Channel setup is not correct. Please provide correct details.");
 			return false;
 		}
+		storeBaseURL = apiUrl + storeID + "/v2";
+		pullStatusID = orderStatusIDMap.get(m_orderProcessingRule.getPullWithStatus());
+		if (pullStatusID == null) {
+			throw new ChannelConfigurationException("Error in channel Setup : Orders To Pull From Channel not correctly configured");
+		}
+		Integer orderConfirmationID = orderStatusIDMap.get(m_orderProcessingRule.getConfirmedStatus());
+		if (orderConfirmationID == null) {
+			throw new ChannelConfigurationException("Error in channel Setup : Check 'Order Status When imported to Channel Manager'");
+		}
+		JSONObject orderStatusJSON = new JSONObject();
+		orderStatusJSON.put("status_id", orderConfirmationID);
+		confirmedOrderStatusJSON = orderStatusJSON.toJSONString();
 		return true;
 	}
 
-	private Object getBigcommerceJSON(String requestUrl) throws IOException, InterruptedException, ParseException {
+	private Object getBigcommerceJSON(String requestUrl) throws ChannelConfigurationException, ChannelCommunicationException,
+			ChannelOrderFormatException {
 		Object json = null;
 		HttpsURLConnection connection = null;
-		URL url = new URL(requestUrl);
-		connection = (HttpsURLConnection) url.openConnection();
-		connection.setRequestMethod("GET");
-		connection.setDoOutput(true);
-
-		connection.setRequestProperty("X-Auth-Client", clientID);
-		connection.setRequestProperty("X-Auth-Token", authToken);
-		connection.setRequestProperty("Accept", "*/*");
-		connection.setRequestProperty("Content-type", "application/json");
-
-		connection.connect();
-
-		int responseCode = connection.getResponseCode();
-		if (responseCode == 429) {
-			int waitTime = Integer.parseInt(connection.getHeaderField("X-Retry-After"));
-			System.out.println("API rate limit exceeded, waiting for " + waitTime + " seconds");
-			connection.disconnect();
-			Thread.sleep(waitTime * 1000);
-			getBigcommerceJSON(requestUrl);
-		}
-		if (responseCode == 200) {
-			String response = getStringFromStream(connection.getInputStream());
-			JSONParser parser = new JSONParser();
-			json = parser.parse(response);
+		URL url;
+		int responseCode = 0;
+		try {
+			url = new URL(requestUrl);
+			connection = (HttpsURLConnection) url.openConnection();
+			connection.setRequestMethod("GET");
+			connection.setDoOutput(true);
+			connection.setRequestProperty("X-Auth-Client", clientID);
+			connection.setRequestProperty("X-Auth-Token", authToken);
+			connection.setRequestProperty("Accept", "*/*");
+			connection.setRequestProperty("Content-type", "application/json");
+			connection.connect();
+			responseCode = connection.getResponseCode();
+			if (responseCode == 200) {
+				String response = getStringFromStream(connection.getInputStream());
+				if (response.equalsIgnoreCase("null")) {
+					log.info("No data found for - " + requestUrl);
+					return null;
+				}
+				JSONParser parser = new JSONParser();
+				json = parser.parse(response);
+			} else if (responseCode == 429) {
+				connection.disconnect();
+				int waitTime = Integer.parseInt(connection.getHeaderField("X-Retry-After"));
+				log.info("API rate limit exceeded, waiting for " + waitTime + " seconds");
+				Thread.sleep(waitTime * 1000);
+				getBigcommerceJSON(requestUrl);
+			} else if (responseCode == 400) {
+				throw new ChannelConfigurationException("API returned response code 400 - probably a malformed url - " + requestUrl);
+			} else if (responseCode == 401) {
+				throw new ChannelConfigurationException("inavild credentials - verfiy channel setup/auth-token");
+			} else if (responseCode == 403) {
+				throw new ChannelCommunicationException("verify app OAuth scopes");
+			} else if (responseCode == 500) {
+				throw new ChannelCommunicationException("error occured within the API");
+			} else if (responseCode == 503) {
+				throw new ChannelCommunicationException("Store is down for maintenance");
+			} else {
+				throw new ChannelCommunicationException("Unable to pull Order Data from BigCommerce, got response code " + responseCode);
+			}
+		} catch (InterruptedException e) {
+			throw new ChannelCommunicationException("Interrupted waiting for API bandwidth");
+		} catch (MalformedURLException e) {
+			throw new ChannelConfigurationException("MalformedURLException - " + requestUrl);
+		} catch (IOException e) {
+			throw new ChannelCommunicationException(e.getMessage());
+		} catch (ParseException e) {
+			throw new ChannelOrderFormatException("Error in parsing API response - " + e.getMessage());
+		} finally {
 			connection.disconnect();
 		}
 		return json;
 	}
 
+	private boolean updateBigCommerceOrderData(String data, String requestUrl, String requestMethod) throws ChannelConfigurationException,
+			ChannelCommunicationException, ChannelOrderFormatException {
+		boolean status = false;
+		HttpsURLConnection connection = null;
+		URL url;
+		int responseCode = 0;
+		try {
+			byte[] req = data.getBytes();
+			url = new URL(requestUrl);
+			connection = (HttpsURLConnection) url.openConnection();
+			connection.setRequestMethod(requestMethod);
+			connection.setRequestProperty("Content-Type", "application/json; charset=utf-8");
+			connection.setRequestProperty("Content-Length", String.valueOf(req.length));
+			connection.setRequestProperty("Content-Language", "en-US");
+			connection.setRequestProperty("User-Agent", "BC API Client/1.0");
+			connection.setRequestProperty("Accept", "*/*");
+			connection.setDoOutput(true);
+			OutputStream out = connection.getOutputStream();
+			out.write(req);
+			out.close();
+			connection.connect();
+			responseCode = connection.getResponseCode();
+			if (responseCode == 200) {
+				status = true;
+			} else if (responseCode == 201) { // content posted successfully
+				status = true;
+			} else if (responseCode == 429) {
+				int waitTime = Integer.parseInt(connection.getHeaderField("X-Retry-After"));
+				log.info("API rate limit exceeded, waiting for " + waitTime + " seconds");
+				connection.disconnect();
+				Thread.sleep(waitTime * 1000);
+				updateBigCommerceOrderData(data, requestUrl, requestMethod);
+			} else if (responseCode == 400) {
+				throw new ChannelConfigurationException("API returned response code 400 - probably a malformed url - " + requestUrl);
+			} else if (responseCode == 401) {
+				throw new ChannelConfigurationException("inavild credentials - verfiy channel setup/auth-token");
+			} else if (responseCode == 403) {
+				throw new ChannelCommunicationException("verify app OAuth scopes");
+			} else if (responseCode == 500) {
+				throw new ChannelCommunicationException("error occured within the API");
+			} else if (responseCode == 503) {
+				throw new ChannelCommunicationException("Store is down for maintenance");
+			} else {
+				throw new ChannelCommunicationException("failed to update Bigcommerce order status, API returned response code - " + responseCode);
+			}
+		} catch (InterruptedException e) {
+			throw new ChannelCommunicationException("Interrupted waiting for API bandwidth");
+		} catch (MalformedURLException e) {
+			throw new ChannelConfigurationException("MalformedURLException - " + requestUrl);
+		} catch (IOException e) {
+			throw new ChannelCommunicationException(e.getMessage());
+		} finally {
+			connection.disconnect();
+		}
+		return status;
+	}
+
 	@Override
-	public void getVendorOrders(OimOrderBatchesTypes batchesTypes, OimOrderBatches batch) throws ChannelCommunicationException, ChannelOrderFormatException,
-			ChannelConfigurationException {
+	public void getVendorOrders(OimOrderBatchesTypes batchesTypes, OimOrderBatches batch) throws ChannelCommunicationException,
+			ChannelOrderFormatException, ChannelConfigurationException {
 		Transaction tx = m_dbSession.getTransaction();
 		batch.setOimChannels(m_channel);
 		batch.setOimOrderBatchesTypes(batchesTypes);
@@ -127,13 +228,19 @@ public class BigcommerceOrderImport extends ChannelBase {
 		batch.setCreationTm(new Date());
 		m_dbSession.save(batch);
 		tx.commit();
-		try {
-			String requestURL = apiUrl + storeID + "/v2/orders.json?" + orderStatusIDMap.get(m_orderProcessingRule.getProcessWithStatus()) + "&";
-
+		int totalOrders = 0;
+		int batchPullCount = 0;
+		int page = 1;
+		do {
+			batchPullCount = 0;
+			String requestURL = storeBaseURL + "/orders.json?status_id=" + pullStatusID + "&limit=250&page=" + page++;
 			JSONArray orderJsonArray = (JSONArray) getBigcommerceJSON(requestURL);
-			if (orderJsonArray == null)
+			if (orderJsonArray == null) {
+				log.info("No orders found to be pulled " + m_channel.getChannelId());
 				return;
-			System.out.println("count - " + orderJsonArray.size());
+			}
+			batchPullCount = orderJsonArray.size();
+			totalOrders += batchPullCount;
 			tx = m_dbSession.beginTransaction();
 			for (int i = 0; i < orderJsonArray.size(); i++) {
 				JSONObject orderJsonObj = (JSONObject) orderJsonArray.get(i);
@@ -145,7 +252,7 @@ public class BigcommerceOrderImport extends ChannelBase {
 				OimOrders oimOrders = new OimOrders();
 				oimOrders.setStoreOrderId(storeOrderId);
 				String customer_id = removeNull(orderJsonObj.get("customer_id"));
-				JSONObject customer = (JSONObject) getBigcommerceJSON(apiUrl + storeID + "/v2/customers/" + customer_id);
+				JSONObject customer = (JSONObject) getBigcommerceJSON(storeBaseURL + "/customers.json/" + customer_id);
 				oimOrders.setCustomerName(removeNull(customer.get("first_name") + " " + removeNull(customer.get("last_name"))));
 				oimOrders.setCustomerEmail(removeNull(customer.get("email")));
 				oimOrders.setCustomerPhone(removeNull(customer.get("phone")));
@@ -171,10 +278,8 @@ public class BigcommerceOrderImport extends ChannelBase {
 					oimOrders.setCustomerZip(removeNull(billingObj.get("zip")));
 					oimOrders.setCustomerCountry(removeNull(billingObj.get("country")));
 				}
-				String shippingAddressesUrl = (String) ((JSONObject) orderJsonObj.get("shipping_addresses")).get("url");
-				if (!shippingAddressesUrl.endsWith(".json")) {
-					shippingAddressesUrl += ".json";
-				}
+				String shippingAddressesUrl = (String) ((JSONObject) orderJsonObj.get("shipping_addresses")).get("resource");
+				shippingAddressesUrl = storeBaseURL + shippingAddressesUrl + ".json";
 				JSONArray shippingAddresses = (JSONArray) getBigcommerceJSON(shippingAddressesUrl);
 				String shipMethod = null;
 				if (shippingAddresses.size() == 1) {
@@ -197,7 +302,11 @@ public class BigcommerceOrderImport extends ChannelBase {
 				oimOrders.setOrderFetchTm(new Date());
 				String orderCreatedTm = removeNull(orderJsonObj.get("date_created"));
 				Date order_tm = null;
-				order_tm = sdf.parse(orderCreatedTm);
+				try {
+					order_tm = sdf.parse(orderCreatedTm);
+				} catch (java.text.ParseException e) {
+					throw new ChannelOrderFormatException("Verify Bigcommerce API date format" + e.getMessage());
+				}
 				oimOrders.setOrderTm(order_tm);
 				oimOrders.setOrderTotalAmount(Double.parseDouble(removeNull(orderJsonObj.get("total_inc_tax"))));
 				oimOrders.setPayMethod(removeNull(orderJsonObj.get("payment_method")));
@@ -215,10 +324,7 @@ public class BigcommerceOrderImport extends ChannelBase {
 				m_dbSession.saveOrUpdate(oimOrders);
 
 				String product_resource = removeNull(((JSONObject) orderJsonObj.get("products")).get("resource"));
-				String product_resource_url = apiUrl + storeID + "/v2" + product_resource;
-				if (!product_resource_url.endsWith(".json")) {
-					product_resource_url += product_resource_url;
-				}
+				String product_resource_url = storeBaseURL + product_resource + ".json";
 				Set<OimOrderDetails> detailSet = new HashSet<OimOrderDetails>();
 				JSONArray orderItems = (JSONArray) getBigcommerceJSON(product_resource_url);
 				for (int x = 0; x < orderItems.size(); x++) {
@@ -238,7 +344,9 @@ public class BigcommerceOrderImport extends ChannelBase {
 					if (oimSuppliers != null) {
 						details.setOimSuppliers(oimSuppliers);
 					}
-					details.setProductDesc(removeNull(orderItem.get("name")));
+					// setting order_address_id in product description to be
+					// used later while updating order.
+					details.setProductDesc(removeNull(orderItem.get("order_address_id")));
 					details.setProductName(removeNull(orderItem.get("name")));
 					details.setQuantity(Integer.parseInt(removeNull(orderItem.get("quantity"))));
 					details.setSalePrice(Double.parseDouble(removeNull(orderItem.get("base_price"))));
@@ -248,17 +356,40 @@ public class BigcommerceOrderImport extends ChannelBase {
 					m_dbSession.save(details);
 					detailSet.add(details);
 				}
+				// update order status on store aka acknowledge order has been
+				// received by CM
+				String orderStatusUpdateUrl = storeBaseURL + "/orders/" + storeOrderId;
+				updateBigCommerceOrderData(confirmedOrderStatusJSON, orderStatusUpdateUrl, "PUT");
 			}
-			log.info("Fetched {} order(s)", orderJsonArray.size());
-			tx.commit();
-			log.debug("Finished importing orders...");
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
+		} while (batchPullCount == 250);
+		log.info("Fetched {} order(s)", totalOrders);
+		tx.commit();
+		log.debug("Finished importing orders...");
 	}
 
 	@Override
-	public boolean updateStoreOrder(OimOrderDetails oimOrderDetails, OrderStatus orderStatus) {
+	public boolean updateStoreOrder(OimOrderDetails oimOrderDetails, OrderStatus orderStatus) throws ChannelCommunicationException,
+			ChannelOrderFormatException, ChannelConfigurationException {
+		log.info("order id is - {}", oimOrderDetails.getOimOrders().getOrderId());
+		log.info("order status is - {}", orderStatus);
+
+		if (!orderStatus.isShipped()) {
+			return true;
+		}
+		String addShipmentURL = storeBaseURL + "/orders/" + oimOrderDetails.getOimOrders().getStoreOrderId() + "/shipments";
+		for (TrackingData trackingData : orderStatus.getTrackingData()) {
+			JSONObject shipmentJSON = new JSONObject();
+			shipmentJSON.put("tracking_number", trackingData.getShipperTrackingNumber());
+			shipmentJSON.put("order_address_id", oimOrderDetails.getProductDesc());
+			shipmentJSON.put("comments", "carrier_name : " + trackingData.getCarrierName());
+			JSONArray items = new JSONArray();
+			JSONObject item = new JSONObject();
+			item.put("order_product_id", oimOrderDetails.getStoreOrderItemId());
+			item.put("quantity", trackingData.getQuantity());
+			items.add(item);
+			shipmentJSON.put("items", items);
+			return updateBigCommerceOrderData(shipmentJSON.toString(), addShipmentURL, "POST");
+		}
 		return false;
 	}
 
