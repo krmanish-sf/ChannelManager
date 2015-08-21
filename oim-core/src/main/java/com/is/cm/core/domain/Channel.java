@@ -209,4 +209,17 @@ public class Channel extends DomainBase implements Serializable {
 		this.lastFetchTm = lastFetchTm;
 	}
 
+	public String getLastFetch() {
+		if (lastFetchTm == null)
+			return null;
+		Date now = new Date();
+		String lapsedTm = "";
+		long lapsedTime = now.getTime() - lastFetchTm.getTime();
+		if (lapsedTime / (1000 * 60) < 60) {
+			lapsedTm = (lapsedTime / (1000 * 60)) + " mins ago";
+		} else {
+			lapsedTm = (lapsedTime / (1000 * 60 * 60)) + " hours ago";
+		}
+		return lapsedTm;
+	}
 }

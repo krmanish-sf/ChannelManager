@@ -951,17 +951,23 @@ function drawSalesReportTable(data) {
 									},
 									{
 										"mData" : function(channel) {
+											var r = '';
 											for (var i = 0; i < channel.oimChannelAccessDetailses.length; i++) {
 												if (channel.oimChannelAccessDetailses[i].oimChannelAccessFields.fieldId == 1) {
 													if (channel.oimChannelAccessDetailses[i].detailFieldValue == null)
 														channel.oimChannelAccessDetailses[i].detailFieldValue = "N/A";
-													return '<a class="btn btn-default icon-info-sign btn-xs visible-xs addresspop" data-toggle="popover" data-container="body"  data-placement="bottom" data-content="'
+													r = '<a class="btn btn-default icon-info-sign btn-xs visible-xs addresspop" data-toggle="popover" data-container="body"  data-placement="bottom" data-content="'
 															+ channel.oimChannelAccessDetailses[i].detailFieldValue
 															+ '" data-original-title="Url"></a><div class="hidden-xs">'
 															+ channel.oimChannelAccessDetailses[i].detailFieldValue
 															+ '</div>';
 												}
 											}
+											if (channel.lastFetch)
+												r += '<p><i class="icon-circle-arrow-left" title="Last pull"></i><small>'
+														+ channel.lastFetch
+														+ '</small></p>';
+											return r;
 										}
 									},
 									{
@@ -971,7 +977,7 @@ function drawSalesReportTable(data) {
 										"bSortable" : false,
 										"sWidth" : "100px",
 										"mData" : function(channel) {
-											var toolTip = "Pull Order";
+											var toolTip = "Import Orders";
 											var onClick = 'onclick="$.CM.pullorder($(this).parent().parent())"';
 											var icon = "icon-circle-arrow-left";
 											if (channel.oimSupportedChannels.supportedChannelId == 0

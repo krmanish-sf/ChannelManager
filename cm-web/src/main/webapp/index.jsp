@@ -64,7 +64,7 @@
                     <li class="text-center">
                     <a href="javascript:$.CM.pullorder();"
 									class="btn btn-info btn-app radius-4">
-									<i class="icon-shopping-cart bigger-230"></i>
+									<i class="icon-circle-arrow-left bigger-230"></i>
 								</a>
                       <h6>Import Orders</h6>
                     </li>

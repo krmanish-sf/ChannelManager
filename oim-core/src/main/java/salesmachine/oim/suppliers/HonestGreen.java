@@ -472,7 +472,6 @@ public class HonestGreen extends Supplier implements HasTracking {
 				.createQuery("select p from salesmachine.hibernatedb.Product p where p.sku=:sku");
 
 		query.setString("sku", sku);
-		System.out.println(query.list());
 		Product p = (Product) query.uniqueResult();
 		return p.getQuantity();
 	}
@@ -703,11 +702,12 @@ public class HonestGreen extends Supplier implements HasTracking {
 				// fOut.write(BLANK_SPACE);
 				// fOut.write(COMMA);
 				fOut.write(NEW_LINE);
-				//od.setSupplierOrderNumber(poNum);
-				//od.setSupplierOrderStatus("Sent to supplier.");
-				//Session session = SessionManager.currentSession();
-				//session.update(od);
-				successfulOrders.put(od.getDetailId(), new OrderDetailResponse(poNum, "Sent to supplier."));
+				// od.setSupplierOrderNumber(poNum);
+				// od.setSupplierOrderStatus("Sent to supplier.");
+				// Session session = SessionManager.currentSession();
+				// session.update(od);
+				successfulOrders.put(od.getDetailId(), new OrderDetailResponse(
+						poNum, "Sent to supplier."));
 				OimChannels oimChannels = order.getOimOrderBatches()
 						.getOimChannels();
 				Integer channelId = oimChannels.getChannelId();
@@ -843,7 +843,7 @@ public class HonestGreen extends Supplier implements HasTracking {
 									|| confirmationFile.equals("."))
 								continue;
 
-							log.info(
+							log.debug(
 									"Confirmation file path: {} Last Modified: {} Order Processing Time: {}",
 									ftpFile.getName(), ftpFile.lastModified(),
 									detail.getProcessingTm());

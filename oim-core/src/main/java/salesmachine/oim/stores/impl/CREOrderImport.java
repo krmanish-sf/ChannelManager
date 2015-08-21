@@ -22,11 +22,9 @@ import java.util.regex.Pattern;
 import oracle.xml.parser.v2.DOMParser;
 import oracle.xml.parser.v2.XMLDocument;
 
-import org.hibernate.Criteria;
 import org.hibernate.Query;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
-import org.hibernate.criterion.Restrictions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Element;
@@ -95,109 +93,116 @@ public class CREOrderImport extends ChannelBase implements IOrderImport {
 		m_dbSession.save(batch);
 		tx.commit();
 		List<OimOrders> orderFetched = null;
-		//try {
-			if (!pingTest()) {
-				throw new ChannelCommunicationException("Channel ping failed.");
-			}
+		// try {
+		if (!pingTest()) {
+			throw new ChannelCommunicationException("Channel ping failed.");
+		}
 
-			long start = System.currentTimeMillis();
-			String response = sendGetOrdersRequest();
-			LOG.debug(response);
-			if (!StringHandle.isNullOrEmpty(response)) {
-				StringReader str = new StringReader(response);
-				orderFetched = parseGetProdResponse(str, batchesTypes);
-			} else {
-				LOG.error("FAILURE_GETPRODUCT_NULL_RESPONSE");
-				throw new ChannelOrderFormatException(
-						"Channel returned null in response to fetch Orders.");
-			}
-
-			long time = (System.currentTimeMillis() - start);
-			LOG.info("Finished GetProduct step in {} seconds", time / 1000);
-
-			if (orderFetched.size() == 0) {
-				throw new ChannelCommunicationException(
-						"Recieved empty response in order fetch");
-			}
-
-			// Update status
-			if (!StringHandle.isNullOrEmpty(m_orderProcessingRule
-					.getConfirmedStatus())) {
-				response = sendOrderStatusRequest(orderFetched,
-						m_orderProcessingRule.getConfirmedStatus());
-			}
-
+		long start = System.currentTimeMillis();
+		String response = sendGetOrdersRequest();
+		LOG.debug(response);
+		if (!StringHandle.isNullOrEmpty(response)) {
 			StringReader str = new StringReader(response);
-			List updatedOrders = parseUpdateResponse(str);
-			Set confirmedOrders = new HashSet();
-			if (!StringHandle.isNullOrEmpty(m_orderProcessingRule
-					.getConfirmedStatus())) {
-				for (OimOrders order : orderFetched) {
-					if (updatedOrders.contains(order.getStoreOrderId())) {
-						confirmedOrders.add(order);
+			orderFetched = parseGetProdResponse(str, batchesTypes);
+		} else {
+			LOG.error("FAILURE_GETPRODUCT_NULL_RESPONSE");
+			throw new ChannelOrderFormatException(
+					"Channel returned null in response to fetch Orders.");
+		}
+
+		long time = (System.currentTimeMillis() - start);
+		LOG.info("Finished GetProduct step in {} seconds", time / 1000);
+		try {
+			tx = m_dbSession.beginTransaction();
+			if (orderFetched.size() == 0) {
+				LOG.info("No new Orders found on store");
+				// return;
+			} else {
+
+				// Update status
+				if (!StringHandle.isNullOrEmpty(m_orderProcessingRule
+						.getConfirmedStatus())) {
+					response = sendOrderStatusRequest(orderFetched,
+							m_orderProcessingRule.getConfirmedStatus());
+				}
+
+				StringReader str = new StringReader(response);
+				List updatedOrders = parseUpdateResponse(str);
+				Set<OimOrders> confirmedOrders = new HashSet<OimOrders>();
+				if (!StringHandle.isNullOrEmpty(m_orderProcessingRule
+						.getConfirmedStatus())) {
+					for (OimOrders order : orderFetched) {
+						if (updatedOrders.contains(order.getStoreOrderId())) {
+							confirmedOrders.add(order);
+						}
 					}
-				}
-				batch.setOimOrderses(confirmedOrders);
-			}
-
-			// Save everything
-
-			LOG.debug("Saved batch id: {}", batch.getBatchId());
-
-			boolean ordersSaved = false;
-			int importCount = 0;
-			for (Iterator oit = batch.getOimOrderses().iterator(); oit
-					.hasNext();) {
-				OimOrders order = (OimOrders) oit.next();
-				if (orderAlreadyImported(order.getStoreOrderId())) {
-					LOG.warn(
-							"Order skipping as already exists. Store order id : {}",
-							order.getStoreOrderId());
-					continue;
+					batch.setOimOrderses(confirmedOrders);
 				}
 
-				order.setOimOrderBatches(batch);
-				batch.getOimOrderses().add(order);
-				order.setOrderFetchTm(new Date());
-				order.setInsertionTm(new Date());
-				String shippingDetails = order.getShippingDetails();
-				for (OimChannelShippingMap entity : oimChannelShippingMapList) {
-					String shippingRegEx = entity.getShippingRegEx();
-					Pattern p = Pattern.compile(shippingRegEx,
-							Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
-					Matcher m = p.matcher(shippingDetails);
-					if (m.find() && m.groupCount() >= 2) {
-						order.setOimShippingMethod(entity
-								.getOimShippingMethod());
-						LOG.info("Shipping set to "
-								+ entity.getOimShippingMethod());
-						break;
-					}
-				}
-				if (order.getOimShippingMethod() == null)
-					LOG.warn("Shipping can't be mapped for order "
-							+ order.getStoreOrderId());
-				m_dbSession.save(order);
-				LOG.info("Saved order id: " + order.getOrderId());
+				// Save everything
 
-				for (Iterator dit = order.getOimOrderDetailses().iterator(); dit
+				LOG.debug("Saved batch id: {}", batch.getBatchId());
+
+				for (Iterator oit = batch.getOimOrderses().iterator(); oit
 						.hasNext();) {
-					OimOrderDetails detail = (OimOrderDetails) dit.next();
-					detail.setOimOrders(order);
-					detail.setInsertionTm(new Date());
-					detail.setOimOrderStatuses(new OimOrderStatuses(
-							OimConstants.ORDER_STATUS_UNPROCESSED));
+					OimOrders order = (OimOrders) oit.next();
+					if (orderAlreadyImported(order.getStoreOrderId())) {
+						LOG.warn(
+								"Order skipping as already exists. Store order id : {}",
+								order.getStoreOrderId());
+						continue;
+					}
 
-					m_dbSession.save(detail);
-					LOG.info("Saved detail id: " + detail.getDetailId());
-					ordersSaved = true;
+					order.setOimOrderBatches(batch);
+					batch.getOimOrderses().add(order);
+					order.setOrderFetchTm(new Date());
+					order.setInsertionTm(new Date());
+					String shippingDetails = order.getShippingDetails();
+					for (OimChannelShippingMap entity : oimChannelShippingMapList) {
+						String shippingRegEx = entity.getShippingRegEx();
+						Pattern p = Pattern.compile(shippingRegEx,
+								Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
+						Matcher m = p.matcher(shippingDetails);
+						if (m.find() && m.groupCount() >= 2) {
+							order.setOimShippingMethod(entity
+									.getOimShippingMethod());
+							LOG.info("Shipping set to "
+									+ entity.getOimShippingMethod());
+							break;
+						}
+					}
+					if (order.getOimShippingMethod() == null)
+						LOG.warn("Shipping can't be mapped for order "
+								+ order.getStoreOrderId());
+					m_dbSession.save(order);
+					LOG.info("Saved order id: " + order.getOrderId());
+
+					for (Iterator dit = order.getOimOrderDetailses().iterator(); dit
+							.hasNext();) {
+						OimOrderDetails detail = (OimOrderDetails) dit.next();
+						detail.setOimOrders(order);
+						detail.setInsertionTm(new Date());
+						detail.setOimOrderStatuses(new OimOrderStatuses(
+								OimConstants.ORDER_STATUS_UNPROCESSED));
+						m_dbSession.save(detail);
+						LOG.info("Saved detail id: " + detail.getDetailId());
+					}
 				}
-				importCount++;
 			}
+			m_channel.setLastFetchTm(new Date());
+			m_dbSession.persist(m_channel);
+			tx.commit();
+		} catch (RuntimeException e) {
+			if (tx != null && tx.isActive())
+				tx.rollback();
+			LOG.error(e.getMessage(), e);
+			throw new ChannelOrderFormatException(
+					"Error occured in persisting order: " + e.getMessage(), e);
+		}
 
-//		} catch (Exception e) {
-//			LOG.info(e.getMessage(), e);
-//		}
+		// } catch (Exception e) {
+		// LOG.info(e.getMessage(), e);
+		// }
 		LOG.info("Returning Order batch with size: {}", batch.getOimOrderses()
 				.size());
 	}

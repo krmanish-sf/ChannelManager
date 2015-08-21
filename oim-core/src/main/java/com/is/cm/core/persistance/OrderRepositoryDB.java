@@ -747,8 +747,10 @@ public class OrderRepositoryDB extends RepositoryBase implements
 					+ customer_address.toLowerCase() + "%') and ";
 		if (order_id.length() > 0)
 			customer_search += " o.storeOrderId = '" + order_id + "' and ";
-		if (searchText.length() > 0)
-			customer_search += " o.storeOrderId = '" + searchText + "' and ";
+		if (searchText.length() > 0) {
+			customer_search += "( o.storeOrderId = '" + searchText + "' or ";
+			customer_search += "d.sku = '" + sku + "' ) and ";
+		}
 		if (customer_phone.length() > 0)
 			customer_search += "(lower(o.deliveryPhone) like '%"
 					+ customer_phone.toLowerCase()
@@ -1135,6 +1137,8 @@ public class OrderRepositoryDB extends RepositoryBase implements
 				order.setOimOrderDetailses(detailSet);
 				m_dbSession.save(order);
 			}
+			oimChannel.setLastFetchTm(new Date());
+			m_dbSession.persist(oimChannel);
 			tx.commit();
 
 		} catch (Exception e) {

@@ -115,7 +115,7 @@ public class ReportRepositoryDB extends RepositoryBase implements
 		long start = m_startDate.getTime();
 		long end = m_endDate.getTime();
 		long days = (end - start) / (24 * 60 * 60 * 1000);
-		String dateFormat = days < 7 ? "'MON D hhP.M.'" : "'YYYY-MM-DD'";
+		String dateFormat = days < 4 ? "'MON D hhP.M.'" : "'YYYY-MM-DD'";
 
 		StringBuilder sb = new StringBuilder();
 		sb.append("select to_char(d.insertion_tm," + dateFormat

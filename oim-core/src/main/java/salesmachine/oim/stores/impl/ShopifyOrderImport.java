@@ -178,7 +178,8 @@ public class ShopifyOrderImport extends ChannelBase implements IOrderImport {
 		Integer maxStoreID = getMaxStoreOrderId();
 		if (maxStoreID != null) {
 			log.info("Max store id -- ", maxStoreID.intValue());
-			requestUrl = storeUrl + "/admin/orders.json?since_id=" + maxStoreID.intValue();
+			requestUrl = storeUrl + "/admin/orders.json?since_id="
+					+ maxStoreID.intValue();
 		} else {
 			requestUrl = storeUrl + "/admin/orders.json";
 		}
@@ -416,6 +417,8 @@ public class ShopifyOrderImport extends ChannelBase implements IOrderImport {
 						m_orderProcessingRule.getConfirmedStatus(), false, null);
 			}
 			log.info("Fetched {} order(s)", orderArr.size());
+			m_channel.setLastFetchTm(new Date());
+			m_dbSession.persist(m_channel);
 			tx.commit();
 			log.debug("Finished importing orders...");
 		} else {

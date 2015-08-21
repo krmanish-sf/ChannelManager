@@ -20,10 +20,8 @@ import javax.xml.datatype.XMLGregorianCalendar;
 
 import org.apache.axis.encoding.Base64;
 import org.apache.axis.utils.ByteArrayOutputStream;
-import org.hibernate.Criteria;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
-import org.hibernate.criterion.Restrictions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -194,22 +192,28 @@ public class AmazonOrderImport extends ChannelBase implements IOrderImport {
 			try {
 				marshaller = jaxbContext.createMarshaller();
 			} catch (JAXBException e1) {
-				// TODO Auto-generated catch block
 				log.error(e1.getMessage(), e1);
 			}
 			Calendar c = Calendar.getInstance();
-			c.setTime(new Date());
-			c.add(Calendar.DATE, -30);
-			Date cutoffDate = c.getTime();
+			if (m_channel.getLastFetchTm() != null) {
+				c.setTime(m_channel.getLastFetchTm());
+				c.add(Calendar.HOUR, -2);
+			} else {
+				c.setTime(new Date());
+				c.add(Calendar.DATE, -5);
+			}
+
+			log.info("Set to fetch Orders after {}", c.getTime());
 			XMLGregorianCalendar createdAfter = MwsUtl.getDTF()
 					.newXMLGregorianCalendar();
-			createdAfter.setYear(cutoffDate.getYear());
-			createdAfter.setMonth(cutoffDate.getMonth());
-			createdAfter.setDay(cutoffDate.getDate());
-			createdAfter.setHour(cutoffDate.getHours());
-			createdAfter.setMinute(cutoffDate.getMinutes());
-			createdAfter.setSecond(cutoffDate.getSeconds());
+			createdAfter.setYear(c.get(Calendar.YEAR));
+			createdAfter.setMonth(c.get(Calendar.MONTH) + 1);
+			createdAfter.setDay(c.get(Calendar.DAY_OF_MONTH));
+			createdAfter.setHour(c.get(Calendar.HOUR_OF_DAY));
+			createdAfter.setMinute(c.get(Calendar.MINUTE));
+			createdAfter.setSecond(c.get(Calendar.SECOND));
 			listOrdersRequest.setCreatedAfter(createdAfter);
+			log.info(listOrdersRequest.toXML());
 			int numOrdersSaved = 0;
 			String nextToken = null;
 			boolean lastPass = false;
@@ -222,9 +226,8 @@ public class AmazonOrderImport extends ChannelBase implements IOrderImport {
 			do {
 				// We recommend logging the request id and timestamp of
 				// every call.
-				log.debug("Response:");
-				log.debug("RequestId: " + rhmd.getRequestId());
-				log.debug("Timestamp: " + rhmd.getTimestamp());
+				log.info(" Quota Remianing: {}", rhmd.getQuotaRemaining());
+				log.info("Response: {}", rhmd.toString());
 
 				log.info("Total order(s) fetched: {}", orderList.size());
 
@@ -232,14 +235,14 @@ public class AmazonOrderImport extends ChannelBase implements IOrderImport {
 
 				for (Order order2 : orderList) {
 					String amazonOrderId = order2.getAmazonOrderId();
-					log.info("Order#{} fetched.", amazonOrderId);
 					OimOrders oimOrders = null;
 					if (orderAlreadyImported(amazonOrderId)) {
-						log.info(
+						log.warn(
 								"Order#{} is already imported in the system, skipping it.",
 								amazonOrderId);
 						continue;
 					}
+					log.info("Order#{} fetched.", amazonOrderId);
 					if (oimOrders == null) {
 						oimOrders = new OimOrders();
 						newOrder = true;
@@ -343,7 +346,7 @@ public class AmazonOrderImport extends ChannelBase implements IOrderImport {
 					}
 
 					m_dbSession.saveOrUpdate(oimOrders);
-					// Thread.currentThread().sleep(1000);
+					Thread.currentThread().sleep(1000);
 					ListOrderItemsRequest itemsRequest = new ListOrderItemsRequest();
 					itemsRequest.setSellerId(sellerId);
 					itemsRequest.setMWSAuthToken(mwsAuthToken);
@@ -418,6 +421,7 @@ public class AmazonOrderImport extends ChannelBase implements IOrderImport {
 				}
 				lastPass = false;
 				if (nextToken != null) {
+					Thread.currentThread().sleep(1000);
 					ListOrdersByNextTokenRequest listOrderByNextTokenReq = new ListOrdersByNextTokenRequest(
 							sellerId, mwsAuthToken, nextToken);
 					ListOrdersByNextTokenResponse listOrdersByNextTokenResponse = client
@@ -464,6 +468,8 @@ public class AmazonOrderImport extends ChannelBase implements IOrderImport {
 								+ e.getMessage(), e);
 			}
 			m_dbSession.persist(batch);
+			m_channel.setLastFetchTm(new Date());
+			m_dbSession.persist(m_channel);
 			tx.commit();
 			try {
 				service.submitFeed(orderAckSubmitFeedRequest);
@@ -480,6 +486,9 @@ public class AmazonOrderImport extends ChannelBase implements IOrderImport {
 			log.error(e.getMessage(), e);
 			throw new ChannelOrderFormatException(e.getMessage(), e);
 
+		} catch (InterruptedException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
 		}
 		log.info("Returning Order batch with size: {}", batch.getOimOrderses()
 				.size());
@@ -562,7 +571,7 @@ public class AmazonOrderImport extends ChannelBase implements IOrderImport {
 				submitFeedRequest.setContentMD5(Base64.encode((MessageDigest
 						.getInstance("MD5").digest(os.toByteArray()))));
 			} catch (NoSuchAlgorithmException e) {
-				log.error(e.getMessage(),e);
+				log.error(e.getMessage(), e);
 				throw new ChannelCommunicationException(
 						"Error in submiting feed request while updating order to store - "
 								+ e.getMessage(), e);
@@ -570,16 +579,18 @@ public class AmazonOrderImport extends ChannelBase implements IOrderImport {
 			log.info("SubmitFeedRequest: {}", os.toString());
 			SubmitFeedResponse submitFeed = null;
 			try {
-				submitFeed = service
-						.submitFeed(submitFeedRequest);
+				Thread.currentThread().sleep(1000);
+				submitFeed = service.submitFeed(submitFeedRequest);
 				log.info(submitFeed.toXML());
 			} catch (MarketplaceWebServiceException e) {
-				log.error(e.getMessage(),e);
+				log.error(e.getMessage(), e);
 				throw new ChannelCommunicationException(
 						"Error in submiting feed request while updating order to store - "
 								+ e.getMessage(), e);
+			} catch (InterruptedException e) {
+				log.error(e.getMessage(), e);
 			}
-			
+
 			return true;
 		} catch (RuntimeException e) {
 			log.error(e.getMessage(), e);

@@ -159,7 +159,7 @@
 						<button class="btn btn-yellow" data-rel="tooltip"
 							data-original-title="Pull Orders (all channels)"
 							onclick="javascript:$.CM.pullorder();">
-							<i class="icon-shopping-cart"></i>
+							<i class="icon-circle-arrow-left"></i>
 						</button>
 						<a class="btn btn-success" data-rel="tooltip"
 							href="processorder.jsp#unprocessed"
