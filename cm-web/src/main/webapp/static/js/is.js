@@ -498,7 +498,7 @@ function drawSalesReportTable(data) {
 	$.CM.pullorder = function(e) {
 		var url = "/aggregators/channels/pull";
 		if (e != null) {
-			var channel = tableimportchannel.fnGetData(e[0]);
+			var channel = tableimportchannel.row(e[0]).data();
 			url = "/aggregators/channels/" + channel.channelId + "/pull";
 		}
 		$(this).CRUD({
@@ -595,6 +595,15 @@ function drawSalesReportTable(data) {
 			message : true
 		});
 	};
+	$.CM.planify = function(data) {
+		for (var i = 0; i < data.columns.length; i++) {
+			column = data.columns[i];
+			column.searchRegex = column.search.regex;
+			column.searchValue = column.search.value;
+			delete (column.search);
+		}
+		return data;
+	};
 	$.CM.updateOrderSummary = function() {
 		$(this)
 				.CRUD(
@@ -662,37 +671,33 @@ function drawSalesReportTable(data) {
 										});
 									}
 									drawSalesReportTable(productsales);
-									$(
-											'#unprocessedCount span.infobox-data-number')
-											.html(
-													data.OrderSummaryData.unprocessedCount);
-									$(
-											'#unprocessedValue span.infobox-data-number')
-											.html(
-													'$'
-															+ data.OrderSummaryData.unprocessedAmount
-																	.toFixed(2));
-									$(
-											'#unresolvedCount span.infobox-data-number')
-											.html(
-													data.OrderSummaryData.unresolvedCount);
-									$(
-											'#unresolvedValue span.infobox-data-number')
-											.html(
-													'$'
-															+ data.OrderSummaryData.unresolvedAmount
-																	.toFixed(2));
-									$('strong.unresolvedcount')
-											.html(
-													data.OrderSummaryData.unresolvedCount);
+
 								} catch (e) {
 									console.log('Report box not present.');
 								}
+								$('#unprocessedCount span.infobox-data-number')
+										.html(
+												data.OrderSummaryData.unprocessedCount);
+								$('#unprocessedValue span.infobox-data-number')
+										.html(
+												'$'
+														+ data.OrderSummaryData.unprocessedAmount
+																.toFixed(2));
+								$('#unresolvedCount span.infobox-data-number')
+										.html(
+												data.OrderSummaryData.unresolvedCount);
+								$('#unresolvedValue span.infobox-data-number')
+										.html(
+												'$'
+														+ data.OrderSummaryData.unresolvedAmount
+																.toFixed(2));
+								$('strong.unresolvedcount').html(
+										data.OrderSummaryData.unresolvedCount);
 							}
 						});
 	};
 	$.CM.viewShippingMap = function(e) {
-		var channel = tableimportchannel.fnGetData(e[0]);
+		var channel = tableimportchannel.row(e[0]).data();
 		$('#tableShippingMap').DataTable(
 				{
 					"bPaginate" : false,
@@ -725,7 +730,7 @@ function drawSalesReportTable(data) {
 		if (typeof e == 'number')
 			supplierId = e;
 		else {
-			var vendor_supplier = table_vendorSuppliers.fnGetData(e[0]);
+			var vendor_supplier = table_vendorSuppliers.row(e[0]).data();
 			supplierId = vendor_supplier.oimSuppliers.supplierId;
 		}
 		if (!tableId)
@@ -881,7 +886,7 @@ function drawSalesReportTable(data) {
 					text : 'Order Processed successfully.',
 					class_name : 'gritter-success'
 				});
-				table_xy.fnReloadAjax();
+				table_xy.ajax.reload();
 				getAlerts();
 			},
 			error : function(a, b, c) {
@@ -890,7 +895,7 @@ function drawSalesReportTable(data) {
 					text : 'Order Processing Failed.',
 					class_name : 'gritter-error'
 				});
-				table_xy.fnReloadAjax();
+				table_xy.ajax.reload();
 				getAlerts();
 			}
 		});
@@ -920,7 +925,7 @@ function drawSalesReportTable(data) {
 	};
 	$.CM.bindChannels = function(tableId) {
 		return $(tableId)
-				.dataTable(
+				.DataTable(
 						{
 							"bPaginate" : false,
 							"bLengthChange" : false,

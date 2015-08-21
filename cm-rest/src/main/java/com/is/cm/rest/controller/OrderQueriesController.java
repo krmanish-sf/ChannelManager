@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
+import com.is.cm.core.domain.DataTableCriterias;
 import com.is.cm.core.domain.Order;
 import com.is.cm.core.domain.OrderDetail;
 import com.is.cm.core.domain.OrderDetailMod;
@@ -49,13 +50,27 @@ public class OrderQueriesController {
 		return details.getEntity();
 	}
 
-	@RequestMapping(method = RequestMethod.GET, value = "/{orderStatus}")
+	// @RequestMapping(method = RequestMethod.GET, value = "/{orderStatus}")
+	// @ResponseStatus(HttpStatus.OK)
+	// @ResponseBody
+	// public Collection<Order> getAllOrders(@PathVariable String orderStatus) {
+	// LOG.debug("Getting {} orders...", orderStatus);
+	// ReadCollectionEvent<Order> details = orderService
+	// .findOrderByStatus(new RequestReadEvent<String>(orderStatus));
+	// return details.getEntity();
+	// }
+
+	@RequestMapping(method = RequestMethod.POST, value = "/{orderStatus}")
 	@ResponseStatus(HttpStatus.OK)
 	@ResponseBody
-	public Collection<Order> getAllOrders(@PathVariable String orderStatus) {
+	public PagedDataResult<Order> getPostedOrders(
+			@PathVariable String orderStatus,
+			@RequestBody DataTableCriterias criteria) {
+
 		LOG.debug("Getting {} orders...", orderStatus);
-		ReadCollectionEvent<Order> details = orderService
-				.findOrderByStatus(new RequestReadEvent<String>(orderStatus));
+		PagedDataResultEvent<Order> details = orderService
+				.findOrderByStatus(orderStatus,
+						new RequestReadEvent<DataTableCriterias>(criteria));
 		return details.getEntity();
 	}
 

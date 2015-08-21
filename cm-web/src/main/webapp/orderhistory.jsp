@@ -512,7 +512,7 @@
 		function a(e) {
 			var order = table_xy.row(e[0]).data();
 			$('#tableorderdetails')
-					.dataTable(
+					.DataTable(
 							{
 								"aoColumns" : [
 										{
@@ -535,10 +535,10 @@
 										} ],
 								"aaData" : order.oimOrderDetailses,
 								"bDestroy" : true
-							}).width('100%');
+							});
 		}
 		function b(e) {
-			var orderDetail = tableModal.fnGetData(e[0]);
+			var orderDetail = tableModal.row(e[0]).data();
 			updateOrderDetail(orderDetail, $(e[0]).find('input')[0], $(e[0])
 					.find('input')[1], $(e[0]).find('input')[2], $(e[0]).find(
 					'input')[3], $(e[0]).find('select')[0], $(e[0]).find(
@@ -614,7 +614,7 @@
 			var order = table_xy.row(e[0]).data();
 			var orderTemp = JSON.parse(JSON.stringify(order));
 			tableModal = $('#editordermodaltable')
-					.dataTable(
+					.DataTable(
 							{
 								bSort : false,
 								"aoColumns" : [
@@ -716,9 +716,8 @@
 											"sWidth" : "10%"
 										} ],
 								"aaData" : orderTemp.oimOrderDetailses,
-								"bDestroy" : true,
-								"bAutoWidth" : false
-							}).width('100%');
+								"bDestroy" : true
+							});
 			GenericBinder('order', orderTemp);
 			$('#updateorder').unbind("click").on('click', orderTemp,
 					function(e) {
@@ -808,23 +807,19 @@
 									});
 									map['draw'] = data.draw;
 									//if(data.start>)
-									map['pageNum'] =Math.floor( (data.start + data.length)
-											/ data.length);
+									map['pageNum'] = data.start;
 									map['pageSize'] = data.length;
-									map['search'] = data.search.value;
-									$(this)
-											.CRUD(
-													{
-														"method" : "POST",
-														"cache" : true,
-														"url" : 'aggregators/orders/search',
-														"data" : JSON
-																.stringify(map),
-														"message" : true,
-														"success" : function(d) {
-															callback(d);
-														}
-													});
+									map['searchText'] = data.search.value;
+									$(this).CRUD({
+										"method" : "POST",
+										"cache" : true,
+										"url" : 'aggregators/orders/search',
+										"data" : JSON.stringify(map),
+										"message" : true,
+										"success" : function(d) {
+											callback(d);
+										}
+									});
 								},
 								"bDestroy" : true,
 								"aoColumns" : [

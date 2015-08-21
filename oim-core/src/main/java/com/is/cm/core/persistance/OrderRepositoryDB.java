@@ -483,29 +483,35 @@ public class OrderRepositoryDB extends RepositoryBase implements
 	}
 
 	@Override
-	public List<Order> findUnprocessedOrders() {
+	public PagedDataResult<Order> findUnprocessedOrders(int firstResult,
+			int pageSize, String storeOrderId) {
 		Session currentSession = SessionManager.currentSession();
-		/*
-		 * Criteria criteria = currentSession.createCriteria(OimOrders.class);
-		 * criteria.add(Expression.in("status", new Integer[] {
-		 * OimConstants.ORDER_STATUS_UNPROCESSED }));
-		 * criteria.add(Expression.ne("supplierId", null)); List<OimOrders> list
-		 * = criteria.list();
-		 */
+		long totalRecords = 0, recordsFiltered = 0;
 		List<Order> orderList = new ArrayList<Order>();
 		// Transaction tx = null;
 		try {
 			// tx = currentSession.beginTransaction();
-			Query query = currentSession
-					.createQuery("select distinct o from salesmachine.hibernatedb.OimOrders o "
-							+ "left join fetch o.oimOrderDetailses d "
-							+ "where o.deleteTm is null and "
-							+ "d.deleteTm is null and "
-							+ "d.oimOrderStatuses.statusId = '0' and d.oimSuppliers.supplierId is not null and "
-							+ "o.oimOrderBatches.oimChannels.vendors.vendorId=:vid ");
+			StringBuilder sb = new StringBuilder();
+			sb.append(
+					"select distinct o from salesmachine.hibernatedb.OimOrders o")
+					.append(" left join fetch o.oimOrderDetailses d")
+					.append(" where o.deleteTm is null and")
+					.append(" d.deleteTm is null and")
+					.append(" d.oimOrderStatuses.statusId = '0' and d.oimSuppliers.supplierId is not null and")
+					.append(" o.oimOrderBatches.oimChannels.vendors.vendorId=:vid ");
+			if (!StringHandle.isNullOrEmpty(storeOrderId)) {
+				sb.append(" and o.storeOrderId=:storeOrderId");
+			}
+			Query query = currentSession.createQuery(sb.toString());
 			query.setInteger("vid", getVendorId());
-
+			if (!StringHandle.isNullOrEmpty(storeOrderId)) {
+				query.setString("storeOrderId", storeOrderId);
+			}
+			if (firstResult >= 0 && pageSize > 0) {
+				query.setFirstResult(firstResult).setMaxResults(pageSize);
+			}
 			List<OimOrders> list = query.list();
+			recordsFiltered = list.size();
 			for (Iterator iter = query.list().iterator(); iter.hasNext();) {
 				OimOrders oimorder = (OimOrders) iter.next();
 				Order order = Order.from(oimorder);
@@ -537,6 +543,19 @@ public class OrderRepositoryDB extends RepositoryBase implements
 				}
 				order.setOimOrderDetailses(details);
 			}
+			Query queryCount = currentSession
+					.createQuery("select count(distinct o) from salesmachine.hibernatedb.OimOrders o "
+							+ "left join o.oimOrderDetailses d "
+							+ "where o.deleteTm is null and "
+							+ "d.deleteTm is null and "
+							+ "d.oimOrderStatuses.statusId = '0' and d.oimSuppliers.supplierId is not null and "
+							+ "o.oimOrderBatches.oimChannels.vendors.vendorId=:vid ");
+			queryCount.setInteger("vid", getVendorId());
+			totalRecords = (long) queryCount.uniqueResult();
+			if (!StringHandle.isNullOrEmpty(storeOrderId))
+				recordsFiltered = list.size();
+			else
+				recordsFiltered = totalRecords;
 			// tx.commit();
 		} catch (HibernateException ex) {
 			/*
@@ -544,27 +563,41 @@ public class OrderRepositoryDB extends RepositoryBase implements
 			 */
 			LOG.error(ex.getMessage(), ex);
 		}
-		return orderList;
+		return new PagedDataResult<Order>(recordsFiltered, totalRecords,
+				orderList);
 	}
 
 	@Override
-	public List<Order> findUnresolvedOrders() {
+	public PagedDataResult<Order> findUnresolvedOrders(int firstResult,
+			int pageSize, String storeOrderId) {
 		Session currentSession = SessionManager.currentSession();
 		List<Order> orderList = new ArrayList<Order>();
 		// Transaction tx = null;
+		long totalRecords = 0, recordsFiltered = 0;
 		try {
 			// tx = currentSession.beginTransaction();
-			Query query = currentSession
-					.createQuery("select distinct o from salesmachine.hibernatedb.OimOrders o "
-							+ "left join fetch o.oimOrderDetailses d "
-							+ "where o.deleteTm is null and "
-							+ "d.deleteTm is null and "
-							+ "d.oimOrderStatuses.statusId = '0' and "
-							+ "o.oimOrderBatches.oimChannels.vendors.vendorId=:vid ");
+			StringBuilder sb = new StringBuilder();
+			sb.append(
+					"select distinct o from salesmachine.hibernatedb.OimOrders o")
+					.append(" left join fetch o.oimOrderDetailses d")
+					.append(" where o.deleteTm is null and")
+					.append(" d.deleteTm is null and")
+					.append(" d.oimOrderStatuses.statusId = '0' and")
+					.append(" o.oimOrderBatches.oimChannels.vendors.vendorId=:vid");
+			if (!StringHandle.isNullOrEmpty(storeOrderId)) {
+				sb.append(" and o.storeOrderId=:storeOrderId");
+			}
+			Query query = currentSession.createQuery(sb.toString());
 			query.setInteger("vid", getVendorId());
+			if (!StringHandle.isNullOrEmpty(storeOrderId)) {
+				query.setString("storeOrderId", storeOrderId);
+			}
+			if (firstResult >= 0 && pageSize > 0) {
+				query.setFirstResult(firstResult).setMaxResults(pageSize);
+			}
 			List<OimOrders> list = query.list();
-			LOG.debug("Found {} unresolved orders for vendor {}", list.size(),
-					getVendorId());
+			LOG.debug("Found {} unresolved orders for vendor {}",
+					recordsFiltered, getVendorId());
 			for (OimOrders oimorder : list) {
 				Order order = Order.from(oimorder);
 				orderList.add(order);
@@ -595,13 +628,28 @@ public class OrderRepositoryDB extends RepositoryBase implements
 				order.setOimOrderDetailses(details);
 				// tx.commit();
 			}
+
+			Query queryCount = currentSession
+					.createQuery("select count(distinct o) from salesmachine.hibernatedb.OimOrders o "
+							+ "left join o.oimOrderDetailses d "
+							+ "where o.deleteTm is null and "
+							+ "d.deleteTm is null and "
+							+ "d.oimOrderStatuses.statusId = '0' and "
+							+ "o.oimOrderBatches.oimChannels.vendors.vendorId=:vid ");
+			queryCount.setInteger("vid", getVendorId());
+			totalRecords = (long) queryCount.uniqueResult();
+			if (!StringHandle.isNullOrEmpty(storeOrderId))
+				recordsFiltered = list.size();
+			else
+				recordsFiltered = totalRecords;
 		} catch (HibernateException ex) {
 			/*
 			 * if (tx != null && tx.isActive()) tx.rollback();
 			 */
 			LOG.error(ex.getMessage(), ex);
 		}
-		return orderList;
+		return new PagedDataResult<Order>(recordsFiltered, totalRecords,
+				orderList);
 	}
 
 	@Override
@@ -617,7 +665,7 @@ public class OrderRepositoryDB extends RepositoryBase implements
 
 	@Override
 	public PagedDataResult<Order> find(Map<String, String> map, int pageSize,
-			int pageNum) {
+			int firstResult) {
 
 		Date d = new Date();
 		// basic search
@@ -639,6 +687,7 @@ public class OrderRepositoryDB extends RepositoryBase implements
 				.get("customer_email"));//
 		String customer_address = StringHandle.removeNull(map
 				.get("customer_address"));//
+		String searchText = StringHandle.removeNull(map.get("searchText"));//
 		String order_id = StringHandle.removeNull(map.get("customer_address"));//
 		String customer_zip = StringHandle.removeNull(map.get("customer_zip"));//
 		String customer_phone = StringHandle.removeNull(map
@@ -698,6 +747,8 @@ public class OrderRepositoryDB extends RepositoryBase implements
 					+ customer_address.toLowerCase() + "%') and ";
 		if (order_id.length() > 0)
 			customer_search += " o.storeOrderId = '" + order_id + "' and ";
+		if (searchText.length() > 0)
+			customer_search += " o.storeOrderId = '" + searchText + "' and ";
 		if (customer_phone.length() > 0)
 			customer_search += "(lower(o.deliveryPhone) like '%"
 					+ customer_phone.toLowerCase()
@@ -744,8 +795,7 @@ public class OrderRepositoryDB extends RepositoryBase implements
 							+ "o.oimOrderBatches.oimChannels.vendors.vendorId=:vid "
 							+ sort_query);
 			query.setInteger("vid", getVendorId());
-			query.setFirstResult((pageNum - 1) * pageSize).setMaxResults(
-					pageSize);
+			query.setFirstResult(firstResult).setMaxResults(pageSize);
 
 			for (Iterator iter = query.list().iterator(); iter.hasNext();) {
 				OimOrders oimorder = (OimOrders) iter.next();
@@ -788,8 +838,7 @@ public class OrderRepositoryDB extends RepositoryBase implements
 		} catch (RuntimeException e) {
 			LOG.error("Erorr in fetching orders", e);
 		}
-		return new PagedDataResult<Order>(pageNum, pageSize, totalRecords,
-				orders);
+		return new PagedDataResult<Order>(totalRecords, totalRecords, orders);
 	}
 
 	@Override
@@ -807,23 +856,37 @@ public class OrderRepositoryDB extends RepositoryBase implements
 	}
 
 	@Override
-	public List<Order> findProcessedOrders() {
+	public PagedDataResult<Order> findProcessedOrders(int firstResult,
+			int pageSize, String storeOrderId) {
 		Session currentSession = SessionManager.currentSession();
 		List<Order> orderList = new ArrayList<Order>();
 		// Transaction tx = null;
+		long totalRecords = 0, recordsFiltered = 0;
 		try {
 			// tx = currentSession.beginTransaction();
-			Query query = currentSession
-					.createQuery("select distinct o from salesmachine.hibernatedb.OimOrders o "
-							+ "left join fetch o.oimOrderDetailses d "
-							+ "where o.deleteTm is null and "
-							+ "d.deleteTm is null and d.supplierOrderStatus is not null and "
-							+ "d.oimOrderStatuses.statusId = '2' and "
-							+ "o.oimOrderBatches.oimChannels.vendors.vendorId=:vid ");
+			StringBuilder sb = new StringBuilder();
+			sb.append(
+					"select distinct o from salesmachine.hibernatedb.OimOrders o")
+					.append(" left join fetch o.oimOrderDetailses d")
+					.append(" where o.deleteTm is null and")
+					.append(" d.deleteTm is null and d.supplierOrderStatus is not null")
+					.append(" and d.oimOrderStatuses.statusId = '2'")
+					.append(" and o.oimOrderBatches.oimChannels.vendors.vendorId=:vid");
+			if (!StringHandle.isNullOrEmpty(storeOrderId)) {
+				sb.append(" and o.storeOrderId=:storeOrderId");
+			}
+			Query query = currentSession.createQuery(sb.toString());
 			query.setInteger("vid", getVendorId());
+			if (!StringHandle.isNullOrEmpty(storeOrderId)) {
+				query.setString("storeOrderId", storeOrderId);
+			}
+			if (firstResult >= 0 && pageSize > 0) {
+				query.setFirstResult(firstResult).setMaxResults(pageSize);
+			}
 			List<OimOrders> list = query.list();
-			LOG.debug("Found {} processed orders for vendor {}", list.size(),
-					getVendorId());
+			recordsFiltered = list.size();
+			LOG.debug("Found {} processed orders for vendor {}",
+					recordsFiltered, getVendorId());
 			for (OimOrders oimorder : list) {
 				Order order = Order.from(oimorder);
 				orderList.add(order);
@@ -843,13 +906,28 @@ public class OrderRepositoryDB extends RepositoryBase implements
 				order.setOimOrderDetailses(details);
 				// tx.commit();
 			}
+			Query queryCount = currentSession
+					.createQuery("select count(distinct o) from salesmachine.hibernatedb.OimOrders o "
+							+ "left join o.oimOrderDetailses d "
+							+ "where o.deleteTm is null and "
+							+ "d.deleteTm is null and d.supplierOrderStatus is not null and "
+							+ "d.oimOrderStatuses.statusId = '2' and "
+							+ "o.oimOrderBatches.oimChannels.vendors.vendorId=:vid ");
+
+			queryCount.setInteger("vid", getVendorId());
+			totalRecords = (long) queryCount.uniqueResult();
+			if (!StringHandle.isNullOrEmpty(storeOrderId))
+				recordsFiltered = list.size();
+			else
+				recordsFiltered = totalRecords;
 		} catch (HibernateException ex) {
 			/*
 			 * if (tx != null && tx.isActive()) tx.rollback();
 			 */
 			LOG.error(ex.getMessage(), ex);
 		}
-		return orderList;
+		return new PagedDataResult<Order>(recordsFiltered, totalRecords,
+				orderList);
 	}
 
 	@Override
@@ -857,6 +935,8 @@ public class OrderRepositoryDB extends RepositoryBase implements
 
 		String catalogid = entity.getCATALOGID();
 		OimChannels oimChannel = getOimChannel(catalogid);
+		Integer supportedChannelId = oimChannel.getOimSupportedChannels()
+				.getSupportedChannelId();
 		Session m_dbSession = SessionManager.currentSession();
 		Transaction tx = null;
 		Map<String, OimSuppliers> supplierMap = new HashMap<String, OimSuppliers>();
@@ -982,9 +1062,7 @@ public class OrderRepositoryDB extends RepositoryBase implements
 				String shippingDetails = ccorder.getSHIPPINGLABEL()
 						.getSLMETHOD();
 				order.setShippingDetails(shippingDetails);
-				// FIXME:: Get Channel reference and find supported channel ID
-				// from there
-				Integer supportedChannelId = 7;
+
 				Criteria findCriteria = m_dbSession
 						.createCriteria(OimChannelShippingMap.class);
 				findCriteria.add(Restrictions.eq(

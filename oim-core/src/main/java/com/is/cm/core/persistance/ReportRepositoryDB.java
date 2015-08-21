@@ -65,8 +65,7 @@ public class ReportRepositoryDB extends RepositoryBase implements
 					dbSession, getVendorId());
 			reportDataWrapper.put("channelsales", channelSales);
 		} else if (reportType.equalsIgnoreCase("totalsales")) {
-			List overallSales = getOverallSalesData(dbSession, getVendorId(),
-					m_startDate, m_endDate);
+			List overallSales = getOverallSalesData(dbSession, getVendorId());
 			reportDataWrapper.put("overAllSales", overallSales);
 		} else {
 			List<ChannelSalesData> channelSales = getChannelSalesData(
@@ -75,8 +74,7 @@ public class ReportRepositoryDB extends RepositoryBase implements
 					dbSession, getVendorId());
 			List<ProductSalesData> productSales = getProductSalesData(
 					dbSession, getVendorId());
-			List overallSales = getOverallSalesData(dbSession, getVendorId(),
-					m_startDate, m_endDate);
+			List overallSales = getOverallSalesData(dbSession, getVendorId());
 			reportDataWrapper.put("channelsales", channelSales);
 			reportDataWrapper.put("suppliersales", supplierSales);
 			reportDataWrapper.put("productsales", productSales);
@@ -104,8 +102,7 @@ public class ReportRepositoryDB extends RepositoryBase implements
 			reportDataWrapper.put("channelsales", channelSales);
 			reportDataWrapper.put("suppliersales", supplierSales);
 			reportDataWrapper.put("productsales", productSales);
-			overallSales = getOverallSalesData(dbSession, getVendorId(),
-					m_startDate, m_endDate);
+			overallSales = getOverallSalesData(dbSession, getVendorId());
 			reportDataWrapper.put("overAllSales", overallSales);
 		} catch (RuntimeException e) {
 			LOG.error(e.getMessage(), e);
@@ -113,22 +110,28 @@ public class ReportRepositoryDB extends RepositoryBase implements
 		return reportDataWrapper;
 	}
 
-	private List getOverallSalesData(Session dbSession, Integer vendorId,
-			Date startDate, Date endDate) {
+	private List getOverallSalesData(Session dbSession, Integer vendorId) {
+
+		long start = m_startDate.getTime();
+		long end = m_endDate.getTime();
+		long days = (end - start) / (24 * 60 * 60 * 1000);
+		String dateFormat = days < 7 ? "'MON D hhP.M.'" : "'YYYY-MM-DD'";
 
 		StringBuilder sb = new StringBuilder();
-		sb.append("select to_char(d.insertion_tm,'YYYY-MM-DD'), sum(quantity*sale_price) from oim_order_details d");
+		sb.append("select to_char(d.insertion_tm," + dateFormat
+				+ "), sum(quantity*sale_price) from oim_order_details d");
 		sb.append(" inner join oim_orders o on d.order_id=o.order_id");
 		sb.append(" inner join oim_order_batches b on b.batch_id = o.batch_id");
 		sb.append(" inner join oim_channels c on c.channel_id = b.channel_id");
 		sb.append(" where c.vendor_id =:vendorId");
 		sb.append(" and d.insertion_tm between :startDate and :endDate");
-		sb.append(" group by to_char(d.insertion_tm,'YYYY-MM-DD') order by to_char(d.insertion_tm,'YYYY-MM-DD')");
+		sb.append(" group by to_char(d.insertion_tm," + dateFormat
+				+ ") order by to_char(d.insertion_tm," + dateFormat + ")");
 
 		SQLQuery query = dbSession.createSQLQuery(sb.toString());
 		query.setInteger("vendorId", vendorId);
-		query.setDate("startDate", m_startDate);
-		query.setDate("endDate", m_endDate);
+		query.setTimestamp("startDate", m_startDate);
+		query.setTimestamp("endDate", m_endDate);
 		return query.list();
 	}
 

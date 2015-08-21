@@ -514,8 +514,10 @@
                                 </div>
                                <div class="col-sm-4">
                                   <label>State Code</label>
-                                  <input type="text" id="deliveryStateCode" data-bind-order="deliveryStateCode" class="pull-right"
-																			maxlength="2" name="deliveryStateCode">
+                                  <input type="text"
+																		id="deliveryStateCode"
+																		data-bind-order="deliveryStateCode" class="pull-right"
+																		maxlength="2" name="deliveryStateCode">
                                 </div>
                                
                                 
@@ -674,20 +676,21 @@
 	}, {
 		"statusId" : 7,
 		"statusValue" : "Shipped"
-	}  ];
+	} ];
 	function showResolve(e) {
-		var order = table_xy.fnGetData(e[0]);
+		var order = table_xy.row(e[0]).data();
 		$('#order-form').hide();
 		showOrderEdit(order);
 	}
 
 	function process(e) {
-		var order = table_xy.fnGetData(e[0]);
+		var order = table_xy.row(e[0]).data();
 		$.CM.processOrder(order);
+		$.CM.updateOrderSummary();
 	}
 
 	function b(e) {
-		var orderDetail = tableModal.fnGetData(e[0]);
+		var orderDetail = tableModal.row(e[0]).data();
 		updateOrderDetail(orderDetail, $(e[0]).find('input')[0], $(e[0]).find(
 				'input')[1], $(e[0]).find('input')[2],
 				$(e[0]).find('input')[3], $(e[0]).find('select')[0], $(e[0])
@@ -745,7 +748,7 @@
 					title : "Update Order Detail",
 					text : "Order Detail updated successfully."
 				});
-				table_xy.fnReloadAjax();
+				table_xy.ajax.reload();
 				$('#myModalResolve').modal('hide');
 				$('#myModalEdit').modal('hide');
 			},
@@ -758,7 +761,7 @@
 		});
 	}
 	function c(e) {
-		var order = table_xy.fnGetData(e[0]);
+		var order = table_xy.row(e[0]).data();
 		$('#order-form').show();
 		showOrderEdit(order);
 	}
@@ -775,7 +778,7 @@
 					$.CM.processOrder(order);
 				});
 		tableModal = $('#editordermodaltable')
-				.dataTable(
+				.DataTable(
 						{
 							bSort : false,
 							"aoColumns" : [
@@ -863,8 +866,7 @@
 										"sWidth" : "10%"
 									} ],
 							"aaData" : orderTemp.oimOrderDetailses,
-							"bDestroy" : true,
-							"bAutoWidth" : false
+							"bDestroy" : true
 						});
 		GenericBinder('order', orderTemp);
 		if (!orderTemp.shippingMethod) {
@@ -881,7 +883,7 @@
 						text : "Order updated successfully."
 					});
 					$('#myModaledit').modal('hide');
-					table_xy.fnReloadAjax();
+					table_xy.ajax.reload();
 				},
 				error : function(a, c, b) {
 					$.gritter.add({
@@ -894,6 +896,7 @@
 	}
 
 	jQuery(function($) {
+		$.CM.updateOrderSummary();
 		$(this).CRUD({
 			type : "GET",
 			url : "aggregators/suppliers/shippingmethods",
@@ -928,21 +931,23 @@
 		});
 
 		table_xy = $('#tableprocesschannel')
-				.dataTable(
+				.DataTable(
 						{
 							"bProcessing" : true,
-							"sAjaxSource" : 'aggregators/orders/unresolved',
-							"fnServerData" : function(sSource, aoData,
-									fnCallback, oSettings) {
-								oSettings.jqXHR = $(this)
+							"serverSide" : true,
+							"sAjaxDataProp" : 'data',
+							"ajax" : function(data, callback, settings) {
+								var d = $.CM.planify(data);
+								$(this)
 										.CRUD(
 												{
-													type : "GET",
-													url : sSource,
+													method : "POST",
+													url : 'aggregators/orders/unresolved',
 													cache : true,
 													message : true,
-													data : aoData,
-													success : function(json) {
+													data : JSON.stringify(d),
+													success : function(result) {
+														var json = result.data;
 														var unresolvedCount = 0, unprocessedCount = 0, unprocessedAmount = 0, unresolvedAmount = 0;
 														for (var i = 0; i < json.length; i++) {
 															var order = json[i];
@@ -982,39 +987,18 @@
 															}
 
 														}
-
-														$(
-																'#unprocessedCount span.infobox-data-number')
-																.html(
-																		unprocessedCount);
-														$(
-																'#unprocessedValue span.infobox-data-number')
-																.html(
-																		'$'
-																				+ unprocessedAmount
-																						.toFixed(2));
-														$(
-																'#unresolvedCount span.infobox-data-number')
-																.html(
-																		unresolvedCount);
-														$(
-																'#unresolvedValue span.infobox-data-number')
-																.html(
-																		'$'
-																				+ unresolvedAmount
-																						.toFixed(2));
-														fnCallback(json);
+														callback(result);
 													}
 												});
 							},
-							"sAjaxDataProp" : '',
 							"aoColumns" : [
 									{
 										"mData" : function(order) {
 											//if (order.unresolved)
 											//	return ''
 											return '<label><input class="ace" type="checkbox" value="'+order.orderId+'"><span class="lbl"></span></label>';
-										}
+										},
+										"orderable" : false
 									},
 									{
 										"mData" : "storeOrderId"
@@ -1073,17 +1057,17 @@
 		window.onhashchange = function() {
 			var hash = window.location.hash;
 			if (hash && hash == '#unprocessed') {
-				table_xy.fnSort([ [ 9, 'asc' ] ]);
+				table_xy.order([ 9, 'asc' ]).draw();
 			} else {
-				table_xy.sort([ [ 9, 'desc' ] ]);
+				table_xy.order([ 9, 'desc' ]).draw();
 			}
 		};
 		if (hash && hash == '#unprocessed') {
-			table_xy.fnSort([ [ 9, 'asc' ] ]);
+			table_xy.order([ 9, 'asc' ]).draw();
 		} else if (hash == '#unresolved') {
-			table_xy.fnSort([ [ 9, 'desc' ] ]);
+			table_xy.order([ 9, 'desc' ]).draw();
 		} else {
-			table_xy.fnSort([ [ 2, 'desc' ] ]);
+			table_xy.order([ 2, 'desc' ]).draw();
 		}
 		$('.addresspop').popover({
 			container : 'body'
@@ -1133,10 +1117,12 @@
 													selected = true;
 													var o = {};
 													var order = table_xy
-															.fnGetData($(this)
-																	.parent()
-																	.parent()
-																	.parent()[0]);
+															.row(
+																	$(this)
+																			.parent()
+																			.parent()
+																			.parent()[0])
+															.data();
 													if (order != null) {
 														for (var i = 0; i < order.oimOrderDetailses.length; i++) {
 															var od = order.oimOrderDetailses[i];
@@ -1175,7 +1161,8 @@
 																				'#processselect1 option:selected')
 																				.text()
 															});
-													table_xy.fnReloadAjax();
+													table_xy.ajax.reload();
+													$.CM.updateOrderSummary();
 												}
 											});
 						});

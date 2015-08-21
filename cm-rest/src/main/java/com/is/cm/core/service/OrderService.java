@@ -8,6 +8,7 @@ import salesmachine.oim.suppliers.exception.SupplierCommunicationException;
 import salesmachine.oim.suppliers.exception.SupplierConfigurationException;
 import salesmachine.oim.suppliers.exception.SupplierOrderException;
 
+import com.is.cm.core.domain.DataTableCriterias;
 import com.is.cm.core.domain.Order;
 import com.is.cm.core.domain.OrderDetail;
 import com.is.cm.core.domain.OrderDetailMod;
@@ -38,7 +39,8 @@ public interface OrderService {
 
 	OrderDetailUpdatedEvent update(UpdateOrderDetailEvent updateOrderDetailEvent);
 
-	ReadCollectionEvent<Order> findOrderByStatus(RequestReadEvent<String> event);
+	PagedDataResultEvent<Order> findOrderByStatus(String status,
+			RequestReadEvent<DataTableCriterias> requestReadEvent);
 
 	UpdatedEvent<Order> processOrder(UpdateEvent<Order> event)
 			throws SupplierConfigurationException,

@@ -50,6 +50,12 @@
 								
 								
 								
+								
+								
+								
+								
+								
+								
 								</thead>
 									</table>
 									</div>
@@ -86,21 +92,25 @@
 
 		jQuery(function($) {
 			table_xy = $('#table-order-tracking')
-					.dataTable(
+					.DataTable(
 							{
-								"bProcessing" : true,
-								"sAjaxSource" : 'aggregators/orders/posted',
-								"fnServerData" : function(sSource, aoData,
-										fnCallback, oSettings) {
-									oSettings.jqXHR = $(this).CRUD({
-										type : "GET",
-										url : sSource,
-										data : aoData,
-										message : true,
-										success : fnCallback
+								"order" : [ [ 2, "desc" ] ],
+								"processing" : true,
+								"serverSide" : true,
+								"sAjaxDataProp" : "data",
+								"ajax" : function(data, callback, settings) {
+									var d = $.CM.planify(data);
+									$(this).CRUD({
+										method : "POST",
+										url : 'aggregators/orders/posted',
+										cache : true,
+										data : JSON.stringify(d),
+										"message" : true,
+										"success" : function(result) {
+											callback(result);
+										}
 									});
 								},
-								"sAjaxDataProp" : '',
 								"bDestroy" : true,
 								"aoColumns" : [
 										{
@@ -152,7 +162,6 @@
 											"mData" : "orderTotalAmount"
 										} ]
 							});
-			table_xy.fnSort([ [ 2, 'desc' ] ]);
 			$('.addresspop').popover({
 				container : 'body'
 			});

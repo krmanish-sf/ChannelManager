@@ -18,6 +18,8 @@ import salesmachine.oim.suppliers.exception.SupplierCommunicationException;
 import salesmachine.oim.suppliers.exception.SupplierConfigurationException;
 import salesmachine.oim.suppliers.exception.SupplierOrderException;
 
+import com.is.cm.core.domain.DataTableCriterias;
+import com.is.cm.core.domain.DataTableCriterias.SearchCriterias;
 import com.is.cm.core.domain.Order;
 import com.is.cm.core.domain.OrderDetail;
 import com.is.cm.core.domain.OrderDetailMod;
@@ -91,21 +93,24 @@ public class OrderEventHandler implements OrderService {
 	}
 
 	@Override
-	public ReadCollectionEvent<Order> findOrderByStatus(
-			RequestReadEvent<String> event) {
-		if (event.getEntity() == null) {
-			return null;
-		} else if ("unprocessed".equalsIgnoreCase(event.getEntity())) {
-			return new ReadCollectionEvent<Order>(
-					orderRepository.findUnprocessedOrders());
-		} else if ("unresolved".equalsIgnoreCase(event.getEntity())) {
-			return new ReadCollectionEvent<Order>(
-					orderRepository.findUnresolvedOrders());
-		} else if ("posted".equalsIgnoreCase(event.getEntity())) {
-			return new ReadCollectionEvent<Order>(
-					orderRepository.findProcessedOrders());
-		}
-		return null;
+	public PagedDataResultEvent<Order> findOrderByStatus(String status,
+			RequestReadEvent<DataTableCriterias> event) {
+		PagedDataResult<Order> result = null;
+		String storeOrderId = event.getEntity().getSearch()
+				.get(SearchCriterias.value);
+		if ("unprocessed".equalsIgnoreCase(status)) {
+			result = orderRepository.findUnprocessedOrders(event.getEntity()
+					.getStart(), event.getEntity().getLength(), storeOrderId);
+		} else if ("unresolved".equalsIgnoreCase(status)) {
+			result = orderRepository.findUnresolvedOrders(event.getEntity()
+					.getStart(), event.getEntity().getLength(), storeOrderId);
+		} else if ("posted".equalsIgnoreCase(status)) {
+			result = orderRepository.findProcessedOrders(event.getEntity()
+					.getStart(), event.getEntity().getLength(), storeOrderId);
+		} else
+			result = new PagedDataResult<Order>(0, 0, new ArrayList<Order>(0));
+		result.setDraw(event.getEntity().getDraw());
+		return new PagedDataResultEvent<Order>(result);
 	}
 
 	@Override
@@ -135,7 +140,6 @@ public class OrderEventHandler implements OrderService {
 		List<Order> orders = event.getEntity();
 		LOG.debug("Order Size: {}", orders.size());
 		Object order2 = orders.get(0);
-		Order o = (Order) order2;
 		LOG.debug(order2.getClass().getName());
 		for (Order order : orders) {
 			orderRepository.processOrders(order);
@@ -149,11 +153,12 @@ public class OrderEventHandler implements OrderService {
 		List<Integer> orders = event.getEntity();
 		if (orders == null && "process".equalsIgnoreCase(status)) {
 			LOG.warn("No order submitted for {}", status);
-			List<Order> findUnprocessedOrders = orderRepository
-					.findUnprocessedOrders();
+			// Passing null to fetch all unprocessed orders
+			PagedDataResult<Order> findUnprocessedOrders = orderRepository
+					.findUnprocessedOrders(-1, -1, null);
 			orders = new ArrayList<Integer>();
 			LOG.debug("Querying unprocessed orders..");
-			for (Order order : findUnprocessedOrders) {
+			for (Order order : findUnprocessedOrders.getData()) {
 				orders.add(order.getOrderId());
 			}
 		}

@@ -17,39 +17,42 @@ import com.is.cm.core.domain.PagedDataResult;
 
 public interface OrderRepository {
 
-	List<Order> findAll();
-
-	Order save(Order order);
-
 	void delete(int id);
-
-	Order findById(int id);
-
-	OimOrders getById(int id);
-
-	void update(OrderDetail orderDetail);
-
-	List<Order> findAll(String[] orderStatus);
-
-	Order saveOrder(Map<String, String> orderData);
-
-	List<Order> findUnprocessedOrders();
-
-	List<Order> findUnresolvedOrders();
-
-	boolean processOrders(Order order) throws SupplierConfigurationException,
-			SupplierCommunicationException, SupplierOrderException;
 
 	PagedDataResult<Order> find(Map<String, String> map, int pageSize,
 			int pageNum);
 
-	void update(OimOrderDetails orderDetail);
+	List<Order> findAll();
 
-	String trackOrderStatus(Integer entity);
+	List<Order> findAll(String[] orderStatus);
 
-	List<Order> findProcessedOrders();
+	Order findById(int id);
+
+	List<OrderDetailMod> findOrderDetailModifications(int orderDetailId);
+
+	PagedDataResult<Order> findProcessedOrders(int firstResult, int pageSize,
+			String storeOrderId);
+
+	PagedDataResult<Order> findUnprocessedOrders(int firstResult, int pageSize,
+			String storeOrderId);
+
+	PagedDataResult<Order> findUnresolvedOrders(int firstResult, int pageSize,
+			String storeOrderId);
+
+	OimOrders getById(int id);
+
+	boolean processOrders(Order order) throws SupplierConfigurationException,
+			SupplierCommunicationException, SupplierOrderException;
 
 	List<Order> save(CCTRANSMISSION entity);
 
-	List<OrderDetailMod> findOrderDetailModifications(int orderDetailId);
+	Order save(Order order);
+
+	Order saveOrder(Map<String, String> orderData);
+
+	String trackOrderStatus(Integer entity);
+
+	void update(OimOrderDetails orderDetail);
+
+	void update(OrderDetail orderDetail);
 }
