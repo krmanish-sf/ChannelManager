@@ -33,6 +33,7 @@ import salesmachine.oim.stores.exception.ChannelOrderFormatException;
 import salesmachine.oim.suppliers.exception.SupplierCommunicationException;
 import salesmachine.oim.suppliers.exception.SupplierConfigurationException;
 import salesmachine.oim.suppliers.exception.SupplierOrderException;
+import salesmachine.oim.suppliers.modal.OrderDetailResponse;
 import salesmachine.util.OimLogStream;
 import salesmachine.util.StringHandle;
 
@@ -40,7 +41,7 @@ import com.suppliers.pcs.OrderReturnInfo;
 
 public abstract class Supplier {
 	private static final Logger log = LoggerFactory.getLogger(Supplier.class);
-	protected final Set<Integer> successfulOrders = new HashSet<Integer>();
+	protected final Map<Integer, OrderDetailResponse> successfulOrders = new HashMap<Integer, OrderDetailResponse>();
 	protected final Set<Integer> failedOrders = new HashSet<Integer>();
 	protected Map stateCodeMapping = new HashMap();
 	protected Map countryCodeMapping = new HashMap();
@@ -283,7 +284,7 @@ public abstract class Supplier {
 		return shippingMethodCode;
 	}
 
-	public Set<Integer> getSuccessfulOrders() {
+	public Map<Integer, OrderDetailResponse> getSuccessfulOrders() {
 		return successfulOrders;
 	}
 

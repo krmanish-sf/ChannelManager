@@ -33,6 +33,7 @@ import salesmachine.oim.stores.impl.OrderImportManager;
 import salesmachine.oim.suppliers.exception.SupplierCommunicationException;
 import salesmachine.oim.suppliers.exception.SupplierConfigurationException;
 import salesmachine.oim.suppliers.exception.SupplierOrderException;
+import salesmachine.oim.suppliers.modal.OrderDetailResponse;
 import salesmachine.oim.suppliers.modal.OrderStatus;
 import salesmachine.util.OimLogStream;
 import salesmachine.util.StringHandle;
@@ -169,6 +170,7 @@ public class GreenSupply extends Supplier {
 							.getOimOrderDetailses())) {
 						StringBuilder sb = new StringBuilder();
 						// for (OimFileFieldMap map : fileFieldMaps) {
+						String poNumber=null;
 						for (int i = 0; i < fileFieldMaps.size(); i++) {
 							OimFileFieldMap map = fileFieldMaps.get(i);
 							String mappedFieldName = StringHandle
@@ -185,7 +187,7 @@ public class GreenSupply extends Supplier {
 							}
 							sb.append(fieldValue.replaceAll(",", " "));
 							if (mappedFieldName.equalsIgnoreCase("PO Number")) {
-								od.setSupplierOrderNumber(fieldValue);
+								poNumber = fieldValue;
 							}
 							if (i == fileFieldMaps.size() - 1) {
 								sb.append(NEWLINE);
@@ -194,9 +196,9 @@ public class GreenSupply extends Supplier {
 							}
 						}
 						fw.write(sb.toString());
-						od.setSupplierOrderStatus("Sent to supplier.");
-						session.update(od);
-						successfulOrders.add(od.getDetailId());
+						//od.setSupplierOrderStatus("Sent to supplier.");
+						//session.update(od);
+						successfulOrders.put(od.getDetailId(),new OrderDetailResponse(poNumber, "Sent to supplier."));
 						OimChannels oimChannels = order.getOimOrderBatches()
 								.getOimChannels();
 						Integer channelId = oimChannels.getChannelId();

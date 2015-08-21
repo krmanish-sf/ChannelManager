@@ -5,10 +5,12 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import jxl.Workbook;
@@ -56,6 +58,7 @@ import salesmachine.oim.suppliers.exception.SupplierCommunicationException;
 import salesmachine.oim.suppliers.exception.SupplierConfigurationException;
 import salesmachine.oim.suppliers.exception.SupplierOrderException;
 import salesmachine.oim.suppliers.exception.SupplierOrderTrackingException;
+import salesmachine.oim.suppliers.modal.OrderDetailResponse;
 import salesmachine.oim.suppliers.modal.OrderStatus;
 import salesmachine.orderfile.DatabaseFile;
 import salesmachine.orderfile.DefaultCsvFile;
@@ -193,7 +196,7 @@ public class OimSupplierOrderPlacement {
 		try {
 
 			List orders = new ArrayList();
-			List<Integer> successfulOrders = new ArrayList<Integer>();
+			Map<Integer, OrderDetailResponse> successfulOrders = new HashMap<Integer, OrderDetailResponse>();
 			List<Integer> failedOrders = new ArrayList<Integer>();
 			int countToProcess = 0;
 			try {
@@ -284,7 +287,7 @@ public class OimSupplierOrderPlacement {
 
 			updateOrderStatus(successfulOrders,
 					OimConstants.ORDER_STATUS_PROCESSED_SUCCESS);
-			updateOrderStatus(failedOrders,
+			updateFailedOrderStatus(failedOrders,
 					OimConstants.ORDER_STATUS_PROCESSED_FAILED);
 			if (failedOrders.size() == 0) {
 				// updateVendorSupplierOrderHistory(vendorId, ERROR_NONE, "");
@@ -296,6 +299,54 @@ public class OimSupplierOrderPlacement {
 			return false;
 		}
 		return ordersSent;
+	}
+
+	private boolean updateFailedOrderStatus(List<Integer> orders, Integer status) {
+
+		if (orders == null || orders.size() == 0) {
+			log.debug("No orders to update with status: " + status);
+			return true;
+		}
+		String orderDetails = "";
+		for (int i = 0; i < orders.size(); i++) {
+			if (orderDetails.length() > 0)
+				orderDetails += ",";
+			orderDetails += (Integer) orders.get(i);
+		}
+
+		String processTime = "";
+		if (status == OimConstants.ORDER_STATUS_PROCESSED_SUCCESS) {
+			processTime = " o.processingTm=sysdate, ";
+		}
+		System.out
+				.println("update salesmachine.hibernatedb.OimOrderDetails o set o.oimOrderStatuses.statusId="
+						+ status
+						+ " where o.detailId in ("
+						+ orderDetails
+						+ ")");
+
+		Transaction tx = null;
+		try {
+			tx = m_dbSession.beginTransaction();
+
+			Query q = m_dbSession
+					.createQuery("update salesmachine.hibernatedb.OimOrderDetails o set "
+							+ processTime
+							+ " o.oimOrderStatuses.statusId="
+							+ status
+							+ " where o.detailId in ("
+							+ orderDetails
+							+ ")");
+			int rows = q.executeUpdate();
+			log.debug("Updated order details. Rows changed: " + rows);
+
+			tx.commit();
+		} catch (RuntimeException e) {
+			tx.rollback();
+			e.printStackTrace();
+		}
+		return true;
+
 	}
 
 	private boolean pingSupplier(Integer vendorId, OimVendorSuppliers ovs,
@@ -362,8 +413,8 @@ public class OimSupplierOrderPlacement {
 	}
 
 	private boolean sendOrderToSupplier(Integer vendorId, OimOrders oimOrders,
-			List<Integer> successfulOrders, List<Integer> failedOrders)
-			throws SupplierConfigurationException,
+			Map<Integer, OrderDetailResponse> successfulOrders,
+			List<Integer> failedOrders) throws SupplierConfigurationException,
 			SupplierCommunicationException, SupplierOrderException {
 		List<OimOrders> orders = new ArrayList<OimOrders>();
 		orders.add(oimOrders);
@@ -472,7 +523,7 @@ public class OimSupplierOrderPlacement {
 					try {
 						s.setLogStream(logStream);
 						s.sendOrders(vendorId, ovs, orders);
-						successfulOrders.addAll(s.successfulOrders);
+						successfulOrders.putAll(s.successfulOrders);
 						failedOrders.addAll(s.failedOrders);
 					} catch (SupplierConfigurationException e) {
 						Supplier.updateVendorSupplierOrderHistory(vendorId,
@@ -905,49 +956,41 @@ public class OimSupplierOrderPlacement {
 		return dataline.toString();
 	}
 
-	private boolean updateOrderStatus(List orders, Integer status) {
+	private boolean updateOrderStatus(Map<Integer, OrderDetailResponse> orders,
+			Integer status) {
 		if (orders == null || orders.size() == 0) {
 			log.debug("No orders to update with status: " + status);
 			return true;
 		}
-		String orderDetails = "";
-		for (int i = 0; i < orders.size(); i++) {
-			if (orderDetails.length() > 0)
-				orderDetails += ",";
-			orderDetails += (Integer) orders.get(i);
-		}
-
-		String processTime = "";
-		if (status == OimConstants.ORDER_STATUS_PROCESSED_SUCCESS) {
-			processTime = " o.processingTm=sysdate, ";
-		}
-		System.out
-				.println("update salesmachine.hibernatedb.OimOrderDetails o set o.oimOrderStatuses.statusId="
-						+ status
-						+ " where o.detailId in ("
-						+ orderDetails
-						+ ")");
-
+		// for (int i = 0; i < orders.size(); i++) {
+		// if (orderDetails.length() > 0)
+		// orderDetails += ",";
+		// orderDetails += (Integer) orders.get(i);
+		// }
 		Transaction tx = null;
 		try {
+
 			tx = m_dbSession.beginTransaction();
-
-			Query q = m_dbSession
-					.createQuery("update salesmachine.hibernatedb.OimOrderDetails o set "
-							+ processTime
-							+ " o.oimOrderStatuses.statusId="
-							+ status
-							+ " where o.detailId in ("
-							+ orderDetails
-							+ ")");
-			int rows = q.executeUpdate();
-			log.debug("Updated order details. Rows changed: " + rows);
-
+			for (Iterator<Integer> itr = orders.keySet().iterator(); itr
+					.hasNext();) {
+				Integer detailId = itr.next();
+				OimOrderDetails detail = (OimOrderDetails) m_dbSession.get(
+						OimOrderDetails.class, detailId);
+				detail.setProcessingTm(new Date());
+				detail.setOimOrderStatuses(new OimOrderStatuses(status));
+				OrderDetailResponse res = orders.get(detailId);
+				if (res.poNumber != null)
+					detail.setSupplierOrderNumber(res.poNumber);
+				if (res.status != null)
+					detail.setSupplierOrderStatus(res.status);
+				m_dbSession.update(detail);
+			}
 			tx.commit();
-		} catch (RuntimeException e) {
+		} catch (Exception e) {
 			tx.rollback();
-			e.printStackTrace();
+			// e.printStackTrace();
 		}
+
 		return true;
 	}
 
@@ -1043,7 +1086,7 @@ public class OimSupplierOrderPlacement {
 		Integer channelId = oimChannels.getChannelId();
 		IOrderImport iOrderImport = OrderImportManager
 				.getIOrderImport(channelId);
-		
+
 		if (iOrderImport != null) {
 			log.debug("Created the iorderimport object");
 			try {
@@ -1085,7 +1128,7 @@ public class OimSupplierOrderPlacement {
 			log.error("Could not find a bean to work with this Channel.");
 			stream.println("This Channel type is not supported for pushing order updates.");
 		}
-		if(orderStatus!=null)
+		if (orderStatus != null)
 			stream.println(orderStatus.toString());
 		return stream.toString();
 	}

@@ -55,6 +55,7 @@ import salesmachine.oim.suppliers.exception.SupplierCommunicationException;
 import salesmachine.oim.suppliers.exception.SupplierConfigurationException;
 import salesmachine.oim.suppliers.exception.SupplierOrderException;
 import salesmachine.oim.suppliers.exception.SupplierOrderTrackingException;
+import salesmachine.oim.suppliers.modal.OrderDetailResponse;
 import salesmachine.oim.suppliers.modal.OrderStatus;
 import salesmachine.oim.suppliers.modal.TrackingData;
 import salesmachine.oim.suppliers.modal.dh.XMLRESPONSE;
@@ -298,11 +299,11 @@ public class DandH extends Supplier implements HasTracking {
 						continue;
 					orderMessage = getXPath(xmlResponse,
 							"/XMLRESPONSE/ORDERNUM/text()");
-					detail.setSupplierOrderNumber(orderMessage);
-					detail.setSupplierOrderStatus("Sent to supplier.");
-					Session session = SessionManager.currentSession();
-					session.update(detail);
-					successfulOrders.add(detail.getDetailId());
+					// detail.setSupplierOrderNumber(orderMessage);
+					// detail.setSupplierOrderStatus("Sent to supplier.");
+					// Session session = SessionManager.currentSession();
+					// session.update(detail);
+					successfulOrders.put(detail.getDetailId(), new OrderDetailResponse(orderMessage, "Sent to supplier."));
 
 					OimChannels oimChannels = order.getOimOrderBatches()
 							.getOimChannels();

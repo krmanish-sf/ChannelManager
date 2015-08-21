@@ -19,6 +19,7 @@ import salesmachine.hibernatedb.OimVendorSuppliers;
 import salesmachine.hibernatedb.Reps;
 import salesmachine.hibernatedb.Vendors;
 import salesmachine.hibernatehelper.SessionManager;
+import salesmachine.oim.suppliers.modal.OrderDetailResponse;
 import salesmachine.util.StringHandle;
 
 import com.suppliers.pcs.OrderAddress;
@@ -239,7 +240,7 @@ public class PCS extends Supplier {
 				for (Iterator detailIt = order.getOimOrderDetailses()
 						.iterator(); detailIt.hasNext();) {
 					OimOrderDetails detail = (OimOrderDetails) detailIt.next();
-					successfulOrders.add(detail.getDetailId());
+					successfulOrders.put(detail.getDetailId(),new OrderDetailResponse()); //TODO get PO Number and add as value here
 				}
 
 			} else {

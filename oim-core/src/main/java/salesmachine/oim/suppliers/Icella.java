@@ -20,6 +20,7 @@ import salesmachine.hibernatedb.Reps;
 import salesmachine.hibernatedb.Vendors;
 import salesmachine.hibernatehelper.SessionManager;
 import salesmachine.oim.api.OimConstants;
+import salesmachine.oim.suppliers.modal.OrderDetailResponse;
 import salesmachine.util.FtpFileUploader;
 import salesmachine.util.StringHandle;
 
@@ -93,7 +94,7 @@ public class Icella extends Supplier {
 			for (Iterator detailIt=order.getOimOrderDetailses().iterator(); detailIt.hasNext();) {
 				OimOrderDetails detail = (OimOrderDetails)detailIt.next();
 				if (fileUploaded)
-					successfulOrders.add(detail.getDetailId());
+					successfulOrders.put(detail.getDetailId(),new OrderDetailResponse());
 				else
 					failedOrders.add(detail.getDetailId());
 			}
