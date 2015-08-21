@@ -31,6 +31,11 @@ public class ApplicationProperties {
 	// Shopify Keys
 	public static final String SHOPIFY_API_KEY = "cm.shopify.apiKey";
 	public static final String SHOPIFY_SECRET_KEY = "cm.shopify.secretKey";
+	
+	// BigCommerce Keys
+	public static final String BIGCOMMERCE_CLIENT_API_URL = "cm.bigcommerce.apiURL";
+	public static final String BIGCOMMERCE_CLIENT_ID = "cm.bigcommerce.clientId";
+	public static final String BIGCOMMERCE_CLIENT_SECRET = "cm.bigcommerce.clientSecret";
 
 	private static final Logger log = LoggerFactory
 			.getLogger(ApplicationProperties.class);

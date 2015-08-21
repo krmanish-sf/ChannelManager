@@ -55,6 +55,7 @@ import salesmachine.oim.suppliers.exception.SupplierCommunicationException;
 import salesmachine.oim.suppliers.exception.SupplierConfigurationException;
 import salesmachine.oim.suppliers.exception.SupplierOrderException;
 import salesmachine.oim.suppliers.exception.SupplierOrderTrackingException;
+import salesmachine.oim.suppliers.modal.OrderDetailResponse;
 import salesmachine.oim.suppliers.modal.OrderStatus;
 import salesmachine.oim.suppliers.modal.hg.TrackingData;
 import salesmachine.util.OimLogStream;
@@ -702,11 +703,11 @@ public class HonestGreen extends Supplier implements HasTracking {
 				// fOut.write(BLANK_SPACE);
 				// fOut.write(COMMA);
 				fOut.write(NEW_LINE);
-				od.setSupplierOrderNumber(poNum);
-				od.setSupplierOrderStatus("Sent to supplier.");
-				Session session = SessionManager.currentSession();
-				session.update(od);
-				successfulOrders.add(od.getDetailId());
+				//od.setSupplierOrderNumber(poNum);
+				//od.setSupplierOrderStatus("Sent to supplier.");
+				//Session session = SessionManager.currentSession();
+				//session.update(od);
+				successfulOrders.put(od.getDetailId(), new OrderDetailResponse(poNum, "Sent to supplier."));
 				OimChannels oimChannels = order.getOimOrderBatches()
 						.getOimChannels();
 				Integer channelId = oimChannels.getChannelId();

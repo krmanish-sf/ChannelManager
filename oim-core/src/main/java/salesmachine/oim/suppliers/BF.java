@@ -48,6 +48,7 @@ import salesmachine.oim.suppliers.exception.SupplierCommunicationException;
 import salesmachine.oim.suppliers.exception.SupplierConfigurationException;
 import salesmachine.oim.suppliers.exception.SupplierOrderException;
 import salesmachine.oim.suppliers.exception.SupplierOrderTrackingException;
+import salesmachine.oim.suppliers.modal.OrderDetailResponse;
 import salesmachine.oim.suppliers.modal.TrackingData;
 import salesmachine.oim.suppliers.modal.bf.OrderXMLresp;
 import salesmachine.oim.suppliers.modal.bf.OrderXMLresp.Items.Item;
@@ -88,7 +89,8 @@ public class BF extends Supplier implements HasTracking {
 	public void sendOrders(Integer vendorId, OimVendorSuppliers ovs, List orders)
 			throws SupplierConfigurationException,
 			SupplierCommunicationException, SupplierOrderException,
-			ChannelConfigurationException, ChannelCommunicationException, ChannelOrderFormatException{
+			ChannelConfigurationException, ChannelCommunicationException,
+			ChannelOrderFormatException {
 		log.info("Started sending orders to BnF USA");
 		// populate orderSkuPrefixMap with channel id and the prefix to be used
 		// for the given supplier.
@@ -138,7 +140,8 @@ public class BF extends Supplier implements HasTracking {
 			List fileFieldMaps, IFileSpecificsProvider fileSpecifics,
 			OimVendorSuppliers ovs, Integer vendorId, Reps r)
 			throws SupplierConfigurationException, SupplierOrderException,
-			SupplierCommunicationException, ChannelConfigurationException, ChannelCommunicationException, ChannelOrderFormatException {
+			SupplierCommunicationException, ChannelConfigurationException,
+			ChannelCommunicationException, ChannelOrderFormatException {
 		String USERID = ovs.getLogin();
 		String PASSWORD = ovs.getPassword();
 		String lincenceKey = ovs.getAccountNumber();
@@ -330,20 +333,27 @@ public class BF extends Supplier implements HasTracking {
 								OimOrderDetails detail = (OimOrderDetails) detailIt
 										.next();
 								if (detail.getSku().contains(itemId)) {
-									detail.setSupplierOrderStatus(status);
-									detail.setSupplierOrderNumber(String
-											.valueOf(orderXMLresp.getOrder()
-													.getProcessing()
-													.getInvNum()));
+									// detail.setSupplierOrderStatus(status);
+									// detail.setSupplierOrderNumber(String
+									// .valueOf(orderXMLresp.getOrder()
+									// .getProcessing()
+									// .getInvNum()));
 									if (failedStatus.contains(status)) {
 										failedOrders.add(detail.getDetailId());
 									} else {
-										successfulOrders.add(detail
-												.getDetailId());
+										String poNum = String
+												.valueOf(orderXMLresp
+														.getOrder()
+														.getProcessing()
+														.getInvNum());
+										successfulOrders.put(detail
+												.getDetailId(),
+												new OrderDetailResponse(poNum,
+														status));
 									}
 									Session session = SessionManager
 											.currentSession();
-									session.update(detail);
+									// session.update(detail);
 
 									OimChannels oimChannels = order
 											.getOimOrderBatches()
@@ -530,7 +540,8 @@ public class BF extends Supplier implements HasTracking {
 
 	@Override
 	public salesmachine.oim.suppliers.modal.OrderStatus getOrderStatus(
-			OimVendorSuppliers oimVendorSuppliers, Object trackingMeta)  throws SupplierOrderTrackingException{
+			OimVendorSuppliers oimVendorSuppliers, Object trackingMeta)
+			throws SupplierOrderTrackingException {
 		salesmachine.oim.suppliers.modal.OrderStatus orderStatus = new salesmachine.oim.suppliers.modal.OrderStatus();
 		if (!(trackingMeta instanceof String))
 			throw new IllegalArgumentException(
@@ -636,12 +647,16 @@ public class BF extends Supplier implements HasTracking {
 
 				}
 			}
-				if(orderStatus.getStatus()==null ){
-					throw new SupplierOrderTrackingException("Error in getting order status from Supplier while tracking Tracking Id- "+trackingMeta);
-				}
-			if(orderStatus.getTrackingData()==null)
-				throw new SupplierOrderTrackingException("Error in getting tracking details from Supplier while tracking Tracking Id- "+trackingMeta);
-				
+			if (orderStatus.getStatus() == null) {
+				throw new SupplierOrderTrackingException(
+						"Error in getting order status from Supplier while tracking Tracking Id- "
+								+ trackingMeta);
+			}
+			if (orderStatus.getTrackingData() == null)
+				throw new SupplierOrderTrackingException(
+						"Error in getting tracking details from Supplier while tracking Tracking Id- "
+								+ trackingMeta);
+
 		} catch (JAXBException | SupplierConfigurationException
 				| SupplierOrderException | SupplierCommunicationException e) {
 			log.error(e.getMessage(), e);

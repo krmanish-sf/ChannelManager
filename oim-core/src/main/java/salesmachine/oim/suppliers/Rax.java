@@ -20,6 +20,7 @@ import salesmachine.hibernatedb.Reps;
 import salesmachine.hibernatedb.Vendors;
 import salesmachine.hibernatehelper.SessionManager;
 import salesmachine.oim.api.OimConstants;
+import salesmachine.oim.suppliers.modal.OrderDetailResponse;
 import salesmachine.util.StringHandle;
 
 public class Rax extends Supplier {
@@ -77,7 +78,7 @@ public class Rax extends Supplier {
 			OimOrders order = (OimOrders)orders.get(i);
 			for (Iterator detailIt=order.getOimOrderDetailses().iterator(); detailIt.hasNext();) {
 				OimOrderDetails detail = (OimOrderDetails)detailIt.next();
-				successfulOrders.add(detail.getDetailId());
+				successfulOrders.put(detail.getDetailId(),new OrderDetailResponse());//TODO get PO Number and add as value here
 			}
 			
 			//Send Email Notifications if is set to true.
