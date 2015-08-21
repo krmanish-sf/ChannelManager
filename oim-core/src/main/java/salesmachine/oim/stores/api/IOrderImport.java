@@ -20,7 +20,7 @@ public interface IOrderImport {
 
 	boolean updateStoreOrder(OimOrderDetails oimOrderDetails,
 			OrderStatus orderStatus) throws ChannelCommunicationException,
-			ChannelOrderFormatException;
+			ChannelOrderFormatException, ChannelConfigurationException;
 
 	public static enum ChannelError {
 		CHANNEL_COMMUNICATION_ERROR(2), CHANNEL_CONFIGURATION_ERROR(1), CHANNEL_ORDERFORMAT_ERROR(
