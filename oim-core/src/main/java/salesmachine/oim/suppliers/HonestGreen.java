@@ -982,7 +982,6 @@ public class HonestGreen extends Supplier implements HasTracking {
 			if (tempTrackingMeta.toString().equals(orderData.get(PONUM))) {
 				log.info("Order Confirmation details found for {}", orderData);
 				orderStatus.setStatus("In Process");
-				ftp.quit();
 				return orderData.get(UNFIORDERNO);
 			}
 		}
