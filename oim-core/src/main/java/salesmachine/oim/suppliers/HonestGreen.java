@@ -11,6 +11,7 @@ import java.io.Reader;
 import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -472,6 +473,7 @@ public class HonestGreen extends Supplier implements HasTracking {
 				.createQuery("select p from salesmachine.hibernatedb.Product p where p.sku=:sku");
 
 		query.setString("sku", sku);
+		System.out.println(query.list());
 		Product p = (Product) query.uniqueResult();
 		return p.getQuantity();
 	}
@@ -572,6 +574,9 @@ public class HonestGreen extends Supplier implements HasTracking {
 		orderData.put(QTY_ORDERED, lineArray4[3]);
 		orderData.put(QTY_SHIPPED, lineArray4[4]);
 		orderData.put(SHIP_DATE, lineArray1[lineArray1.length - 1]);
+		orderData.put(PONUM, lineArray1[7]);
+		orderData.put(UNFIORDERNO, lineArray1[9]);
+
 		return orderData;
 	}
 
@@ -786,8 +791,6 @@ public class HonestGreen extends Supplier implements HasTracking {
 					"trackingMeta is expected to be a String value containing UNFI Order number.");
 		OrderStatus orderStatus = new OrderStatus();
 		orderStatus.setStatus("Sent to supplier.");
-		// getting item sku by which we can distinguish that this item can be
-		// track from hva or phi location.
 		Session session = SessionManager.currentSession();
 
 		OimOrderDetails detail = (OimOrderDetails) session
@@ -822,150 +825,168 @@ public class HonestGreen extends Supplier implements HasTracking {
 				for (Iterator<FtpDetails> itr = ftpDetailMap.values()
 						.iterator(); itr.hasNext();) {
 					FtpDetails ftpDetails = itr.next();
-					try {
 						FTPClient ftp = new FTPClient();
-						ftp.setRemoteHost(ftpDetails.getUrl());
-						ftp.setDetectTransferMode(true);
-						ftp.connect();
-						ftp.login(ftpDetails.getUserName(),
-								ftpDetails.getPassword());
-						ftp.setTimeout(60 * 1000 * 60 * 7);
-						FTPFile[] ftpFiles = ftp.dirDetails("confirmations");
-						Arrays.sort(ftpFiles, new Comparator<FTPFile>() {
-							public int compare(FTPFile f1, FTPFile f2) {
-								return f2.lastModified().compareTo(
-										f1.lastModified());
-							}
-						});
-						for (FTPFile ftpFile : ftpFiles) {
-							String confirmationFile = ftpFile.getName();
-							if (confirmationFile.equals("..")
-									|| confirmationFile.equals("."))
-								continue;
-
-							log.debug(
-									"Confirmation file path: {} Last Modified: {} Order Processing Time: {}",
-									ftpFile.getName(), ftpFile.lastModified(),
-									detail.getProcessingTm());
-							if (ftpFile.lastModified().before(
-									detail.getProcessingTm()))
-								break;
-							byte[] confirmationFileData = ftp
-									.get("confirmations/" + confirmationFile);
-							Map<Integer, String> orderDataMap = parseFileData(confirmationFileData);
-							Map<String, String> orderData = parseOrderConfirmation(orderDataMap);
-							log.info("Order Confirmation details found for {}",
-									orderData);
-							if (tempTrackingMeta.toString().equals(
-									orderData.get(PONUM))) {
-								log.debug("Order Invoice Data Found");
-								String unfiOrderNo = orderData.get(UNFIORDERNO);
-								String trackingFilePath = getTrackingFilePath(
-										ftpDetails.getAccountNumber(),
-										unfiOrderNo);
-								orderStatus.setStatus("In-Process");
-								String shippingFilePath = getShippingFilePath(
-										ftpDetails.getAccountNumber(),
-										unfiOrderNo);
-								byte[] shippingFileData = ftp
-										.get(shippingFilePath);
-								Map<Integer, String> shippingDataMap = parseFileData(shippingFileData);
-								Map<String, String> parseShippingConfirmation = parseShippingConfirmation(shippingDataMap);
-								try {
-									byte[] trackingFileData;
-									try {
-										trackingFileData = ftp
-												.get(trackingFilePath);
-									} catch (FTPException e) {
-										log.error(e.getMessage(), e);
-										trackingFileData = null;
-									}
-									if (trackingFileData != null) {
-										Unmarshaller unmarshaller = jaxbContext
-												.createUnmarshaller();
-										String s = new String(trackingFileData);
-										StringReader reader = new StringReader(
-												s);
-										log.info(s);
-										TrackingData orderTrackingResponse = (TrackingData) unmarshaller
-												.unmarshal(reader);
-										orderStatus.setStatus("Shipped");
-										salesmachine.oim.suppliers.modal.TrackingData trackingData = new salesmachine.oim.suppliers.modal.TrackingData();
-										if ("A".equals(orderTrackingResponse
-												.getPO().getShipVia())) {
-											trackingData.setCarrierCode("UPS");
-											trackingData.setCarrierName("UPS");
-											trackingData
-													.setShippingMethod("Ground");
-
-										} else {
-											trackingData
-													.setCarrierName(orderTrackingResponse
-															.getPO()
-															.getShipVia());
-										}
-										trackingData
-												.setShipperTrackingNumber(orderTrackingResponse
-														.getPOTracking()
-														.getTrackingNumber());
-
-										trackingData
-												.setQuantity(Integer
-														.parseInt(parseShippingConfirmation
-																.get(QTY_SHIPPED)));
-										String dateshipped = parseShippingConfirmation
-												.get(SHIP_DATE);
-										// FORMAT 08/11/2015 MM/DD/YYYY
-										int year = Integer.parseInt(dateshipped
-												.substring(6, 10));
-										int month = Integer
-												.parseInt(dateshipped
-														.substring(0, 2));
-										int dayOfMonth = Integer
-												.parseInt(dateshipped
-														.substring(3, 5));
-										trackingData
-												.setShipDate(new GregorianCalendar(
-														year, month, dayOfMonth));
-										orderStatus
-												.addTrackingData(trackingData);
-										log.info("Tracking details: {} {}",
-												orderTrackingResponse.getPO()
-														.getShipVia(),
-												orderTrackingResponse
-														.getPOTracking()
-														.getTrackingNumber());
-									} else {
-										log.info(
-												"Tracking Details not updated for - {}",
-												trackingMeta.toString());
-									}
-								} catch (JAXBException e) {
-									log.error(
-											"Tracking XML recieved from server could not be parsed.",
-											e);
-								}
-								break;
-							}
+						try {
+							ftp.setRemoteHost(ftpDetails.getUrl());
+							ftp.setDetectTransferMode(true);
+							ftp.connect();
+							ftp.login(ftpDetails.getUserName(),
+									ftpDetails.getPassword());
+							ftp.setTimeout(60 * 1000 * 60 * 7);
+							String unfiNumber = findUNFIFromConfirmations(ftp,
+									detail, tempTrackingMeta,orderStatus);
+							getTrackingInfo(ftpDetails, ftp, unfiNumber,
+									orderStatus, tempTrackingMeta, detail,trackingMeta);
+						} catch (IOException | FTPException | ParseException
+								| JAXBException e) {
+							log.error(e.getMessage(),e);
+							
 						}
-						ftp.quit();
-					} catch (Exception e) {
-						log.error(e.getMessage(), e);
+				}
+			}
+		}
+
+		return orderStatus;
+	}
+
+	private void getTrackingInfo(FtpDetails ftpDetails, FTPClient ftp,
+			String unfiOrderNo, OrderStatus orderStatus,
+			String tempTrackingMeta, OimOrderDetails detail, Object trackingMeta) throws FTPException,IOException,ParseException,JAXBException {
+		byte[] trackingFileData = null;
+		Map<String, String> parseShippingConfirmation = new HashMap<String, String>();
+		if (unfiOrderNo != null) {
+			String trackingFilePath = getTrackingFilePath(
+					ftpDetails.getAccountNumber(), unfiOrderNo);
+			orderStatus.setStatus("In-Process");
+			String shippingFilePath = getShippingFilePath(
+					ftpDetails.getAccountNumber(), unfiOrderNo);
+			byte[] shippingFileData = ftp.get(shippingFilePath);
+			Map<Integer, String> shippingDataMap = parseFileData(shippingFileData);
+			parseShippingConfirmation = parseShippingConfirmation(shippingDataMap);
+			try {
+				trackingFileData = ftp.get(trackingFilePath);
+			} catch (FTPException e) {
+				log.error(e.getMessage(), e);
+				trackingFileData = null;
+			}
+		} else {
+
+			FTPFile[] ftpFiles = ftp.dirDetails("shipping");
+			Arrays.sort(ftpFiles, new Comparator<FTPFile>() {
+				public int compare(FTPFile f1, FTPFile f2) {
+					return f2.lastModified().compareTo(f1.lastModified());
+				}
+			});
+			for (FTPFile ftpFile : ftpFiles) {
+				String shippingFileName = ftpFile.getName();
+				if (shippingFileName.equals("..")
+						|| shippingFileName.equals("."))
+					continue;
+
+				log.info(
+						"shipping file path: {} Last Modified: {} Order Processing Time: {}",
+						ftpFile.getName(), ftpFile.lastModified(),
+						detail.getProcessingTm());
+				if (ftpFile.lastModified().before(detail.getProcessingTm()))
+					break;
+				byte[] sippingFileData = ftp
+						.get("shipping/" + shippingFileName);
+				if (sippingFileData != null) {
+					Map<Integer, String> shippingDataMap = parseFileData(sippingFileData);
+					parseShippingConfirmation = parseShippingConfirmation(shippingDataMap);
+					log.info("Order shipping details found for {}",
+							parseShippingConfirmation);
+					if (tempTrackingMeta.toString().equals(
+							parseShippingConfirmation.get(PONUM))) {
+						unfiOrderNo = parseShippingConfirmation
+								.get(UNFIORDERNO);
+						Unmarshaller unmarshaller = jaxbContext
+								.createUnmarshaller();
+						if (unfiOrderNo != null) {
+							String trackingFilePath = getTrackingFilePath(
+									ftpDetails.getAccountNumber(), unfiOrderNo);
+							trackingFileData = ftp.get(trackingFilePath);
+						}
+						break;
 					}
 				}
 			}
 		}
-		if (orderStatus.getStatus() == null) {
-			throw new SupplierOrderTrackingException(
-					"Error in getting order status from Supplier while tracking Tracking Id- "
-							+ trackingMeta);
-		}
-		if (orderStatus.getTrackingData() == null)
-			throw new SupplierOrderTrackingException(
-					"Error in getting tracking details from Supplier while tracking Tracking Id- "
-							+ trackingMeta);
 
-		return orderStatus;
+		if (trackingFileData != null) {
+			Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
+			String s = new String(trackingFileData);
+			StringReader reader = new StringReader(s);
+			log.info(s);
+			TrackingData orderTrackingResponse = (TrackingData) unmarshaller
+					.unmarshal(reader);
+			orderStatus.setStatus("Shipped");
+			salesmachine.oim.suppliers.modal.TrackingData trackingData = new salesmachine.oim.suppliers.modal.TrackingData();
+			if ("A".equals(orderTrackingResponse.getPO().getShipVia())) {
+				trackingData.setCarrierCode("UPS");
+				trackingData.setCarrierName("UPS");
+				trackingData.setShippingMethod("Ground");
+
+			} else {
+				trackingData.setCarrierName(orderTrackingResponse.getPO()
+						.getShipVia());
+			}
+			trackingData.setShipperTrackingNumber(orderTrackingResponse
+					.getPOTracking().getTrackingNumber());
+
+			trackingData.setQuantity(Integer.parseInt(parseShippingConfirmation
+					.get(QTY_SHIPPED)));
+			String dateshipped = parseShippingConfirmation.get(SHIP_DATE);
+			// FORMAT 08/11/2015 MM/DD/YYYY
+			int year = Integer.parseInt(dateshipped.substring(6, 10));
+			int month = Integer.parseInt(dateshipped.substring(0, 2));
+			int dayOfMonth = Integer.parseInt(dateshipped.substring(3, 5));
+			trackingData.setShipDate(new GregorianCalendar(year, month,
+					dayOfMonth));
+			orderStatus.addTrackingData(trackingData);
+			log.info("Tracking details: {} {}", orderTrackingResponse.getPO()
+					.getShipVia(), orderTrackingResponse.getPOTracking()
+					.getTrackingNumber());
+		}
+		else {
+			log.info(
+					"Tracking Details not updated for - {}",
+					trackingMeta.toString());
+		}
+	}
+
+	private String findUNFIFromConfirmations(FTPClient ftp,
+			OimOrderDetails detail, String tempTrackingMeta, OrderStatus orderStatus)
+			throws IOException, FTPException, ParseException {
+		FTPFile[] ftpFiles = ftp.dirDetails("confirmations");
+		Arrays.sort(ftpFiles, new Comparator<FTPFile>() {
+			public int compare(FTPFile f1, FTPFile f2) {
+				return f2.lastModified().compareTo(f1.lastModified());
+			}
+		});
+		for (FTPFile ftpFile : ftpFiles) {
+			String confirmationFile = ftpFile.getName();
+			if (confirmationFile.equals("..") || confirmationFile.equals("."))
+				continue;
+
+			log.info(
+					"Confirmation file path: {} Last Modified: {} Order Processing Time: {}",
+					ftpFile.getName(), ftpFile.lastModified(),
+					detail.getProcessingTm());
+			if (ftpFile.lastModified().before(detail.getProcessingTm()))
+				break;
+			byte[] confirmationFileData = ftp.get("confirmations/"
+					+ confirmationFile);
+			Map<Integer, String> orderDataMap = parseFileData(confirmationFileData);
+			Map<String, String> orderData = parseOrderConfirmation(orderDataMap);
+			if (tempTrackingMeta.toString().equals(orderData.get(PONUM))) {
+				log.info("Order Confirmation details found for {}", orderData);
+				orderStatus.setStatus("In Process");
+				ftp.quit();
+				return orderData.get(UNFIORDERNO);
+			}
+		}
+		return null;
 	}
 
 	private Map<String, FtpDetails> getFtpdDetailsForHVAAndPHI(int vendorId,
