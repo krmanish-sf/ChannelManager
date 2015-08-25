@@ -54,7 +54,6 @@ public abstract class Supplier {
 	public static final Integer ERROR_ORDER_TRACKING = 4;
 
 	public Supplier() {
-		log.debug("Creating instance");
 		createStateNameMapping();
 		createCountryCodeMapping();
 	}

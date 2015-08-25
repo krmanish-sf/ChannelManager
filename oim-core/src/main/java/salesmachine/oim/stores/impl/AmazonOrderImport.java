@@ -8,7 +8,6 @@ import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.GregorianCalendar;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -224,18 +223,12 @@ public class AmazonOrderImport extends ChannelBase implements IOrderImport {
 				nextToken = response.getListOrdersResult().getNextToken();
 
 			do {
-				// We recommend logging the request id and timestamp of
-				// every call.
-				log.info(" Quota Remianing: {}", rhmd.getQuotaRemaining());
 				log.info("Response: {}", rhmd.toString());
 
 				log.info("Total order(s) fetched: {}", orderList.size());
 
-				boolean newOrder = false;
-
 				for (Order order2 : orderList) {
 					String amazonOrderId = order2.getAmazonOrderId();
-					OimOrders oimOrders = null;
 					if (orderAlreadyImported(amazonOrderId)) {
 						log.warn(
 								"Order#{} is already imported in the system, skipping it.",
@@ -243,10 +236,7 @@ public class AmazonOrderImport extends ChannelBase implements IOrderImport {
 						continue;
 					}
 					log.info("Order#{} fetched.", amazonOrderId);
-					if (oimOrders == null) {
-						oimOrders = new OimOrders();
-						newOrder = true;
-					}
+					OimOrders oimOrders = new OimOrders();
 					oimOrders.setStoreOrderId(amazonOrderId);
 					if (order2.getShippingAddress() != null) {
 						oimOrders.setBillingCity(order2.getShippingAddress()
@@ -357,67 +347,63 @@ public class AmazonOrderImport extends ChannelBase implements IOrderImport {
 							.listOrderItems(itemsRequest);
 					ListOrderItemsResult listOrderItemsResult = listOrderResponse
 							.getListOrderItemsResult();
-					if (newOrder) {
-						Set<OimOrderDetails> detailSet = new HashSet<OimOrderDetails>();
-						try {
-							Thread.currentThread().sleep(1000);
-						} catch (InterruptedException e) {
-							// TODO Auto-generated catch block
-							e.printStackTrace();
-						}
-						for (OrderItem orderItem : listOrderItemsResult
-								.getOrderItems()) {
-							OimOrderDetails details = new OimOrderDetails();
-							double itemPrice = Double.parseDouble(orderItem
-									.getItemPrice().getAmount());
-							// Amazon returns total price for this order item
-							// which
-							// needs to be divided by quantity before saving.
-							itemPrice = itemPrice
-									/ orderItem.getQuantityOrdered();
-							details.setCostPrice(itemPrice);
-							details.setInsertionTm(new Date());
-							details.setOimOrderStatuses(new OimOrderStatuses(
-									OimConstants.ORDER_STATUS_UNPROCESSED));
-							String sku = orderItem.getSellerSKU();
-							OimSuppliers oimSuppliers = null;
-							for (String prefix : supplierMap.keySet()) {
-								if (sku.startsWith(prefix)) {
-									oimSuppliers = supplierMap.get(prefix);
-									break;
-								}
-							}
-							if (oimSuppliers != null) {
-								details.setOimSuppliers(oimSuppliers);
-							}
-							details.setProductDesc(orderItem.getTitle());
-							details.setProductName(orderItem.getTitle());
-							details.setQuantity(orderItem.getQuantityOrdered());
-							details.setSalePrice(itemPrice);
-							details.setSku(orderItem.getSellerSKU());
-							details.setStoreOrderItemId(orderItem
-									.getOrderItemId());
-							details.setOimOrders(oimOrders);
-							m_dbSession.save(details);
-							detailSet.add(details);
-
-						}
-						oimOrders.setOimOrderDetailses(detailSet);
-						m_dbSession.saveOrUpdate(oimOrders);
-						numOrdersSaved++;
-
-						Message message = new Message();
-						message.setMessageID(BigInteger.valueOf(numOrdersSaved));
-
-						ackAmazonEnvelope.getMessage().add(message);
-						OrderAcknowledgement acknowledgement = new OrderAcknowledgement();
-						message.setOrderAcknowledgement(acknowledgement);
-						acknowledgement.setAmazonOrderID(amazonOrderId);
-						acknowledgement.setMerchantOrderID(oimOrders
-								.getOrderId().toString());
-						acknowledgement.setStatusCode(m_orderProcessingRule
-								.getConfirmedStatus());
+					Set<OimOrderDetails> detailSet = new HashSet<OimOrderDetails>();
+					try {
+						Thread.currentThread().sleep(1000);
+					} catch (InterruptedException e) {
+						log.warn(e.getMessage());
 					}
+					for (OrderItem orderItem : listOrderItemsResult
+							.getOrderItems()) {
+						OimOrderDetails details = new OimOrderDetails();
+						double itemPrice = Double.parseDouble(orderItem
+								.getItemPrice().getAmount());
+						// Amazon returns total price for this order item
+						// which needs to be divided by quantity before
+						// saving.
+						itemPrice = itemPrice / orderItem.getQuantityOrdered();
+						details.setCostPrice(itemPrice);
+						details.setInsertionTm(new Date());
+						details.setOimOrderStatuses(new OimOrderStatuses(
+								OimConstants.ORDER_STATUS_UNPROCESSED));
+						String sku = orderItem.getSellerSKU();
+						OimSuppliers oimSuppliers = null;
+						for (String prefix : supplierMap.keySet()) {
+							if (sku.startsWith(prefix)) {
+								oimSuppliers = supplierMap.get(prefix);
+								break;
+							}
+						}
+						if (oimSuppliers != null) {
+							details.setOimSuppliers(oimSuppliers);
+						}
+						details.setProductDesc(orderItem.getTitle());
+						details.setProductName(orderItem.getTitle());
+						details.setQuantity(orderItem.getQuantityOrdered());
+						details.setSalePrice(itemPrice);
+						details.setSku(orderItem.getSellerSKU());
+						details.setStoreOrderItemId(orderItem.getOrderItemId());
+						details.setOimOrders(oimOrders);
+						m_dbSession.save(details);
+						detailSet.add(details);
+
+					}
+					oimOrders.setOimOrderDetailses(detailSet);
+					m_dbSession.saveOrUpdate(oimOrders);
+					numOrdersSaved++;
+
+					Message message = new Message();
+					message.setMessageID(BigInteger.valueOf(numOrdersSaved));
+
+					ackAmazonEnvelope.getMessage().add(message);
+					OrderAcknowledgement acknowledgement = new OrderAcknowledgement();
+					message.setOrderAcknowledgement(acknowledgement);
+					acknowledgement.setAmazonOrderID(amazonOrderId);
+					acknowledgement.setMerchantOrderID(oimOrders.getOrderId()
+							.toString());
+					acknowledgement.setStatusCode(m_orderProcessingRule
+							.getConfirmedStatus());
+
 				}
 				lastPass = false;
 				if (nextToken != null) {
@@ -431,11 +417,11 @@ public class AmazonOrderImport extends ChannelBase implements IOrderImport {
 					orderList = listOrdersByNextTokenResponse
 							.getListOrdersByNextTokenResult().getOrders();
 					if (listOrdersByNextTokenResponse
-							.getListOrdersByNextTokenResult().isSetNextToken())
+							.getListOrdersByNextTokenResult().isSetNextToken()) {
 						nextToken = listOrdersByNextTokenResponse
 								.getListOrdersByNextTokenResult()
 								.getNextToken();
-					else {
+					} else {
 						nextToken = null;
 						lastPass = true;
 					}
@@ -532,14 +518,7 @@ public class AmazonOrderImport extends ChannelBase implements IOrderImport {
 				fulfillment.setMerchantFulfillmentID(BigInteger
 						.valueOf(oimOrderDetails.getOimOrders().getOrderId()
 								.longValue()));
-				XMLGregorianCalendar cal = MwsUtl.getDTF()
-						.newXMLGregorianCalendar(td.getShipDate());
-				GregorianCalendar shipDate = td.getShipDate();
-				cal.setYear(shipDate.get(GregorianCalendar.YEAR));
-				cal.setMonth(shipDate.get(GregorianCalendar.MONTH));
-				cal.setDay(shipDate.get(GregorianCalendar.DATE));
-				fulfillment.setFulfillmentDate(cal);
-
+				fulfillment.setFulfillmentDate(td.getShipDate());
 				Item i = new Item();
 				i.setAmazonOrderItemCode(oimOrderDetails.getStoreOrderItemId());
 				i.setQuantity(BigInteger.valueOf(td.getQuantity()));
@@ -579,7 +558,7 @@ public class AmazonOrderImport extends ChannelBase implements IOrderImport {
 			log.info("SubmitFeedRequest: {}", os.toString());
 			SubmitFeedResponse submitFeed = null;
 			try {
-				Thread.currentThread().sleep(1000);
+				Thread.sleep(60 * 1000);
 				submitFeed = service.submitFeed(submitFeedRequest);
 				log.info(submitFeed.toXML());
 			} catch (MarketplaceWebServiceException e) {

@@ -12,7 +12,6 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.GregorianCalendar;
 import java.util.Iterator;
 import java.util.List;
 
@@ -20,6 +19,7 @@ import javax.net.ssl.HttpsURLConnection;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
+import javax.xml.datatype.XMLGregorianCalendar;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -63,6 +63,8 @@ import salesmachine.oim.suppliers.modal.dh.XMLRESPONSE.ORDERSTATUS;
 import salesmachine.oim.suppliers.modal.dh.XMLRESPONSE.ORDERSTATUS.PACKAGE;
 import salesmachine.util.OimLogStream;
 import salesmachine.util.StringHandle;
+
+import com.amazonservices.mws.client.MwsUtl;
 
 /***
  * 
@@ -303,7 +305,9 @@ public class DandH extends Supplier implements HasTracking {
 					// detail.setSupplierOrderStatus("Sent to supplier.");
 					// Session session = SessionManager.currentSession();
 					// session.update(detail);
-					successfulOrders.put(detail.getDetailId(), new OrderDetailResponse(orderMessage, "Sent to supplier."));
+					successfulOrders.put(detail.getDetailId(),
+							new OrderDetailResponse(orderMessage,
+									"Sent to supplier."));
 
 					OimChannels oimChannels = order.getOimOrderBatches()
 							.getOimChannels();
@@ -595,10 +599,9 @@ public class DandH extends Supplier implements HasTracking {
 										.getTRACKNUM());
 								trackingData.setQuantity(perBoxQty);
 								String dateshipped = package1.getDateshipped();
-								GregorianCalendar cal;
-								if (StringHandle.isNullOrEmpty(dateshipped)) {
-									cal = new GregorianCalendar();
-								} else {
+								XMLGregorianCalendar cal = MwsUtl.getDTF()
+										.newXMLGregorianCalendar();
+								if (!StringHandle.isNullOrEmpty(dateshipped)) {
 									// Date Format: 04/16/15
 									int year = 2000 + Integer
 											.parseInt(dateshipped.substring(6,
@@ -608,8 +611,9 @@ public class DandH extends Supplier implements HasTracking {
 									int dayOfMonth = Integer
 											.parseInt(dateshipped.substring(3,
 													5));
-									cal = new GregorianCalendar(year, month,
-											dayOfMonth);
+									cal.setYear(year);
+									cal.setMonth(month);
+									cal.setDay(dayOfMonth);
 								}
 								trackingData.setShipDate(cal);
 								orderStatus.addTrackingData(trackingData);

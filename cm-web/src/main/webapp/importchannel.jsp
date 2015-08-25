@@ -414,7 +414,9 @@
 																textStatus,
 																jqXHR) {
 															tableimportchannel
-																	.fnDeleteRow(e[0]);
+																	.row(e[0])
+																	.remove()
+																	.draw();
 															$.gritter
 																	.add({
 																		title : "Delete Channel",

@@ -37,7 +37,7 @@ public class OrderTrackingTask extends TimerTask {
 								+ "left join fetch o.oimOrderDetailses d "
 								+ "where o.deleteTm is null and "
 								+ "d.deleteTm is null and d.supplierOrderStatus is not null and "
-								+ "d.oimOrderStatuses.statusId = '2'");
+								+ "d.oimOrderStatuses.statusId = '2' order by d.processingTm desc");
 
 				List<OimOrders> list = query.list();
 				log.info("Found {} orders to track...", list.size());

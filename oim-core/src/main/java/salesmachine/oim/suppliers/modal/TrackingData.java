@@ -2,6 +2,8 @@ package salesmachine.oim.suppliers.modal;
 
 import java.util.GregorianCalendar;
 
+import javax.xml.datatype.XMLGregorianCalendar;
+
 import salesmachine.util.StringHandle;
 
 public class TrackingData {
@@ -11,9 +13,9 @@ public class TrackingData {
 	private String shippingMethod;
 	private String trackingNumber;
 	private int quantity = 1;
-	private GregorianCalendar shipDate;
+	private XMLGregorianCalendar shipDate;
 
-	public GregorianCalendar getShipDate() {
+	public XMLGregorianCalendar getShipDate() {
 		return shipDate;
 	}
 
@@ -49,7 +51,7 @@ public class TrackingData {
 		this.trackingNumber = shipperTrackingNumber;
 	}
 
-	public void setShipDate(GregorianCalendar shipDate) {
+	public void setShipDate(XMLGregorianCalendar shipDate) {
 		this.shipDate = shipDate;
 	}
 

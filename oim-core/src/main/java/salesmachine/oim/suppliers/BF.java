@@ -9,7 +9,6 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.GregorianCalendar;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -20,6 +19,7 @@ import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
 import javax.xml.bind.Unmarshaller;
+import javax.xml.datatype.XMLGregorianCalendar;
 
 import org.apache.axis.utils.ByteArrayOutputStream;
 import org.hibernate.Session;
@@ -60,6 +60,8 @@ import salesmachine.oim.suppliers.modal.bf.Trackxml;
 import salesmachine.oim.suppliers.modal.bf.Trackxml.Tracking;
 import salesmachine.oim.suppliers.modal.bf.Trackxmlresp;
 import salesmachine.util.StringHandle;
+
+import com.amazonservices.mws.client.MwsUtl;
 
 public class BF extends Supplier implements HasTracking {
 	private static final Logger log = LoggerFactory.getLogger(BF.class);
@@ -635,8 +637,11 @@ public class BF extends Supplier implements HasTracking {
 									6));
 							int dayOfMonth = Integer.parseInt(shipDate
 									.substring(6, 8));
-							GregorianCalendar cal = new GregorianCalendar(year,
-									month, dayOfMonth);
+							XMLGregorianCalendar cal = MwsUtl.getDTF()
+									.newXMLGregorianCalendar();
+							cal.setYear(year);
+							cal.setMonth(month);
+							cal.setDay(dayOfMonth);
 							trackingData.setShipDate(cal);
 							orderStatus.addTrackingData(trackingData);
 						} else

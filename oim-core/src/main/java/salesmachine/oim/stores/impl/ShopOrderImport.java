@@ -101,7 +101,7 @@ public class ShopOrderImport extends ChannelBase implements IOrderImport {
 						.getShipperTrackingNumber());
 				statusDetail.setSHIPMETHOD(td.getCarrierCode() + " "
 						+ td.getShippingMethod());
-				statusDetail.setSHIPDATE(df.format(td.getShipDate().getTime()));
+				statusDetail.setSHIPDATE(df.format(td.getShipDate()));
 				statusDetail.setPURCHASEID(oimOrderDetails
 						.getStoreOrderItemId());
 				status.getADIOSORDERSTATUSDETAILOrINTERNALTEXTOrEXTERNALTEXT()

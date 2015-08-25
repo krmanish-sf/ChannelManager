@@ -441,8 +441,9 @@
 															+ channel.channelId,
 													success : function(data,
 															textStatus, jqXHR) {
-														tableimportchannel
-																.fnDeleteRow(e[0]);
+														tableimportchannel.row(
+																e[0]).remove()
+																.draw();
 														$.gritter
 																.add({
 																	title : "Delete Channel",

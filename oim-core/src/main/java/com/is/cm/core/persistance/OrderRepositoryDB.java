@@ -749,7 +749,7 @@ public class OrderRepositoryDB extends RepositoryBase implements
 			customer_search += " o.storeOrderId = '" + order_id + "' and ";
 		if (searchText.length() > 0) {
 			customer_search += "( o.storeOrderId = '" + searchText + "' or ";
-			customer_search += "d.sku = '" + sku + "' ) and ";
+			customer_search += "d.sku = '" + searchText + "' ) and ";
 		}
 		if (customer_phone.length() > 0)
 			customer_search += "(lower(o.deliveryPhone) like '%"
@@ -877,6 +877,7 @@ public class OrderRepositoryDB extends RepositoryBase implements
 			if (!StringHandle.isNullOrEmpty(storeOrderId)) {
 				sb.append(" and o.storeOrderId=:storeOrderId");
 			}
+			sb.append(" order by d.processingTm desc");
 			Query query = currentSession.createQuery(sb.toString());
 			query.setInteger("vid", getVendorId());
 			if (!StringHandle.isNullOrEmpty(storeOrderId)) {
