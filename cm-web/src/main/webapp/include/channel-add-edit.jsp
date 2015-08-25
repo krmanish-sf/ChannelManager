@@ -1,4 +1,5 @@
 <%@page import="salesmachine.util.ApplicationProperties"%>
+<%@page import="salesmachine.oim.api.OimConstants"%>
 <%@ page language="java" contentType="text/html; charset=UTF-8"
 	pageEncoding="UTF-8" session="false"%>
 <div class="modal fade" id="mychanneledit" tabindex="-1" role="dialog"
@@ -178,6 +179,29 @@
 														data-bind-channel="customMapper:oimChannelAccessDetailses[oimChannelAccessFields.fieldId=13].detailFieldValue" />
 												</div>
 											</div>
+											<div class="form-group store-info bc-store">
+												<label for="store-hash"
+													class="col-sm-5 control-label no-padding-right">Store Hash</label>
+												<div class="col-sm-7">
+													<input type="text" id="store-hash" name="store-hash"
+														class="width-70" placeholder="Store Hash"
+														required="required"
+														data-bind-channel="customMapper:oimChannelAccessDetailses[oimChannelAccessFields.fieldId=18].detailFieldValue"
+														readonly />
+												</div>
+											</div>
+											<div class="form-group store-info bc-store">
+												<label for="catalog-id"
+													class="col-sm-5 control-label no-padding-right">Auth
+													Token</label>
+												<div class="col-sm-7">
+													<input type="text" id="bc-auth-token" name="bc-auth-token"
+														class="width-70" placeholder="Auth Token"
+														required="required"
+														data-bind-channel="customMapper:oimChannelAccessDetailses[oimChannelAccessFields.fieldId=8].detailFieldValue"
+														readonly />
+												</div>
+											</div>
 											<div class="form-group store-info shopify-store">
 												<label for="catalog-id"
 													class="col-sm-5 control-label no-padding-right">Auth
@@ -190,9 +214,14 @@
 														readonly />
 												</div>
 											</div>
+											<div class="form-group store-info bc-store">
+												<div class="col-sm-5"></div>
+												<div class="col-sm-7"><a style="cursor: pointer;"
+															onclick="fetchBigcommerceAuthData();">Get Access Token</a></div>
+											</div>
 											<div class="form-group store-info shopify-store">
 												<div class="col-sm-5"></div>
-												<div class="col-sm-7"><a style=" cursor: pointer;"
+												<div class="col-sm-7"><a style="cursor: pointer;"
 															onclick="openUrl()">Get Access Token</a></div>
 											</div>
 											<div class="form-group center">

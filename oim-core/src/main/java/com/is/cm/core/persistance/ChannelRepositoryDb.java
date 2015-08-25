@@ -2,6 +2,7 @@ package com.is.cm.core.persistance;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -73,7 +74,18 @@ public class ChannelRepositoryDb extends RepositoryBase implements
 			updateChannelWithRequest(c, channelDetails);
 			dbSession.saveOrUpdate(c);
 			LOG.debug("Saved channel");
-			if (c.getOimSupportedChannels().getSupportedChannelId() == 8) {
+			if (c.getOimSupportedChannels().getSupportedChannelId() == 9) {
+				addChannelAccessDetail(dbSession, c,
+						OimConstants.CHANNEL_ACCESSDETAIL_CHANNEL_URL,
+						StringHandle.removeNull(getParameter("storeurl")));
+				addChannelAccessDetail(dbSession, c,
+						OimConstants.CHANNEL_ACCESSDETAIL_BIGCOMMERCE_STORE_ID,
+						StringHandle.removeNull(getParameter("store-hash")));
+				addChannelAccessDetail(dbSession, c,
+						OimConstants.CHANNEL_ACCESSDETAIL_AUTH_KEY,
+						StringHandle.removeNull(getParameter("bc-auth-token")));
+				LOG.debug("Saved Bigcommerce channel access details");
+			} else if (c.getOimSupportedChannels().getSupportedChannelId() == 8) {
 				addChannelAccessDetail(dbSession, c,
 						OimConstants.CHANNEL_ACCESSDETAIL_CHANNEL_URL,
 						StringHandle.removeNull(getParameter("storeurl")));
@@ -451,5 +463,25 @@ public class ChannelRepositoryDb extends RepositoryBase implements
 			supportedChannels.add(SupportedChannel.from(oimSupportedChannel));
 		}
 		return supportedChannels;
+	}
+
+	@Override
+	public Map<String, String> findBigcommerceAuthDetailsByUrl(String url) {
+		url.replaceFirst("https://", "");
+		url.replaceFirst("http://", "");
+		url.replaceFirst("www.", "");
+		Session session = SessionManager.currentSession();
+		Map<String, String> details = new HashMap<String, String>();
+		Query query = session
+				.createSQLQuery(
+						"select b.auth_token, b.context from bigcommerce_authentication b where b.shop_url = :url")
+				.setParameter("url", url);
+		List<Object[]> result = query.list();
+		if (result.size() == 1) {
+			Object[] values = result.get(0);
+			details.put("authToken", (String) values[0]);
+			details.put("context", (String) values[1]);
+		}
+		return details;
 	}
 }

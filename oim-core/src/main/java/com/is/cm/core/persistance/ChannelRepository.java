@@ -27,4 +27,6 @@ public interface ChannelRepository {
 	List<ChannelShippingMap> findShippingMapping(Integer entity);
 
 	List<SupportedChannel> findSupportedChannels();
+
+	Map<String, String> findBigcommerceAuthDetailsByUrl(String url);
 }

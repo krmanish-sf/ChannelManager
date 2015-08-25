@@ -224,4 +224,12 @@ public class ChannelEventHandler implements ChannelService {
 				.findSupportedChannels();
 		return new ReadCollectionEvent<SupportedChannel>(supportedChannels);
 	}
+
+	@Override
+	public ReadEvent<Map<String, String>> getBigcommerceAuthDetailsByUrl(
+			RequestReadEvent<String> requestReadEvent) {
+		Map<String, String> authDetails = channelRepository
+				.findBigcommerceAuthDetailsByUrl(requestReadEvent.getEntity());
+		return new ReadEvent<Map<String, String>>(0, authDetails);
+	}
 }

@@ -1,6 +1,7 @@
 package com.is.cm.rest.controller;
 
 import java.util.Collection;
+import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -9,6 +10,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -18,6 +20,7 @@ import com.is.cm.core.domain.Channel;
 import com.is.cm.core.domain.ChannelShippingMap;
 import com.is.cm.core.domain.SupportedChannel;
 import com.is.cm.core.event.ReadCollectionEvent;
+import com.is.cm.core.event.ReadEvent;
 import com.is.cm.core.event.RequestReadEvent;
 import com.is.cm.core.event.channels.AllChannelsEvent;
 import com.is.cm.core.event.channels.ChannelDetailsEvent;
@@ -81,5 +84,15 @@ public class ChannelQueriesController {
 		}
 		return new ResponseEntity<Collection<SupportedChannel>>(
 				details.getEntity(), HttpStatus.OK);
+	}
+
+	@RequestMapping(method = RequestMethod.POST, value = "/bc-app")
+	public ResponseEntity<Map<String, String>> getBigCommerceAuth(
+			@RequestBody String storeUrl) {
+		ReadEvent<Map<String, String>> authData = channelService
+				.getBigcommerceAuthDetailsByUrl(new RequestReadEvent<String>(
+						storeUrl));
+		return new ResponseEntity<Map<String, String>>(authData.getEntity(),
+				HttpStatus.OK);
 	}
 }
