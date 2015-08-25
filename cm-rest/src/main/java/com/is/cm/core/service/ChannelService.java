@@ -47,4 +47,6 @@ public interface ChannelService {
 
 	ReadCollectionEvent<SupportedChannel> getSupportedChannels(
 			RequestReadEvent<SupportedChannel> requestReadEvent);
+
+	ReadEvent<Map<String, String>> getBigcommerceAuthDetailsByUrl(RequestReadEvent<String> requestReadEvent);
 }

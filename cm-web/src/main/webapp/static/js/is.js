@@ -5,6 +5,29 @@ var previousPoint = null;
 function $$(selector, context) {
 	return jQuery(selector.replace(/(\[|\])/g, '\\$1'), context);
 };
+
+function fetchBigcommerceAuthData(){
+	var storeUrl = $("input[name=storeurl]").val();
+	console.log(storeUrl);
+	$(this).CRUD(
+			{
+				url : "aggregators/channels/bc-app",
+				method : "POST",
+				data : storeUrl,
+				success : function(data) {
+					var keySize = Object.keys(data).length;
+					if(keySize == 0){
+						$.gritter.add({
+							title : "Error",
+							text : "Verify Store Url, or app might not have been installed on your store"
+						});
+					}
+					$('#bc-auth-token').val(data.authToken);
+					$('#store-hash').val(data.context);
+				}
+			});
+}
+
 Date.prototype.getWeekRange = function() {
 	var curr_date = this;
 	var day = curr_date.getDay();
@@ -1030,6 +1053,14 @@ function drawSalesReportTable(data) {
 					$(this).hide();
 			});
 			break;
+		case "9":
+			$(".store-info").each(function(i, e) {
+				if ($(this).hasClass('bc-store'))
+					$(this).show();
+				else
+					$(this).hide();
+			});
+			break;			
 		case "7":
 			$(".store-info").each(function(i, e) {
 				if ($(this).hasClass('shop-store'))
