@@ -307,6 +307,7 @@ public class BigcommerceOrderImport extends ChannelBase {
 					}
 					oimOrders.setInsertionTm(new Date());
 					oimOrders.setOimOrderBatches(batch);
+					batch.getOimOrderses().add(oimOrders);
 					oimOrders.setOrderFetchTm(new Date());
 					String orderCreatedTm = removeNull(orderJsonObj.get("date_created"));
 					Date order_tm = null;
