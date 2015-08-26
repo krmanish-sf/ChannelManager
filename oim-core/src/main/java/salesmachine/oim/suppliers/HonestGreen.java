@@ -30,7 +30,6 @@ import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
 import javax.xml.bind.Unmarshaller;
-import javax.xml.datatype.XMLGregorianCalendar;
 
 import org.apache.axis.encoding.Base64;
 import org.apache.axis.utils.ByteArrayOutputStream;
@@ -181,12 +180,15 @@ public class HonestGreen extends Supplier implements HasTracking {
 							orderDetailMap.put(detail.getDetailId(), detail);
 						}
 						FtpDetails ftpDetails = new FtpDetails();
+						ftpDetails.setWhareHouseType(WhareHouseType.HVA);
 						for (Iterator<OimSupplierMethods> itr = ovs
 								.getOimSuppliers().getOimSupplierMethodses()
 								.iterator(); itr.hasNext();) {
 							OimSupplierMethods oimSupplierMethods = itr.next();
 							if (oimSupplierMethods.getOimSupplierMethodTypes()
 									.getMethodTypeId().intValue() == OimConstants.SUPPLIER_METHOD_TYPE_HG_HVA) {
+								ftpDetails
+										.setWhareHouseType(WhareHouseType.HVA);
 								log.info("found configured HVA Location ");
 								if (oimSupplierMethods.getVendor() != null
 										&& oimSupplierMethods.getVendor()
@@ -230,7 +232,7 @@ public class HonestGreen extends Supplier implements HasTracking {
 						String fileName = createOrderFile(order, ovs,
 								orderDetailMap, ftpDetails,
 								isOrderFromAmazonStore);
-						sendToFTP(fileName, ovs, ftpDetails);
+						sendToFTP(fileName, ftpDetails);
 						// if (emailNotification) {
 						sendEmail(emailContent, ftpDetails, fileName, "");
 						// }
@@ -240,6 +242,7 @@ public class HonestGreen extends Supplier implements HasTracking {
 						// create order file and send order to PHI configured
 						// ftp
 						FtpDetails ftpDetails = new FtpDetails();
+						ftpDetails.setWhareHouseType(WhareHouseType.PHI);
 						Map<Integer, OimOrderDetails> orderDetailMap = new HashMap<Integer, OimOrderDetails>();
 						for (Iterator<OimOrderDetails> itr = PhiMap.values()
 								.iterator(); itr.hasNext();) {
@@ -252,6 +255,8 @@ public class HonestGreen extends Supplier implements HasTracking {
 							OimSupplierMethods oimSupplierMethods = itr.next();
 							if (oimSupplierMethods.getOimSupplierMethodTypes()
 									.getMethodTypeId().intValue() == OimConstants.SUPPLIER_METHOD_TYPE_HG_PHI) {
+								ftpDetails
+										.setWhareHouseType(WhareHouseType.PHI);
 								log.info("found configured PHI Location ");
 								if (oimSupplierMethods.getVendor() != null
 										&& oimSupplierMethods.getVendor()
@@ -295,7 +300,7 @@ public class HonestGreen extends Supplier implements HasTracking {
 						String fileName = createOrderFile(order, ovs,
 								orderDetailMap, ftpDetails,
 								isOrderFromAmazonStore);
-						sendToFTP(fileName, ovs, ftpDetails);
+						sendToFTP(fileName, ftpDetails);
 						// if (emailNotification) {
 						sendEmail(emailContent, ftpDetails, fileName, "");
 						// }
@@ -331,6 +336,8 @@ public class HonestGreen extends Supplier implements HasTracking {
 								if (oimSupplierMethods
 										.getOimSupplierMethodTypes()
 										.getMethodTypeId().intValue() == OimConstants.SUPPLIER_METHOD_TYPE_HG_HVA) {
+									ftpDetails
+											.setWhareHouseType(WhareHouseType.HVA);
 									log.info("found configured HVA Location ");
 									if (oimSupplierMethods.getVendor() != null
 											&& oimSupplierMethods.getVendor()
@@ -374,7 +381,7 @@ public class HonestGreen extends Supplier implements HasTracking {
 							fileName = createOrderFile(order, ovs,
 									orderDetailHVAMap, ftpDetails,
 									isOrderFromAmazonStore);
-							sendToFTP(fileName, ovs, ftpDetails);
+							sendToFTP(fileName, ftpDetails);
 							// if (emailNotification) {
 							sendEmail(emailContent, ftpDetails, fileName, "");
 							// }
@@ -391,6 +398,8 @@ public class HonestGreen extends Supplier implements HasTracking {
 								if (oimSupplierMethods
 										.getOimSupplierMethodTypes()
 										.getMethodTypeId().intValue() == OimConstants.SUPPLIER_METHOD_TYPE_HG_PHI) {
+									ftpDetails
+											.setWhareHouseType(WhareHouseType.PHI);
 									log.info("found configured PHI Location ");
 									if (oimSupplierMethods.getVendor() != null
 											&& oimSupplierMethods.getVendor()
@@ -434,7 +443,7 @@ public class HonestGreen extends Supplier implements HasTracking {
 							fileName = createOrderFile(order, ovs,
 									orderDetailPHIMap, ftpDetails,
 									isOrderFromAmazonStore);
-							sendToFTP(fileName, ovs, ftpDetails);
+							sendToFTP(fileName, ftpDetails);
 
 							// if (emailNotification) {
 							sendEmail(emailContent, ftpDetails, fileName, "");
@@ -472,12 +481,14 @@ public class HonestGreen extends Supplier implements HasTracking {
 				"support@inventorysource.com", login, emailSubject, emailBody,
 				fileName);
 
-		// emailContent += "<br>Thanks, <br>Inventorysource support<br>";
-		// logStream.println("Sending email to user about order processing");
-		// log.debug("Sending email to user about order processing");
-		// EmailUtil.sendEmail(login, "support@inventorysource.com", "",
-		// "Order processing update results", emailContent, "text/html");
+	}
 
+	private void sendErrorReportEmail(String fileName, FtpDetails ftpDetails) {
+		EmailUtil.sendEmail("support@inventorysource.com",
+				"support@inventorysource.com", "",
+				"Failed to put order file to " + ftpDetails.getUrl(),
+				"Failed to put this order file " + fileName + " to "
+						+ ftpDetails.getUrl(), "text/html");
 	}
 
 	private int getPhiQuantity(String sku, Integer vendorId, int hvaQuantity) {
@@ -506,8 +517,8 @@ public class HonestGreen extends Supplier implements HasTracking {
 		return p.getQuantity();
 	}
 
-	private void sendToFTP(String fileName, OimVendorSuppliers ovs,
-			FtpDetails ftpDetails) throws SupplierCommunicationException,
+	private void sendToFTP(String fileName, FtpDetails ftpDetails)
+			throws SupplierCommunicationException,
 			SupplierConfigurationException {
 		FTPClient ftp = new FTPClient();
 		File file = new File(fileName);
@@ -519,6 +530,9 @@ public class HonestGreen extends Supplier implements HasTracking {
 			ftp.setType(FTPTransferType.ASCII);
 			ftp.setTimeout(60 * 1000 * 60 * 5);
 			ftp.put(fileName, file.getName());
+			if (ftp.get(file.getName()) == null) {
+				sendErrorReportEmail(fileName, ftpDetails);
+			}
 			ftp.quit();
 		} catch (IOException e) {
 			log.error(e.getMessage(), e);
@@ -585,25 +599,41 @@ public class HonestGreen extends Supplier implements HasTracking {
 	}
 
 	private Map<String, String> parseOrderConfirmation(
-			Map<Integer, String> orderConfirmationMap) {
-		String[] lineArray1 = orderConfirmationMap.get(1).split(",");
+			Map<Integer, String> orderConfirmationMap, String tempTrackingMeta) {
 		Map<String, String> orderData = new HashMap<String, String>();
-		orderData.put(PONUM, lineArray1[6]);
-		orderData.put(UNFIORDERNO, lineArray1[0]);
+		for (Iterator itr = orderConfirmationMap.keySet().iterator(); itr
+				.hasNext();) {
+			String line = (String) itr.next();
+			String[] lineArray = line.split(",");
+			if (lineArray[6].equals(tempTrackingMeta)) {
+				orderData.put(PONUM, lineArray[6]);
+				orderData.put(UNFIORDERNO, lineArray[0]);
+			}
+
+		}
+		// String[] lineArray1 = orderConfirmationMap.get(1).split(",");
+		//
+		// orderData.put(PONUM, lineArray1[6]);
+		// orderData.put(UNFIORDERNO, lineArray1[0]);
 		return orderData;
 	}
 
 	private Map<String, String> parseShippingConfirmation(
-			Map<Integer, String> shippingConfirmationMap) {
-		String[] lineArray4 = shippingConfirmationMap.get(4).split(",");
-		String[] lineArray1 = shippingConfirmationMap.get(1).split(",");
+			Map<Integer, String> shippingConfirmationMap, String sku) {
 		Map<String, String> orderData = new HashMap<String, String>();
-		orderData.put(QTY_ORDERED, lineArray4[3]);
-		orderData.put(QTY_SHIPPED, lineArray4[4]);
-		orderData.put(SHIP_DATE, lineArray1[lineArray1.length - 1]);
+		String[] lineArray1 = shippingConfirmationMap.get(1).split(",");
 		orderData.put(PONUM, lineArray1[7]);
 		orderData.put(UNFIORDERNO, lineArray1[9]);
-
+		orderData.put(SHIP_DATE, lineArray1[lineArray1.length - 1]);
+		for (Iterator itr = shippingConfirmationMap.keySet().iterator(); itr
+				.hasNext();) {
+			String line = (String) itr.next();
+			String[] lineArray = line.split(",");
+			if (lineArray[0] == sku) {
+				orderData.put(QTY_ORDERED, lineArray[3]);
+				orderData.put(QTY_SHIPPED, lineArray[4]);
+			}
+		}
 		return orderData;
 	}
 
@@ -665,9 +695,14 @@ public class HonestGreen extends Supplier implements HasTracking {
 			// fOut.write(BLANK_SPACE);
 			fOut.write(COMMA);
 			if (isAmazon)
-				poNum = order.getStoreOrderId();
+				poNum = ftpDetails.getWhareHouseType().getWharehouseType() == OimConstants.SUPPLIER_METHOD_TYPE_HG_HVA
+						.intValue() ? "H" + order.getStoreOrderId() : "P"
+						+ order.getStoreOrderId();
 			else
-				poNum = ovs.getVendors().getVendorId() + "-"
+				poNum = ftpDetails.getWhareHouseType().getWharehouseType() == OimConstants.SUPPLIER_METHOD_TYPE_HG_HVA
+						.intValue() ? "H" + ovs.getVendors().getVendorId()
+						+ "-" + order.getStoreOrderId() : "P"
+						+ ovs.getVendors().getVendorId() + "-"
 						+ order.getStoreOrderId();
 			fOut.write(poNum.getBytes(ASCII));
 			fOut.write(COMMA);
@@ -816,9 +851,11 @@ public class HonestGreen extends Supplier implements HasTracking {
 
 	@Override
 	public OrderStatus getOrderStatus(OimVendorSuppliers ovs,
-			Object trackingMeta) throws SupplierOrderTrackingException {
+			Object trackingMeta, OimOrderDetails oimOrderDetails)
+			throws SupplierOrderTrackingException {
 		clearCache();
 		log.info("Tracking request for PONUM: {}", trackingMeta);
+		orderSkuPrefixMap = setSkuPrefixForOrders(ovs);
 		if (!(trackingMeta instanceof String))
 			throw new IllegalArgumentException(
 					"trackingMeta is expected to be a String value containing UNFI Order number.");
@@ -826,22 +863,24 @@ public class HonestGreen extends Supplier implements HasTracking {
 		orderStatus.setStatus("Sent to supplier.");
 		Session session = SessionManager.currentSession();
 
-		OimOrderDetails detail = (OimOrderDetails) session
-				.createCriteria(OimOrderDetails.class)
-				.add(Restrictions.eq("supplierOrderNumber",
-						trackingMeta.toString())).uniqueResult();
+		List<OimOrders> oimOrderList = new ArrayList<OimOrders>();
+		oimOrderList.add(oimOrderDetails.getOimOrders());
+		boolean isAmazon = isOrderFromAmazonStore(oimOrderList);
+		String tempTrackingMeta = isAmazon ? new String((String) trackingMeta)
+				: ovs.getVendors().getVendorId() + "-"
+						+ new String((String) trackingMeta);
 
-		if (detail != null) {
-			List<OimOrders> oimOrderList = new ArrayList<OimOrders>();
-			oimOrderList.add(detail.getOimOrders());
-			boolean isAmazon = isOrderFromAmazonStore(oimOrderList);
-			String tempTrackingMeta = isAmazon ? new String(
-					(String) trackingMeta) : ovs.getVendors().getVendorId()
-					+ "-" + new String((String) trackingMeta);
+		Map<String, FtpDetails> ftpDetailMap = new HashMap<String, FtpDetails>();
 
-			Map<String, FtpDetails> ftpDetailMap = new HashMap<String, FtpDetails>();
-			isRestricted(detail.getSku(), detail, ovs.getVendors()
-					.getVendorId());
+		if (tempTrackingMeta.startsWith("H")) {
+			FtpDetails ftpDetails = getFtpDetails(ovs, false, true);
+			ftpDetailMap.put("FromHvaMap", ftpDetails);
+		} else if (tempTrackingMeta.startsWith("P")) {
+			FtpDetails ftpDetails = getFtpDetails(ovs, true, false);
+			ftpDetailMap.put("FromPhiMap", ftpDetails);
+		} else {
+			isRestricted(oimOrderDetails.getSku(), oimOrderDetails, ovs
+					.getVendors().getVendorId());
 			if (HvaMap.size() > 0) {
 				FtpDetails ftpDetails = getFtpDetails(ovs, false, true);
 				ftpDetailMap.put("FromHvaMap", ftpDetails);
@@ -853,29 +892,39 @@ public class HonestGreen extends Supplier implements HasTracking {
 						ovs.getVendors().getVendorId(), ovs);
 				ftpDetailMap.putAll(ftpDetailMaps);
 			}
+		}
 
-			if (ftpDetailMap != null && ftpDetailMap.size() > 0) {
-				for (Iterator<FtpDetails> itr = ftpDetailMap.values()
-						.iterator(); itr.hasNext();) {
-					FtpDetails ftpDetails = itr.next();
-					FTPClient ftp = new FTPClient();
-					try {
-						ftp.setRemoteHost(ftpDetails.getUrl());
-						ftp.setDetectTransferMode(true);
-						ftp.connect();
-						ftp.login(ftpDetails.getUserName(),
-								ftpDetails.getPassword());
-						ftp.setTimeout(60 * 1000 * 60 * 7);
-						String unfiNumber = findUNFIFromConfirmations(ftp,
-								detail, tempTrackingMeta, orderStatus);
-						getTrackingInfo(ftpDetails, ftp, unfiNumber,
-								orderStatus, tempTrackingMeta, detail,
-								trackingMeta);
-					} catch (IOException | FTPException | ParseException
-							| JAXBException e) {
-						log.error(e.getMessage(), e);
+		if (ftpDetailMap != null && ftpDetailMap.size() > 0) {
+			for (Iterator<FtpDetails> itr1 = ftpDetailMap.values().iterator(); itr1
+					.hasNext();) {
+				FtpDetails ftpDetails = itr1.next();
+				FTPClient ftp = new FTPClient();
+				try {
+					ftp.setRemoteHost(ftpDetails.getUrl());
+					ftp.setDetectTransferMode(true);
+					ftp.connect();
+					ftp.login(ftpDetails.getUserName(),
+							ftpDetails.getPassword());
+					ftp.setTimeout(60 * 1000 * 60 * 7);
+					String unfiNumber = findUNFIFromConfirmations(ftp,
+							oimOrderDetails, tempTrackingMeta, orderStatus);
+					// if(unfiNumber==null){
+					// EmailUtil.sendEmail("support@inventorysource.com",
+					// "support@inventorysource.com", "",
+					// "Order confirmation failed for OrderID"+tempTrackingMeta,
+					// "Order confirmation file for order id - "+tempTrackingMeta+" is not found at HG's ftp for account - "+ftpDetails.getAccountNumber(),
+					// "text/html");
+					// orderStatus.setStatus("Order Confirmation Failed");
+					//
+					// return orderStatus;
+					// }
 
-					}
+					getTrackingInfo(ftpDetails, ftp, unfiNumber, orderStatus,
+							tempTrackingMeta, oimOrderDetails, trackingMeta);
+				} catch (IOException | FTPException | ParseException
+						| JAXBException e) {
+					log.error(e.getMessage(), e);
+
 				}
 			}
 		}
@@ -888,6 +937,17 @@ public class HonestGreen extends Supplier implements HasTracking {
 			String tempTrackingMeta, OimOrderDetails detail, Object trackingMeta)
 			throws FTPException, IOException, ParseException, JAXBException {
 		byte[] trackingFileData = null;
+
+		String skuPrefix = null;
+		String sku = detail.getSku();
+		if (!orderSkuPrefixMap.isEmpty()) {
+			skuPrefix = orderSkuPrefixMap.values().toArray()[0].toString();
+		}
+		skuPrefix = StringHandle.removeNull(skuPrefix);
+		if (sku.startsWith(skuPrefix)) {
+			sku = sku.substring(skuPrefix.length());
+		}
+
 		Map<String, String> parseShippingConfirmation = new HashMap<String, String>();
 		if (unfiOrderNo != null) {
 			String trackingFilePath = getTrackingFilePath(
@@ -897,7 +957,8 @@ public class HonestGreen extends Supplier implements HasTracking {
 					ftpDetails.getAccountNumber(), unfiOrderNo);
 			byte[] shippingFileData = ftp.get(shippingFilePath);
 			Map<Integer, String> shippingDataMap = parseFileData(shippingFileData);
-			parseShippingConfirmation = parseShippingConfirmation(shippingDataMap);
+			parseShippingConfirmation = parseShippingConfirmation(
+					shippingDataMap, sku);
 			try {
 				trackingFileData = ftp.get(trackingFilePath);
 			} catch (FTPException e) {
@@ -930,7 +991,8 @@ public class HonestGreen extends Supplier implements HasTracking {
 						.get("shipping/" + shippingFileName);
 				if (sippingFileData != null) {
 					Map<Integer, String> shippingDataMap = parseFileData(sippingFileData);
-					parseShippingConfirmation = parseShippingConfirmation(shippingDataMap);
+					parseShippingConfirmation = parseShippingConfirmation(
+							shippingDataMap, sku);
 					log.info("Shipping {}", parseShippingConfirmation);
 					if (tempTrackingMeta.toString().equals(
 							parseShippingConfirmation.get(PONUM))) {
@@ -967,32 +1029,47 @@ public class HonestGreen extends Supplier implements HasTracking {
 			TrackingData orderTrackingResponse = (TrackingData) unmarshaller
 					.unmarshal(reader);
 			orderStatus.setStatus("Shipped");
-			salesmachine.oim.suppliers.modal.TrackingData trackingData = new salesmachine.oim.suppliers.modal.TrackingData();
-			if ("A".equals(orderTrackingResponse.getPO().getShipVia())) {
-				trackingData.setCarrierCode("UPS");
-				trackingData.setCarrierName("UPS");
-				trackingData.setShippingMethod("Ground");
-
+			int perBoxQty = 1;
+			if (detail.getQuantity() == orderTrackingResponse.getPOTracking()
+					.size()) {
+				perBoxQty = 1;
 			} else {
-				trackingData.setCarrierName(orderTrackingResponse.getPO()
-						.getShipVia());
+				if (detail.getQuantity()
+						% orderTrackingResponse.getPOTracking().size() == 0) {
+					perBoxQty = detail.getQuantity()
+							/ orderTrackingResponse.getPOTracking().size();
+				} else if (orderTrackingResponse.getPOTracking().size()
+						% detail.getQuantity() == 0)
+					perBoxQty = orderTrackingResponse.getPOTracking().size()
+							/ detail.getQuantity();
 			}
-			trackingData.setShipperTrackingNumber(orderTrackingResponse
-					.getPOTracking().getTrackingNumber());
+			for (POTracking poTracking : orderTrackingResponse.getPOTracking()) {
+				salesmachine.oim.suppliers.modal.TrackingData trackingData = new salesmachine.oim.suppliers.modal.TrackingData();
+				if ("A".equals(orderTrackingResponse.getPO().getShipVia())) {
+					trackingData.setCarrierCode("UPS");
+					trackingData.setCarrierName("UPS");
+					trackingData.setShippingMethod("Ground");
 
-			trackingData.setQuantity(Integer.parseInt(parseShippingConfirmation
-					.get(QTY_SHIPPED)));
-			String dateshipped = parseShippingConfirmation.get(SHIP_DATE);
-			// FORMAT 08/11/2015 MM/DD/YYYY
-			// int year = Integer.parseInt(dateshipped.substring(6, 10));
-			// int month = Integer.parseInt(dateshipped.substring(0, 2));
-			// int dayOfMonth = Integer.parseInt(dateshipped.substring(3, 5));
-			trackingData.setShipDate(orderTrackingResponse.getPO()
-					.getDeliveryDate());
-			orderStatus.addTrackingData(trackingData);
-			log.info("Tracking details: {} {}", orderTrackingResponse.getPO()
-					.getShipVia(), orderTrackingResponse.getPOTracking()
-					.getTrackingNumber());
+				} else {
+					trackingData.setCarrierName(orderTrackingResponse.getPO()
+							.getShipVia());
+				}
+				trackingData.setShipperTrackingNumber(poTracking
+						.getTrackingNumber());
+
+				trackingData.setQuantity(perBoxQty);
+				// String dateshipped =
+				// parseShippingConfirmation.get(SHIP_DATE);
+				// FORMAT 08/11/2015 MM/DD/YYYY
+				// int year = Integer.parseInt(dateshipped.substring(6, 10));
+				// int month = Integer.parseInt(dateshipped.substring(0, 2));
+				// int dayOfMonth = Integer.parseInt(dateshipped.substring(3,
+				// 5));
+				trackingData.setShipDate(orderTrackingResponse.getPO()
+						.getDeliveryDate());
+				orderStatus.addTrackingData(trackingData);
+			}
+			log.info("Tracking details: {}", orderStatus);
 		} else {
 			log.info("Tracking Details not updated for - {}",
 					trackingMeta.toString());
@@ -1029,8 +1106,9 @@ public class HonestGreen extends Supplier implements HasTracking {
 			byte[] confirmationFileData = ftp.get("confirmations/"
 					+ confirmationFile);
 			Map<Integer, String> orderDataMap = parseFileData(confirmationFileData);
-			Map<String, String> orderData = parseOrderConfirmation(orderDataMap);
-			if (tempTrackingMeta.equals(orderData.get(PONUM))) {
+			Map<String, String> orderData = parseOrderConfirmation(
+					orderDataMap, tempTrackingMeta);
+			if (tempTrackingMeta.toString().equals(orderData.get(PONUM))) {
 				log.info("Order Confirmation details found for {}", orderData);
 				orderStatus.setStatus("In Process");
 				PONUM_UNFI_MAP.put(orderData.get(PONUM),
@@ -1067,6 +1145,7 @@ public class HonestGreen extends Supplier implements HasTracking {
 				OimSupplierMethods oimSupplierMethods = itr.next();
 				if (oimSupplierMethods.getOimSupplierMethodTypes()
 						.getMethodTypeId().intValue() == OimConstants.SUPPLIER_METHOD_TYPE_HG_HVA) {
+					ftpDetails.setWhareHouseType(WhareHouseType.HVA);
 					if (oimSupplierMethods.getVendor() != null
 							&& oimSupplierMethods.getVendor().getVendorId()
 									.intValue() == ovs.getVendors()
@@ -1113,6 +1192,7 @@ public class HonestGreen extends Supplier implements HasTracking {
 				OimSupplierMethods oimSupplierMethods = itr.next();
 				if (oimSupplierMethods.getOimSupplierMethodTypes()
 						.getMethodTypeId().intValue() == OimConstants.SUPPLIER_METHOD_TYPE_HG_PHI) {
+					ftpDetails.setWhareHouseType(WhareHouseType.PHI);
 					if (oimSupplierMethods.getVendor() != null
 							&& oimSupplierMethods.getVendor().getVendorId()
 									.intValue() == ovs.getVendors()
@@ -1164,8 +1244,14 @@ public class HonestGreen extends Supplier implements HasTracking {
 			OimSupplierMethods oimSupplierMethods = itr.next();
 			int compareValue = isHVA ? OimConstants.SUPPLIER_METHOD_TYPE_HG_HVA
 					: OimConstants.SUPPLIER_METHOD_TYPE_HG_PHI;
+			if (isHVA)
+				ftpDetails.setWhareHouseType(WhareHouseType.HVA);
+			else
+				ftpDetails.setWhareHouseType(WhareHouseType.PHI);
 			if (oimSupplierMethods.getOimSupplierMethodTypes()
 					.getMethodTypeId().intValue() == compareValue) {
+				log.info("found configured Location for {}", isPHI ? "PHI"
+						: "HVA");
 				if (oimSupplierMethods.getVendor() != null
 						&& oimSupplierMethods.getVendor().getVendorId()
 								.intValue() == ovs.getVendors().getVendorId()
@@ -1241,9 +1327,9 @@ public class HonestGreen extends Supplier implements HasTracking {
 	public static void main(String[] args) {
 		FtpDetails ftpDetails = new FtpDetails();
 		ftpDetails.setUrl("ftp1.unfi.com");
-		ftpDetails.setAccountNumber("40968");
-		ftpDetails.setUserName("evox");
-		ftpDetails.setPassword("evoftp093!");
+		ftpDetails.setAccountNumber("70757");
+		ftpDetails.setUserName("70757");
+		ftpDetails.setPassword("vU!6akAB");
 		FTPClient ftp = new FTPClient();
 		Session session = SessionManager.currentSession();
 
@@ -1286,7 +1372,7 @@ public class HonestGreen extends Supplier implements HasTracking {
 			ftp.connect();
 			ftp.login(ftpDetails.getUserName(), ftpDetails.getPassword());
 			ftp.setTimeout(60 * 1000 * 60 * 7);
-			FTPFile[] ftpFiles = ftp.dirDetails("archive");
+			FTPFile[] ftpFiles = ftp.dirDetails("tracking");
 			Arrays.sort(ftpFiles, new Comparator<FTPFile>() {
 				public int compare(FTPFile f1, FTPFile f2) {
 					return f2.lastModified().compareTo(f1.lastModified());
@@ -1301,7 +1387,7 @@ public class HonestGreen extends Supplier implements HasTracking {
 							|| ftpFile.getName().endsWith("S.txt"))
 						continue;
 
-					byte[] bs = ftp.get("archive/" + ftpFile.getName());
+					byte[] bs = ftp.get("tracking/" + ftpFile.getName());
 					Unmarshaller unmarshaller = jaxbContext
 							.createUnmarshaller();
 					String s = new String(bs);
@@ -1322,35 +1408,53 @@ public class HonestGreen extends Supplier implements HasTracking {
 						continue;
 					log.info("PONUM# {}", purchaseOrder);
 					tx = session.beginTransaction();
-					salesmachine.oim.suppliers.modal.TrackingData trackingData = new salesmachine.oim.suppliers.modal.TrackingData();
-					if ("A".equals(orderTrackingResponse.getPO().getShipVia())) {
-						trackingData.setCarrierCode("UPS");
-						trackingData.setCarrierName("UPS");
-						trackingData.setShippingMethod("Ground");
-
+					int perBoxQty = 1;
+					if (detail.getQuantity() == orderTrackingResponse
+							.getPOTracking().size()) {
+						perBoxQty = 1;
 					} else {
-						trackingData.setCarrierName(orderTrackingResponse
-								.getPO().getShipVia());
+						if (detail.getQuantity()
+								% orderTrackingResponse.getPOTracking().size() == 0) {
+							perBoxQty = detail.getQuantity()
+									/ orderTrackingResponse.getPOTracking()
+											.size();
+						} else if (orderTrackingResponse.getPOTracking().size()
+								% detail.getQuantity() == 0)
+							perBoxQty = orderTrackingResponse.getPOTracking()
+									.size() / detail.getQuantity();
 					}
-					trackingData.setShipperTrackingNumber(orderTrackingResponse
-							.getPOTracking().getTrackingNumber());
+					for (POTracking poTracking : orderTrackingResponse
+							.getPOTracking()) {
+						salesmachine.oim.suppliers.modal.TrackingData trackingData = new salesmachine.oim.suppliers.modal.TrackingData();
+						if ("A".equals(orderTrackingResponse.getPO()
+								.getShipVia())) {
+							trackingData.setCarrierCode("UPS");
+							trackingData.setCarrierName("UPS");
+							trackingData.setShippingMethod("Ground");
 
-					trackingData.setQuantity(detail.getQuantity());
-					XMLGregorianCalendar dateshipped = orderTrackingResponse
-							.getPO().getDeliveryDate();
-					// FORMAT 08/11/2015 MM/DD/YYYY
-					log.info("Ship Date: {}", dateshipped);
-					// int year = Integer.parseInt(dateshipped.substring(6,
-					// 10));
-					// int month = Integer.parseInt(dateshipped.substring(0,
-					// 2));
-					// int dayOfMonth =
-					// Integer.parseInt(dateshipped.substring(3, 5));
-					trackingData.setShipDate(dateshipped);
-					orderStatus.addTrackingData(trackingData);
-					log.info("Tracking details: {} {}", orderTrackingResponse
-							.getPO().getShipVia(), orderTrackingResponse
-							.getPOTracking().getTrackingNumber());
+						} else {
+							trackingData.setCarrierName(orderTrackingResponse
+									.getPO().getShipVia());
+						}
+						trackingData.setShipperTrackingNumber(poTracking
+								.getTrackingNumber());
+
+						trackingData.setQuantity(perBoxQty);
+						// String dateshipped =
+						// parseShippingConfirmation.get(SHIP_DATE);
+						// FORMAT 08/11/2015 MM/DD/YYYY
+						// int year = Integer.parseInt(dateshipped.substring(6,
+						// 10));
+						// int month = Integer.parseInt(dateshipped.substring(0,
+						// 2));
+						// int dayOfMonth =
+						// Integer.parseInt(dateshipped.substring(3,
+						// 5));
+						trackingData.setShipDate(orderTrackingResponse.getPO()
+								.getDeliveryDate());
+						orderStatus.addTrackingData(trackingData);
+					}
+					log.info("Tracking details: {}", orderStatus);
 					detail.setSupplierOrderStatus(orderStatus.toString());
 					if (orderStatus.isShipped())
 						detail.setOimOrderStatuses(new OimOrderStatuses(
@@ -1445,6 +1549,21 @@ class FtpDetails {
 	String url;
 	String userName;
 	String password;
+	WhareHouseType whareHouseType;
+
+	public static enum WhareHouseType {
+		PHI(OimConstants.SUPPLIER_METHOD_TYPE_HG_PHI), HVA(
+				OimConstants.SUPPLIER_METHOD_TYPE_HG_HVA);
+		private final int wharehouseType;
+
+		WhareHouseType(int wharehouseType) {
+			this.wharehouseType = wharehouseType;
+		}
+
+		public int getWharehouseType() {
+			return wharehouseType;
+		}
+	}
 
 	public FtpDetails() {
 		super();
@@ -1488,6 +1607,14 @@ class FtpDetails {
 
 	public void setPassword(String password) {
 		this.password = password;
+	}
+
+	public WhareHouseType getWhareHouseType() {
+		return whareHouseType;
+	}
+
+	public void setWhareHouseType(WhareHouseType whareHouseType) {
+		this.whareHouseType = whareHouseType;
 	}
 
 }
