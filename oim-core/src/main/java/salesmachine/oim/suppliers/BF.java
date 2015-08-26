@@ -542,7 +542,7 @@ public class BF extends Supplier implements HasTracking {
 
 	@Override
 	public salesmachine.oim.suppliers.modal.OrderStatus getOrderStatus(
-			OimVendorSuppliers oimVendorSuppliers, Object trackingMeta)
+			OimVendorSuppliers oimVendorSuppliers, Object trackingMeta,OimOrderDetails oimOrderDetails)
 			throws SupplierOrderTrackingException {
 		salesmachine.oim.suppliers.modal.OrderStatus orderStatus = new salesmachine.oim.suppliers.modal.OrderStatus();
 		if (!(trackingMeta instanceof String))

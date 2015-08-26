@@ -1020,7 +1020,7 @@ public class OimSupplierOrderPlacement {
 			try {
 				s = new DandH();
 				orderStatus = s.getOrderStatus(oimVendorSuppliers,
-						oimOrderDetails.getSupplierOrderNumber());
+						oimOrderDetails.getSupplierOrderNumber(),oimOrderDetails);
 
 				oimOrderDetails.setSupplierOrderStatus(orderStatus.toString());
 				if (orderStatus.isShipped())
@@ -1039,7 +1039,7 @@ public class OimSupplierOrderPlacement {
 			try {
 				s = new BF();
 				orderStatus = s.getOrderStatus(oimVendorSuppliers,
-						oimOrderDetails.getSupplierOrderNumber());
+						oimOrderDetails.getSupplierOrderNumber(),oimOrderDetails);
 				oimOrderDetails.setSupplierOrderStatus(orderStatus.toString());
 				if (orderStatus.isShipped())
 					oimOrderDetails.setOimOrderStatuses(new OimOrderStatuses(
@@ -1057,7 +1057,7 @@ public class OimSupplierOrderPlacement {
 			try {
 				s = new HonestGreen();
 				orderStatus = s.getOrderStatus(oimVendorSuppliers,
-						oimOrderDetails.getSupplierOrderNumber());
+						oimOrderDetails.getSupplierOrderNumber(),oimOrderDetails);
 				oimOrderDetails.setSupplierOrderStatus(orderStatus.toString());
 				if (orderStatus.isShipped())
 					oimOrderDetails.setOimOrderStatuses(new OimOrderStatuses(

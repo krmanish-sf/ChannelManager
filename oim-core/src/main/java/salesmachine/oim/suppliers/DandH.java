@@ -514,7 +514,7 @@ public class DandH extends Supplier implements HasTracking {
 
 	@Override
 	public OrderStatus getOrderStatus(OimVendorSuppliers oimVendorSuppliers,
-			Object trackingMeta) throws SupplierOrderTrackingException {
+			Object trackingMeta, OimOrderDetails oimOrderDetails) throws SupplierOrderTrackingException {
 		if (!(trackingMeta instanceof String))
 			throw new IllegalArgumentException(
 					"trackingMeta is expected to be a String value containing D&H ORDERNUM.");
