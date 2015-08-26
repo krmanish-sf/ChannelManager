@@ -500,8 +500,9 @@ public class OrderRepositoryDB extends RepositoryBase implements
 					.append(" d.oimOrderStatuses.statusId = '0' and d.oimSuppliers.supplierId is not null and")
 					.append(" o.oimOrderBatches.oimChannels.vendors.vendorId=:vid ");
 			if (!StringHandle.isNullOrEmpty(storeOrderId)) {
-				sb.append(" and o.storeOrderId=:storeOrderId");
+				sb.append(" and o.storeOrderId like :storeOrderId");
 			}
+			sb.append(" order by d.insertionTm desc");
 			Query query = currentSession.createQuery(sb.toString());
 			query.setInteger("vid", getVendorId());
 			if (!StringHandle.isNullOrEmpty(storeOrderId)) {
@@ -585,8 +586,9 @@ public class OrderRepositoryDB extends RepositoryBase implements
 					.append(" d.oimOrderStatuses.statusId = '0' and")
 					.append(" o.oimOrderBatches.oimChannels.vendors.vendorId=:vid");
 			if (!StringHandle.isNullOrEmpty(storeOrderId)) {
-				sb.append(" and o.storeOrderId=:storeOrderId");
+				sb.append(" and o.storeOrderId like :storeOrderId");
 			}
+			sb.append(" order by d.insertionTm desc");
 			Query query = currentSession.createQuery(sb.toString());
 			query.setInteger("vid", getVendorId());
 			if (!StringHandle.isNullOrEmpty(storeOrderId)) {
@@ -748,7 +750,8 @@ public class OrderRepositoryDB extends RepositoryBase implements
 		if (order_id.length() > 0)
 			customer_search += " o.storeOrderId = '" + order_id + "' and ";
 		if (searchText.length() > 0) {
-			customer_search += "( o.storeOrderId = '" + searchText + "' or ";
+			customer_search += "( o.storeOrderId like '" + searchText
+					+ "%' or ";
 			customer_search += "d.sku = '" + searchText + "' ) and ";
 		}
 		if (customer_phone.length() > 0)
@@ -875,9 +878,9 @@ public class OrderRepositoryDB extends RepositoryBase implements
 					.append(" and d.oimOrderStatuses.statusId = '2'")
 					.append(" and o.oimOrderBatches.oimChannels.vendors.vendorId=:vid");
 			if (!StringHandle.isNullOrEmpty(storeOrderId)) {
-				sb.append(" and o.storeOrderId=:storeOrderId");
+				sb.append(" and o.storeOrderId like :storeOrderId");
 			}
-			sb.append(" order by d.processingTm desc");
+			sb.append(" order by o.orderTm desc");
 			Query query = currentSession.createQuery(sb.toString());
 			query.setInteger("vid", getVendorId());
 			if (!StringHandle.isNullOrEmpty(storeOrderId)) {

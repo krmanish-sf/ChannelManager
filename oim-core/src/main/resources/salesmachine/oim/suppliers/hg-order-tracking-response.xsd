@@ -22,10 +22,11 @@
 						</xs:sequence>
 					</xs:complexType>
 				</xs:element>
-				<xs:element name="POTracking">
+				<xs:element name="POTracking" maxOccurs="unbounded"
+					minOccurs="0">
 					<xs:complexType>
 						<xs:sequence>
-							<xs:element type="xs:string" name="InvoiceNumber" />
+							<xs:element type="xs:int" name="InvoiceNumber" />
 							<xs:element type="xs:string" name="TrackingNumber" />
 						</xs:sequence>
 					</xs:complexType>

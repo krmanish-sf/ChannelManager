@@ -34,7 +34,7 @@
 											class="icon-sort-by-order-alt icon-2x blue visible-xs"></i><span
 											class="hidden-xs visible-sm">Order Id</span></th>
 											<th>Order Status</th>
-													<th class="hidden-xs">Date</th>
+													<th class="hidden-xs">Order Date</th>
 													<th><i class="icon-home icon-2x blue visible-xs"></i><span
 											class="hidden-xs">Customer</span></th>
 													<th class="hidden-sm hidden-xs">Channel
@@ -43,18 +43,6 @@
 													<th class="sorting"><i
 											class="icon-usd icon-2x blue visible-xs"></i><span
 											class="hidden-xs">Order Total</span></th>
-								
-								
-								
-								
-								
-								
-								
-								
-								
-								
-								
-								
 								
 								</thead>
 									</table>
