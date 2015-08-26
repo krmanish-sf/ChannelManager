@@ -601,13 +601,17 @@ public class HonestGreen extends Supplier implements HasTracking {
 	private Map<String, String> parseOrderConfirmation(
 			Map<Integer, String> orderConfirmationMap, String tempTrackingMeta) {
 		Map<String, String> orderData = new HashMap<String, String>();
-		for (Iterator itr = orderConfirmationMap.keySet().iterator(); itr
+		for (Iterator itr = orderConfirmationMap.values().iterator(); itr
 				.hasNext();) {
 			String line = (String) itr.next();
 			String[] lineArray = line.split(",");
-			if (lineArray[6].equals(tempTrackingMeta)) {
-				orderData.put(PONUM, lineArray[6]);
-				orderData.put(UNFIORDERNO, lineArray[0]);
+			if (lineArray.length == 9) {
+				if (lineArray[6].equals(tempTrackingMeta)) {
+					orderData.put(PONUM, lineArray[6]);
+					orderData.put(UNFIORDERNO, lineArray[0]);
+
+				}
+				PONUM_UNFI_MAP.put(lineArray[6], lineArray[0]);
 			}
 
 		}
@@ -624,12 +628,13 @@ public class HonestGreen extends Supplier implements HasTracking {
 		String[] lineArray1 = shippingConfirmationMap.get(1).split(",");
 		orderData.put(PONUM, lineArray1[7]);
 		orderData.put(UNFIORDERNO, lineArray1[9]);
+		PONUM_UNFI_MAP.put(lineArray1[7], lineArray1[9]);
 		orderData.put(SHIP_DATE, lineArray1[lineArray1.length - 1]);
-		for (Iterator itr = shippingConfirmationMap.keySet().iterator(); itr
+		for (Iterator itr = shippingConfirmationMap.values().iterator(); itr
 				.hasNext();) {
 			String line = (String) itr.next();
 			String[] lineArray = line.split(",");
-			if (lineArray[0] == sku) {
+			if (lineArray.length > 4 && lineArray[0] == sku) {
 				orderData.put(QTY_ORDERED, lineArray[3]);
 				orderData.put(QTY_SHIPPED, lineArray[4]);
 			}
@@ -731,8 +736,8 @@ public class HonestGreen extends Supplier implements HasTracking {
 			fOut.write(StringHandle.removeNull(order.getDeliveryZip())
 					.toUpperCase().getBytes(ASCII));
 			fOut.write(COMMA);
-			fOut.write(StringHandle.removeNull(order.getDeliveryPhone())
-					.toUpperCase().getBytes(ASCII));
+//			fOut.write(StringHandle.removeNull(order.getDeliveryPhone())
+//					.toUpperCase().getBytes(ASCII));
 			fOut.write(COMMA);
 			fOut.write('A');
 			fOut.write(COMMA);
@@ -1001,7 +1006,7 @@ public class HonestGreen extends Supplier implements HasTracking {
 
 						if (unfiOrderNo != null) {
 							orderStatus.setStatus("In-Process");
-							PONUM_UNFI_MAP.put(tempTrackingMeta, unfiOrderNo);
+
 							String trackingFilePath = getTrackingFilePath(
 									ftpDetails.getAccountNumber(), unfiOrderNo);
 							try {
@@ -1111,8 +1116,7 @@ public class HonestGreen extends Supplier implements HasTracking {
 			if (tempTrackingMeta.toString().equals(orderData.get(PONUM))) {
 				log.info("Order Confirmation details found for {}", orderData);
 				orderStatus.setStatus("In Process");
-				PONUM_UNFI_MAP.put(orderData.get(PONUM),
-						orderData.get(UNFIORDERNO));
+
 				return orderData.get(UNFIORDERNO);
 			}
 		}
@@ -1328,6 +1332,11 @@ public class HonestGreen extends Supplier implements HasTracking {
 
 	public static void main(String[] args) {
 		FtpDetails ftpDetails = new FtpDetails();
+		// ftpDetails.setUrl("ftp1.unfi.com");
+		// ftpDetails.setAccountNumber("40968");
+		// ftpDetails.setUserName("evox");
+		// ftpDetails.setPassword("evoftp093!");
+
 		ftpDetails.setUrl("ftp1.unfi.com");
 		ftpDetails.setAccountNumber("70757");
 		ftpDetails.setUserName("70757");
@@ -1388,6 +1397,8 @@ public class HonestGreen extends Supplier implements HasTracking {
 							|| ftpFile.getName().equals("..")
 							|| ftpFile.getName().endsWith("S.txt"))
 						continue;
+					
+					
 
 					byte[] bs = ftp.get("tracking/" + ftpFile.getName());
 					Unmarshaller unmarshaller = jaxbContext
