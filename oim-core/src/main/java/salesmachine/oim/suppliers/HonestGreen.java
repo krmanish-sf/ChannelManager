@@ -1296,8 +1296,9 @@ public class HonestGreen extends Supplier implements HasTracking {
 		HVAPhiMap = new HashMap<String, OimOrderDetails>();
 	}
 
-	private static String sellerId, mwsAuthToken;
-	private static List<String> marketPlaceIdList = null;
+	private static String sellerId = "A2V8R85K60KD3B",
+			mwsAuthToken = "amzn.mws.c8a76813-c733-c66e-5215-2ef9bcecff4b";
+	private static List<String> marketPlaceIdList = new ArrayList<String>();
 	private static final MarketplaceWebService service;
 	private static JAXBContext jaxbContext2;
 	static {
@@ -1319,6 +1320,7 @@ public class HonestGreen extends Supplier implements HasTracking {
 			jaxbContext2 = JAXBContext.newInstance(OrderFulfillment.class,
 					SubmitFeedRequest.class, OrderAcknowledgement.class,
 					AmazonEnvelope.class);
+			marketPlaceIdList.add("ATVPDKIKX0DER");
 		} catch (JAXBException e) {
 			log.error(e.getMessage(), e);
 		}
