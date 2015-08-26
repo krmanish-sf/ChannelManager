@@ -2,11 +2,14 @@ package salesmachine.oim.suppliers;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.Reader;
 import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
@@ -119,6 +122,18 @@ public class HonestGreen extends Supplier implements HasTracking {
 			jaxbContext = JAXBContext.newInstance(TrackingData.class);
 		} catch (JAXBException e) {
 			log.error(e.getMessage(), e);
+		}
+	}
+	
+	static {
+		try {
+			FileInputStream fis = new FileInputStream("orders.ser");
+			ObjectInputStream ois = new ObjectInputStream(fis);
+			PONUM_UNFI_MAP.putAll((Hashtable<String, String>) ois.readObject());
+			ois.close();
+		} catch (Exception e) {
+			e.printStackTrace();
+			log.warn("orders.ser file is blank");
 		}
 	}
 
@@ -606,12 +621,13 @@ public class HonestGreen extends Supplier implements HasTracking {
 			String line = (String) itr.next();
 			String[] lineArray = line.split(",");
 			if (lineArray.length == 9) {
+				PONUM_UNFI_MAP.put(lineArray[6], lineArray[0]);
 				if (lineArray[6].equals(tempTrackingMeta)) {
 					orderData.put(PONUM, lineArray[6]);
 					orderData.put(UNFIORDERNO, lineArray[0]);
-
+					break;
 				}
-				PONUM_UNFI_MAP.put(lineArray[6], lineArray[0]);
+				
 			}
 
 		}
@@ -932,6 +948,14 @@ public class HonestGreen extends Supplier implements HasTracking {
 
 				}
 			}
+		}
+		try {
+			FileOutputStream fs = new FileOutputStream("orders.ser");
+			ObjectOutputStream os = new ObjectOutputStream(fs);
+			os.writeObject(PONUM_UNFI_MAP);
+			os.close();
+		} catch (Exception e) {
+			log.warn("error occure while serializing PONUM_UNFI_MAP to orders.ser");
 		}
 
 		return orderStatus;

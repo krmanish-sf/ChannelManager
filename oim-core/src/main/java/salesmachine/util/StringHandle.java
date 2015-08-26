@@ -125,4 +125,10 @@ public class StringHandle {
 	public static boolean isNullOrEmpty(final String str) {
 		return str == null || str.isEmpty();
 	}
+	
+	public static String removeComma(String str){
+		str = removeNull(str);
+		str = str.replaceAll(",", " ");
+		return str;
+	}
 }
