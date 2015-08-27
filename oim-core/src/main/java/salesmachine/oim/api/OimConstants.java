@@ -99,4 +99,9 @@ public class OimConstants {
 	public static final Integer OIM_FIELD_ORDER_COMMENTS = new Integer(32);
 	public static final Integer OIM_FIELD_UPC = new Integer(33);
 	public static final Integer OIM_FIELD_ORDER_PROCESS_DATE = new Integer(34);
+	
+	public static final String OIM_SUPPLER_ORDER_STATUS_IN_PROCESS = "In-Process";
+	public static final String OIM_SUPPLER_ORDER_STATUS_SENT_TO_SUPPLIER = "Sent to supplier.";
+	public static final String OIM_SUPPLER_ORDER_STATUS_SHIPPED = "Shipped";
+	
 }

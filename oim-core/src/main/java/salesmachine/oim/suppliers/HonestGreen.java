@@ -205,7 +205,6 @@ public class HonestGreen extends Supplier implements HasTracking {
 									.getMethodTypeId().intValue() == OimConstants.SUPPLIER_METHOD_TYPE_HG_HVA) {
 								ftpDetails
 										.setWhareHouseType(WhareHouseType.HVA);
-								log.info("found configured HVA Location ");
 								if (oimSupplierMethods.getVendor() != null
 										&& oimSupplierMethods.getVendor()
 												.getVendorId().intValue() == ovs
@@ -273,7 +272,6 @@ public class HonestGreen extends Supplier implements HasTracking {
 									.getMethodTypeId().intValue() == OimConstants.SUPPLIER_METHOD_TYPE_HG_PHI) {
 								ftpDetails
 										.setWhareHouseType(WhareHouseType.PHI);
-								log.info("found configured PHI Location ");
 								if (oimSupplierMethods.getVendor() != null
 										&& oimSupplierMethods.getVendor()
 												.getVendorId().intValue() == ovs
@@ -735,24 +733,29 @@ public class HonestGreen extends Supplier implements HasTracking {
 			fOut.write(COMMA);
 			// fOut.write(BLANK_SPACE);
 			fOut.write(NEW_LINE);
-			fOut.write(StringHandle.removeNull(order.getDeliveryName())
-					.toUpperCase().getBytes(ASCII));
+			fOut.write(StringHandle.removeComma(
+					StringHandle.removeNull(order.getDeliveryName())
+							.toUpperCase()).getBytes(ASCII));
 			fOut.write(COMMA);
-			fOut.write(StringHandle
-					.removeNull(order.getDeliveryStreetAddress()).toUpperCase()
-					.getBytes(ASCII));
+			fOut.write(StringHandle.removeComma(
+					StringHandle.removeNull(order.getDeliveryStreetAddress())
+							.toUpperCase()).getBytes(ASCII));
 			fOut.write(COMMA);
-			fOut.write(StringHandle.removeNull(order.getDeliverySuburb())
-					.toUpperCase().getBytes(ASCII));
+			fOut.write(StringHandle.removeComma(
+					StringHandle.removeNull(order.getDeliverySuburb())
+							.toUpperCase()).getBytes(ASCII));
 			fOut.write(COMMA);
-			fOut.write(StringHandle.removeNull(order.getDeliveryCity())
-					.toUpperCase().getBytes(ASCII));
+			fOut.write(StringHandle.removeComma(
+					StringHandle.removeNull(order.getDeliveryCity())
+							.toUpperCase()).getBytes(ASCII));
 			fOut.write(COMMA);
-			fOut.write(StringHandle.removeNull(order.getDeliveryStateCode())
-					.toUpperCase().getBytes(ASCII));
+			fOut.write(StringHandle.removeComma(
+					StringHandle.removeNull(order.getDeliveryStateCode())
+							.toUpperCase()).getBytes(ASCII));
 			fOut.write(COMMA);
-			fOut.write(StringHandle.removeNull(order.getDeliveryZip())
-					.toUpperCase().getBytes(ASCII));
+			fOut.write(StringHandle.removeComma(
+					StringHandle.removeNull(order.getDeliveryZip())
+							.toUpperCase()).getBytes(ASCII));
 			fOut.write(COMMA);
 			// fOut.write(StringHandle.removeNull(order.getDeliveryPhone())
 			// .toUpperCase().getBytes(ASCII));
@@ -795,8 +798,11 @@ public class HonestGreen extends Supplier implements HasTracking {
 				// od.setSupplierOrderStatus("Sent to supplier.");
 				// Session session = SessionManager.currentSession();
 				// session.update(od);
-				successfulOrders.put(od.getDetailId(), new OrderDetailResponse(
-						poNum, "Sent to supplier."));
+				successfulOrders
+						.put(od.getDetailId(),
+								new OrderDetailResponse(
+										poNum,
+										OimConstants.OIM_SUPPLER_ORDER_STATUS_SENT_TO_SUPPLIER));
 				OimChannels oimChannels = order.getOimOrderBatches()
 						.getOimChannels();
 				Integer channelId = oimChannels.getChannelId();
@@ -884,7 +890,7 @@ public class HonestGreen extends Supplier implements HasTracking {
 			throw new IllegalArgumentException(
 					"trackingMeta is expected to be a String value containing UNFI Order number.");
 		OrderStatus orderStatus = new OrderStatus();
-		orderStatus.setStatus("Sent to supplier.");
+		orderStatus.setStatus(oimOrderDetails.getSupplierOrderStatus());
 		Session session = SessionManager.currentSession();
 
 		List<OimOrders> oimOrderList = new ArrayList<OimOrders>();
@@ -987,7 +993,8 @@ public class HonestGreen extends Supplier implements HasTracking {
 		if (unfiOrderNo != null) {
 			String trackingFilePath = getTrackingFilePath(
 					ftpDetails.getAccountNumber(), unfiOrderNo);
-			orderStatus.setStatus("In-Process");
+			orderStatus
+					.setStatus(OimConstants.OIM_SUPPLER_ORDER_STATUS_IN_PROCESS);
 			String shippingFilePath = getShippingFilePath(
 					ftpDetails.getAccountNumber(), unfiOrderNo);
 			byte[] shippingFileData = ftp.get(shippingFilePath);
@@ -1035,7 +1042,8 @@ public class HonestGreen extends Supplier implements HasTracking {
 								.get(UNFIORDERNO);
 
 						if (unfiOrderNo != null) {
-							orderStatus.setStatus("In-Process");
+							orderStatus
+									.setStatus(OimConstants.OIM_SUPPLER_ORDER_STATUS_IN_PROCESS);
 
 							String trackingFilePath = getTrackingFilePath(
 									ftpDetails.getAccountNumber(), unfiOrderNo);
@@ -1119,7 +1127,8 @@ public class HonestGreen extends Supplier implements HasTracking {
 		if (PONUM_UNFI_MAP.containsKey(tempTrackingMeta)) {
 			log.info("UNFI Order Id found in MAP {}",
 					PONUM_UNFI_MAP.get(tempTrackingMeta));
-			orderStatus.setStatus("In-Process");
+			orderStatus
+					.setStatus(OimConstants.OIM_SUPPLER_ORDER_STATUS_IN_PROCESS);
 			return PONUM_UNFI_MAP.get(tempTrackingMeta);
 		}
 		FTPFile[] ftpFiles = ftp.dirDetails("confirmations");
@@ -1146,7 +1155,8 @@ public class HonestGreen extends Supplier implements HasTracking {
 					orderDataMap, tempTrackingMeta);
 			if (tempTrackingMeta.toString().equals(orderData.get(PONUM))) {
 				log.info("Order Confirmation details found for {}", orderData);
-				orderStatus.setStatus("In-Process");
+				orderStatus
+						.setStatus(OimConstants.OIM_SUPPLER_ORDER_STATUS_IN_PROCESS);
 
 				return orderData.get(UNFIORDERNO);
 			}
@@ -1481,7 +1491,8 @@ public class HonestGreen extends Supplier implements HasTracking {
 						tx = session.beginTransaction();
 						String unfiOrderNo = PONUM_UNFI_MAP.get(purchaseOrder);
 						OrderStatus orderStatus = new OrderStatus();
-						orderStatus.setStatus("In-Process");
+						orderStatus
+								.setStatus(OimConstants.OIM_SUPPLER_ORDER_STATUS_IN_PROCESS);
 						totalValidPO++;
 						try {
 							byte[] bs;

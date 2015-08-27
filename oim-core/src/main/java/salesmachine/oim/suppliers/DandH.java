@@ -519,6 +519,7 @@ public class DandH extends Supplier implements HasTracking {
 			throw new IllegalArgumentException(
 					"trackingMeta is expected to be a String value containing D&H ORDERNUM.");
 		OrderStatus orderStatus = new OrderStatus();
+		orderStatus.setStatus(oimOrderDetails.getSupplierOrderStatus());
 		Session session = SessionManager.currentSession();
 		r = (Reps) session
 				.createCriteria(Reps.class)

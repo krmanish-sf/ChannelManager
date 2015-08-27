@@ -128,7 +128,7 @@ public class StringHandle {
 	
 	public static String removeComma(String str){
 		str = removeNull(str);
-		str = str.replaceAll(",", " ");
+		str = str.replaceAll(",", "");
 		return str;
 	}
 }

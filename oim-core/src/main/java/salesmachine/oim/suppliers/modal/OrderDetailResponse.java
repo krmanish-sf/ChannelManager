@@ -12,13 +12,4 @@ public class OrderDetailResponse {
 		this.status = status;
 	}
 	
-	@Override
-	public String toString() {
-		return "OrderDetailResponse [poNumber=" + poNumber + ", status="
-				+ status + "]";
-	}
-	
-	
-	
-	
 }

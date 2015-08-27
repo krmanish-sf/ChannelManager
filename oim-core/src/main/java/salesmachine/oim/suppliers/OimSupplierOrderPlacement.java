@@ -988,7 +988,7 @@ public class OimSupplierOrderPlacement {
 			tx.commit();
 		} catch (Exception e) {
 			tx.rollback();
-			// e.printStackTrace();
+			log.error(e.getMessage(),e);
 		}
 
 		return true;

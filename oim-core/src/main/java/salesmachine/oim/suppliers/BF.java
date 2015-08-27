@@ -542,9 +542,11 @@ public class BF extends Supplier implements HasTracking {
 
 	@Override
 	public salesmachine.oim.suppliers.modal.OrderStatus getOrderStatus(
-			OimVendorSuppliers oimVendorSuppliers, Object trackingMeta,OimOrderDetails oimOrderDetails)
+			OimVendorSuppliers oimVendorSuppliers, Object trackingMeta,
+			OimOrderDetails oimOrderDetails)
 			throws SupplierOrderTrackingException {
 		salesmachine.oim.suppliers.modal.OrderStatus orderStatus = new salesmachine.oim.suppliers.modal.OrderStatus();
+		orderStatus.setStatus(oimOrderDetails.getSupplierOrderStatus());
 		if (!(trackingMeta instanceof String))
 			throw new IllegalArgumentException(
 					"trackingMeta is expected to be a String value containing PO number.");
