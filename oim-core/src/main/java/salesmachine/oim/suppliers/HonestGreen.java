@@ -1739,7 +1739,13 @@ public class HonestGreen extends Supplier implements HasTracking {
 								.add(Restrictions.eq("supplierOrderNumber",
 										purchaseOrder)).uniqueResult();
 
-						if (detail == null)
+						if (detail == null
+								|| detail.getOimOrderStatuses().getStatusId()
+										.intValue() == OimConstants.ORDER_STATUS_SHIPPED
+										.intValue()
+								|| detail.getOimOrderStatuses().getStatusId()
+										.intValue() == OimConstants.ORDER_STATUS_MANUALLY_PROCESSED
+										.intValue())
 							continue;
 						log.info("PONUM# {}", purchaseOrder);
 						tx = session.beginTransaction();

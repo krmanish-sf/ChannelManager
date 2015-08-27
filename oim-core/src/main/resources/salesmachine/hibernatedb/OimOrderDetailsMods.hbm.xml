@@ -45,5 +45,8 @@
 		<property name="quantity" type="java.lang.Integer">
 			<column name="QUANTITY" precision="22" scale="0" />
 		</property>
+		<property name="supplierOrderNumber" type="string">
+			<column name="supplier_order_no" length="50" />
+		</property>
 	</class>
 </hibernate-mapping>

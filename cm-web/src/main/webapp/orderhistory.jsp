@@ -451,7 +451,7 @@
 	
 	<div aria-hidden="true" role="dialog" tabindex="-1"
 			id="myModalOrderMods" class="modal fade">
-										<div class="modal-dialog" style="width: 750px;">
+										<div class="modal-dialog" style="width: 60%;">
 											<div class="modal-content">
 												<div class="modal-header">
 													<button aria-hidden="true" data-dismiss="modal"
@@ -469,8 +469,10 @@
 																		<th>Status</th>
 																		<th>Comment</th>
 																		<th>Sku</th>
+																		<th>PO Num</th>
 																		<th>Supplier</th>
 																		<th>Qty</th>
+																		<th>Processing Date</th>
 																		<th>Sale Price</th>
 																	</tr>
 																</thead>

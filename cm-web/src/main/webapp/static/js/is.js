@@ -6,26 +6,28 @@ function $$(selector, context) {
 	return jQuery(selector.replace(/(\[|\])/g, '\\$1'), context);
 };
 
-function fetchBigcommerceAuthData(){
+function fetchBigcommerceAuthData() {
 	var storeUrl = $("input[name=storeurl]").val();
 	console.log(storeUrl);
-	$(this).CRUD(
-			{
-				url : "aggregators/channels/bc-app",
-				method : "POST",
-				data : storeUrl,
-				success : function(data) {
-					var keySize = Object.keys(data).length;
-					if(keySize == 0){
-						$.gritter.add({
-							title : "Error",
-							text : "Verify Store Url, or app might not have been installed on your store"
-						});
-					}
-					$('#bc-auth-token').val(data.authToken);
-					$('#store-hash').val(data.context);
-				}
-			});
+	$(this)
+			.CRUD(
+					{
+						url : "aggregators/channels/bc-app",
+						method : "POST",
+						data : storeUrl,
+						success : function(data) {
+							var keySize = Object.keys(data).length;
+							if (keySize == 0) {
+								$.gritter
+										.add({
+											title : "Error",
+											text : "Verify Store Url, or app might not have been installed on your store"
+										});
+							}
+							$('#bc-auth-token').val(data.authToken);
+							$('#store-hash').val(data.context);
+						}
+					});
 }
 
 Date.prototype.getWeekRange = function() {
@@ -585,16 +587,28 @@ function drawSalesReportTable(data) {
 											}
 											return status;
 										}
-									}, {
+									},
+									{
 										"mData" : "operation"
-									}, {
+									},
+									{
 										"mData" : "sku"
-									}, {
+									},
+									{
+										"mData" : "supplierOrderNumber"
+									},
+									{
 										"mData" : "supplier.supplierName"
 									},
-
 									{
 										"mData" : "quantity"
+									},
+									{
+										"mData" : function(d) {
+											return d.processingTm ? new Date(
+													d.processingTm)
+													.toLocaleString() : '';
+										}
 									}, {
 										"mData" : "salePrice"
 									} ]
@@ -1060,7 +1074,7 @@ function drawSalesReportTable(data) {
 				else
 					$(this).hide();
 			});
-			break;			
+			break;
 		case "7":
 			$(".store-info").each(function(i, e) {
 				if ($(this).hasClass('shop-store'))

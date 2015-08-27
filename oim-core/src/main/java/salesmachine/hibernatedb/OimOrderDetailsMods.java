@@ -25,6 +25,7 @@ public class OimOrderDetailsMods implements java.io.Serializable {
 	private Date insertionTm;
 	private Integer statusId;
 	private Integer quantity;
+	private String supplierOrderNumber;
 
 	public OimOrderDetailsMods() {
 	}
@@ -145,6 +146,14 @@ public class OimOrderDetailsMods implements java.io.Serializable {
 
 	public void setOimSuppliers(OimSuppliers oimSuppliers) {
 		this.oimSuppliers = oimSuppliers;
+	}
+
+	public String getSupplierOrderNumber() {
+		return supplierOrderNumber;
+	}
+
+	public void setSupplierOrderNumber(String supplierOrderNumber) {
+		this.supplierOrderNumber = supplierOrderNumber;
 	}
 
 }

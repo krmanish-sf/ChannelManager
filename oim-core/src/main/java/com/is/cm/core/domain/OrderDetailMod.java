@@ -20,6 +20,7 @@ public class OrderDetailMod extends DomainBase implements java.io.Serializable {
 	private Date insertionTm;
 	private Integer statusId;
 	private Integer quantity;
+	private String supplierOrderNumber;
 
 	public OrderDetailMod() {
 	}
@@ -127,5 +128,13 @@ public class OrderDetailMod extends DomainBase implements java.io.Serializable {
 
 	public void setSupplier(Supplier supplier) {
 		this.supplier = supplier;
+	}
+
+	public String getSupplierOrderNumber() {
+		return supplierOrderNumber;
+	}
+
+	public void setSupplierOrderNumber(String supplierOrderNumber) {
+		this.supplierOrderNumber = supplierOrderNumber;
 	}
 }
