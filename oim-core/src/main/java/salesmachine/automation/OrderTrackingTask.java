@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory;
 import salesmachine.hibernatedb.OimOrderDetails;
 import salesmachine.hibernatedb.OimOrders;
 import salesmachine.hibernatehelper.SessionManager;
+import salesmachine.oim.suppliers.HonestGreen;
 
 import com.google.common.eventbus.EventBus;
 
@@ -30,6 +31,8 @@ public class OrderTrackingTask extends TimerTask {
 	public void run() {
 		try {
 			log.info("Order Tracking Task Running...");
+			HonestGreen.updateFromConfirmation();
+			HonestGreen.updateFromTracking();
 			try {
 				Session session = SessionManager.currentSession();
 				Query query = session

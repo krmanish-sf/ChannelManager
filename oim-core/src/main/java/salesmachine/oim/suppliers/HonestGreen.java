@@ -21,6 +21,7 @@ import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.Iterator;
@@ -124,7 +125,7 @@ public class HonestGreen extends Supplier implements HasTracking {
 			log.error(e.getMessage(), e);
 		}
 	}
-	
+
 	static {
 		try {
 			FileInputStream fis = new FileInputStream("orders.ser");
@@ -613,23 +614,23 @@ public class HonestGreen extends Supplier implements HasTracking {
 		return HvaMap.size() > 0 || HVAPhiMap.size() > 0;
 	}
 
-	private Map<String, String> parseOrderConfirmation(
+	private static Map<String, String> parseOrderConfirmation(
 			Map<Integer, String> orderConfirmationMap, String tempTrackingMeta) {
 		Map<String, String> orderData = new HashMap<String, String>();
+
 		for (Iterator itr = orderConfirmationMap.values().iterator(); itr
 				.hasNext();) {
 			String line = (String) itr.next();
 			String[] lineArray = line.split(",");
 			if (lineArray.length == 9) {
+
 				PONUM_UNFI_MAP.put(lineArray[6], lineArray[0]);
 				if (lineArray[6].equals(tempTrackingMeta)) {
 					orderData.put(PONUM, lineArray[6]);
 					orderData.put(UNFIORDERNO, lineArray[0]);
 					break;
 				}
-				
 			}
-
 		}
 		// String[] lineArray1 = orderConfirmationMap.get(1).split(",");
 		//
@@ -664,7 +665,8 @@ public class HonestGreen extends Supplier implements HasTracking {
 	 * @param confirmationFileData
 	 * @return file data in a Map with line number as keys.
 	 */
-	private Map<Integer, String> parseFileData(byte[] confirmationFileData) {
+	private static Map<Integer, String> parseFileData(
+			byte[] confirmationFileData) {
 		Map<Integer, String> fileData = null;
 		try {
 			fileData = new HashMap<Integer, String>();
@@ -752,8 +754,8 @@ public class HonestGreen extends Supplier implements HasTracking {
 			fOut.write(StringHandle.removeNull(order.getDeliveryZip())
 					.toUpperCase().getBytes(ASCII));
 			fOut.write(COMMA);
-//			fOut.write(StringHandle.removeNull(order.getDeliveryPhone())
-//					.toUpperCase().getBytes(ASCII));
+			// fOut.write(StringHandle.removeNull(order.getDeliveryPhone())
+			// .toUpperCase().getBytes(ASCII));
 			fOut.write(COMMA);
 			fOut.write('A');
 			fOut.write(COMMA);
@@ -849,23 +851,24 @@ public class HonestGreen extends Supplier implements HasTracking {
 				unfiOrderNo);
 	}
 
-	private String getConfirmationFilePath(String account, String unfiOrderNo) {
+	private static String getConfirmationFilePath(String account,
+			String unfiOrderNo) {
 		return getFilePath(ORDER_CONFIRMATION_FILE_PATH_TEMPLATE, account,
 				unfiOrderNo);
 	}
 
-	private String getTrackingFilePath(String account, String unfiOrderNo) {
+	private static String getTrackingFilePath(String account, String unfiOrderNo) {
 		return getFilePath(ORDER_TRACKING_FILE_PATH_TEMPLATE, account,
 				unfiOrderNo);
 	}
 
-	private String getTrackingFilePathInArchive(String account,
+	private static String getTrackingFilePathInArchive(String account,
 			String unfiOrderNo) {
 		return getFilePath(ORDER_TRACKING_FILE_PATH_ARCHIVE_TEMPLATE, account,
 				unfiOrderNo);
 	}
 
-	private String getFilePath(String template, String account,
+	private static String getFilePath(String template, String account,
 			String unfiOrderNo) {
 		return String.format(template, account, unfiOrderNo);
 	}
@@ -949,6 +952,11 @@ public class HonestGreen extends Supplier implements HasTracking {
 				}
 			}
 		}
+		serializeMap();
+		return orderStatus;
+	}
+
+	private static synchronized void serializeMap() {
 		try {
 			FileOutputStream fs = new FileOutputStream("orders.ser");
 			ObjectOutputStream os = new ObjectOutputStream(fs);
@@ -957,8 +965,6 @@ public class HonestGreen extends Supplier implements HasTracking {
 		} catch (Exception e) {
 			log.warn("error occure while serializing PONUM_UNFI_MAP to orders.ser");
 		}
-
-		return orderStatus;
 	}
 
 	private void getTrackingInfo(FtpDetails ftpDetails, FTPClient ftp,
@@ -1113,6 +1119,7 @@ public class HonestGreen extends Supplier implements HasTracking {
 		if (PONUM_UNFI_MAP.containsKey(tempTrackingMeta)) {
 			log.info("UNFI Order Id found in MAP {}",
 					PONUM_UNFI_MAP.get(tempTrackingMeta));
+			orderStatus.setStatus("In-Process");
 			return PONUM_UNFI_MAP.get(tempTrackingMeta);
 		}
 		FTPFile[] ftpFiles = ftp.dirDetails("confirmations");
@@ -1139,7 +1146,7 @@ public class HonestGreen extends Supplier implements HasTracking {
 					orderDataMap, tempTrackingMeta);
 			if (tempTrackingMeta.toString().equals(orderData.get(PONUM))) {
 				log.info("Order Confirmation details found for {}", orderData);
-				orderStatus.setStatus("In Process");
+				orderStatus.setStatus("In-Process");
 
 				return orderData.get(UNFIORDERNO);
 			}
@@ -1355,229 +1362,526 @@ public class HonestGreen extends Supplier implements HasTracking {
 	}
 
 	public static void main(String[] args) {
-		FtpDetails ftpDetails = new FtpDetails();
-		// ftpDetails.setUrl("ftp1.unfi.com");
-		// ftpDetails.setAccountNumber("40968");
-		// ftpDetails.setUserName("evox");
-		// ftpDetails.setPassword("evoftp093!");
+		updateFromConfirmation();
+		updateFromTracking();
+	}
 
-		ftpDetails.setUrl("ftp1.unfi.com");
-		ftpDetails.setAccountNumber("70757");
-		ftpDetails.setUserName("70757");
-		ftpDetails.setPassword("vU!6akAB");
-		FTPClient ftp = new FTPClient();
-		Session session = SessionManager.currentSession();
+	public static void updateFromConfirmation() {
+		int totalValidPO = 0, shippedPO = 0;
 
-		SubmitFeedRequest submitFeedRequest = new SubmitFeedRequest();
-		submitFeedRequest.setMerchant(sellerId);
-		submitFeedRequest.setMWSAuthToken(mwsAuthToken);
-		submitFeedRequest.setMarketplaceIdList(new IdList(marketPlaceIdList));
-		submitFeedRequest.setFeedType("_POST_ORDER_FULFILLMENT_DATA_");
+		List<FtpDetails> ftpList = new ArrayList<FtpDetails>(2);
 
-		Marshaller marshaller = null;
-		try {
-			marshaller = jaxbContext2.createMarshaller();
-		} catch (JAXBException e) {
-			log.error(e.getMessage(), e);
+		FtpDetails ftpDetails2 = new FtpDetails();
+		ftpDetails2.setUrl("ftp1.unfi.com");
+		ftpDetails2.setAccountNumber("40968");
+		ftpDetails2.setUserName("evox");
+		ftpDetails2.setPassword("evoftp093!");
+		ftpList.add(ftpDetails2);
 
-		}
-		AmazonEnvelope envelope = new AmazonEnvelope();
-		Header header = new Header();
-		header.setDocumentVersion("1.01");
-		header.setMerchantIdentifier(sellerId);
-		envelope.setHeader(header);
-		envelope.setMessageType("OrderFulfillment");
-		long msgId = 1L;
+		FtpDetails ftpDetails1 = new FtpDetails();
+		ftpDetails1.setUrl("ftp1.unfi.com");
+		ftpDetails1.setAccountNumber("70757");
+		ftpDetails1.setUserName("70757");
+		ftpDetails1.setPassword("vU!6akAB");
+		ftpList.add(ftpDetails1);
+		for (FtpDetails ftpDetails : ftpList) {
 
-		Transaction tx = null;
+			FTPClient ftp = new FTPClient();
+			Session session = SessionManager.currentSession();
+			Transaction tx = null;
+			SubmitFeedRequest submitFeedRequest = new SubmitFeedRequest();
+			submitFeedRequest.setMerchant(sellerId);
+			submitFeedRequest.setMWSAuthToken(mwsAuthToken);
+			submitFeedRequest
+					.setMarketplaceIdList(new IdList(marketPlaceIdList));
+			submitFeedRequest.setFeedType("_POST_ORDER_FULFILLMENT_DATA_");
 
-		try {
+			Marshaller marshaller = null;
+			try {
+				marshaller = jaxbContext2.createMarshaller();
+			} catch (JAXBException e) {
+				log.error(e.getMessage(), e);
 
-			int channelId = 2941;
-			IOrderImport iOrderImport = OrderImportManager
-					.getIOrderImport(channelId);
-
-			if (!iOrderImport.init(channelId, SessionManager.currentSession())) {
-				log.debug("Failed initializing the channel with Id:{}",
-						channelId);
 			}
+			AmazonEnvelope envelope = new AmazonEnvelope();
+			Header header = new Header();
+			header.setDocumentVersion("1.01");
+			header.setMerchantIdentifier(sellerId);
+			envelope.setHeader(header);
+			envelope.setMessageType("OrderFulfillment");
+			long msgId = 1L;
+			try {
 
-			ftp.setRemoteHost(ftpDetails.getUrl());
-			ftp.setDetectTransferMode(true);
-			ftp.connect();
-			ftp.login(ftpDetails.getUserName(), ftpDetails.getPassword());
-			ftp.setTimeout(60 * 1000 * 60 * 7);
-			FTPFile[] ftpFiles = ftp.dirDetails("tracking");
-			Arrays.sort(ftpFiles, new Comparator<FTPFile>() {
-				public int compare(FTPFile f1, FTPFile f2) {
-					return f2.lastModified().compareTo(f1.lastModified());
+				ftp.setRemoteHost(ftpDetails.getUrl());
+				ftp.setDetectTransferMode(true);
+				ftp.connect();
+				ftp.login(ftpDetails.getUserName(), ftpDetails.getPassword());
+				ftp.setTimeout(60 * 1000 * 60 * 7);
+
+				int channelId = 2941;
+				IOrderImport iOrderImport = OrderImportManager
+						.getIOrderImport(channelId);
+
+				if (!iOrderImport.init(channelId,
+						SessionManager.currentSession())) {
+					log.debug("Failed initializing the channel with Id:{}",
+							channelId);
 				}
-			});
-			for (FTPFile ftpFile : ftpFiles) {
-				try {
 
-					log.info(ftpFile.getName());
-					if (ftpFile.getName().equals(".")
-							|| ftpFile.getName().equals("..")
-							|| ftpFile.getName().endsWith("S.txt"))
-						continue;
-					
-					
-
-					byte[] bs = ftp.get("tracking/" + ftpFile.getName());
-					Unmarshaller unmarshaller = jaxbContext
-							.createUnmarshaller();
-					String s = new String(bs);
-					StringReader reader = new StringReader(s);
-					// log.info(s);
-					TrackingData orderTrackingResponse = (TrackingData) unmarshaller
-							.unmarshal(reader);
-					OrderStatus orderStatus = new OrderStatus();
-					orderStatus.setStatus("Shipped");
-					String purchaseOrder = orderTrackingResponse.getPO()
-							.getPurchaseOrder();
-					OimOrderDetails detail = (OimOrderDetails) session
-							.createCriteria(OimOrderDetails.class)
-							.add(Restrictions.eq("supplierOrderNumber",
-									purchaseOrder)).uniqueResult();
-
-					if (detail == null)
-						continue;
-					log.info("PONUM# {}", purchaseOrder);
-					tx = session.beginTransaction();
-					int perBoxQty = 1;
-					if (detail.getQuantity() == orderTrackingResponse
-							.getPOTracking().size()) {
-						perBoxQty = 1;
-					} else {
-						if (detail.getQuantity()
-								% orderTrackingResponse.getPOTracking().size() == 0) {
-							perBoxQty = detail.getQuantity()
-									/ orderTrackingResponse.getPOTracking()
-											.size();
-						} else if (orderTrackingResponse.getPOTracking().size()
-								% detail.getQuantity() == 0)
-							perBoxQty = orderTrackingResponse.getPOTracking()
-									.size() / detail.getQuantity();
+				FTPFile[] ftpFiles = ftp.dirDetails("confirmations");
+				Arrays.sort(ftpFiles, new Comparator<FTPFile>() {
+					public int compare(FTPFile f1, FTPFile f2) {
+						return f2.lastModified().compareTo(f1.lastModified());
 					}
-					for (POTracking poTracking : orderTrackingResponse
-							.getPOTracking()) {
-						salesmachine.oim.suppliers.modal.TrackingData trackingData = new salesmachine.oim.suppliers.modal.TrackingData();
-						if ("A".equals(orderTrackingResponse.getPO()
-								.getShipVia())) {
-							trackingData.setCarrierCode("UPS");
-							trackingData.setCarrierName("UPS");
-							trackingData.setShippingMethod("Ground");
+				});
+				Date cutoff = new Date(115, 7, 19);
+				log.info("Cutoff: {}", cutoff);
+				for (FTPFile ftpFile : ftpFiles) {
+					try {
+						log.info("{} {}", ftpFile.getName(),
+								ftpFile.lastModified());
+						if (ftpFile.getName().equals(".")
+								|| ftpFile.getName().equals("..")
+								|| ftpFile.getName().endsWith("S.txt"))
+							continue;
 
-						} else {
-							trackingData.setCarrierName(orderTrackingResponse
-									.getPO().getShipVia());
+						byte[] confirmationFileData = ftp.get("confirmations/"
+								+ ftpFile.getName());
+
+						Map<Integer, String> parseFileData = parseFileData(confirmationFileData);
+
+						parseOrderConfirmation(parseFileData, "");
+						if (ftpFile.lastModified().before(cutoff))
+							break;
+					} catch (Exception e) {
+						if (tx != null && tx.isActive()) {
+							tx.rollback();
 						}
-						trackingData.setShipperTrackingNumber(poTracking
-								.getTrackingNumber());
-
-						trackingData.setQuantity(perBoxQty);
-						// String dateshipped =
-						// parseShippingConfirmation.get(SHIP_DATE);
-						// FORMAT 08/11/2015 MM/DD/YYYY
-						// int year = Integer.parseInt(dateshipped.substring(6,
-						// 10));
-						// int month = Integer.parseInt(dateshipped.substring(0,
-						// 2));
-						// int dayOfMonth =
-						// Integer.parseInt(dateshipped.substring(3,
-						// 5));
-						trackingData.setShipDate(orderTrackingResponse.getPO()
-								.getDeliveryDate());
-						orderStatus.addTrackingData(trackingData);
+						log.error(e.getMessage(), e);
 					}
-					log.info("Tracking details: {}", orderStatus);
-					detail.setSupplierOrderStatus(orderStatus.toString());
-					if (orderStatus.isShipped())
-						detail.setOimOrderStatuses(new OimOrderStatuses(
-								OimConstants.ORDER_STATUS_SHIPPED));
-					session.update(detail);
-					/*
-					 * synchronized (iOrderImport) {
-					 * iOrderImport.updateStoreOrder(detail, orderStatus); }
-					 */
-					tx.commit();
-					for (salesmachine.oim.suppliers.modal.TrackingData td : orderStatus
-							.getTrackingData()) {
-						Message message = new Message();
-						message.setMessageID(BigInteger.valueOf(msgId++));
-						envelope.getMessage().add(message);
-						OrderFulfillment fulfillment = new OrderFulfillment();
-						message.setOrderFulfillment(fulfillment);
-						fulfillment.setAmazonOrderID(detail.getOimOrders()
-								.getStoreOrderId());
-						fulfillment.setMerchantFulfillmentID(BigInteger
-								.valueOf(detail.getOimOrders().getOrderId()
-										.longValue()));
-						fulfillment.setFulfillmentDate(td.getShipDate());
-						Item i = new Item();
-						i.setAmazonOrderItemCode(detail.getStoreOrderItemId());
-						i.setQuantity(BigInteger.valueOf(td.getQuantity()));
-						i.setMerchantFulfillmentItemID(BigInteger
-								.valueOf(detail.getDetailId()));
-						FulfillmentData value = new FulfillmentData();
-						// value.setCarrierCode(orderStatus.getTrackingData().getCarrierCode());
-						value.setCarrierName(td.getCarrierName());
-						value.setShipperTrackingNumber(td
-								.getShipperTrackingNumber());
-						value.setShippingMethod(td.getShippingMethod());
-						fulfillment.getItem().add(i);
-						fulfillment.setFulfillmentData(value);
-					}
-				} catch (Exception e) {
-					if (tx != null && tx.isActive()) {
-						tx.rollback();
-					}
-					log.error(e.getMessage(), e);
 				}
+				log.info("Found {} order confirmations till {}",
+						PONUM_UNFI_MAP.size(), cutoff);
+				for (String purchaseOrder : PONUM_UNFI_MAP.keySet()) {
+					try {
+						OimOrderDetails detail = (OimOrderDetails) session
+								.createCriteria(OimOrderDetails.class)
+								.add(Restrictions.eq("supplierOrderNumber",
+										purchaseOrder)).uniqueResult();
 
-			}
-			ByteArrayOutputStream os = new ByteArrayOutputStream();
-			if (marshaller != null) {
+						if (detail == null
+								|| detail.getOimOrderStatuses().getStatusId()
+										.intValue() == OimConstants.ORDER_STATUS_SHIPPED
+										.intValue()
+								|| detail.getOimOrderStatuses().getStatusId()
+										.intValue() == OimConstants.ORDER_STATUS_MANUALLY_PROCESSED
+										.intValue())
+							continue;
+
+						tx = session.beginTransaction();
+						String unfiOrderNo = PONUM_UNFI_MAP.get(purchaseOrder);
+						OrderStatus orderStatus = new OrderStatus();
+						orderStatus.setStatus("In-Process");
+						totalValidPO++;
+						try {
+							byte[] bs;
+							try {
+								bs = ftp.get(getTrackingFilePath(
+										ftpDetails.getAccountNumber(),
+										unfiOrderNo));
+							} catch (FTPException e) {
+								log.warn("Tracking not found PO: {}  UNFI: {}",
+										purchaseOrder, unfiOrderNo);
+								bs = ftp.get(getTrackingFilePathInArchive(
+										ftpDetails.getAccountNumber(),
+										unfiOrderNo));
+							}
+							Unmarshaller unmarshaller = jaxbContext
+									.createUnmarshaller();
+							String s = new String(bs);
+							StringReader reader = new StringReader(s);
+							// log.info(s);
+							TrackingData orderTrackingResponse = (TrackingData) unmarshaller
+									.unmarshal(reader);
+
+							orderStatus.setStatus("Shipped");
+
+							log.info("PONUM# {}", purchaseOrder);
+
+							int perBoxQty = 1;
+							if (detail.getQuantity() == orderTrackingResponse
+									.getPOTracking().size()) {
+								perBoxQty = 1;
+							} else {
+								if (detail.getQuantity()
+										% orderTrackingResponse.getPOTracking()
+												.size() == 0) {
+									perBoxQty = detail.getQuantity()
+											/ orderTrackingResponse
+													.getPOTracking().size();
+								} else if (orderTrackingResponse
+										.getPOTracking().size()
+										% detail.getQuantity() == 0)
+									perBoxQty = orderTrackingResponse
+											.getPOTracking().size()
+											/ detail.getQuantity();
+							}
+							for (POTracking poTracking : orderTrackingResponse
+									.getPOTracking()) {
+								salesmachine.oim.suppliers.modal.TrackingData trackingData = new salesmachine.oim.suppliers.modal.TrackingData();
+								if ("A".equals(orderTrackingResponse.getPO()
+										.getShipVia())) {
+									trackingData.setCarrierCode("UPS");
+									trackingData.setCarrierName("UPS");
+									trackingData.setShippingMethod("Ground");
+
+								} else {
+									trackingData
+											.setCarrierName(orderTrackingResponse
+													.getPO().getShipVia());
+								}
+								trackingData
+										.setShipperTrackingNumber(poTracking
+												.getTrackingNumber());
+
+								trackingData.setQuantity(perBoxQty);
+								trackingData.setShipDate(orderTrackingResponse
+										.getPO().getDeliveryDate());
+								orderStatus.addTrackingData(trackingData);
+								shippedPO++;
+							}
+						} catch (FTPException e) {
+							log.warn("Tracking not found PO: {}  UNFI: {}",
+									purchaseOrder, unfiOrderNo);
+						}
+						log.info("Tracking details: {}", orderStatus);
+
+						detail.setSupplierOrderStatus(orderStatus.toString());
+						if (orderStatus.isShipped()) {
+							detail.setOimOrderStatuses(new OimOrderStatuses(
+									OimConstants.ORDER_STATUS_SHIPPED));
+							for (salesmachine.oim.suppliers.modal.TrackingData td : orderStatus
+									.getTrackingData()) {
+								Message message = new Message();
+								message.setMessageID(BigInteger
+										.valueOf(msgId++));
+								envelope.getMessage().add(message);
+								OrderFulfillment fulfillment = new OrderFulfillment();
+								message.setOrderFulfillment(fulfillment);
+								fulfillment.setAmazonOrderID(detail
+										.getOimOrders().getStoreOrderId());
+								fulfillment.setMerchantFulfillmentID(BigInteger
+										.valueOf(detail.getOimOrders()
+												.getOrderId().longValue()));
+								fulfillment
+										.setFulfillmentDate(td.getShipDate());
+								Item i = new Item();
+								i.setAmazonOrderItemCode(detail
+										.getStoreOrderItemId());
+								i.setQuantity(BigInteger.valueOf(td
+										.getQuantity()));
+								i.setMerchantFulfillmentItemID(BigInteger
+										.valueOf(detail.getDetailId()));
+								FulfillmentData value = new FulfillmentData();
+								// value.setCarrierCode(orderStatus.getTrackingData().getCarrierCode());
+								value.setCarrierName(td.getCarrierName());
+								value.setShipperTrackingNumber(td
+										.getShipperTrackingNumber());
+								value.setShippingMethod(td.getShippingMethod());
+								fulfillment.getItem().add(i);
+								fulfillment.setFulfillmentData(value);
+							}
+						}
+						session.update(detail);
+						tx.commit();
+
+					} catch (Exception e) {
+						if (tx != null && tx.isActive()) {
+							tx.rollback();
+						}
+					}
+				}
+				ByteArrayOutputStream os = new ByteArrayOutputStream();
+				if (marshaller != null) {
+					try {
+						marshaller.marshal(envelope, os);
+					} catch (JAXBException e) {
+						log.error(e.getMessage(), e);
+						throw new ChannelOrderFormatException(
+								"Error in Updating Store order - "
+										+ e.getMessage(), e);
+					}
+				}
+				InputStream inputStream = new ByteArrayInputStream(
+						os.toByteArray());
+				submitFeedRequest.setFeedContent(inputStream);
 				try {
-					marshaller.marshal(envelope, os);
-				} catch (JAXBException e) {
+					submitFeedRequest.setContentMD5(Base64
+							.encode((MessageDigest.getInstance("MD5").digest(os
+									.toByteArray()))));
+				} catch (NoSuchAlgorithmException e) {
 					log.error(e.getMessage(), e);
-					throw new ChannelOrderFormatException(
-							"Error in Updating Store order - " + e.getMessage(),
-							e);
+					throw new ChannelCommunicationException(
+							"Error in submiting feed request while updating order to store - "
+									+ e.getMessage(), e);
 				}
-			}
-			InputStream inputStream = new ByteArrayInputStream(os.toByteArray());
-			submitFeedRequest.setFeedContent(inputStream);
-			try {
-				submitFeedRequest.setContentMD5(Base64.encode((MessageDigest
-						.getInstance("MD5").digest(os.toByteArray()))));
-			} catch (NoSuchAlgorithmException e) {
-				log.error(e.getMessage(), e);
-				throw new ChannelCommunicationException(
-						"Error in submiting feed request while updating order to store - "
-								+ e.getMessage(), e);
-			}
-			log.info("SubmitFeedRequest: {}", os.toString());
-			SubmitFeedResponse submitFeed = null;
-			try {
-				Thread.sleep(60 * 1000);
+				log.info("SubmitFeedRequest: {}", os.toString());
+				SubmitFeedResponse submitFeed = null;
+				try {
+					submitFeed = service.submitFeed(submitFeedRequest);
+					log.info(submitFeed.toXML());
 
-				submitFeed = service.submitFeed(submitFeedRequest);
-				log.info(submitFeed.toXML());
-
-			} catch (MarketplaceWebServiceException e) {
-				log.error(e.getMessage(), e);
-				throw new ChannelCommunicationException(
-						"Error in submiting feed request while updating order to store - "
-								+ e.getMessage(), e);
-			} catch (InterruptedException e) {
+				} catch (MarketplaceWebServiceException e) {
+					log.error(e.getMessage(), e);
+					throw new ChannelCommunicationException(
+							"Error in submiting feed request while updating order to store - "
+									+ e.getMessage(), e);
+				}
+			} catch (Exception e) {
 				log.error(e.getMessage(), e);
 			}
-		} catch (Exception e) {
-			log.error(e.getMessage());
 		}
+		log.info("Total PO Found {}, Shipped PO{}", totalValidPO, shippedPO);
+		serializeMap();
+	}
+
+	public static void updateFromTracking() {
+		List<FtpDetails> ftpList = new ArrayList<FtpDetails>(2);
+
+		FtpDetails ftpDetails2 = new FtpDetails();
+		ftpDetails2.setUrl("ftp1.unfi.com");
+		ftpDetails2.setAccountNumber("40968");
+		ftpDetails2.setUserName("evox");
+		ftpDetails2.setPassword("evoftp093!");
+		ftpList.add(ftpDetails2);
+
+		FtpDetails ftpDetails1 = new FtpDetails();
+		ftpDetails1.setUrl("ftp1.unfi.com");
+		ftpDetails1.setAccountNumber("70757");
+		ftpDetails1.setUserName("70757");
+		ftpDetails1.setPassword("vU!6akAB");
+		ftpList.add(ftpDetails1);
+		for (FtpDetails ftpDetails : ftpList) {
+
+			FTPClient ftp = new FTPClient();
+			Session session = SessionManager.currentSession();
+
+			SubmitFeedRequest submitFeedRequest = new SubmitFeedRequest();
+			submitFeedRequest.setMerchant(sellerId);
+			submitFeedRequest.setMWSAuthToken(mwsAuthToken);
+			submitFeedRequest
+					.setMarketplaceIdList(new IdList(marketPlaceIdList));
+			submitFeedRequest.setFeedType("_POST_ORDER_FULFILLMENT_DATA_");
+
+			Marshaller marshaller = null;
+			try {
+				marshaller = jaxbContext2.createMarshaller();
+			} catch (JAXBException e) {
+				log.error(e.getMessage(), e);
+
+			}
+			AmazonEnvelope envelope = new AmazonEnvelope();
+			Header header = new Header();
+			header.setDocumentVersion("1.01");
+			header.setMerchantIdentifier(sellerId);
+			envelope.setHeader(header);
+			envelope.setMessageType("OrderFulfillment");
+			long msgId = 1L;
+
+			Transaction tx = null;
+
+			try {
+
+				int channelId = 2941;
+				IOrderImport iOrderImport = OrderImportManager
+						.getIOrderImport(channelId);
+
+				if (!iOrderImport.init(channelId,
+						SessionManager.currentSession())) {
+					log.debug("Failed initializing the channel with Id:{}",
+							channelId);
+				}
+
+				ftp.setRemoteHost(ftpDetails.getUrl());
+				ftp.setDetectTransferMode(true);
+				ftp.connect();
+				ftp.login(ftpDetails.getUserName(), ftpDetails.getPassword());
+				ftp.setTimeout(60 * 1000 * 60 * 7);
+				FTPFile[] ftpFiles = ftp.dirDetails("tracking");
+				Arrays.sort(ftpFiles, new Comparator<FTPFile>() {
+					public int compare(FTPFile f1, FTPFile f2) {
+						return f2.lastModified().compareTo(f1.lastModified());
+					}
+				});
+				for (FTPFile ftpFile : ftpFiles) {
+					try {
+
+						log.info(ftpFile.getName());
+						if (ftpFile.getName().equals(".")
+								|| ftpFile.getName().equals("..")
+								|| ftpFile.getName().endsWith("S.txt"))
+							continue;
+
+						byte[] bs = ftp.get("tracking/" + ftpFile.getName());
+						Unmarshaller unmarshaller = jaxbContext
+								.createUnmarshaller();
+						String s = new String(bs);
+						StringReader reader = new StringReader(s);
+						// log.info(s);
+						TrackingData orderTrackingResponse = (TrackingData) unmarshaller
+								.unmarshal(reader);
+						OrderStatus orderStatus = new OrderStatus();
+						orderStatus.setStatus("Shipped");
+						String purchaseOrder = orderTrackingResponse.getPO()
+								.getPurchaseOrder();
+						OimOrderDetails detail = (OimOrderDetails) session
+								.createCriteria(OimOrderDetails.class)
+								.add(Restrictions.eq("supplierOrderNumber",
+										purchaseOrder)).uniqueResult();
+
+						if (detail == null)
+							continue;
+						log.info("PONUM# {}", purchaseOrder);
+						tx = session.beginTransaction();
+						int perBoxQty = 1;
+						if (detail.getQuantity() == orderTrackingResponse
+								.getPOTracking().size()) {
+							perBoxQty = 1;
+						} else {
+							if (detail.getQuantity()
+									% orderTrackingResponse.getPOTracking()
+											.size() == 0) {
+								perBoxQty = detail.getQuantity()
+										/ orderTrackingResponse.getPOTracking()
+												.size();
+							} else if (orderTrackingResponse.getPOTracking()
+									.size() % detail.getQuantity() == 0)
+								perBoxQty = orderTrackingResponse
+										.getPOTracking().size()
+										/ detail.getQuantity();
+						}
+						for (POTracking poTracking : orderTrackingResponse
+								.getPOTracking()) {
+							salesmachine.oim.suppliers.modal.TrackingData trackingData = new salesmachine.oim.suppliers.modal.TrackingData();
+							if ("A".equals(orderTrackingResponse.getPO()
+									.getShipVia())) {
+								trackingData.setCarrierCode("UPS");
+								trackingData.setCarrierName("UPS");
+								trackingData.setShippingMethod("Ground");
+
+							} else {
+								trackingData
+										.setCarrierName(orderTrackingResponse
+												.getPO().getShipVia());
+							}
+							trackingData.setShipperTrackingNumber(poTracking
+									.getTrackingNumber());
+
+							trackingData.setQuantity(perBoxQty);
+							// String dateshipped =
+							// parseShippingConfirmation.get(SHIP_DATE);
+							// FORMAT 08/11/2015 MM/DD/YYYY
+							// int year =
+							// Integer.parseInt(dateshipped.substring(6,
+							// 10));
+							// int month =
+							// Integer.parseInt(dateshipped.substring(0,
+							// 2));
+							// int dayOfMonth =
+							// Integer.parseInt(dateshipped.substring(3,
+							// 5));
+							trackingData.setShipDate(orderTrackingResponse
+									.getPO().getDeliveryDate());
+							orderStatus.addTrackingData(trackingData);
+						}
+						log.info("Tracking details: {}", orderStatus);
+						detail.setSupplierOrderStatus(orderStatus.toString());
+						if (orderStatus.isShipped())
+							detail.setOimOrderStatuses(new OimOrderStatuses(
+									OimConstants.ORDER_STATUS_SHIPPED));
+						session.update(detail);
+						/*
+						 * synchronized (iOrderImport) {
+						 * iOrderImport.updateStoreOrder(detail, orderStatus); }
+						 */
+						tx.commit();
+						for (salesmachine.oim.suppliers.modal.TrackingData td : orderStatus
+								.getTrackingData()) {
+							Message message = new Message();
+							message.setMessageID(BigInteger.valueOf(msgId++));
+							envelope.getMessage().add(message);
+							OrderFulfillment fulfillment = new OrderFulfillment();
+							message.setOrderFulfillment(fulfillment);
+							fulfillment.setAmazonOrderID(detail.getOimOrders()
+									.getStoreOrderId());
+							fulfillment.setMerchantFulfillmentID(BigInteger
+									.valueOf(detail.getOimOrders().getOrderId()
+											.longValue()));
+							fulfillment.setFulfillmentDate(td.getShipDate());
+							Item i = new Item();
+							i.setAmazonOrderItemCode(detail
+									.getStoreOrderItemId());
+							i.setQuantity(BigInteger.valueOf(td.getQuantity()));
+							i.setMerchantFulfillmentItemID(BigInteger
+									.valueOf(detail.getDetailId()));
+							FulfillmentData value = new FulfillmentData();
+							// value.setCarrierCode(orderStatus.getTrackingData().getCarrierCode());
+							value.setCarrierName(td.getCarrierName());
+							value.setShipperTrackingNumber(td
+									.getShipperTrackingNumber());
+							value.setShippingMethod(td.getShippingMethod());
+							fulfillment.getItem().add(i);
+							fulfillment.setFulfillmentData(value);
+						}
+					} catch (Exception e) {
+						if (tx != null && tx.isActive()) {
+							tx.rollback();
+						}
+						log.error(e.getMessage(), e);
+					}
+
+				}
+				ByteArrayOutputStream os = new ByteArrayOutputStream();
+				if (marshaller != null) {
+					try {
+						marshaller.marshal(envelope, os);
+					} catch (JAXBException e) {
+						log.error(e.getMessage(), e);
+						throw new ChannelOrderFormatException(
+								"Error in Updating Store order - "
+										+ e.getMessage(), e);
+					}
+				}
+				InputStream inputStream = new ByteArrayInputStream(
+						os.toByteArray());
+				submitFeedRequest.setFeedContent(inputStream);
+				try {
+					submitFeedRequest.setContentMD5(Base64
+							.encode((MessageDigest.getInstance("MD5").digest(os
+									.toByteArray()))));
+				} catch (NoSuchAlgorithmException e) {
+					log.error(e.getMessage(), e);
+					throw new ChannelCommunicationException(
+							"Error in submiting feed request while updating order to store - "
+									+ e.getMessage(), e);
+				}
+				log.info("SubmitFeedRequest: {}", os.toString());
+				SubmitFeedResponse submitFeed = null;
+				try {
+					submitFeed = service.submitFeed(submitFeedRequest);
+					log.info(submitFeed.toXML());
+
+				} catch (MarketplaceWebServiceException e) {
+					log.error(e.getMessage(), e);
+					throw new ChannelCommunicationException(
+							"Error in submiting feed request while updating order to store - "
+									+ e.getMessage(), e);
+				}
+			} catch (Exception e) {
+				log.error(e.getMessage());
+			}
+		}
+		serializeMap();
 	}
 }
 
