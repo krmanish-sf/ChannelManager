@@ -300,6 +300,7 @@ public class BigcommerceOrderImport extends ChannelBase {
 						oimOrders.setDeliveryZip(removeNull(shippingAddObj.get("zip")));
 						oimOrders.setDeliveryCountry(removeNull(shippingAddObj.get("country")));
 						oimOrders.setDeliveryState(removeNull(shippingAddObj.get("state")));
+						oimOrders.setDeliveryStateCode(validateAndGetStateCode(oimOrders));
 						oimOrders.setDeliveryEmail(removeNull(shippingAddObj.get("email")));
 						oimOrders.setDeliveryPhone(removeNull(shippingAddObj.get("phone")));
 						shipMethod = removeNull(shippingAddObj.get("shipping_method"));
