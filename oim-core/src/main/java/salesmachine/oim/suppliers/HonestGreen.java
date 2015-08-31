@@ -37,6 +37,7 @@ import javax.xml.bind.Unmarshaller;
 
 import org.apache.axis.encoding.Base64;
 import org.apache.axis.utils.ByteArrayOutputStream;
+import org.hibernate.NonUniqueResultException;
 import org.hibernate.Query;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
@@ -511,8 +512,18 @@ public class HonestGreen extends Supplier implements HasTracking {
 				.createSQLQuery("select QUANTITY from VENDOR_CUSTOM_FEEDS_PRODUCTS where sku=:sku and VENDOR_CUSTOM_FEED_ID=(select VENDOR_CUSTOM_FEED_ID from VENDOR_CUSTOM_FEEDS where vendor_id=:vendorID AND IS_RESTRICTED=1)");
 		query.setString("sku", sku);
 		query.setInteger("vendorID", vendorId);
-		Object q = query.uniqueResult();
-		log.info("PHI Quantity: {}", q.toString());
+		Object q = null;
+		try {
+			q = query.uniqueResult();
+		} catch (NonUniqueResultException e) {
+			log.warn(
+					"VENDOR_CUSTOM_FEEDS_PRODUCTS contains more than one entries for SKU {}",
+					sku);
+
+			List restrictedList = query.list();
+			q = restrictedList.get(0);
+		}
+		log.debug("PHI Quantity {} for Sku {}", q.toString(), sku);
 		int tempQuantity = 0;
 		if (q != null)
 			tempQuantity = Integer.parseInt(q.toString());
@@ -524,9 +535,7 @@ public class HonestGreen extends Supplier implements HasTracking {
 		Session dbSession = SessionManager.currentSession();
 		Query query = dbSession
 				.createQuery("select p from salesmachine.hibernatedb.Product p where p.sku=:sku");
-
 		query.setString("sku", sku);
-		System.out.println(query.list());
 		Product p = (Product) query.uniqueResult();
 		return p.getQuantity();
 	}
@@ -596,7 +605,19 @@ public class HonestGreen extends Supplier implements HasTracking {
 					.createSQLQuery("select IS_RESTRICTED from VENDOR_CUSTOM_FEEDS_PRODUCTS where sku=:sku and VENDOR_CUSTOM_FEED_ID=(select VENDOR_CUSTOM_FEED_ID from VENDOR_CUSTOM_FEEDS where vendor_id=:vendorID)");
 			query.setString("sku", sku);
 			query.setInteger("vendorID", vendorID);
-			Object restrictedVal = query.uniqueResult();
+			Object restrictedVal = null;
+
+			try {
+				restrictedVal = query.uniqueResult();
+			} catch (NonUniqueResultException e) {
+				log.warn(
+						"VENDOR_CUSTOM_FEEDS_PRODUCTS contains more than one entries for SKU {}",
+						sku);
+
+				List restrictedList = query.list();
+				restrictedVal = restrictedList.get(0);
+			}
+
 			if (restrictedVal != null
 					&& ((BigDecimal) restrictedVal).intValue() == 1) {
 				log.debug(
@@ -700,8 +721,8 @@ public class HonestGreen extends Supplier implements HasTracking {
 			boolean isAmazon) throws ChannelCommunicationException,
 			ChannelOrderFormatException {
 
-		String uploadfilename = "HG_" + ftpDetails.getAccountNumber() + "_"
-				+ new Random().nextLong() + ".txt";
+		String uploadfilename = "/tmp/" + "HG_" + ftpDetails.getAccountNumber()
+				+ "_" + new Random().nextLong() + ".txt";
 		File f = new File(uploadfilename);
 		log.info("created file name for HG:{}", f.getName());
 		log.debug("Creating order file for OrderId:{}", order.getOrderId());
@@ -1071,7 +1092,8 @@ public class HonestGreen extends Supplier implements HasTracking {
 			log.info(s);
 			TrackingData orderTrackingResponse = (TrackingData) unmarshaller
 					.unmarshal(reader);
-			orderStatus.setStatus("Shipped");
+			orderStatus
+					.setStatus(OimConstants.OIM_SUPPLER_ORDER_STATUS_SHIPPED);
 			int perBoxQty = 1;
 			if (detail.getQuantity() == orderTrackingResponse.getPOTracking()
 					.size()) {
@@ -1515,7 +1537,8 @@ public class HonestGreen extends Supplier implements HasTracking {
 							TrackingData orderTrackingResponse = (TrackingData) unmarshaller
 									.unmarshal(reader);
 
-							orderStatus.setStatus("Shipped");
+							orderStatus
+									.setStatus(OimConstants.OIM_SUPPLER_ORDER_STATUS_SHIPPED);
 
 							log.info("PONUM# {}", purchaseOrder);
 
@@ -1742,7 +1765,8 @@ public class HonestGreen extends Supplier implements HasTracking {
 						TrackingData orderTrackingResponse = (TrackingData) unmarshaller
 								.unmarshal(reader);
 						OrderStatus orderStatus = new OrderStatus();
-						orderStatus.setStatus("Shipped");
+						orderStatus
+								.setStatus(OimConstants.OIM_SUPPLER_ORDER_STATUS_SHIPPED);
 						String purchaseOrder = orderTrackingResponse.getPO()
 								.getPurchaseOrder();
 						OimOrderDetails detail = (OimOrderDetails) session
