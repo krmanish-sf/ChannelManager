@@ -37,6 +37,7 @@ import javax.xml.bind.Unmarshaller;
 
 import org.apache.axis.encoding.Base64;
 import org.apache.axis.utils.ByteArrayOutputStream;
+import org.hibernate.Criteria;
 import org.hibernate.NonUniqueResultException;
 import org.hibernate.Query;
 import org.hibernate.Session;
@@ -48,6 +49,7 @@ import org.slf4j.LoggerFactory;
 import salesmachine.email.EmailUtil;
 import salesmachine.hibernatedb.OimChannels;
 import salesmachine.hibernatedb.OimOrderDetails;
+import salesmachine.hibernatedb.OimOrderDetailsMods;
 import salesmachine.hibernatedb.OimOrderProcessingRule;
 import salesmachine.hibernatedb.OimOrderStatuses;
 import salesmachine.hibernatedb.OimOrders;
@@ -129,7 +131,8 @@ public class HonestGreen extends Supplier implements HasTracking {
 
 	static {
 		try {
-			FileInputStream fis = new FileInputStream("orders.ser");
+			FileInputStream fis = new FileInputStream(
+					"orders.ser");
 			ObjectInputStream ois = new ObjectInputStream(fis);
 			PONUM_UNFI_MAP.putAll((Hashtable<String, String>) ois.readObject());
 			ois.close();
@@ -985,7 +988,8 @@ public class HonestGreen extends Supplier implements HasTracking {
 
 	private static synchronized void serializeMap() {
 		try {
-			FileOutputStream fs = new FileOutputStream("orders.ser");
+			FileOutputStream fs = new FileOutputStream(
+					"orders.ser");
 			ObjectOutputStream os = new ObjectOutputStream(fs);
 			os.writeObject(PONUM_UNFI_MAP);
 			os.close();
@@ -1695,6 +1699,8 @@ public class HonestGreen extends Supplier implements HasTracking {
 		ftpDetails1.setUserName("70757");
 		ftpDetails1.setPassword("vU!6akAB");
 		ftpList.add(ftpDetails1);
+		int count = 0;
+		
 		for (FtpDetails ftpDetails : ftpList) {
 
 			FTPClient ftp = new FTPClient();
@@ -1769,110 +1775,121 @@ public class HonestGreen extends Supplier implements HasTracking {
 								.setStatus(OimConstants.OIM_SUPPLER_ORDER_STATUS_SHIPPED);
 						String purchaseOrder = orderTrackingResponse.getPO()
 								.getPurchaseOrder();
-						OimOrderDetails detail = (OimOrderDetails) session
+						if (!purchaseOrder.startsWith("P")
+								|| !purchaseOrder.startsWith("H"))
+							count++;
+						String[] poArray = { purchaseOrder,
+								purchaseOrder.replaceFirst("P", ""),
+								purchaseOrder.replaceFirst("H", "") };
+						// OimOrderDetails detail = (OimOrderDetails) session
+						// .createCriteria(OimOrderDetails.class)
+						// .add(Restrictions.in("supplierOrderNumber",
+						// poArray)).uniqueResult();
+
+						List<OimOrderDetails> detailList = session
 								.createCriteria(OimOrderDetails.class)
-								.add(Restrictions.eq("supplierOrderNumber",
-										purchaseOrder)).uniqueResult();
-
-						if (detail == null
-								|| detail.getOimOrderStatuses().getStatusId()
-										.intValue() == OimConstants.ORDER_STATUS_SHIPPED
-										.intValue()
-								|| detail.getOimOrderStatuses().getStatusId()
-										.intValue() == OimConstants.ORDER_STATUS_MANUALLY_PROCESSED
-										.intValue())
-							continue;
-						log.info("PONUM# {}", purchaseOrder);
-						tx = session.beginTransaction();
-						int perBoxQty = 1;
-						if (detail.getQuantity() == orderTrackingResponse
-								.getPOTracking().size()) {
-							perBoxQty = 1;
-						} else {
-							if (detail.getQuantity()
-									% orderTrackingResponse.getPOTracking()
-											.size() == 0) {
-								perBoxQty = detail.getQuantity()
-										/ orderTrackingResponse.getPOTracking()
-												.size();
-							} else if (orderTrackingResponse.getPOTracking()
-									.size() % detail.getQuantity() == 0)
-								perBoxQty = orderTrackingResponse
-										.getPOTracking().size()
-										/ detail.getQuantity();
-						}
-						for (POTracking poTracking : orderTrackingResponse
-								.getPOTracking()) {
-							salesmachine.oim.suppliers.modal.TrackingData trackingData = new salesmachine.oim.suppliers.modal.TrackingData();
-							if ("A".equals(orderTrackingResponse.getPO()
-									.getShipVia())) {
-								trackingData.setCarrierCode("UPS");
-								trackingData.setCarrierName("UPS");
-								trackingData.setShippingMethod("Ground");
-
+								.add(Restrictions.in("supplierOrderNumber",
+										poArray)).list();
+						for (OimOrderDetails detail : detailList) {
+							//setSkuPrefixForOrders(ovs);
+							if(!detail.getSku().startsWith("HG"))
+								continue;
+							if (detail == null
+									|| detail.getOimOrderStatuses()
+											.getStatusId().intValue() == OimConstants.ORDER_STATUS_SHIPPED
+											.intValue()
+									|| detail.getOimOrderStatuses()
+											.getStatusId().intValue() == OimConstants.ORDER_STATUS_MANUALLY_PROCESSED
+											.intValue())
+								continue;
+							log.info("PONUM# {}", purchaseOrder);
+							tx = session.beginTransaction();
+							int perBoxQty = 1;
+							if (detail.getQuantity() == orderTrackingResponse
+									.getPOTracking().size()) {
+								perBoxQty = 1;
 							} else {
-								trackingData
-										.setCarrierName(orderTrackingResponse
-												.getPO().getShipVia());
+								if (detail.getQuantity()
+										% orderTrackingResponse.getPOTracking()
+												.size() == 0) {
+									perBoxQty = detail.getQuantity()
+											/ orderTrackingResponse
+													.getPOTracking().size();
+								} else if (orderTrackingResponse
+										.getPOTracking().size()
+										% detail.getQuantity() == 0)
+									perBoxQty = orderTrackingResponse
+											.getPOTracking().size()
+											/ detail.getQuantity();
 							}
-							trackingData.setShipperTrackingNumber(poTracking
-									.getTrackingNumber());
+							for (POTracking poTracking : orderTrackingResponse
+									.getPOTracking()) {
+								salesmachine.oim.suppliers.modal.TrackingData trackingData = new salesmachine.oim.suppliers.modal.TrackingData();
+								if ("A".equals(orderTrackingResponse.getPO()
+										.getShipVia())) {
+									trackingData.setCarrierCode("UPS");
+									trackingData.setCarrierName("UPS");
+									trackingData.setShippingMethod("Ground");
 
-							trackingData.setQuantity(perBoxQty);
-							// String dateshipped =
-							// parseShippingConfirmation.get(SHIP_DATE);
-							// FORMAT 08/11/2015 MM/DD/YYYY
-							// int year =
-							// Integer.parseInt(dateshipped.substring(6,
-							// 10));
-							// int month =
-							// Integer.parseInt(dateshipped.substring(0,
-							// 2));
-							// int dayOfMonth =
-							// Integer.parseInt(dateshipped.substring(3,
-							// 5));
-							trackingData.setShipDate(orderTrackingResponse
-									.getPO().getDeliveryDate());
-							orderStatus.addTrackingData(trackingData);
-						}
-						log.info("Tracking details: {}", orderStatus);
-						detail.setSupplierOrderStatus(orderStatus.toString());
-						if (orderStatus.isShipped())
-							detail.setOimOrderStatuses(new OimOrderStatuses(
-									OimConstants.ORDER_STATUS_SHIPPED));
-						session.update(detail);
-						/*
-						 * synchronized (iOrderImport) {
-						 * iOrderImport.updateStoreOrder(detail, orderStatus); }
-						 */
-						tx.commit();
-						for (salesmachine.oim.suppliers.modal.TrackingData td : orderStatus
-								.getTrackingData()) {
-							Message message = new Message();
-							message.setMessageID(BigInteger.valueOf(msgId++));
-							envelope.getMessage().add(message);
-							OrderFulfillment fulfillment = new OrderFulfillment();
-							message.setOrderFulfillment(fulfillment);
-							fulfillment.setAmazonOrderID(detail.getOimOrders()
-									.getStoreOrderId());
-							fulfillment.setMerchantFulfillmentID(BigInteger
-									.valueOf(detail.getOimOrders().getOrderId()
-											.longValue()));
-							fulfillment.setFulfillmentDate(td.getShipDate());
-							Item i = new Item();
-							i.setAmazonOrderItemCode(detail
-									.getStoreOrderItemId());
-							i.setQuantity(BigInteger.valueOf(td.getQuantity()));
-							i.setMerchantFulfillmentItemID(BigInteger
-									.valueOf(detail.getDetailId()));
-							FulfillmentData value = new FulfillmentData();
-							// value.setCarrierCode(orderStatus.getTrackingData().getCarrierCode());
-							value.setCarrierName(td.getCarrierName());
-							value.setShipperTrackingNumber(td
-									.getShipperTrackingNumber());
-							value.setShippingMethod(td.getShippingMethod());
-							fulfillment.getItem().add(i);
-							fulfillment.setFulfillmentData(value);
+								} else {
+									trackingData
+											.setCarrierName(orderTrackingResponse
+													.getPO().getShipVia());
+								}
+								trackingData
+										.setShipperTrackingNumber(poTracking
+												.getTrackingNumber());
+
+								trackingData.setQuantity(perBoxQty);
+								trackingData.setShipDate(orderTrackingResponse
+										.getPO().getDeliveryDate());
+								orderStatus.addTrackingData(trackingData);
+							}
+							log.info("Tracking details: {}", orderStatus);
+							detail.setSupplierOrderStatus(orderStatus
+									.toString());
+							if (orderStatus.isShipped())
+								detail.setOimOrderStatuses(new OimOrderStatuses(
+										OimConstants.ORDER_STATUS_SHIPPED));
+							session.update(detail);
+
+							/*
+							 * synchronized (iOrderImport) {
+							 * iOrderImport.updateStoreOrder(detail,
+							 * orderStatus); }
+							 */
+							tx.commit();
+							for (salesmachine.oim.suppliers.modal.TrackingData td : orderStatus
+									.getTrackingData()) {
+								Message message = new Message();
+								message.setMessageID(BigInteger
+										.valueOf(msgId++));
+								envelope.getMessage().add(message);
+								OrderFulfillment fulfillment = new OrderFulfillment();
+								message.setOrderFulfillment(fulfillment);
+								fulfillment.setAmazonOrderID(detail
+										.getOimOrders().getStoreOrderId());
+								fulfillment.setMerchantFulfillmentID(BigInteger
+										.valueOf(detail.getOimOrders()
+												.getOrderId().longValue()));
+								fulfillment
+										.setFulfillmentDate(td.getShipDate());
+								Item i = new Item();
+								i.setAmazonOrderItemCode(detail
+										.getStoreOrderItemId());
+								i.setQuantity(BigInteger.valueOf(td
+										.getQuantity()));
+								i.setMerchantFulfillmentItemID(BigInteger
+										.valueOf(detail.getDetailId()));
+								FulfillmentData value = new FulfillmentData();
+								// value.setCarrierCode(orderStatus.getTrackingData().getCarrierCode());
+								value.setCarrierName(td.getCarrierName());
+								value.setShipperTrackingNumber(td
+										.getShipperTrackingNumber());
+								value.setShippingMethod(td.getShippingMethod());
+								fulfillment.getItem().add(i);
+								fulfillment.setFulfillmentData(value);
+							}
 						}
 					} catch (Exception e) {
 						if (tx != null && tx.isActive()) {
@@ -1922,6 +1939,9 @@ public class HonestGreen extends Supplier implements HasTracking {
 				log.error(e.getMessage());
 			}
 		}
+		log.info(
+				"Total Products which have not P or H prefix in tracking directory - {}",
+				count);
 		serializeMap();
 	}
 }
