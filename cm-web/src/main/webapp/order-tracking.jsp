@@ -134,7 +134,7 @@
 														+ "</span>"
 														+ new Date(
 																order.orderTm)
-																.toLocaleDateString();
+																.toLocaleString();
 											}
 										},
 										{

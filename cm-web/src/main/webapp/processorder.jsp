@@ -146,7 +146,7 @@
 															<th class="hidden-xs sorting" role="columnheader"
 																tabindex="0" aria-controls="tableprocesschannel"
 																rowspan="1" colspan="1" style="width: 37px;"
-																aria-label="Date: activate to sort column ascending">Date</th>
+																aria-label="Date: activate to sort column ascending">Order Date</th>
 															<th class="sorting" role="columnheader" tabindex="0"
 																aria-controls="tableprocesschannel" rowspan="1"
 																colspan="1" style="width: 67px;"
@@ -1009,7 +1009,7 @@
 													+ order.orderTm
 													+ "</span>"
 													+ new Date(order.orderTm)
-															.toLocaleDateString();
+															.toLocaleString();
 										}
 									},
 									{

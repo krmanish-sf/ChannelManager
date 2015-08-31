@@ -115,18 +115,19 @@ public class ReportRepositoryDB extends RepositoryBase implements
 		long start = m_startDate.getTime();
 		long end = m_endDate.getTime();
 		long days = (end - start) / (24 * 60 * 60 * 1000);
-		String dateFormat = days < 4 ? "'MON D hhP.M.'" : "'YYYY-MM-DD'";
-
+		String trimLevel = days < 4 ? "'HH24'" : "'dd'";
+		String dateFormat = days < 4 ? "'MON dd hhPM'" : "'YYYY-MM-DD'";
 		StringBuilder sb = new StringBuilder();
-		sb.append("select to_char(d.insertion_tm," + dateFormat
-				+ "), sum(quantity*sale_price) from oim_order_details d");
+		sb.append("select to_char(trunc(d.insertion_tm," + trimLevel + "),");
+		sb.append(dateFormat);
+		sb.append("), sum(quantity*sale_price) from oim_order_details d");
 		sb.append(" inner join oim_orders o on d.order_id=o.order_id");
 		sb.append(" inner join oim_order_batches b on b.batch_id = o.batch_id");
 		sb.append(" inner join oim_channels c on c.channel_id = b.channel_id");
 		sb.append(" where c.vendor_id =:vendorId");
 		sb.append(" and d.insertion_tm between :startDate and :endDate");
-		sb.append(" group by to_char(d.insertion_tm," + dateFormat
-				+ ") order by to_char(d.insertion_tm," + dateFormat + ")");
+		sb.append(" group by trunc(d.insertion_tm," + trimLevel
+				+ ") order by trunc(d.insertion_tm," + trimLevel + ")");
 
 		SQLQuery query = dbSession.createSQLQuery(sb.toString());
 		query.setInteger("vendorId", vendorId);
@@ -1076,10 +1077,11 @@ public class ReportRepositoryDB extends RepositoryBase implements
 	}
 
 	@Override
-	public List<OrderBatch> getChannelPullHistory(Date startDate, Date endDate) {
+	public List<OrderBatch> getChannelPullHistory(Date startDate, Date endDate,
+			int firstResult, int pageSize) {
 		Session dbSession = SessionManager.currentSession();
 		Criteria criteria = dbSession.createCriteria(OimOrderBatches.class)
-				// TODO uncomment it .add(Restrictions.isNotNull("description"))
+				.add(Restrictions.isNotNull("description"))
 				.add(Restrictions.ge("insertionTm", startDate))
 				.add(Restrictions.le("insertionTm", endDate));
 		List<OrderBatch> batchesHistory = new ArrayList<OrderBatch>();
