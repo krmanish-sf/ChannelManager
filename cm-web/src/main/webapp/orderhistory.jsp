@@ -154,7 +154,7 @@
 											class="icon-sort-by-order-alt icon-2x blue visible-xs"></i><span
 											class="hidden-xs visible-sm">Order Id</span></th>
 												<th>Order Status</th>
-													<th class="hidden-xs sorting" role="columnheader">Date</th>
+													<th class="hidden-xs sorting" role="columnheader">Order Date</th>
 													<th class="sorting" role="columnheader"><i
 											class="icon-home icon-2x blue visible-xs"></i><span
 											class="hidden-xs">Customer</span></th>
@@ -861,7 +861,7 @@
 														+ "</span>"
 														+ new Date(
 																order.orderTm)
-																.toLocaleDateString();
+																.toLocaleString();
 											}
 										},
 										{
