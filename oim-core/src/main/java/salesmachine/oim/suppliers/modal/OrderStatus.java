@@ -37,6 +37,6 @@ public class OrderStatus {
 	@Override
 	public String toString() {
 		return isShipped ? String.format("%s %s", status, trackingData)
-				: String.format("%s ", status);
+				: String.format("%s", status);
 	}
 }
