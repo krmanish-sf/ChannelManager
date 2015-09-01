@@ -18,6 +18,7 @@ import java.nio.file.Paths;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -39,50 +40,111 @@ public class OrderTest {
 	private static final String ASCII = "ASCII";
 	private static Map<String, String> orderData = new HashMap<String, String>();
 
-	private static List<PHIHVAData> phiHvaDataList = new ArrayList<PHIHVAData>();
+	private static List<PHIHVAData> phiDataList = new ArrayList<PHIHVAData>();
+	private static List<PHIHVAData> hvaDataList = new ArrayList<PHIHVAData>();
+	private static Set<PHIHVAData> phiHvaDataSet = new HashSet<PHIHVAData>();
+
 	private static String startDate = "";// 08/18/2015
 	private static String endDate = "";// MM/DD/YYYY
-	private static final String phiConfirmPath = "/home/manish-kumar/Desktop/report/evox/confirmations/";
-	private static final String phiShippingPath = "/home/manish-kumar/Desktop/report/evox/shipping/";
-	private static final String phiTrackingPath = "/home/manish-kumar/Desktop/report/evox/tracking/";
-	
-	private static final String hvaConfirmPath = "/home/manish-kumar/Desktop/report/70757/confirmations/";
-	private static final String hvaShippingPath = "/home/manish-kumar/Desktop/report/70757/shipping/";
-	private static final String hvaTrackingPath = "/home/manish-kumar/Desktop/report/70757/tracking/";
+	private static final String phiConfirmPath = "/home/staging/cm-evoxOrders/report/evox/confirmations/";
+	private static final String phiShippingPath = "/home/staging/cm-evoxOrders/report/evox/shipping/";
+	private static final String phiTrackingPath = "/home/staging/cm-evoxOrders/report/evox/tracking/";
+
+	private static final String hvaConfirmPath = "/home/staging/cm-evoxOrders/report/70757/confirmations/";
+	private static final String hvaShippingPath = "/home/staging/cm-evoxOrders/report/70757/shipping/";
+	private static final String hvaTrackingPath = "/home/staging/cm-evoxOrders/report/70757/tracking/";
+	private static int phiConfirmationDownloadCount = 0;
+	private static int phiShippingCount = 0;
+	private static int phiTrackingCount = 0;
+	private static int hvaConfirmationDownloadCount = 0;
+	private static int hvaShippingCount = 0;
+	private static int hvaTrackingCount = 0;
 
 	public static void main(String[] args) throws IOException, FTPException,
 			ParseException {
+		long processStartTime = System.currentTimeMillis();
 		if (args.length == 2) {
 			startDate = args[0];
 			endDate = args[1];
 		}
+		long startTime = System.currentTimeMillis();
+		System.out.println("started downloading files from ftp at --"
+				+ startTime);
 		downloadPhiData();
 		downloadHvaData();
+		Long endTime = System.currentTimeMillis();
+		long totalTime = endTime - startTime;
+		System.out.println("total time taken in downloding files --"
+				+ totalTime);
 		getDataForPHI();
 		getDataForHVA();
-		File file =new File("/home/manish-kumar/Desktop/report/orderStatusReport.csv");
+		File file = new File(
+				"/home/staging/cm-evoxOrders/report/orderStatusReport.csv");
 		FileWriter fw = new FileWriter(file);
 		fw.write("STORE_ORDER_ITEM_ID, DETAIL_ID, SUPPLIER_ORDER_NUMBER, STATUS_VALUE, insertion_tm, processing_tm, isConfirmed, isShipped, isTracked, location\n");
-		for (PHIHVAData phihvaData : phiHvaDataList) {
-			fw.write(phihvaData.toString());
+		for (PHIHVAData hvaData : hvaDataList) {
+			int index = phiDataList.indexOf(hvaData);
+			if (index != -1) {
+				PHIHVAData data2 = phiDataList.get(index);
+				if (data2.equals(hvaData)) {
+					if ((data2.isConfirmed() || data2.isShipped() || data2
+							.isTracked())) {
+						phiHvaDataSet.add(data2);
+					} else
+						phiHvaDataSet.add(hvaData);
+				}
+			} else {
+				phiHvaDataSet.add(hvaData);
+			}
+		}
+		phiHvaDataSet.addAll(phiDataList);
+
+		for (PHIHVAData data : phiHvaDataSet) {
+			fw.write(data.toString());
 		}
 		fw.close();
 		sendEmail(file.getName());
+		long processEndTime = System.currentTimeMillis();
+		long totalProcessTime = processEndTime - processStartTime;
+		System.out
+				.println("total files downloaded from PHI confirmation directory --"
+						+ phiConfirmationDownloadCount);
+		System.out
+				.println("total files downloaded from PHI confirmation directory --"
+						+ phiShippingCount);
+		System.out
+				.println("total files downloaded from PHI confirmation directory --"
+						+ phiTrackingCount);
+		System.out
+				.println("total files downloaded from PHI confirmation directory --"
+						+ hvaConfirmationDownloadCount);
+		System.out
+				.println("total files downloaded from PHI confirmation directory --"
+						+ hvaShippingCount);
+		System.out
+				.println("total files downloaded from PHI confirmation directory --"
+						+ hvaTrackingCount);
+		System.out
+				.println("total time taken in this run --" + totalProcessTime);
+		System.out.println("Process complete...");
 	}
 
-	private static void sendEmail(String fileName){
+	private static void sendEmail(String fileName) {
 		String emailBody = "Please find attached order status file.";
 		String emailSubject = null;
-		if(!StringHandle.removeNull(startDate).equals("") && !StringHandle.removeNull(endDate).equals("")){
-			emailSubject = "Evox Order status for "+startDate+" to "+endDate;
-		}
-		else
+		if (!StringHandle.removeNull(startDate).equals("")
+				&& !StringHandle.removeNull(endDate).equals("")) {
+			emailSubject = "Evox Order status for " + startDate + " to "
+					+ endDate;
+		} else
 			emailSubject = "Evox Order status for last 2 days";
-		
-		EmailUtil.sendEmailWithAttachment("orders@inventorysource.com",
-				"support@inventorysource.com", "", emailSubject, emailBody,
-				fileName);
+
+		EmailUtil.sendEmailWithAttachment("manish@inventorysource.com",
+				"manish@inventorysource.com", "abheeshek@inventorysource.com",
+				emailSubject, emailBody, fileName);
+		System.out.println("Email sent successfully");
 	}
+
 	private static void downloadHvaData() {
 
 		System.out.println("downloading files from HVA location...");
@@ -101,7 +163,8 @@ public class OrderTest {
 				if (ff.isDir()) {
 					String dirName = ff.getName() + "/";
 					if (ff.getName().startsWith("confirmations")) {
-						System.out.println("downloading files from HVA confirmations.......");
+						System.out
+								.println("downloading files from HVA confirmations.......");
 						FTPFile[] confirmedFileList = ftp.dirDetails(fileDir
 								+ dirName);
 						for (int j = 0; j < confirmedFileList.length; j++) {
@@ -109,13 +172,16 @@ public class OrderTest {
 									.getName();
 							System.out.println("Getting file : " + fileNme);
 							File tmp = new File(hvaConfirmPath + fileNme);
-							if (!tmp.exists())
+							if (!tmp.exists()) {
 								ftp.get(hvaConfirmPath + fileNme, fileDir
 										+ dirName + fileNme);
+								hvaConfirmationDownloadCount++;
+							}
 						}
 					}
 					if (ff.getName().startsWith("shipping")) {
-						System.out.println("downloading files from HVA shipping.......");
+						System.out
+								.println("downloading files from HVA shipping.......");
 						FTPFile[] confirmedFileList = ftp.dirDetails(fileDir
 								+ dirName);
 						for (int j = 0; j < confirmedFileList.length; j++) {
@@ -123,13 +189,16 @@ public class OrderTest {
 									.getName();
 							System.out.println("Getting file : " + fileNme);
 							File tmp = new File(hvaShippingPath + fileNme);
-							if (!tmp.exists())
+							if (!tmp.exists()) {
 								ftp.get(hvaShippingPath + fileNme, fileDir
 										+ dirName + fileNme);
+								hvaShippingCount++;
+							}
 						}
 					}
 					if (ff.getName().startsWith("tracking")) {
-						System.out.println("downloading files from HVA tracking.......");
+						System.out
+								.println("downloading files from HVA tracking.......");
 						FTPFile[] confirmedFileList = ftp.dirDetails(fileDir
 								+ dirName);
 						for (int j = 0; j < confirmedFileList.length; j++) {
@@ -137,9 +206,11 @@ public class OrderTest {
 									.getName();
 							System.out.println("Getting file : " + fileNme);
 							File tmp = new File(hvaTrackingPath + fileNme);
-							if (!tmp.exists())
+							if (!tmp.exists()) {
 								ftp.get(hvaTrackingPath + fileNme, fileDir
 										+ dirName + fileNme);
+								hvaTrackingCount++;
+							}
 						}
 					}
 				}
@@ -149,8 +220,6 @@ public class OrderTest {
 			e.printStackTrace();
 		}
 
-	
-		
 	}
 
 	private static void downloadPhiData() {
@@ -165,14 +234,16 @@ public class OrderTest {
 			FTPFile[] ftpFiles = ftp.dirDetails(fileDir);
 			for (int i = 0; i < ftpFiles.length; i++) {
 				FTPFile ff = ftpFiles[i];
-				if(ff.getName().startsWith(".")|| ff.getName().startsWith("..") )
+				if (ff.getName().startsWith(".")
+						|| ff.getName().startsWith(".."))
 					continue;
 				if (ff.isDir()) {
 					String dirName = ff.getName() + "/";
-					System.out.println("dirName -->"+dirName);
-				
+					System.out.println("dirName -->" + dirName);
+
 					if (ff.getName().startsWith("confirmations")) {
-						System.out.println("downloading files from PHI confirmations.......");
+						System.out
+								.println("downloading files from PHI confirmations.......");
 						FTPFile[] confirmedFileList = ftp.dirDetails(fileDir
 								+ dirName);
 						for (int j = 0; j < confirmedFileList.length; j++) {
@@ -180,14 +251,17 @@ public class OrderTest {
 									.getName();
 							System.out.println("Getting file : " + fileNme);
 							File tmp = new File(phiConfirmPath + fileNme);
-							if (!tmp.exists())
+							if (!tmp.exists()) {
 								ftp.get(phiConfirmPath + fileNme, fileDir
 										+ dirName + fileNme);
+								phiConfirmationDownloadCount++;
+							}
 						}
-						
+
 					}
 					if (ff.getName().startsWith("shipping")) {
-						System.out.println("downloading files from PHI shipping.......");
+						System.out
+								.println("downloading files from PHI shipping.......");
 						FTPFile[] confirmedFileList = ftp.dirDetails(fileDir
 								+ dirName);
 						for (int j = 0; j < confirmedFileList.length; j++) {
@@ -195,13 +269,16 @@ public class OrderTest {
 									.getName();
 							System.out.println("Getting file : " + fileNme);
 							File tmp = new File(phiShippingPath + fileNme);
-							if (!tmp.exists())
+							if (!tmp.exists()) {
 								ftp.get(phiShippingPath + fileNme, fileDir
 										+ dirName + fileNme);
+								phiShippingCount++;
+							}
 						}
 					}
 					if (ff.getName().startsWith("tracking")) {
-						System.out.println("downloading files from PHI tracking.......");
+						System.out
+								.println("downloading files from PHI tracking.......");
 						FTPFile[] confirmedFileList = ftp.dirDetails(fileDir
 								+ dirName);
 						for (int j = 0; j < confirmedFileList.length; j++) {
@@ -209,9 +286,11 @@ public class OrderTest {
 									.getName();
 							System.out.println("Getting file : " + fileNme);
 							File tmp = new File(phiTrackingPath + fileNme);
-							if (!tmp.exists())
+							if (!tmp.exists()) {
 								ftp.get(phiTrackingPath + fileNme, fileDir
 										+ dirName + fileNme);
+								phiTrackingCount++;
+							}
 						}
 					}
 				}
@@ -253,7 +332,7 @@ public class OrderTest {
 				&& !StringHandle.removeNull(endDate).equals("")) {
 			query = session
 					.createSQLQuery("select STORE_ORDER_ITEM_ID, DETAIL_ID, SUPPLIER_ORDER_NUMBER, os.STATUS_VALUE , to_char(INSERTION_TM, 'DD-MON-YYYY'), to_char(PROCESSING_TM, 'DD-MON-YYYY') from "
-							+ "OIM_ORDER_DETAILS od inner join OIM_ORDER_STATUSES os on os.STATUS_ID=od.STATUS_ID where SUPPLIER_ORDER_NUMBER like 'P%' ORDER_ID "
+							+ "OIM_ORDER_DETAILS od inner join OIM_ORDER_STATUSES os on os.STATUS_ID=od.STATUS_ID where ORDER_ID "
 							+ "in (select ORDER_ID from OIM_ORDERS where BATCH_ID in (select BATCH_ID from OIM_ORDER_BATCHES where "
 							+ "CHANNEL_ID = 2941 and CREATION_TM > TO_DATE('"
 							+ startDate
@@ -264,7 +343,7 @@ public class OrderTest {
 		} else {
 			query = session
 					.createSQLQuery("select STORE_ORDER_ITEM_ID, DETAIL_ID, SUPPLIER_ORDER_NUMBER, os.STATUS_VALUE , to_char(INSERTION_TM, 'DD-MON-YYYY'), to_char(PROCESSING_TM, 'DD-MON-YYYY') from "
-							+ "OIM_ORDER_DETAILS od inner join OIM_ORDER_STATUSES os on os.STATUS_ID=od.STATUS_ID where SUPPLIER_ORDER_NUMBER like 'P%' ORDER_ID "
+							+ "OIM_ORDER_DETAILS od inner join OIM_ORDER_STATUSES os on os.STATUS_ID=od.STATUS_ID where ORDER_ID "
 							+ "in (select ORDER_ID from OIM_ORDERS where BATCH_ID in (select BATCH_ID from OIM_ORDER_BATCHES where "
 							+ "CHANNEL_ID = 2941 and CREATION_TM >=TRUNC( sysdate-2) and (CREATION_TM)<=TRUNC( sysdate)))");
 		}
@@ -279,20 +358,21 @@ public class OrderTest {
 			String STATUS_VALUE = (String) values[3];
 			String insertion_tm = (String) values[4];
 			String processing_tm = (String) values[5];
-			String isConfirmed = orderData.containsKey(SUPPLIER_ORDER_NUMBER) ? "true"
-					: "false";
+			boolean isConfirmed = orderData.containsKey(SUPPLIER_ORDER_NUMBER) ? true
+					: false;
 
-			String isShipped = shippingNames.contains("40968.O"
-					+ orderData.get(SUPPLIER_ORDER_NUMBER) + "A.txt") ? "true"
-					: "false";
-			String isTracked = trackingNames.contains("40968.T"
-					+ orderData.get(SUPPLIER_ORDER_NUMBER) + "S.txt") ? "true"
-					: "false";
+			boolean isShipped = shippingNames.contains("40968.O"
+					+ orderData.get(SUPPLIER_ORDER_NUMBER) + "A.txt") ? true
+					: false;
+			boolean isTracked = trackingNames.contains("40968.T"
+					+ orderData.get(SUPPLIER_ORDER_NUMBER) + "S.txt") ? true
+					: false;
+
 			PHIHVAData phihvaData = new PHIHVAData(STORE_ORDER_ITEM_ID,
 					DETAIL_ID, SUPPLIER_ORDER_NUMBER, STATUS_VALUE,
 					insertion_tm, processing_tm, isConfirmed, isShipped,
 					isTracked, "PHI");
-			phiHvaDataList.add(phihvaData);
+			phiDataList.add(phihvaData);
 		}
 		orderData.clear();
 	}
@@ -327,7 +407,7 @@ public class OrderTest {
 				&& !StringHandle.removeNull(endDate).equals("")) {
 			query = session
 					.createSQLQuery("select STORE_ORDER_ITEM_ID, DETAIL_ID, SUPPLIER_ORDER_NUMBER, os.STATUS_VALUE , to_char(INSERTION_TM, 'DD-MON-YYYY'), to_char(PROCESSING_TM, 'DD-MON-YYYY') from "
-							+ "OIM_ORDER_DETAILS od inner join OIM_ORDER_STATUSES os on os.STATUS_ID=od.STATUS_ID where SUPPLIER_ORDER_NUMBER like 'H%' ORDER_ID "
+							+ "OIM_ORDER_DETAILS od inner join OIM_ORDER_STATUSES os on os.STATUS_ID=od.STATUS_ID where ORDER_ID "
 							+ "in (select ORDER_ID from OIM_ORDERS where BATCH_ID in (select BATCH_ID from OIM_ORDER_BATCHES where "
 							+ "CHANNEL_ID = 2941 and CREATION_TM > TO_DATE('"
 							+ startDate
@@ -338,7 +418,7 @@ public class OrderTest {
 		} else {
 			query = session
 					.createSQLQuery("select STORE_ORDER_ITEM_ID, DETAIL_ID, SUPPLIER_ORDER_NUMBER, os.STATUS_VALUE , to_char(INSERTION_TM, 'DD-MON-YYYY'), to_char(PROCESSING_TM, 'DD-MON-YYYY') from "
-							+ "OIM_ORDER_DETAILS od inner join OIM_ORDER_STATUSES os on os.STATUS_ID=od.STATUS_ID where SUPPLIER_ORDER_NUMBER like 'H%' ORDER_ID "
+							+ "OIM_ORDER_DETAILS od inner join OIM_ORDER_STATUSES os on os.STATUS_ID=od.STATUS_ID where ORDER_ID "
 							+ "in (select ORDER_ID from OIM_ORDERS where BATCH_ID in (select BATCH_ID from OIM_ORDER_BATCHES where "
 							+ "CHANNEL_ID = 2941 and CREATION_TM >=TRUNC( sysdate-2) and (CREATION_TM)<=TRUNC( sysdate)))");
 		}
@@ -353,20 +433,21 @@ public class OrderTest {
 			String STATUS_VALUE = (String) values[3];
 			String insertion_tm = (String) values[4];
 			String processing_tm = (String) values[5];
-			String isConfirmed = orderData.containsKey(SUPPLIER_ORDER_NUMBER) ? "true"
-					: "false";
+			boolean isConfirmed = orderData.containsKey(SUPPLIER_ORDER_NUMBER) ? true
+					: false;
 
-			String isShipped = shippingNames.contains("70757.O"
-					+ orderData.get(SUPPLIER_ORDER_NUMBER) + "A.txt") ? "true"
-					: "false";
-			String isTracked = trackingNames.contains("70757.T"
-					+ orderData.get(SUPPLIER_ORDER_NUMBER) + "S.txt") ? "true"
-					: "false";
+			boolean isShipped = shippingNames.contains("70757.O"
+					+ orderData.get(SUPPLIER_ORDER_NUMBER) + "A.txt") ? true
+					: false;
+			boolean isTracked = trackingNames.contains("70757.T"
+					+ orderData.get(SUPPLIER_ORDER_NUMBER) + "S.txt") ? true
+					: false;
 			PHIHVAData phihvaData = new PHIHVAData(STORE_ORDER_ITEM_ID,
 					DETAIL_ID, SUPPLIER_ORDER_NUMBER, STATUS_VALUE,
 					insertion_tm, processing_tm, isConfirmed, isShipped,
 					isTracked, "HVA");
-			phiHvaDataList.add(phihvaData);
+
+			hvaDataList.add(phihvaData);
 		}
 		orderData.clear();
 	}

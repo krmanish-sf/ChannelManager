@@ -1,18 +1,22 @@
 package salesmachine.oim.suppliers;
-public class PHIHVAData implements Comparable<PHIHVAData> {
+
+public class PHIHVAData {
+	private final String pattern = "%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n";
 	private String STORE_ORDER_ITEM_ID;
 	private String DETAIL_ID;
 	private String SUPPLIER_ORDER_NUMBER;
 	private String STATUS_VALUE;
 	private String insertion_tm;
 	private String processing_tm;
-	private String isConfirmed;
-	private String isShipped;
-	private String isTracked;
+	private boolean isConfirmed;
+	private boolean isShipped;
+	private boolean isTracked;
 	private String location = "";
 
-	public PHIHVAData(String sTORE_ORDER_ITEM_ID, String dETAIL_ID, String sUPPLIER_ORDER_NUMBER, String sTATUS_VALUE, String insertion_tm,
-			String processing_tm, String isConfirmed, String isShipped, String isTracked) {
+	public PHIHVAData(String sTORE_ORDER_ITEM_ID, String dETAIL_ID,
+			String sUPPLIER_ORDER_NUMBER, String sTATUS_VALUE,
+			String insertion_tm, String processing_tm, boolean isConfirmed,
+			boolean isShipped, boolean isTracked) {
 		super();
 		STORE_ORDER_ITEM_ID = sTORE_ORDER_ITEM_ID;
 		DETAIL_ID = dETAIL_ID;
@@ -25,8 +29,10 @@ public class PHIHVAData implements Comparable<PHIHVAData> {
 		this.isTracked = isTracked;
 	}
 
-	public PHIHVAData(String sTORE_ORDER_ITEM_ID, String dETAIL_ID, String sUPPLIER_ORDER_NUMBER, String sTATUS_VALUE, String insertion_tm,
-			String processing_tm, String isConfirmed, String isShipped, String isTracked, String location) {
+	public PHIHVAData(String sTORE_ORDER_ITEM_ID, String dETAIL_ID,
+			String sUPPLIER_ORDER_NUMBER, String sTATUS_VALUE,
+			String insertion_tm, String processing_tm, boolean isConfirmed,
+			boolean isShipped, boolean isTracked, String location) {
 		super();
 		STORE_ORDER_ITEM_ID = sTORE_ORDER_ITEM_ID;
 		DETAIL_ID = dETAIL_ID;
@@ -39,8 +45,6 @@ public class PHIHVAData implements Comparable<PHIHVAData> {
 		this.isTracked = isTracked;
 		this.location = location;
 	}
-
-
 
 	public String getSTORE_ORDER_ITEM_ID() {
 		return STORE_ORDER_ITEM_ID;
@@ -90,28 +94,32 @@ public class PHIHVAData implements Comparable<PHIHVAData> {
 		this.processing_tm = processing_tm;
 	}
 
-	public String getIsConfirmed() {
+	public boolean isConfirmed() {
 		return isConfirmed;
 	}
 
-	public void setIsConfirmed(String isConfirmed) {
+	public void setConfirmed(boolean isConfirmed) {
 		this.isConfirmed = isConfirmed;
 	}
 
-	public String getIsShipped() {
+	public boolean isShipped() {
 		return isShipped;
 	}
 
-	public void setIsShipped(String isShipped) {
+	public void setShipped(boolean isShipped) {
 		this.isShipped = isShipped;
 	}
 
-	public String getIsTracked() {
+	public boolean isTracked() {
 		return isTracked;
 	}
 
-	public void setIsTracked(String isTracked) {
+	public void setTracked(boolean isTracked) {
 		this.isTracked = isTracked;
+	}
+
+	public String getLocation() {
+		return location;
 	}
 
 	public String isLocation() {
@@ -123,14 +131,23 @@ public class PHIHVAData implements Comparable<PHIHVAData> {
 	}
 
 	@Override
-	public String toString() {
-		return STORE_ORDER_ITEM_ID + "," + DETAIL_ID + "," + SUPPLIER_ORDER_NUMBER + "," + STATUS_VALUE + "," + insertion_tm + "," + processing_tm
-				+ "," + isConfirmed + "," + isShipped + "," + isTracked + "," + location + "\n";
+	public boolean equals(Object obj) {
+		if (!(obj instanceof PHIHVAData))
+			return false;
+		return this.DETAIL_ID
+				.equals(((PHIHVAData) obj).DETAIL_ID);
 	}
 
 	@Override
-	public int compareTo(PHIHVAData o) {
-		return o.location.compareTo(this.location);
+	public int hashCode() {
+		return this.DETAIL_ID.hashCode();
+	}
+
+	@Override
+	public String toString() {
+		return String.format(pattern, STORE_ORDER_ITEM_ID, DETAIL_ID,
+				SUPPLIER_ORDER_NUMBER, STATUS_VALUE, insertion_tm,
+				processing_tm, isConfirmed, isShipped, isTracked, location);
 	}
 
 }
