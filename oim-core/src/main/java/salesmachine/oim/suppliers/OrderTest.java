@@ -27,6 +27,7 @@ import java.util.TreeSet;
 import org.hibernate.Query;
 import org.hibernate.Session;
 
+import salesmachine.email.EmailUtil;
 import salesmachine.hibernatehelper.SessionManager;
 import salesmachine.util.StringHandle;
 
@@ -59,17 +60,32 @@ public class OrderTest {
 		downloadHvaData();
 		getDataForPHI();
 		getDataForHVA();
-		FileWriter fw = new FileWriter("/home/manish-kumar/Desktop/report/orderStatusReport.csv");
+		File file =new File("/home/manish-kumar/Desktop/report/orderStatusReport.csv");
+		FileWriter fw = new FileWriter(file);
 		fw.write("STORE_ORDER_ITEM_ID, DETAIL_ID, SUPPLIER_ORDER_NUMBER, STATUS_VALUE, insertion_tm, processing_tm, isConfirmed, isShipped, isTracked, location\n");
 		for (PHIHVAData phihvaData : phiHvaDataList) {
 			fw.write(phihvaData.toString());
 		}
 		fw.close();
+		sendEmail(file.getName());
 	}
 
+	private static void sendEmail(String fileName){
+		String emailBody = "Please find attached order status file.";
+		String emailSubject = null;
+		if(!StringHandle.removeNull(startDate).equals("") && !StringHandle.removeNull(endDate).equals("")){
+			emailSubject = "Evox Order status for "+startDate+" to "+endDate;
+		}
+		else
+			emailSubject = "Evox Order status for last 2 days";
+		
+		EmailUtil.sendEmailWithAttachment("orders@inventorysource.com",
+				"support@inventorysource.com", "", emailSubject, emailBody,
+				fileName);
+	}
 	private static void downloadHvaData() {
 
-		System.out.println("downloading files from PHI location...");
+		System.out.println("downloading files from HVA location...");
 		try {
 			FTPClient ftp = new FTPClient();
 			System.out.println(1);
@@ -92,9 +108,9 @@ public class OrderTest {
 							String fileNme = ((FTPFile) confirmedFileList[j])
 									.getName();
 							System.out.println("Getting file : " + fileNme);
-							File tmp = new File(phiConfirmPath + fileNme);
+							File tmp = new File(hvaConfirmPath + fileNme);
 							if (!tmp.exists())
-								ftp.get(phiConfirmPath + fileNme, fileDir
+								ftp.get(hvaConfirmPath + fileNme, fileDir
 										+ dirName + fileNme);
 						}
 					}
@@ -106,9 +122,9 @@ public class OrderTest {
 							String fileNme = ((FTPFile) confirmedFileList[j])
 									.getName();
 							System.out.println("Getting file : " + fileNme);
-							File tmp = new File(phiShippingPath + fileNme);
+							File tmp = new File(hvaShippingPath + fileNme);
 							if (!tmp.exists())
-								ftp.get(phiShippingPath + fileNme, fileDir
+								ftp.get(hvaShippingPath + fileNme, fileDir
 										+ dirName + fileNme);
 						}
 					}
@@ -120,9 +136,9 @@ public class OrderTest {
 							String fileNme = ((FTPFile) confirmedFileList[j])
 									.getName();
 							System.out.println("Getting file : " + fileNme);
-							File tmp = new File(phiTrackingPath + fileNme);
+							File tmp = new File(hvaTrackingPath + fileNme);
 							if (!tmp.exists())
-								ftp.get(phiTrackingPath + fileNme, fileDir
+								ftp.get(hvaTrackingPath + fileNme, fileDir
 										+ dirName + fileNme);
 						}
 					}
@@ -149,8 +165,12 @@ public class OrderTest {
 			FTPFile[] ftpFiles = ftp.dirDetails(fileDir);
 			for (int i = 0; i < ftpFiles.length; i++) {
 				FTPFile ff = ftpFiles[i];
+				if(ff.getName().startsWith(".")|| ff.getName().startsWith("..") )
+					continue;
 				if (ff.isDir()) {
 					String dirName = ff.getName() + "/";
+					System.out.println("dirName -->"+dirName);
+				
 					if (ff.getName().startsWith("confirmations")) {
 						System.out.println("downloading files from PHI confirmations.......");
 						FTPFile[] confirmedFileList = ftp.dirDetails(fileDir
@@ -164,6 +184,7 @@ public class OrderTest {
 								ftp.get(phiConfirmPath + fileNme, fileDir
 										+ dirName + fileNme);
 						}
+						
 					}
 					if (ff.getName().startsWith("shipping")) {
 						System.out.println("downloading files from PHI shipping.......");
