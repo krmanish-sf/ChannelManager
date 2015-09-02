@@ -103,7 +103,7 @@ public class OrderTest {
 			fw.write(data.toString());
 		}
 		fw.close();
-		sendEmail(file.getName());
+		sendEmail(file.getAbsolutePath());
 		long processEndTime = System.currentTimeMillis();
 		long totalProcessTime = processEndTime - processStartTime;
 		System.out
@@ -139,8 +139,8 @@ public class OrderTest {
 		} else
 			emailSubject = "Evox Order status for last 2 days";
 
-		EmailUtil.sendEmailWithAttachment("manish@inventorysource.com",
-				"manish@inventorysource.com", "abheeshek@inventorysource.com",
+		EmailUtil.sendEmailWithAttachment("orders@inventorysource.com",
+				"support@inventorysource.com", "abheeshek@inventorysource.com, kelly@inventorysource.com, andrew@inventorysource.com",
 				emailSubject, emailBody, fileName);
 		System.out.println("Email sent successfully");
 	}
