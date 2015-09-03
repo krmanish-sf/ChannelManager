@@ -38,7 +38,6 @@ import javax.xml.bind.Unmarshaller;
 
 import org.apache.axis.encoding.Base64;
 import org.apache.axis.utils.ByteArrayOutputStream;
-import org.hibernate.Criteria;
 import org.hibernate.NonUniqueResultException;
 import org.hibernate.Query;
 import org.hibernate.Session;
@@ -50,7 +49,6 @@ import org.slf4j.LoggerFactory;
 import salesmachine.email.EmailUtil;
 import salesmachine.hibernatedb.OimChannels;
 import salesmachine.hibernatedb.OimOrderDetails;
-import salesmachine.hibernatedb.OimOrderDetailsMods;
 import salesmachine.hibernatedb.OimOrderProcessingRule;
 import salesmachine.hibernatedb.OimOrderStatuses;
 import salesmachine.hibernatedb.OimOrders;

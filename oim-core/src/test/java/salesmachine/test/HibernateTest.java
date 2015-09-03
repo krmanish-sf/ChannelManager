@@ -14,6 +14,7 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import salesmachine.hibernatedb.OimAutomationAudit;
 import salesmachine.hibernatedb.OimChannelShippingMap;
 import salesmachine.hibernatedb.OimOrders;
 import salesmachine.hibernatedb.OimShippingCarrier;
@@ -115,6 +116,24 @@ public class HibernateTest {
 				.findOrderDetailModifications(8963830);
 		Assert.assertNotNull(findOrderDetailModifications);
 		Assert.assertTrue(findOrderDetailModifications.size() > 0);
+	}
+	
+	public void test1(){
+		Session session = SessionManager.currentSession();
+		Transaction tx = session.beginTransaction();
+		OimAutomationAudit audit = new OimAutomationAudit();
+		audit.setStartTime(new Date());
+		audit.setEndTime(new Date());
+		audit.setChannelID(123123);
+		audit.setTotalOrderPull(10);
+		audit.setTotalOrderTracked(10);
+		session.save(audit);
+		tx.commit();
+		
+	}
+	public static void main(String[] args) {
+		HibernateTest test = new HibernateTest();
+		test.test1();
 	}
 
 }

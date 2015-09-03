@@ -637,14 +637,6 @@ public class DandH extends Supplier implements HasTracking {
 			log.error(e.getMessage(), e);
 		}
 
-		if (orderStatus.getStatus() == null) {
-			throw new SupplierOrderTrackingException(
-					"Error in getting order status from Supplier while tracking Tracking Id- "
-							+ trackingMeta);
-		} else if (orderStatus.getTrackingData() == null)
-			throw new SupplierOrderTrackingException(
-					"Error in getting order tracking details from Supplier while tracking Tracking Id- "
-							+ trackingMeta);
 		return orderStatus;
 	}
 

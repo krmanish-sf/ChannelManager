@@ -58,5 +58,6 @@
 		<mapping resource="salesmachine/hibernatedb/OimChannelShippingMap.hbm.xml" />
 		<mapping
 			resource="salesmachine/hibernatedb/OimSupplierShippingOverride.hbm.xml" />
+		<mapping class="salesmachine.hibernatedb.OimAutomationAudit" />
 	</session-factory>
 </hibernate-configuration>

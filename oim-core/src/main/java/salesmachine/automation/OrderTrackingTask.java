@@ -22,17 +22,20 @@ public class OrderTrackingTask extends TimerTask {
 	private static final Logger log = LoggerFactory
 			.getLogger(OrderTrackingTask.class);
 	private final EventBus eventBus;
+	private SaveAutomationAudit audit;
 
-	public OrderTrackingTask(EventBus eventBus) {
+	public OrderTrackingTask(EventBus eventBus,SaveAutomationAudit audit) {
 		this.eventBus = eventBus;
+		this.audit = audit;
 	}
 
 	@Override
 	public void run() {
 		try {
 			log.info("Order Tracking Task Running...");
-			HonestGreen.updateFromConfirmation();
-			HonestGreen.updateFromTracking();
+			int trackCount1 = HonestGreen.updateFromConfirmation();
+			int trackCount2 = HonestGreen.updateFromTracking();
+			AutomationManager.orderTrackMap.put(2941, trackCount1+trackCount2);
 			try {
 				Session session = SessionManager.currentSession();
 
@@ -63,6 +66,8 @@ public class OrderTrackingTask extends TimerTask {
 						}
 					}
 				}
+				audit.setTrackTaskCompleted(true);
+				audit.persistAutomationAudit();
 			} catch (HibernateException ex) {
 				log.error(ex.getMessage(), ex);
 			}

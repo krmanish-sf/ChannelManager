@@ -28,6 +28,7 @@ import org.hibernate.criterion.Restrictions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import salesmachine.automation.AutomationManager;
 import salesmachine.email.EmailUtil;
 import salesmachine.hibernatedb.OimChannelSupplierMap;
 import salesmachine.hibernatedb.OimChannels;
@@ -1004,6 +1005,7 @@ public class OimSupplierOrderPlacement {
 		tx = session.beginTransaction();
 		OimOrderDetails oimOrderDetails = (OimOrderDetails) session.get(
 				OimOrderDetails.class, orderDetailId);
+		int channelId = oimOrderDetails.getOimOrders().getOimOrderBatches().getOimChannels().getChannelId();
 		log.info("Tracking Status for Vendor#{} SKU# {}", vendorId,
 				oimOrderDetails.getSku());
 		HasTracking s = null;
@@ -1023,9 +1025,12 @@ public class OimSupplierOrderPlacement {
 						oimOrderDetails.getSupplierOrderNumber(),oimOrderDetails);
 
 				oimOrderDetails.setSupplierOrderStatus(orderStatus.toString());
-				if (orderStatus.isShipped())
+				if (orderStatus.isShipped()){
 					oimOrderDetails.setOimOrderStatuses(new OimOrderStatuses(
 							OimConstants.ORDER_STATUS_SHIPPED));
+					int trackCount = AutomationManager.orderTrackMap.get(channelId)!=null?AutomationManager.orderTrackMap.get(channelId):0;
+					AutomationManager.orderTrackMap.put(channelId, trackCount++);
+				}
 				session.update(oimOrderDetails);
 			} catch (SupplierOrderTrackingException e1) {
 				log.error(e1.getMessage(), e1);
@@ -1041,9 +1046,12 @@ public class OimSupplierOrderPlacement {
 				orderStatus = s.getOrderStatus(oimVendorSuppliers,
 						oimOrderDetails.getSupplierOrderNumber(),oimOrderDetails);
 				oimOrderDetails.setSupplierOrderStatus(orderStatus.toString());
-				if (orderStatus.isShipped())
+				if (orderStatus.isShipped()){
 					oimOrderDetails.setOimOrderStatuses(new OimOrderStatuses(
 							OimConstants.ORDER_STATUS_SHIPPED));
+					int trackCount = AutomationManager.orderTrackMap.get(channelId)!=null?AutomationManager.orderTrackMap.get(channelId):0;
+					AutomationManager.orderTrackMap.put(channelId, trackCount++);
+				}
 				session.update(oimOrderDetails);
 			} catch (SupplierOrderTrackingException e1) {
 				log.error(e1.getMessage(), e1);
@@ -1059,9 +1067,12 @@ public class OimSupplierOrderPlacement {
 				orderStatus = s.getOrderStatus(oimVendorSuppliers,
 						oimOrderDetails.getSupplierOrderNumber(),oimOrderDetails);
 				oimOrderDetails.setSupplierOrderStatus(orderStatus.toString());
-				if (orderStatus.isShipped())
+				if (orderStatus.isShipped()){
 					oimOrderDetails.setOimOrderStatuses(new OimOrderStatuses(
 							OimConstants.ORDER_STATUS_SHIPPED));
+					int trackCount = AutomationManager.orderTrackMap.get(channelId)!=null?AutomationManager.orderTrackMap.get(channelId):0;
+					AutomationManager.orderTrackMap.put(channelId, trackCount++);
+				}
 				session.update(oimOrderDetails);
 			} catch (SupplierOrderTrackingException e1) {
 				log.error(e1.getMessage(), e1);
@@ -1083,7 +1094,7 @@ public class OimSupplierOrderPlacement {
 		OimOrders oimOrders = oimOrderDetails.getOimOrders();
 		OimChannels oimChannels = oimOrders.getOimOrderBatches()
 				.getOimChannels();
-		Integer channelId = oimChannels.getChannelId();
+		//Integer channelId = oimChannels.getChannelId();
 		IOrderImport iOrderImport = OrderImportManager
 				.getIOrderImport(channelId);
 
