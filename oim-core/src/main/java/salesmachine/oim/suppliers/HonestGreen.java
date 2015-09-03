@@ -38,6 +38,7 @@ import javax.xml.bind.Unmarshaller;
 
 import org.apache.axis.encoding.Base64;
 import org.apache.axis.utils.ByteArrayOutputStream;
+import org.hibernate.Criteria;
 import org.hibernate.NonUniqueResultException;
 import org.hibernate.Query;
 import org.hibernate.Session;
@@ -49,6 +50,7 @@ import org.slf4j.LoggerFactory;
 import salesmachine.email.EmailUtil;
 import salesmachine.hibernatedb.OimChannels;
 import salesmachine.hibernatedb.OimOrderDetails;
+import salesmachine.hibernatedb.OimOrderDetailsMods;
 import salesmachine.hibernatedb.OimOrderProcessingRule;
 import salesmachine.hibernatedb.OimOrderStatuses;
 import salesmachine.hibernatedb.OimOrders;
@@ -920,17 +922,14 @@ public class HonestGreen extends Supplier implements HasTracking {
 
 		List<OimOrders> oimOrderList = new ArrayList<OimOrders>();
 		oimOrderList.add(oimOrderDetails.getOimOrders());
-		boolean isAmazon = isOrderFromAmazonStore(oimOrderList);
-		String tempTrackingMeta = isAmazon ? new String((String) trackingMeta)
-				: ovs.getVendors().getVendorId() + "-"
-						+ new String((String) trackingMeta);
+
 
 		Map<String, FtpDetails> ftpDetailMap = new HashMap<String, FtpDetails>();
 
-		if (tempTrackingMeta.startsWith("H")) {
+		if (((String)trackingMeta).startsWith("H")) {
 			FtpDetails ftpDetails = getFtpDetails(ovs, false, true);
 			ftpDetailMap.put("FromHvaMap", ftpDetails);
-		} else if (tempTrackingMeta.startsWith("P")) {
+		} else if (((String)trackingMeta).startsWith("P")) {
 			FtpDetails ftpDetails = getFtpDetails(ovs, true, false);
 			ftpDetailMap.put("FromPhiMap", ftpDetails);
 		} else {
@@ -962,9 +961,20 @@ public class HonestGreen extends Supplier implements HasTracking {
 							ftpDetails.getPassword());
 					ftp.setTimeout(60 * 1000 * 60 * 7);
 					String unfiNumber = findUNFIFromConfirmations(ftp,
-							oimOrderDetails, tempTrackingMeta, orderStatus);
+							oimOrderDetails, (String)trackingMeta, orderStatus);
+					// if(unfiNumber==null){
+					// EmailUtil.sendEmail("support@inventorysource.com",
+					// "support@inventorysource.com", "",
+					// "Order confirmation failed for OrderID"+tempTrackingMeta,
+					// "Order confirmation file for order id - "+tempTrackingMeta+" is not found at HG's ftp for account - "+ftpDetails.getAccountNumber(),
+					// "text/html");
+					// orderStatus.setStatus("Order Confirmation Failed");
+					//
+					// return orderStatus;
+					// }
+
 					getTrackingInfo(ftpDetails, ftp, unfiNumber, orderStatus,
-							tempTrackingMeta, oimOrderDetails, trackingMeta);
+							(String)trackingMeta, oimOrderDetails, trackingMeta);
 				} catch (IOException | FTPException | ParseException
 						| JAXBException e) {
 					log.error(e.getMessage(), e);
@@ -1412,8 +1422,8 @@ public class HonestGreen extends Supplier implements HasTracking {
 		updateFromTracking();
 	}
 
-	public static void updateFromConfirmation() {
-		int totalValidPO = 0, shippedPO = 0;
+	public static Integer updateFromConfirmation() {
+		int totalValidPO = 0, shippedPO = 0, orderTrackCount=0;
 
 		List<FtpDetails> ftpList = new ArrayList<FtpDetails>(2);
 
@@ -1608,6 +1618,7 @@ public class HonestGreen extends Supplier implements HasTracking {
 						if (orderStatus.isShipped()) {
 							detail.setOimOrderStatuses(new OimOrderStatuses(
 									OimConstants.ORDER_STATUS_SHIPPED));
+							orderTrackCount++;
 							for (salesmachine.oim.suppliers.modal.TrackingData td : orderStatus
 									.getTrackingData()) {
 								Message message = new Message();
@@ -1691,9 +1702,11 @@ public class HonestGreen extends Supplier implements HasTracking {
 		}
 		log.info("Total PO Found {}, Shipped PO{}", totalValidPO, shippedPO);
 		serializeMap();
+		return orderTrackCount;
 	}
 
-	public static void updateFromTracking() {
+	public static Integer updateFromTracking() {
+		int orderTrackCount=0;
 		List<FtpDetails> ftpList = new ArrayList<FtpDetails>(2);
 
 		FtpDetails ftpDetails2 = new FtpDetails();
@@ -1863,9 +1876,11 @@ public class HonestGreen extends Supplier implements HasTracking {
 							log.info("Tracking details: {}", orderStatus);
 							detail.setSupplierOrderStatus(orderStatus
 									.toString());
-							if (orderStatus.isShipped())
+							if (orderStatus.isShipped()){
 								detail.setOimOrderStatuses(new OimOrderStatuses(
 										OimConstants.ORDER_STATUS_SHIPPED));
+								orderTrackCount++;
+							}
 							session.update(detail);
 
 							/*
@@ -1958,6 +1973,7 @@ public class HonestGreen extends Supplier implements HasTracking {
 				"Total Products which have not P or H prefix in tracking directory - {}",
 				count);
 		serializeMap();
+		return orderTrackCount;
 	}
 }
 
