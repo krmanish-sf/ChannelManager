@@ -3,6 +3,7 @@ package com.is.cm.core.service;
 import java.util.List;
 import java.util.Map;
 
+import com.is.cm.core.domain.OrderBatch;
 import com.is.cm.core.domain.ReportDataWrapper;
 import com.is.cm.core.domain.VendorsuppOrderhistory;
 import com.is.cm.core.event.ReadCollectionEvent;
@@ -32,4 +33,9 @@ public interface ReportService {
 
 	ReadCollectionEvent getAlerts(
 			RequestReadEvent<Map<String, Map>> requestReadEvent);
+
+	ReadCollectionEvent getChannelAlerts(RequestReadEvent requestReadEvent);
+
+	ReadCollectionEvent<OrderBatch> getChannelPullHistory(
+			PagedDataEvent<OrderBatch> pagedDataEvent);
 }

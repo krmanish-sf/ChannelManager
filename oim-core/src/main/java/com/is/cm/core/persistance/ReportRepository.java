@@ -30,4 +30,6 @@ public interface ReportRepository {
 
 	List<OrderBatch> getChannelPullHistory(Date startDate, Date endDate,
 			int firstResult, int pageSize);
+
+	List getChannelAlerts();
 }

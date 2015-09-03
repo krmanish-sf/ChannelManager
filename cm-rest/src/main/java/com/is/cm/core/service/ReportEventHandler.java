@@ -3,6 +3,7 @@ package com.is.cm.core.service;
 import java.util.List;
 import java.util.Map;
 
+import com.is.cm.core.domain.OrderBatch;
 import com.is.cm.core.domain.ReportDataWrapper;
 import com.is.cm.core.domain.VendorsuppOrderhistory;
 import com.is.cm.core.event.ReadCollectionEvent;
@@ -81,9 +82,27 @@ public class ReportEventHandler implements ReportService {
 	}
 
 	@Override
-	public ReadCollectionEvent getAlerts(
-			RequestReadEvent requestReadEvent) {
+	public ReadCollectionEvent getAlerts(RequestReadEvent requestReadEvent) {
 		List alertAndErrors = reportRepository.getSystemAlerts();
 		return new ReadCollectionEvent(alertAndErrors);
+	}
+
+	@Override
+	public ReadCollectionEvent getChannelAlerts(
+			RequestReadEvent requestReadEvent) {
+		List alertAndErrors = reportRepository.getChannelAlerts();
+		return new ReadCollectionEvent(alertAndErrors);
+	}
+
+	@Override
+	public ReadCollectionEvent<OrderBatch> getChannelPullHistory(
+			PagedDataEvent<OrderBatch> pagedDataEvent) {
+		List<OrderBatch> alertAndErrors = reportRepository
+				.getChannelPullHistory(
+						pagedDataEvent.getDateRange().get("startDate"),
+						pagedDataEvent.getDateRange().get("endDate"),
+						pagedDataEvent.getPageNum(),
+						pagedDataEvent.getRecordCount());
+		return new ReadCollectionEvent<OrderBatch>(alertAndErrors);
 	}
 }

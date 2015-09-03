@@ -24,6 +24,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
+import com.is.cm.core.domain.OrderBatch;
 import com.is.cm.core.domain.ReportDataWrapper;
 import com.is.cm.core.domain.VendorsuppOrderhistory;
 import com.is.cm.core.event.ReadCollectionEvent;
@@ -175,6 +176,35 @@ public class ReportingQueriesController {
 		}
 	}
 
+	@RequestMapping(value = "/system/channel-pull-history", method = RequestMethod.POST)
+	@ResponseBody
+	public List<OrderBatch> getChannelPullHistory(
+			@RequestBody Map<String, String> dateRange) {
+		LOG.debug("Getting channel-pull-history");
+		String st = dateRange.get("startDate");
+		String ed = dateRange.get("endDate");
+		Date startDate, endDate;
+		try {
+			Map<String, Date> dateRange1 = new HashMap<String, Date>();
+			startDate = df.parse(st);
+			endDate = df.parse(ed);
+			endDate.setHours(23);
+			endDate.setMinutes(59);
+			endDate.setSeconds(59);
+			dateRange1.put("startDate", startDate);
+			dateRange1.put("endDate", endDate);
+			ReadCollectionEvent<OrderBatch> event = reportService
+					.getChannelPullHistory(new PagedDataEvent<OrderBatch>(1,
+							100, dateRange1));
+			return event.getEntity();
+		} catch (ParseException e) {
+			log.error("Error in parsing the provided date string",
+					e.getMessage());
+			throw new RuntimeException(
+					"Error in parsing the provided date string");
+		}
+	}
+
 	@RequestMapping(value = "/notifications", method = RequestMethod.GET)
 	@ResponseBody
 	public Map<String, Map> getNotifications() {
@@ -188,6 +218,14 @@ public class ReportingQueriesController {
 	public List getAlerts() {
 		ReadCollectionEvent event = reportService
 				.getAlerts(new RequestReadEvent());
+		return event.getEntity();
+	}
+
+	@RequestMapping(value = "/system/channel-alerts", method = RequestMethod.GET)
+	@ResponseBody
+	public List getChannelAlerts() {
+		ReadCollectionEvent event = reportService
+				.getChannelAlerts(new RequestReadEvent());
 		return event.getEntity();
 	}
 }

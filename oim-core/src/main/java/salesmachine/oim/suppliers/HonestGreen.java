@@ -15,6 +15,7 @@ import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.nio.channels.FileLock;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.text.ParseException;
@@ -37,7 +38,6 @@ import javax.xml.bind.Unmarshaller;
 
 import org.apache.axis.encoding.Base64;
 import org.apache.axis.utils.ByteArrayOutputStream;
-import org.hibernate.Criteria;
 import org.hibernate.NonUniqueResultException;
 import org.hibernate.Query;
 import org.hibernate.Session;
@@ -49,7 +49,6 @@ import org.slf4j.LoggerFactory;
 import salesmachine.email.EmailUtil;
 import salesmachine.hibernatedb.OimChannels;
 import salesmachine.hibernatedb.OimOrderDetails;
-import salesmachine.hibernatedb.OimOrderDetailsMods;
 import salesmachine.hibernatedb.OimOrderProcessingRule;
 import salesmachine.hibernatedb.OimOrderStatuses;
 import salesmachine.hibernatedb.OimOrders;
@@ -100,6 +99,9 @@ import com.enterprisedt.net.ftp.FTPTransferType;
 
 public class HonestGreen extends Supplier implements HasTracking {
 
+	private static final String CACHE_FILENAME = ApplicationProperties
+			.getProperty("cm.cache.dir") + "HG-PO-Hashtable.ser";
+
 	private static final Map<String, String> PONUM_UNFI_MAP = new Hashtable<String, String>();
 
 	private static final String UNFIORDERNO = "UNFIORDERNO";
@@ -127,18 +129,17 @@ public class HonestGreen extends Supplier implements HasTracking {
 		} catch (JAXBException e) {
 			log.error(e.getMessage(), e);
 		}
+		updateObjectFromCacheFile();
 	}
 
-	static {
+	private static final synchronized void updateObjectFromCacheFile() {
 		try {
-			FileInputStream fis = new FileInputStream(
-					"orders.ser");
+			FileInputStream fis = new FileInputStream(CACHE_FILENAME);
 			ObjectInputStream ois = new ObjectInputStream(fis);
 			PONUM_UNFI_MAP.putAll((Hashtable<String, String>) ois.readObject());
 			ois.close();
 		} catch (Exception e) {
-			e.printStackTrace();
-			log.warn("orders.ser file is blank");
+			log.warn("{} file is blank", CACHE_FILENAME);
 		}
 	}
 
@@ -673,7 +674,7 @@ public class HonestGreen extends Supplier implements HasTracking {
 				.hasNext();) {
 			String line = (String) itr.next();
 			String[] lineArray = line.split(",");
-			if (lineArray.length > 4 && lineArray[0] == sku) {
+			if (lineArray.length > 4 && sku.equals(lineArray[0])) {
 				orderData.put(QTY_ORDERED, lineArray[3]);
 				orderData.put(QTY_SHIPPED, lineArray[4]);
 			}
@@ -962,17 +963,6 @@ public class HonestGreen extends Supplier implements HasTracking {
 					ftp.setTimeout(60 * 1000 * 60 * 7);
 					String unfiNumber = findUNFIFromConfirmations(ftp,
 							oimOrderDetails, tempTrackingMeta, orderStatus);
-					// if(unfiNumber==null){
-					// EmailUtil.sendEmail("support@inventorysource.com",
-					// "support@inventorysource.com", "",
-					// "Order confirmation failed for OrderID"+tempTrackingMeta,
-					// "Order confirmation file for order id - "+tempTrackingMeta+" is not found at HG's ftp for account - "+ftpDetails.getAccountNumber(),
-					// "text/html");
-					// orderStatus.setStatus("Order Confirmation Failed");
-					//
-					// return orderStatus;
-					// }
-
 					getTrackingInfo(ftpDetails, ftp, unfiNumber, orderStatus,
 							tempTrackingMeta, oimOrderDetails, trackingMeta);
 				} catch (IOException | FTPException | ParseException
@@ -987,14 +977,24 @@ public class HonestGreen extends Supplier implements HasTracking {
 	}
 
 	private static synchronized void serializeMap() {
+		FileLock lock = null;
 		try {
-			FileOutputStream fs = new FileOutputStream(
-					"orders.ser");
+			updateObjectFromCacheFile();
+			FileOutputStream fs = new FileOutputStream(CACHE_FILENAME);
+			lock = fs.getChannel().lock();
 			ObjectOutputStream os = new ObjectOutputStream(fs);
 			os.writeObject(PONUM_UNFI_MAP);
 			os.close();
 		} catch (Exception e) {
-			log.warn("error occure while serializing PONUM_UNFI_MAP to orders.ser");
+			log.warn("Error occured while serializing HG PO map to {}",
+					CACHE_FILENAME);
+		} finally {
+			if (lock != null && lock.isValid())
+				try {
+					lock.release();
+				} catch (IOException e) {
+					log.warn("Error in releasing lock", e);
+				}
 		}
 	}
 
@@ -1076,10 +1076,15 @@ public class HonestGreen extends Supplier implements HasTracking {
 								trackingFileData = ftp.get(trackingFilePath);
 							} catch (FTPException e) {
 								log.warn("Tracking file not found in Tracking folder .. going to archive..");
-								trackingFileData = ftp
-										.get(getTrackingFilePathInArchive(
-												ftpDetails.getAccountNumber(),
-												unfiOrderNo));
+								try {
+									trackingFileData = ftp
+											.get(getTrackingFilePathInArchive(
+													ftpDetails
+															.getAccountNumber(),
+													unfiOrderNo));
+								} catch (FTPException e1) {
+									log.warn("Tracking file not found in Archive folder ..");
+								}
 								log.info("Found under Archive folder...");
 							}
 						}
@@ -1098,6 +1103,11 @@ public class HonestGreen extends Supplier implements HasTracking {
 					.unmarshal(reader);
 			orderStatus
 					.setStatus(OimConstants.OIM_SUPPLER_ORDER_STATUS_SHIPPED);
+			int qtyShipped = detail.getQuantity();
+			if (parseShippingConfirmation != null) {
+				qtyShipped = Integer.parseInt(parseShippingConfirmation
+						.get(QTY_SHIPPED));
+			}
 			int perBoxQty = 1;
 			if (detail.getQuantity() == orderTrackingResponse.getPOTracking()
 					.size()) {
@@ -1126,7 +1136,7 @@ public class HonestGreen extends Supplier implements HasTracking {
 				trackingData.setShipperTrackingNumber(poTracking
 						.getTrackingNumber());
 
-				trackingData.setQuantity(perBoxQty);
+				trackingData.setQuantity(qtyShipped);
 				// String dateshipped =
 				// parseShippingConfirmation.get(SHIP_DATE);
 				// FORMAT 08/11/2015 MM/DD/YYYY
@@ -1470,7 +1480,7 @@ public class HonestGreen extends Supplier implements HasTracking {
 						return f2.lastModified().compareTo(f1.lastModified());
 					}
 				});
-				Date cutoff = new Date(115, 7, 19);
+				Date cutoff = new Date(115, 7, 16);
 				log.info("Cutoff: {}", cutoff);
 				for (FTPFile ftpFile : ftpFiles) {
 					try {
@@ -1513,7 +1523,7 @@ public class HonestGreen extends Supplier implements HasTracking {
 										.intValue() == OimConstants.ORDER_STATUS_MANUALLY_PROCESSED
 										.intValue())
 							continue;
-
+						session.refresh(detail);
 						tx = session.beginTransaction();
 						String unfiOrderNo = PONUM_UNFI_MAP.get(purchaseOrder);
 						OrderStatus orderStatus = new OrderStatus();
@@ -1700,7 +1710,7 @@ public class HonestGreen extends Supplier implements HasTracking {
 		ftpDetails1.setPassword("vU!6akAB");
 		ftpList.add(ftpDetails1);
 		int count = 0;
-		
+
 		for (FtpDetails ftpDetails : ftpList) {
 
 			FTPClient ftp = new FTPClient();
@@ -1747,7 +1757,10 @@ public class HonestGreen extends Supplier implements HasTracking {
 				ftp.connect();
 				ftp.login(ftpDetails.getUserName(), ftpDetails.getPassword());
 				ftp.setTimeout(60 * 1000 * 60 * 7);
-				FTPFile[] ftpFiles = ftp.dirDetails("tracking");
+				Date cutoff = new Date(115, 7, 10);
+				log.info("Cutoff: {}", cutoff);
+				String dirname = "tracking";
+				FTPFile[] ftpFiles = ftp.dirDetails(dirname);
 				Arrays.sort(ftpFiles, new Comparator<FTPFile>() {
 					public int compare(FTPFile f1, FTPFile f2) {
 						return f2.lastModified().compareTo(f1.lastModified());
@@ -1761,8 +1774,9 @@ public class HonestGreen extends Supplier implements HasTracking {
 								|| ftpFile.getName().equals("..")
 								|| ftpFile.getName().endsWith("S.txt"))
 							continue;
-
-						byte[] bs = ftp.get("tracking/" + ftpFile.getName());
+						if (ftpFile.lastModified().before(cutoff))
+							break;
+						byte[] bs = ftp.get(dirname + "/" + ftpFile.getName());
 						Unmarshaller unmarshaller = jaxbContext
 								.createUnmarshaller();
 						String s = new String(bs);
@@ -1791,8 +1805,8 @@ public class HonestGreen extends Supplier implements HasTracking {
 								.add(Restrictions.in("supplierOrderNumber",
 										poArray)).list();
 						for (OimOrderDetails detail : detailList) {
-							//setSkuPrefixForOrders(ovs);
-							if(!detail.getSku().startsWith("HG"))
+							// setSkuPrefixForOrders(ovs);
+							if (!detail.getSku().startsWith("HG"))
 								continue;
 							if (detail == null
 									|| detail.getOimOrderStatuses()
@@ -1802,6 +1816,7 @@ public class HonestGreen extends Supplier implements HasTracking {
 											.getStatusId().intValue() == OimConstants.ORDER_STATUS_MANUALLY_PROCESSED
 											.intValue())
 								continue;
+							session.refresh(detail);
 							log.info("PONUM# {}", purchaseOrder);
 							tx = session.beginTransaction();
 							int perBoxQty = 1;

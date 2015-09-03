@@ -1092,4 +1092,14 @@ public class ReportRepositoryDB extends RepositoryBase implements
 		}
 		return batchesHistory;
 	}
+
+	@Override
+	public List getChannelAlerts() {
+		StringBuilder sb = new StringBuilder(
+				"select error_code,count(error_code) from oim_order_batches where error_code>0 and INSERTION_TM > trunc(sysdate-2) group by error_code");
+		Session dbSession = SessionManager.currentSession();
+		SQLQuery reportQuery = dbSession.createSQLQuery(sb.toString());
+		List list = reportQuery.list();
+		return list;
+	}
 }

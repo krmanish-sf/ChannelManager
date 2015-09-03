@@ -35,6 +35,7 @@ public class OrderTrackingTask extends TimerTask {
 			HonestGreen.updateFromTracking();
 			try {
 				Session session = SessionManager.currentSession();
+
 				Query query = session
 						.createQuery("select distinct o from salesmachine.hibernatedb.OimOrders o "
 								+ "left join fetch o.oimOrderDetailses d "
@@ -55,6 +56,7 @@ public class OrderTrackingTask extends TimerTask {
 						try {
 							OimOrderDetails od = (OimOrderDetails) odIter
 									.next();
+							session.refresh(od);
 							eventBus.post(od);
 						} catch (Exception e) {
 							log.error("Error in tracking Order..", e);

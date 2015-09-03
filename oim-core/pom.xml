@@ -54,6 +54,7 @@
 								<configuration>
 									<tasks>
 										<echo>Using config.staging.properties</echo>
+										<delete file="${project.build.outputDirectory}/config.properties" />
 										<delete
 											file="${project.build.outputDirectory}/config.live.properties" />
 										<delete

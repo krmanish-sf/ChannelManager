@@ -2,10 +2,10 @@ package salesmachine.oim.stores.impl;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Set;
 
 import org.apache.commons.httpclient.HttpClient;
@@ -14,7 +14,6 @@ import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.methods.PostMethod;
 import org.apache.commons.httpclient.methods.PutMethod;
 import org.apache.commons.httpclient.methods.StringRequestEntity;
-import org.hibernate.Query;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
 import org.json.simple.JSONArray;
@@ -174,21 +173,28 @@ public class ShopifyOrderImport extends ChannelBase implements IOrderImport {
 		m_dbSession.save(batch);
 		tx.commit();
 		HttpClient client = new HttpClient();
-		String requestUrl = null;
-		Integer maxStoreID = getMaxStoreOrderId();
-		if (maxStoreID != null) {
-			log.info("Max store id -- ", maxStoreID.intValue());
-			requestUrl = storeUrl + "/admin/orders.json?since_id="
-					+ maxStoreID.intValue();
-		} else {
-			requestUrl = storeUrl + "/admin/orders.json";
+		String requestUrl = storeUrl + "/admin/orders.json";
+		Date lstFetchTime = m_channel.getLastFetchTm();
+		// FIXME API didn't respond as per the specification, still getting all
+		// the orders.
+		if (lstFetchTime != null) {
+			SimpleDateFormat df = new SimpleDateFormat("YYYY-MM-dd hh:mm");
+			log.info("Cutoff time {} ", lstFetchTime);
+			try {
+				requestUrl += "?"
+						+ URLEncoder.encode(
+								"created_at_min=" + df.format(lstFetchTime),
+								"UTF-8");
+			} catch (UnsupportedEncodingException e1) {
+				log.warn("Encoding type [UTF-8] is invalid");
+				throw new ChannelConfigurationException(
+						"Encoding type [UTF-8] is invalid", e1);
+			}
 		}
 		String jsonString = null;
 		GetMethod getOrderJson = new GetMethod(requestUrl);
 		getOrderJson.addRequestHeader("X-Shopify-Access-Token", shopifyToken);
-
 		tx = m_dbSession.beginTransaction();
-
 		int responseCode = 0;
 		try {
 			responseCode = client.executeMethod(getOrderJson);
@@ -432,22 +438,6 @@ public class ShopifyOrderImport extends ChannelBase implements IOrderImport {
 		}
 		log.info("Returning Order batch with size: {}", batch.getOimOrderses()
 				.size());
-	}
-
-	private Integer getMaxStoreOrderId() {
-		String maxStoreOrderId = null;
-		Query query = m_dbSession
-				.createQuery("select max(o.storeOrderId) from salesmachine.hibernatedb.OimOrders o where o.oimOrderBatches.oimChannels=:chan");
-		query.setEntity("chan", m_channel);
-		Iterator iter = query.iterate();
-		while (iter.hasNext()) {
-			maxStoreOrderId = (String) iter.next();
-		}
-		log.info("Max store order id -- {}", maxStoreOrderId);
-
-		return maxStoreOrderId == null ? null : Integer
-				.parseInt(maxStoreOrderId);
-
 	}
 
 	private boolean sendAcknowledgementToStore(String requestUrl,
