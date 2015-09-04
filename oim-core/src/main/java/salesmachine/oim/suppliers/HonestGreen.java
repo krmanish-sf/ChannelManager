@@ -1112,7 +1112,8 @@ public class HonestGreen extends Supplier implements HasTracking {
 			orderStatus
 					.setStatus(OimConstants.OIM_SUPPLER_ORDER_STATUS_SHIPPED);
 			int qtyShipped = detail.getQuantity();
-			if (parseShippingConfirmation != null) {
+			if (parseShippingConfirmation != null & parseShippingConfirmation
+					.containsKey(QTY_SHIPPED)) {
 				qtyShipped = Integer.parseInt(parseShippingConfirmation
 						.get(QTY_SHIPPED));
 			}

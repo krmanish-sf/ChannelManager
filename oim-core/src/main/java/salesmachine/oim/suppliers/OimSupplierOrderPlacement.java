@@ -989,7 +989,7 @@ public class OimSupplierOrderPlacement {
 			tx.commit();
 		} catch (Exception e) {
 			tx.rollback();
-			log.error(e.getMessage(),e);
+			log.error(e.getMessage(), e);
 		}
 
 		return true;
@@ -1005,7 +1005,8 @@ public class OimSupplierOrderPlacement {
 		tx = session.beginTransaction();
 		OimOrderDetails oimOrderDetails = (OimOrderDetails) session.get(
 				OimOrderDetails.class, orderDetailId);
-		int channelId = oimOrderDetails.getOimOrders().getOimOrderBatches().getOimChannels().getChannelId();
+		int channelId = oimOrderDetails.getOimOrders().getOimOrderBatches()
+				.getOimChannels().getChannelId();
 		log.info("Tracking Status for Vendor#{} SKU# {}", vendorId,
 				oimOrderDetails.getSku());
 		HasTracking s = null;
@@ -1022,14 +1023,18 @@ public class OimSupplierOrderPlacement {
 			try {
 				s = new DandH();
 				orderStatus = s.getOrderStatus(oimVendorSuppliers,
-						oimOrderDetails.getSupplierOrderNumber(),oimOrderDetails);
+						oimOrderDetails.getSupplierOrderNumber(),
+						oimOrderDetails);
 
 				oimOrderDetails.setSupplierOrderStatus(orderStatus.toString());
-				if (orderStatus.isShipped()){
+				if (orderStatus.isShipped()) {
 					oimOrderDetails.setOimOrderStatuses(new OimOrderStatuses(
 							OimConstants.ORDER_STATUS_SHIPPED));
-					int trackCount = AutomationManager.orderTrackMap.get(channelId)!=null?AutomationManager.orderTrackMap.get(channelId):0;
-					AutomationManager.orderTrackMap.put(channelId, trackCount++);
+					int trackCount = AutomationManager.orderTrackMap
+							.get(channelId) != null ? AutomationManager.orderTrackMap
+							.get(channelId) : 0;
+					AutomationManager.orderTrackMap
+							.put(channelId, trackCount++);
 				}
 				session.update(oimOrderDetails);
 			} catch (SupplierOrderTrackingException e1) {
@@ -1044,13 +1049,17 @@ public class OimSupplierOrderPlacement {
 			try {
 				s = new BF();
 				orderStatus = s.getOrderStatus(oimVendorSuppliers,
-						oimOrderDetails.getSupplierOrderNumber(),oimOrderDetails);
+						oimOrderDetails.getSupplierOrderNumber(),
+						oimOrderDetails);
 				oimOrderDetails.setSupplierOrderStatus(orderStatus.toString());
-				if (orderStatus.isShipped()){
+				if (orderStatus.isShipped()) {
 					oimOrderDetails.setOimOrderStatuses(new OimOrderStatuses(
 							OimConstants.ORDER_STATUS_SHIPPED));
-					int trackCount = AutomationManager.orderTrackMap.get(channelId)!=null?AutomationManager.orderTrackMap.get(channelId):0;
-					AutomationManager.orderTrackMap.put(channelId, trackCount++);
+					int trackCount = AutomationManager.orderTrackMap
+							.get(channelId) != null ? AutomationManager.orderTrackMap
+							.get(channelId) : 0;
+					AutomationManager.orderTrackMap
+							.put(channelId, trackCount++);
 				}
 				session.update(oimOrderDetails);
 			} catch (SupplierOrderTrackingException e1) {
@@ -1065,13 +1074,17 @@ public class OimSupplierOrderPlacement {
 			try {
 				s = new HonestGreen();
 				orderStatus = s.getOrderStatus(oimVendorSuppliers,
-						oimOrderDetails.getSupplierOrderNumber(),oimOrderDetails);
+						oimOrderDetails.getSupplierOrderNumber(),
+						oimOrderDetails);
 				oimOrderDetails.setSupplierOrderStatus(orderStatus.toString());
-				if (orderStatus.isShipped()){
+				if (orderStatus.isShipped()) {
 					oimOrderDetails.setOimOrderStatuses(new OimOrderStatuses(
 							OimConstants.ORDER_STATUS_SHIPPED));
-					int trackCount = AutomationManager.orderTrackMap.get(channelId)!=null?AutomationManager.orderTrackMap.get(channelId):0;
-					AutomationManager.orderTrackMap.put(channelId, trackCount++);
+					int trackCount = AutomationManager.orderTrackMap
+							.get(channelId) != null ? AutomationManager.orderTrackMap
+							.get(channelId) : 0;
+					AutomationManager.orderTrackMap
+							.put(channelId, trackCount++);
 				}
 				session.update(oimOrderDetails);
 			} catch (SupplierOrderTrackingException e1) {
@@ -1094,7 +1107,7 @@ public class OimSupplierOrderPlacement {
 		OimOrders oimOrders = oimOrderDetails.getOimOrders();
 		OimChannels oimChannels = oimOrders.getOimOrderBatches()
 				.getOimChannels();
-		//Integer channelId = oimChannels.getChannelId();
+		// Integer channelId = oimChannels.getChannelId();
 		IOrderImport iOrderImport = OrderImportManager
 				.getIOrderImport(channelId);
 
