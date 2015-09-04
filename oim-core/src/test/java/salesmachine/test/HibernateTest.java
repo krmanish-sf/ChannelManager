@@ -117,8 +117,9 @@ public class HibernateTest {
 		Assert.assertNotNull(findOrderDetailModifications);
 		Assert.assertTrue(findOrderDetailModifications.size() > 0);
 	}
-	
-	public void test1(){
+
+	//@Test
+	public void testIf_OimAutomationAudit_Pesrists() {
 		Session session = SessionManager.currentSession();
 		Transaction tx = session.beginTransaction();
 		OimAutomationAudit audit = new OimAutomationAudit();
@@ -129,11 +130,8 @@ public class HibernateTest {
 		audit.setTotalOrderTracked(10);
 		session.save(audit);
 		tx.commit();
-		
+
 	}
-	public static void main(String[] args) {
-		HibernateTest test = new HibernateTest();
-		test.test1();
-	}
+
 
 }

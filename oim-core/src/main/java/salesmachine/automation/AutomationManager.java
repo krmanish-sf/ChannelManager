@@ -52,7 +52,6 @@ public class AutomationManager {
 		Timer timer = new Timer();
 
 		SaveAutomationAudit audit = new SaveAutomationAudit();
-		audit.setStartTime(new Date());
 		TimerTask orderPullTask = new OrderPullTask(eventBus,audit);
 		timer.schedule(orderPullTask, 1000L,
 				ApplicationProperties.getOrderPullInterval());
@@ -153,8 +152,8 @@ class SaveAutomationAudit{
 				automationAudit.setStartTime(this.getStartTime());
 				automationAudit.setEndTime(this.getEndTime());
 				automationAudit.setChannelID(channelId);
-				automationAudit.setTotalOrderPull(pullMap.get(channelId));
-				automationAudit.setTotalOrderTracked(trackMap.get(channelId));
+				automationAudit.setTotalOrderPull(pullMap.get(channelId)!=null?pullMap.get(channelId):0);
+				automationAudit.setTotalOrderTracked(trackMap.get(channelId)!=null?trackMap.get(channelId):0);
 				session.save(automationAudit);
 			}
 			try {

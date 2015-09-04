@@ -1,5 +1,6 @@
 package salesmachine.automation;
 
+import java.util.Date;
 import java.util.List;
 import java.util.TimerTask;
 
@@ -41,6 +42,7 @@ public class OrderPullTask extends TimerTask {
 	@Override
 	public void run() {
 		try {
+			audit.setStartTime(new Date());
 			log.info("Order Pull Task Running...");
 			Session session = SessionManager.currentSession();
 			Criteria vendorQuery = session.createCriteria(Reps.class).add(
