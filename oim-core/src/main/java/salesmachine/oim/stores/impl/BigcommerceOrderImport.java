@@ -378,6 +378,7 @@ public class BigcommerceOrderImport extends ChannelBase {
 			throw new ChannelOrderFormatException(e.getMessage());
 		}
 		log.info("Fetched {} order(s)", totalOrders);
+		m_channel.setLastFetchTm(new Date());
 		tx.commit();
 		log.debug("Finished importing orders...");
 		log.info("Returning Order batch with size: {}", batch.getOimOrderses().size());
