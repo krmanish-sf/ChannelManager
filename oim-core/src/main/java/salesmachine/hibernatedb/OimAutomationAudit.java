@@ -12,23 +12,19 @@ import javax.persistence.Table;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
 
-import org.hibernate.annotations.GenericGenerator;
-
 @Entity
-@Table(name="OIM_AUTOMATION_AUDIT")
+@Table(name = "OIM_AUTOMATION_AUDIT")
 public class OimAutomationAudit implements java.io.Serializable {
 
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
-	
-	
-	
-	 @Id
-	  @SequenceGenerator(name = "auditSequence", sequenceName="OIM_AUTOMATION_AUDIT_SEQUENCES", allocationSize=1)
-	  @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "auditSequence")
-	  @Column(name = "ID", nullable = false)
+
+	@Id
+	@SequenceGenerator(name = "auditSequence", sequenceName = "OIM_AUTOMATION_AUDIT_SEQUENCES", allocationSize = 1)
+	@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "auditSequence")
+	@Column(name = "ID", nullable = false)
 	public Integer getId() {
 		return id;
 	}
@@ -43,13 +39,13 @@ public class OimAutomationAudit implements java.io.Serializable {
 	private Integer channelID;
 	private Integer totalOrderPull;
 	private Integer totalOrderTracked;
-	
+
 	public OimAutomationAudit() {
 		super();
 	}
 
 	@Temporal(TemporalType.DATE)
-	@Column(name = "START_TIME", nullable = false, length = 7)
+	@Column(name = "START_TIME", nullable = true, length = 7)
 	public Date getStartTime() {
 		return startTime;
 	}
@@ -59,7 +55,7 @@ public class OimAutomationAudit implements java.io.Serializable {
 	}
 
 	@Temporal(TemporalType.DATE)
-	@Column(name = "END_TIME", nullable = false, length = 7)
+	@Column(name = "END_TIME", nullable = true, length = 7)
 	public Date getEndTime() {
 		return endTime;
 	}
@@ -68,7 +64,7 @@ public class OimAutomationAudit implements java.io.Serializable {
 		this.endTime = endTime;
 	}
 
-	@Column(name = "CHANNEL_ID", nullable = false, precision=12)
+	@Column(name = "CHANNEL_ID", nullable = true, precision = 12)
 	public Integer getChannelID() {
 		return channelID;
 	}
@@ -77,7 +73,7 @@ public class OimAutomationAudit implements java.io.Serializable {
 		this.channelID = channelID;
 	}
 
-	@Column(name = "ORDER_PULL_COUNT", nullable = false, precision=12)
+	@Column(name = "ORDER_PULL_COUNT", nullable = true, precision = 12)
 	public Integer getTotalOrderPull() {
 		return totalOrderPull;
 	}
@@ -86,7 +82,7 @@ public class OimAutomationAudit implements java.io.Serializable {
 		this.totalOrderPull = totalOrderPull;
 	}
 
-	@Column(name = "ORDER_TRACK_COUNT", nullable = false, precision=12)
+	@Column(name = "ORDER_TRACK_COUNT", nullable = true, precision = 12)
 	public Integer getTotalOrderTracked() {
 		return totalOrderTracked;
 	}
@@ -94,5 +90,5 @@ public class OimAutomationAudit implements java.io.Serializable {
 	public void setTotalOrderTracked(Integer totalOrderTracked) {
 		this.totalOrderTracked = totalOrderTracked;
 	}
-	
+
 }
