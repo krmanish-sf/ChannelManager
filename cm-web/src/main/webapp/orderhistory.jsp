@@ -492,23 +492,23 @@
 		var table_xy = null;
 		var MY_SUPPLIERS = null;
 		var STATUS = [ {
+			"statusId" : 6,
+			"statusValue" : "Canceled"
+		}, {
 			"statusId" : 3,
 			"statusValue" : "Failed"
-		}, {
-			"statusId" : 0,
-			"statusValue" : "Unprocessed"
-		}, {
-			"statusId" : 2,
-			"statusValue" : "Processed"
 		}, {
 			"statusId" : 5,
 			"statusValue" : "Manually Processed"
 		}, {
-			"statusId" : 6,
-			"statusValue" : "Canceled"
+			"statusId" : 2,
+			"statusValue" : "Processed"
 		}, {
 			"statusId" : 7,
 			"statusValue" : "Shipped"
+		}, {
+			"statusId" : 0,
+			"statusValue" : "Unprocessed"
 		} ];
 
 		function a(e) {
