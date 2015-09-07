@@ -129,16 +129,13 @@
 				<!-- <a data-toggle="modal" href="#learn-more"
 					class="navbar-brand small14"><i class="icon-info"></i>&nbsp;Learn
 					more</a> -->
-				<a
-					href="static/how-order-automation-works.jsp" target="_blank"
-					class="navbar-brand small14 ">How it works</a>
-				
-				<a href="static/integrations.jsp" target="_blank"
-					class="navbar-brand small14 ">Integrations</a>	
-					<a href="static/pricing.jsp" target="_blank"
-					class="navbar-brand small14 ">Pricing</a>
-					 
-				<a href="static/contact-us.jsp" target="_blank"
+				<a href="static/how-order-automation-works.jsp" target="_blank"
+					class="navbar-brand small14 ">How it works</a> <a
+					href="static/integrations.jsp" target="_blank"
+					class="navbar-brand small14 ">Integrations</a> <a
+					href="static/pricing.jsp" target="_blank"
+					class="navbar-brand small14 ">Pricing</a> <a
+					href="static/contact-us.jsp" target="_blank"
 					class="navbar-brand small14 ">Contact us</a>
 				<!-- <a
 					href="static/ecommerce-testimonials.jsp" target="_blank"
@@ -223,14 +220,13 @@
 							</a>
 
 							</li>
-							<li
+							<%-- <li
 								<c:if test="${fn:containsIgnoreCase(pageContext.request.requestURI, \"order-tracking.jsp\")}"> class="active" </c:if>>
 								<a href="order-tracking.jsp"> <i class="icon-resize-small"></i>
 									Track Orders
 							</a>
 
-							</li>
-
+							</li>--%>
 							<li
 								<c:if test="${fn:containsIgnoreCase(pageContext.request.requestURI, \"orderhistory.jsp\")}"> class="active" </c:if>>
 								<a href="orderhistory.jsp"> <i class="icon-time"></i> Order
@@ -321,11 +317,10 @@
 		<div class="navbar-inner">
 			<div class="navbar-container">
 				<div class="navbar-header pull-left">
-				<a href="static/about-us.jsp" target="_blank"
-					class="navbar-brand small14 ">About us</a> <span
-						class="navbar-brand small14">|</span>
-					<a href="static/terms.jsp" target="_blank"
-						class="navbar-brand small14 ">Terms of Use</a><span
+					<a href="static/about-us.jsp" target="_blank"
+						class="navbar-brand small14 ">About us</a> <span
+						class="navbar-brand small14">|</span> <a href="static/terms.jsp"
+						target="_blank" class="navbar-brand small14 ">Terms of Use</a><span
 						class="navbar-brand small14">|</span><a
 						href="http://www.inventorysource.com"
 						class="navbar-brand  small14">InventorySource LLC</a>
