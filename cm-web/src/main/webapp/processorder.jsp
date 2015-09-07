@@ -110,7 +110,7 @@
 						<option value="0">With selected</option>
                       <option value="process">Attempt to Process</option>
                       <option value="manually-processed">Mark as Manually Processed</option>
-                      <option value="delete">Delete</option>
+                      <option value="delete">Mark As Manually Canceled</option>
                     </select>
                   </div>
                   <div class="col-sm-10">
@@ -1097,13 +1097,11 @@
 												if ($(this).is(':checked')) {
 													selected = true;
 													var o = {};
-													var order = table_xy
-															.row(
-																	$(this)
-																			.parent()
-																			.parent()
-																			.parent()[0])
+													var order = table_xy.row(
+															$(this).parents(
+																	'tr'))
 															.data();
+													debugger;
 													if (order != null) {
 														for (var i = 0; i < order.oimOrderDetailses.length; i++) {
 															var od = order.oimOrderDetailses[i];

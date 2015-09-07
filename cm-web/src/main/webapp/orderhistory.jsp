@@ -145,20 +145,44 @@
     <!-- /widget-main -->
 	<div class="col-xs-12">
 								<div class="space-2"></div>
+								<div class="container">
+                  <div class="col-sm-2">
+                    <select id="processselect1"
+											class=" width-100 pull-left">
+						<option value="0">With selected</option>
+                      <option value="track">Recheck Orders</option>
+                      <option value="re-process">Resubmit Orders</option>
+                    </select>
+                  </div>
+                  <div class="col-sm-10">
+										<a id="btnUpdateBulk" class="btn btn-info pull-left"
+											href="javascript:;">Update Selected Orders</a>
+									</div>
+                </div>
+                <div class="space-2"></div>
 								<div class="widget-main no-padding">
 								<table id="tableprocesschannel1"
 								class="table table-bordered table-striped  table-responsive dataTable">
 											<thead class="thin-border-bottom">
 												<tr role="row">
+												<th class="center sorting_disabled sorting_asc"
+											role="columnheader" tabindex="0"
+											aria-controls="tableprocesschannel1" rowspan="1" colspan="1"
+											style="width: 18px;" aria-sort="ascending"
+											aria-label=": activate to sort column descending"><label>
+                                <input type="checkbox" class="ace">
+                                <span class="lbl"></span>
+															</label>
+                            </th>
 													<th><i
-											class="icon-sort-by-order-alt icon-2x blue visible-xs"></i><span
+											class="icon-sort-by-order-alt icon-2x visible-xs"></i><span
 											class="hidden-xs visible-sm">Order Id</span></th>
 												<th>Order Status</th>
-													<th class="hidden-xs sorting" role="columnheader">Order Date</th>
+													<th class="hidden-xs" role="columnheader">Order Date</th>
 													<th class="sorting" role="columnheader"><i
 											class="icon-home icon-2x blue visible-xs"></i><span
 											class="hidden-xs">Customer</span></th>
-													<th class="hidden-sm hidden-xs sorting">Channel
+													<th class="hidden-sm hidden-xs">Channel
 														Name</th>
 												<th class="hidden-sm hidden-xs sorting"><span>Shipping</span></th>
 												<th><i class="icon-usd icon-2x blue visible-xs"></i><span
@@ -192,19 +216,7 @@
 																	</tr>
 																</thead>
 																<tbody>
-																	<tr>
-																		<td><input type="text" value="RS1234" readonly=""
-																	class="pull-right width-100" name="billno"></td>
-																		<td><input type="text"
-																	value="Ravish Test Product" readonly=""
-																	class="pull-right width-100" name="orderdate"></td>
-																		<td><input type="text" value="4" readonly=""
-																	class="pull-right width-100" name="Quantity"></td>
-																		<td><input type="text" value="0.0" readonly=""
-																	class="pull-right width-100" name="SalePrice"></td>
-																		<td><input type="text" value="Unprocessed"
-																	readonly="" class="pull-right width-100" name="Status"></td>
-																	</tr>
+																	
 																</tbody>
 															</table>
 														</div>
@@ -806,6 +818,12 @@
 								"bDestroy" : true,
 								"aoColumns" : [
 										{
+											"mData" : function(order) {
+												return '<label><input class="ace" type="checkbox" value="'+order.orderId+'"><span class="lbl"></span></label>';
+											},
+											"orderable" : false
+										},
+										{
 											"mData" : "storeOrderId"
 										},
 										{
@@ -944,6 +962,68 @@
 				$(id + " option:selected").removeAttr("selected");
 				$('#searchBtn').click();
 			});
+			$('#btnUpdateBulk')
+			.click(
+					function() {
+						var orders = [];
+						var selected = false;
+						if ($('#processselect1 option:selected').val() == '0') {
+							alert('Please select an action to apply to selected order(s).');
+							return false;
+						}
+						$('table tr input:checkbox')
+								.each(
+										function(i, d) {
+											if ($(this).is(':checked')) {
+												selected = true;
+												var o = {};
+												var order = table_xy.row(
+														$(this).parents(
+																'tr'))
+														.data();
+												if (order != null) {
+													for (var i = 0; i < order.oimOrderDetailses.length; i++) {
+														var od = order.oimOrderDetailses[i];
+														if (od.oimSuppliers
+																&& od.oimSuppliers.supplierId > 0) {
+															o['orderId'] = order.orderId;
+															o['supplierId'] = od.oimSuppliers.supplierId;
+														}
+														orders
+																.push(order.orderId);
+													}
+												}
+											}
+										});
+						if (!selected) {
+							orders.length = 0;
+							alert('Please select an order.');
+							return false;
+						}
+						$(this)
+								.CRUD(
+										{
+											url : 'aggregators/orders/processed/bulk/'
+													+ $(
+															'#processselect1 option:selected')
+															.val(),
+											data : JSON.stringify(orders),
+											method : 'POST',
+											success : function(data) {
+												$.gritter
+														.add({
+															title : 'Order Bulk Update',
+															text : data.length
+																	+ ' Orders '
+																	+ $(
+																			'#processselect1 option:selected')
+																			.text()
+														});
+												table_xy.ajax.reload();
+												$.CM.updateOrderSummary();
+											}
+										});
+					});
 		});
 	</script>
 </jsp:attribute>

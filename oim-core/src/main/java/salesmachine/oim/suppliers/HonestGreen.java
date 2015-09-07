@@ -921,13 +921,12 @@ public class HonestGreen extends Supplier implements HasTracking {
 		List<OimOrders> oimOrderList = new ArrayList<OimOrders>();
 		oimOrderList.add(oimOrderDetails.getOimOrders());
 
-
 		Map<String, FtpDetails> ftpDetailMap = new HashMap<String, FtpDetails>();
 
-		if (((String)trackingMeta).startsWith("H")) {
+		if (((String) trackingMeta).startsWith("H")) {
 			FtpDetails ftpDetails = getFtpDetails(ovs, false, true);
 			ftpDetailMap.put("FromHvaMap", ftpDetails);
-		} else if (((String)trackingMeta).startsWith("P")) {
+		} else if (((String) trackingMeta).startsWith("P")) {
 			FtpDetails ftpDetails = getFtpDetails(ovs, true, false);
 			ftpDetailMap.put("FromPhiMap", ftpDetails);
 		} else {
@@ -959,7 +958,7 @@ public class HonestGreen extends Supplier implements HasTracking {
 							ftpDetails.getPassword());
 					ftp.setTimeout(60 * 1000 * 60 * 7);
 					String unfiNumber = findUNFIFromConfirmations(ftp,
-							oimOrderDetails, (String)trackingMeta, orderStatus);
+							oimOrderDetails, (String) trackingMeta, orderStatus);
 					// if(unfiNumber==null){
 					// EmailUtil.sendEmail("support@inventorysource.com",
 					// "support@inventorysource.com", "",
@@ -972,7 +971,8 @@ public class HonestGreen extends Supplier implements HasTracking {
 					// }
 
 					getTrackingInfo(ftpDetails, ftp, unfiNumber, orderStatus,
-							(String)trackingMeta, oimOrderDetails, trackingMeta);
+							(String) trackingMeta, oimOrderDetails,
+							trackingMeta);
 				} catch (IOException | FTPException | ParseException
 						| JAXBException e) {
 					log.error(e.getMessage(), e);
@@ -1037,7 +1037,7 @@ public class HonestGreen extends Supplier implements HasTracking {
 			try {
 				trackingFileData = ftp.get(trackingFilePath);
 			} catch (FTPException e) {
-				log.error(e.getMessage(), e);
+				log.warn(e.getMessage());
 				trackingFileData = null;
 			}
 		} else {
@@ -1068,7 +1068,7 @@ public class HonestGreen extends Supplier implements HasTracking {
 					Map<Integer, String> shippingDataMap = parseFileData(sippingFileData);
 					parseShippingConfirmation = parseShippingConfirmation(
 							shippingDataMap, sku);
-					log.info("Shipping {}", parseShippingConfirmation);
+					log.debug("Shipping {}", parseShippingConfirmation);
 					if (tempTrackingMeta.toString().equals(
 							parseShippingConfirmation.get(PONUM))) {
 						unfiOrderNo = parseShippingConfirmation
@@ -1112,8 +1112,8 @@ public class HonestGreen extends Supplier implements HasTracking {
 			orderStatus
 					.setStatus(OimConstants.OIM_SUPPLER_ORDER_STATUS_SHIPPED);
 			int qtyShipped = detail.getQuantity();
-			if (parseShippingConfirmation != null & parseShippingConfirmation
-					.containsKey(QTY_SHIPPED)) {
+			if (parseShippingConfirmation != null
+					& parseShippingConfirmation.containsKey(QTY_SHIPPED)) {
 				qtyShipped = Integer.parseInt(parseShippingConfirmation
 						.get(QTY_SHIPPED));
 			}
@@ -1422,7 +1422,7 @@ public class HonestGreen extends Supplier implements HasTracking {
 	}
 
 	public static Integer updateFromConfirmation() {
-		int totalValidPO = 0, shippedPO = 0, orderTrackCount=0;
+		int totalValidPO = 0, shippedPO = 0, orderTrackCount = 0;
 
 		List<FtpDetails> ftpList = new ArrayList<FtpDetails>(2);
 
@@ -1493,7 +1493,7 @@ public class HonestGreen extends Supplier implements HasTracking {
 				log.info("Cutoff: {}", cutoff);
 				for (FTPFile ftpFile : ftpFiles) {
 					try {
-						log.info("{} {}", ftpFile.getName(),
+						log.trace("File: {} Modified@: {}", ftpFile.getName(),
 								ftpFile.lastModified());
 						if (ftpFile.getName().equals(".")
 								|| ftpFile.getName().equals("..")
@@ -1705,7 +1705,7 @@ public class HonestGreen extends Supplier implements HasTracking {
 	}
 
 	public static Integer updateFromTracking() {
-		int orderTrackCount=0;
+		int orderTrackCount = 0;
 		List<FtpDetails> ftpList = new ArrayList<FtpDetails>(2);
 
 		FtpDetails ftpDetails2 = new FtpDetails();
@@ -1781,7 +1781,8 @@ public class HonestGreen extends Supplier implements HasTracking {
 				for (FTPFile ftpFile : ftpFiles) {
 					try {
 
-						log.info(ftpFile.getName());
+						log.trace("Tracking File:{} Modified@",
+								ftpFile.getName(), ftpFile.lastModified());
 						if (ftpFile.getName().equals(".")
 								|| ftpFile.getName().equals("..")
 								|| ftpFile.getName().endsWith("S.txt"))
@@ -1829,7 +1830,7 @@ public class HonestGreen extends Supplier implements HasTracking {
 											.intValue())
 								continue;
 							session.refresh(detail);
-							log.info("PONUM# {}", purchaseOrder);
+							log.debug("PONUM# {}", purchaseOrder);
 							tx = session.beginTransaction();
 							int perBoxQty = 1;
 							if (detail.getQuantity() == orderTrackingResponse
@@ -1875,7 +1876,7 @@ public class HonestGreen extends Supplier implements HasTracking {
 							log.info("Tracking details: {}", orderStatus);
 							detail.setSupplierOrderStatus(orderStatus
 									.toString());
-							if (orderStatus.isShipped()){
+							if (orderStatus.isShipped()) {
 								detail.setOimOrderStatuses(new OimOrderStatuses(
 										OimConstants.ORDER_STATUS_SHIPPED));
 								orderTrackCount++;

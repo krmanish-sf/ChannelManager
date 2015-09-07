@@ -34,7 +34,7 @@ public class OrderPullTask extends TimerTask {
 
 	// private final Session session;
 
-	public OrderPullTask(EventBus eventBus,SaveAutomationAudit audit) {
+	public OrderPullTask(EventBus eventBus, SaveAutomationAudit audit) {
 		this.eventBus = eventBus;
 		this.audit = audit;
 	}
@@ -168,12 +168,16 @@ public class OrderPullTask extends TimerTask {
 
 				}
 			}
-			audit.setPullTaskCompleted(true);
+			audit.setPullTaskCompleted();
 			audit.persistAutomationAudit();
 		} catch (Throwable e) {
 			log.error("FATAL ERROR", e);
+			StringBuilder sb = new StringBuilder();
+			for (StackTraceElement stackTraceElement : e.getStackTrace()) {
+				sb.append(stackTraceElement.toString());
+			}
 			AutomationManager.sendNotification(
-					"ORDER PULL ERROR: " + e.getMessage(), e.toString());
+					"ORDER PULL ERROR: " + e.getMessage(), sb.toString());
 
 		}
 	}

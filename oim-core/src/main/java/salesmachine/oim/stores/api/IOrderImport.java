@@ -22,6 +22,8 @@ public interface IOrderImport {
 			OrderStatus orderStatus) throws ChannelCommunicationException,
 			ChannelOrderFormatException, ChannelConfigurationException;
 
+	//void cancelOrder(String stroeIrderId);
+
 	public static enum ChannelError {
 		CHANNEL_COMMUNICATION_ERROR(2), CHANNEL_CONFIGURATION_ERROR(1), CHANNEL_ORDERFORMAT_ERROR(
 				3);

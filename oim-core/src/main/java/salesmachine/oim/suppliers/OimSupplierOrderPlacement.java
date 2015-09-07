@@ -43,7 +43,6 @@ import salesmachine.hibernatedb.OimOrders;
 import salesmachine.hibernatedb.OimSupplierMethods;
 import salesmachine.hibernatedb.OimSuppliers;
 import salesmachine.hibernatedb.OimVendorSuppliers;
-import salesmachine.hibernatedb.OimVendorsuppOrderhistory;
 import salesmachine.hibernatedb.Reps;
 import salesmachine.hibernatedb.Vendors;
 import salesmachine.hibernatehelper.PojoHelper;
@@ -150,27 +149,21 @@ public class OimSupplierOrderPlacement {
 		return true;
 	}
 
-	private void updateVendorSupplierOrderHistory(Integer vendorId,
-			Integer errorCode, String description) {
-		Transaction tx = null;
-		try {
-			tx = m_dbSession.beginTransaction();
-
-			Vendors vendors = new Vendors(vendorId);
-			OimVendorsuppOrderhistory history = new OimVendorsuppOrderhistory();
-			history.setDescription(description);
-			history.setErrorCode(errorCode);
-			history.setOimSuppliers(m_supplier);
-			history.setVendors(vendors);
-			history.setProcessingTm(new Date());
-			m_dbSession.save(history);
-
-			tx.commit();
-		} catch (RuntimeException e) {
-			if (tx != null)
-				tx.rollback();
-			e.printStackTrace();
+	public boolean reprocessVendorOrder(Integer vendorId, OimOrders oimOrders)
+			throws SupplierConfigurationException,
+			SupplierCommunicationException, SupplierOrderException {
+		for (Iterator detailIt = oimOrders.getOimOrderDetailses().iterator(); detailIt
+				.hasNext();) {
+			OimOrderDetails detail = (OimOrderDetails) detailIt.next();
+			detail.setOimOrderStatuses(new OimOrderStatuses(
+					OimConstants.ORDER_STATUS_UNPROCESSED));
+			detail.setSupplierOrderStatus("Re-processing");
+			m_dbSession.persist(detail);
 		}
+		return processVendorOrder(
+				vendorId,
+				oimOrders,
+				new OimOrderBatchesTypes(OimConstants.ORDERBATCH_TYPE_ID_MANUAL));
 	}
 
 	public boolean processVendorOrder(Integer vendorId, OimOrders oimOrders)

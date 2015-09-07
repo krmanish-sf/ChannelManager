@@ -44,7 +44,7 @@ public class OimAutomationAudit implements java.io.Serializable {
 		super();
 	}
 
-	@Temporal(TemporalType.DATE)
+	@Temporal(TemporalType.TIMESTAMP)
 	@Column(name = "START_TIME", nullable = true, length = 7)
 	public Date getStartTime() {
 		return startTime;
@@ -54,7 +54,7 @@ public class OimAutomationAudit implements java.io.Serializable {
 		this.startTime = startTime;
 	}
 
-	@Temporal(TemporalType.DATE)
+	@Temporal(TemporalType.TIMESTAMP)
 	@Column(name = "END_TIME", nullable = true, length = 7)
 	public Date getEndTime() {
 		return endTime;

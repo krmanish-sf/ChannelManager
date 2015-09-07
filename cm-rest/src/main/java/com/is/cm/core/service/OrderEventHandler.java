@@ -6,14 +6,17 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import org.hibernate.Session;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import salesmachine.hibernatedb.OimOrderDetails;
 import salesmachine.hibernatedb.OimOrderStatuses;
 import salesmachine.hibernatedb.OimOrders;
+import salesmachine.hibernatehelper.SessionManager;
 import salesmachine.oim.api.OimConstants;
 import salesmachine.oim.stores.modal.shop.order.CCTRANSMISSION;
+import salesmachine.oim.suppliers.OimSupplierOrderPlacement;
 import salesmachine.oim.suppliers.exception.SupplierCommunicationException;
 import salesmachine.oim.suppliers.exception.SupplierConfigurationException;
 import salesmachine.oim.suppliers.exception.SupplierOrderException;
@@ -24,6 +27,7 @@ import com.is.cm.core.domain.Order;
 import com.is.cm.core.domain.OrderDetail;
 import com.is.cm.core.domain.OrderDetailMod;
 import com.is.cm.core.domain.PagedDataResult;
+import com.is.cm.core.domain.VendorContext;
 import com.is.cm.core.event.CreateEvent;
 import com.is.cm.core.event.CreatedEvent;
 import com.is.cm.core.event.PagedDataResultEvent;
@@ -129,7 +133,11 @@ public class OrderEventHandler implements OrderService {
 	private boolean processOrderInternal(Order order)
 			throws SupplierConfigurationException,
 			SupplierCommunicationException, SupplierOrderException {
-		return orderRepository.processOrders(order);
+		Session dbSession = SessionManager.currentSession();
+		OimSupplierOrderPlacement osop = new OimSupplierOrderPlacement(
+				dbSession);
+		OimOrders oimOrders = orderRepository.getById(order.getOrderId());
+		return osop.processVendorOrder(VendorContext.get(), oimOrders);
 	}
 
 	@Override
@@ -180,6 +188,8 @@ public class OrderEventHandler implements OrderService {
 						.hasNext();) {
 					OimOrderDetails detail = (OimOrderDetails) dit.next();
 					detail.setDeleteTm(new Date());
+					detail.setOimOrderStatuses(new OimOrderStatuses(
+							OimConstants.ORDER_STATUS_CANCELED));
 					orderRepository.update(detail);
 					list.add(Order.from(order));
 				}
@@ -189,6 +199,38 @@ public class OrderEventHandler implements OrderService {
 					list.add(Order.from(order));
 				} catch (Exception e) {
 					LOG.error("Error occured in placing order", e);
+				}
+			} else if ("re-process".equalsIgnoreCase(status)) {
+				try {
+					Session dbSession = SessionManager.currentSession();
+					OimSupplierOrderPlacement osop = new OimSupplierOrderPlacement(
+							dbSession);
+					OimOrders oimOrders = orderRepository.getById(order
+							.getOrderId());
+					osop.reprocessVendorOrder(VendorContext.get(), oimOrders);
+					list.add(Order.from(order));
+				} catch (Exception e) {
+					LOG.error("Error occured in re-submitting orders", e);
+				}
+			} else if ("track".equalsIgnoreCase(status)) {
+				try {
+					Session dbSession = SessionManager.currentSession();
+					OimSupplierOrderPlacement osop = new OimSupplierOrderPlacement(
+							dbSession);
+
+					for (Iterator dit = order.getOimOrderDetailses().iterator(); dit
+							.hasNext();) {
+						OimOrderDetails detail = (OimOrderDetails) dit.next();
+						if (detail
+								.getOimOrderStatuses()
+								.getStatusId()
+								.equals(OimConstants.ORDER_STATUS_PROCESSED_SUCCESS))
+							osop.trackOrder(VendorContext.get(),
+									detail.getDetailId());
+					}
+					list.add(Order.from(order));
+				} catch (Exception e) {
+					LOG.error("Error occured in tracking orders", e);
 				}
 			}
 

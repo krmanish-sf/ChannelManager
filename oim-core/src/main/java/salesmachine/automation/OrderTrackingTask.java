@@ -24,7 +24,7 @@ public class OrderTrackingTask extends TimerTask {
 	private final EventBus eventBus;
 	private SaveAutomationAudit audit;
 
-	public OrderTrackingTask(EventBus eventBus,SaveAutomationAudit audit) {
+	public OrderTrackingTask(EventBus eventBus, SaveAutomationAudit audit) {
 		this.eventBus = eventBus;
 		this.audit = audit;
 	}
@@ -35,7 +35,8 @@ public class OrderTrackingTask extends TimerTask {
 			log.info("Order Tracking Task Running...");
 			int trackCount1 = HonestGreen.updateFromConfirmation();
 			int trackCount2 = HonestGreen.updateFromTracking();
-			AutomationManager.orderTrackMap.put(2941, trackCount1+trackCount2);
+			AutomationManager.orderTrackMap
+					.put(2941, trackCount1 + trackCount2);
 			try {
 				Session session = SessionManager.currentSession();
 
@@ -66,7 +67,7 @@ public class OrderTrackingTask extends TimerTask {
 						}
 					}
 				}
-				audit.setTrackTaskCompleted(true);
+				audit.setTrackTaskCompleted();
 				audit.persistAutomationAudit();
 			} catch (HibernateException ex) {
 				log.error(ex.getMessage(), ex);
@@ -74,8 +75,12 @@ public class OrderTrackingTask extends TimerTask {
 			log.info("Order Tracking Task Queued up...");
 		} catch (Throwable e) {
 			log.error("FATAL ERROR", e);
+			StringBuilder sb = new StringBuilder();
+			for (StackTraceElement stackTraceElement : e.getStackTrace()) {
+				sb.append(stackTraceElement.toString());
+			}
 			AutomationManager.sendNotification(
-					"ORDER TRACKING ERROR: " + e.getMessage(), e.toString());
+					"ORDER TRACKING ERROR: " + e.getMessage(), sb.toString());
 		}
 	}
 

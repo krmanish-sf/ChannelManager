@@ -790,7 +790,8 @@ If you have not yet configured your supplier, click "Add Supplier" to do it now.
 													success : function(data,
 															textStatus, jqXHR) {
 														table_vendorSuppliers
-																.fnDeleteRow(e[0]);
+																.row(e[0])
+																.remove();
 														table_vendorSuppliers
 																.fnDraw();
 														getAlerts();
