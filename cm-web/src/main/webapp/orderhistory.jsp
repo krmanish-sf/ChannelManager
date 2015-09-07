@@ -798,11 +798,6 @@
 											map[this.name] = this.value;
 										}
 									});
-									//map['draw'] = data.draw;
-									//if(data.start>)
-									//map['pageNum'] = data.start;
-									//map['pageSize'] = data.length;
-									//map['searchText'] = data.search.value;
 									d.filters = map;
 									$(this).CRUD({
 										"method" : "POST",
