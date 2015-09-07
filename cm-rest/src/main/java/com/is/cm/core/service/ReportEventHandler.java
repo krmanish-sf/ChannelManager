@@ -3,9 +3,12 @@ package com.is.cm.core.service;
 import java.util.List;
 import java.util.Map;
 
+import com.is.cm.core.domain.DataTableCriterias;
 import com.is.cm.core.domain.OrderBatch;
+import com.is.cm.core.domain.PagedDataResult;
 import com.is.cm.core.domain.ReportDataWrapper;
 import com.is.cm.core.domain.VendorsuppOrderhistory;
+import com.is.cm.core.event.PagedDataResultEvent;
 import com.is.cm.core.event.ReadCollectionEvent;
 import com.is.cm.core.event.ReadEvent;
 import com.is.cm.core.event.RequestReadEvent;
@@ -95,14 +98,11 @@ public class ReportEventHandler implements ReportService {
 	}
 
 	@Override
-	public ReadCollectionEvent<OrderBatch> getChannelPullHistory(
-			PagedDataEvent<OrderBatch> pagedDataEvent) {
-		List<OrderBatch> alertAndErrors = reportRepository
-				.getChannelPullHistory(
-						pagedDataEvent.getDateRange().get("startDate"),
-						pagedDataEvent.getDateRange().get("endDate"),
-						pagedDataEvent.getPageNum(),
-						pagedDataEvent.getRecordCount());
-		return new ReadCollectionEvent<OrderBatch>(alertAndErrors);
+	public PagedDataResultEvent<OrderBatch> getChannelPullHistory(
+			RequestReadEvent<DataTableCriterias> event) {
+
+		PagedDataResult<OrderBatch> pagedDataResult = reportRepository
+				.getChannelPullHistory(event.getEntity());
+		return new PagedDataResultEvent<OrderBatch>(pagedDataResult);
 	}
 }

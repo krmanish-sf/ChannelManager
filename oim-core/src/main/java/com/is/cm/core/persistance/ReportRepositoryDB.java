@@ -1,5 +1,7 @@
 package com.is.cm.core.persistance;
 
+import java.text.DateFormat;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -29,7 +31,10 @@ import salesmachine.oim.api.OimConstants;
 import salesmachine.oim.suppliers.Supplier;
 import salesmachine.util.StringHandle;
 
+import com.is.cm.core.domain.DataTableCriterias;
+import com.is.cm.core.domain.DataTableCriterias.SearchCriterias;
 import com.is.cm.core.domain.OrderBatch;
+import com.is.cm.core.domain.PagedDataResult;
 import com.is.cm.core.domain.ProductSalesData;
 import com.is.cm.core.domain.ReportDataWrapper;
 import com.is.cm.core.domain.VendorsuppOrderhistory;
@@ -1066,6 +1071,8 @@ public class ReportRepositoryDB extends RepositoryBase implements
 		return list;
 	}
 
+	private static final DateFormat df = new SimpleDateFormat("MM/dd/yyyy");
+
 	@Override
 	public List getSystemAlerts() {
 		StringBuilder sb = new StringBuilder(
@@ -1077,20 +1084,47 @@ public class ReportRepositoryDB extends RepositoryBase implements
 	}
 
 	@Override
-	public List<OrderBatch> getChannelPullHistory(Date startDate, Date endDate,
-			int firstResult, int pageSize) {
+	public PagedDataResult<OrderBatch> getChannelPullHistory(
+			DataTableCriterias criterias) {
+		
+		Map<String, String> map = criterias.getFilters();
+		String searchText = criterias.getSearch().get(SearchCriterias.value);
+		
+		String st = StringHandle.removeNull(map.get("startDate"));
+		String ed = StringHandle.removeNull(map.get("endDate"));
+		String errorCode = map.get("errorCode");
+		Date startDate, endDate;
+		try {
+			startDate = df.parse(st);
+			endDate = df.parse(ed);
+
+		} catch (ParseException | NullPointerException e) {
+			LOG.warn(e.getMessage());
+			startDate = new Date();
+			endDate = new Date();
+		}
+		endDate.setHours(23);
+		endDate.setMinutes(59);
+		endDate.setSeconds(59);
+		int erroCodeNum = Integer.parseInt(errorCode);
 		Session dbSession = SessionManager.currentSession();
 		Criteria criteria = dbSession.createCriteria(OimOrderBatches.class)
 				.add(Restrictions.isNotNull("description"))
 				.add(Restrictions.ge("insertionTm", startDate))
-				.add(Restrictions.le("insertionTm", endDate));
+				.add(Restrictions.le("insertionTm", endDate))
+				.add(Restrictions.eq("errorCode", erroCodeNum));
+		int recordsTotal = criteria.list().size();
+		criteria.setFirstResult(criterias.getStart()).setMaxResults(
+				criterias.getLength());
+
 		List<OrderBatch> batchesHistory = new ArrayList<OrderBatch>();
 		List<OimOrderBatches> list = criteria.list();
 		for (OimOrderBatches oimOrderBatches : list) {
 			OrderBatch batch = OrderBatch.from(oimOrderBatches);
 			batchesHistory.add(batch);
 		}
-		return batchesHistory;
+		return new PagedDataResult<OrderBatch>(recordsTotal, recordsTotal,
+				batchesHistory);
 	}
 
 	@Override

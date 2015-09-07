@@ -4,7 +4,9 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
+import com.is.cm.core.domain.DataTableCriterias;
 import com.is.cm.core.domain.OrderBatch;
+import com.is.cm.core.domain.PagedDataResult;
 import com.is.cm.core.domain.ReportDataWrapper;
 import com.is.cm.core.domain.VendorsuppOrderhistory;
 
@@ -28,8 +30,8 @@ public interface ReportRepository {
 
 	List getSystemAlerts();
 
-	List<OrderBatch> getChannelPullHistory(Date startDate, Date endDate,
-			int firstResult, int pageSize);
+	PagedDataResult<OrderBatch> getChannelPullHistory(
+			DataTableCriterias criterias);
 
 	List getChannelAlerts();
 }
