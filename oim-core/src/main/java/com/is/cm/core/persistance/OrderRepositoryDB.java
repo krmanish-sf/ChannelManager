@@ -43,6 +43,7 @@ import salesmachine.util.StateCodeProperty;
 import salesmachine.util.StringHandle;
 
 import com.is.cm.core.domain.DataTableCriterias;
+import com.is.cm.core.domain.DataTableCriterias.SearchCriterias;
 import com.is.cm.core.domain.Order;
 import com.is.cm.core.domain.OrderDetail;
 import com.is.cm.core.domain.OrderDetailMod;
@@ -690,7 +691,8 @@ public class OrderRepositoryDB extends RepositoryBase implements
 				.get("customer_email"));//
 		String customer_address = StringHandle.removeNull(map
 				.get("customer_address"));//
-		String searchText = StringHandle.removeNull(criterias.getSearch().get("value"));//
+		String searchText = StringHandle.removeNull(criterias.getSearch().get(
+				SearchCriterias.value));//
 		String order_id = StringHandle.removeNull(map.get("customer_address"));//
 		String customer_zip = StringHandle.removeNull(map.get("customer_zip"));//
 		String customer_phone = StringHandle.removeNull(map
