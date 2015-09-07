@@ -351,7 +351,7 @@ public class BF extends Supplier implements HasTracking {
 										successfulOrders.put(detail
 												.getDetailId(),
 												new OrderDetailResponse(poNum,
-														status));
+														status,null));
 									}
 									Session session = SessionManager
 											.currentSession();

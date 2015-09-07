@@ -307,7 +307,7 @@ public class DandH extends Supplier implements HasTracking {
 					// session.update(detail);
 					successfulOrders.put(detail.getDetailId(),
 							new OrderDetailResponse(orderMessage,
-									"Sent to supplier."));
+									"Sent to supplier.",null));
 
 					OimChannels oimChannels = order.getOimOrderBatches()
 							.getOimChannels();

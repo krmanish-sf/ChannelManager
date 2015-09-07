@@ -198,7 +198,7 @@ public class GreenSupply extends Supplier {
 						fw.write(sb.toString());
 						//od.setSupplierOrderStatus("Sent to supplier.");
 						//session.update(od);
-						successfulOrders.put(od.getDetailId(),new OrderDetailResponse(poNumber, "Sent to supplier."));
+						successfulOrders.put(od.getDetailId(),new OrderDetailResponse(poNumber, "Sent to supplier.",null));
 						OimChannels oimChannels = order.getOimOrderBatches()
 								.getOimChannels();
 						Integer channelId = oimChannels.getChannelId();
