@@ -1,7 +1,6 @@
 package com.is.cm.core.service;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -187,7 +186,7 @@ public class OrderEventHandler implements OrderService {
 				for (Iterator dit = order.getOimOrderDetailses().iterator(); dit
 						.hasNext();) {
 					OimOrderDetails detail = (OimOrderDetails) dit.next();
-					detail.setDeleteTm(new Date());
+					// detail.setDeleteTm(new Date());
 					detail.setOimOrderStatuses(new OimOrderStatuses(
 							OimConstants.ORDER_STATUS_CANCELED));
 					orderRepository.update(detail);
