@@ -977,6 +977,8 @@ public class OimSupplierOrderPlacement {
 					detail.setSupplierOrderNumber(res.poNumber);
 				if (res.status != null)
 					detail.setSupplierOrderStatus(res.status);
+				if (res.wareHouseCode != null)
+					detail.setSupplierWareHouseCode(res.wareHouseCode);
 				m_dbSession.update(detail);
 			}
 			tx.commit();
