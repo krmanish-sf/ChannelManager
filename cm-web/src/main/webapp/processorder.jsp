@@ -658,25 +658,6 @@
 <script type="text/javascript">
 	var table_xy = null, tableModal = null, editOrder = null;
 	var MY_SUPPLIERS = [];
-	var STATUS = [ {
-		"statusId" : 3,
-		"statusValue" : "Failed"
-	}, {
-		"statusId" : 0,
-		"statusValue" : "Unprocessed"
-	}, {
-		"statusId" : 2,
-		"statusValue" : "Processed"
-	}, {
-		"statusId" : 5,
-		"statusValue" : "Manually Processed"
-	}, {
-		"statusId" : 6,
-		"statusValue" : "Canceled"
-	}, {
-		"statusId" : 7,
-		"statusValue" : "Shipped"
-	} ];
 	function showResolve(e) {
 		var order = table_xy.row(e[0]).data();
 		$('#order-form').hide();

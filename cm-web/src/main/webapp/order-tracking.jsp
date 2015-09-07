@@ -58,25 +58,6 @@
 	<script type="text/javascript">
 		var table_xy = null;
 		var MY_SUPPLIERS = null;
-		var STATUS = [ {
-			"statusId" : 3,
-			"statusValue" : "Failed"
-		}, {
-			"statusId" : 0,
-			"statusValue" : "Unprocessed"
-		}, {
-			"statusId" : 2,
-			"statusValue" : "Processed"
-		}, {
-			"statusId" : 5,
-			"statusValue" : "Manually Processed"
-		}, {
-			"statusId" : 6,
-			"statusValue" : "Canceled"
-		}, {
-			"statusId" : 7,
-			"statusValue" : "Shipped"
-		} ];
 
 		jQuery(function($) {
 			table_xy = $('#table-order-tracking')

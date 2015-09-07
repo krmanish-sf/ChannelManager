@@ -1,3 +1,23 @@
+var STATUS = [ {
+			"statusId" : 6,
+			"statusValue" : "Canceled"
+		}, {
+			"statusId" : 3,
+			"statusValue" : "Failed"
+		}, {
+			"statusId" : 5,
+			"statusValue" : "Manually Processed"
+		}, {
+			"statusId" : 2,
+			"statusValue" : "Processed"
+		}, {
+			"statusId" : 7,
+			"statusValue" : "Shipped"
+		}, {
+			"statusId" : 0,
+			"statusValue" : "Unprocessed"
+		} ];
+
 var $tooltip = $(
 		"<div class='tooltip top in'><div class='tooltip-inner'></div></div>")
 		.hide().appendTo('body');
