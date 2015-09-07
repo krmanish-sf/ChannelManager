@@ -10,6 +10,7 @@ import salesmachine.oim.suppliers.exception.SupplierCommunicationException;
 import salesmachine.oim.suppliers.exception.SupplierConfigurationException;
 import salesmachine.oim.suppliers.exception.SupplierOrderException;
 
+import com.is.cm.core.domain.DataTableCriterias;
 import com.is.cm.core.domain.Order;
 import com.is.cm.core.domain.OrderDetail;
 import com.is.cm.core.domain.OrderDetailMod;
@@ -19,8 +20,7 @@ public interface OrderRepository {
 
 	void delete(int id);
 
-	PagedDataResult<Order> find(Map<String, String> map, int pageSize,
-			int pageNum);
+	PagedDataResult<Order> find(DataTableCriterias criterias);
 
 	List<Order> findAll();
 

@@ -1007,7 +1007,7 @@
 										}
 									},
 									{
-										"mData" : "shippingDetails"
+										"mData" : "shippingAddress"
 									},
 									{
 										"mData" : "orderTotalAmount"

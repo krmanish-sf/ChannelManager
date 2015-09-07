@@ -3,7 +3,6 @@ package com.is.cm.core.service;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 
 import org.hibernate.Session;
 import org.slf4j.Logger;
@@ -240,10 +239,9 @@ public class OrderEventHandler implements OrderService {
 
 	@Override
 	public PagedDataResultEvent<Order> find(
-			RequestReadEvent<Map<String, String>> requestReadEvent,
-			int pageNum, int pageSize) {
-		PagedDataResult<Order> orders = orderRepository.find(
-				requestReadEvent.getEntity(), pageSize, pageNum);
+			RequestReadEvent<DataTableCriterias> requestReadEvent) {
+		PagedDataResult<Order> orders = orderRepository.find(requestReadEvent
+				.getEntity());
 		return new PagedDataResultEvent<Order>(orders);
 	}
 

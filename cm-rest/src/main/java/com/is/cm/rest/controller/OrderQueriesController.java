@@ -1,7 +1,6 @@
 package com.is.cm.rest.controller;
 
 import java.util.Collection;
-import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -78,13 +77,11 @@ public class OrderQueriesController {
 	@ResponseStatus(HttpStatus.OK)
 	@ResponseBody
 	public PagedDataResult<Order> searchOrders(
-			@RequestBody Map<String, String> filters) {
+			@RequestBody DataTableCriterias criterias) {
 		LOG.debug("Getting orders for vid: {}", VendorContext.get());
-		PagedDataResultEvent<Order> details = orderService.find(
-				new RequestReadEvent<Map<String, String>>(filters),
-				Integer.parseInt(filters.get("pageNum")),
-				Integer.parseInt(filters.get("pageSize")));
-		details.getEntity().setDraw(Integer.parseInt(filters.get("draw")));
+		PagedDataResultEvent<Order> details = orderService
+				.find(new RequestReadEvent<DataTableCriterias>(criterias));
+		details.getEntity().setDraw(criterias.getDraw());
 		return details.getEntity();
 	}
 

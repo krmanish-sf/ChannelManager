@@ -47,8 +47,7 @@ public interface OrderService {
 			SupplierCommunicationException, SupplierOrderException;
 
 	PagedDataResultEvent<Order> find(
-			RequestReadEvent<Map<String, String>> requestReadEvent,
-			int pageNum, int pageSize);
+			RequestReadEvent<DataTableCriterias> requestReadEvent);
 
 	UpdatedEvent<List<Order>> bulkProcessOrder(UpdateEvent<List<Order>> event)
 			throws SupplierConfigurationException,

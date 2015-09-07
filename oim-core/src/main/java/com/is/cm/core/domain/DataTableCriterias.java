@@ -7,7 +7,7 @@ public class DataTableCriterias {
 	private int draw;
 	private int start;
 	private int length;
-
+	private Map<String, String> filters;
 	private Map<SearchCriterias, String> search;
 
 	private List<Map<ColumnCriterias, String>> columns;
@@ -72,5 +72,13 @@ public class DataTableCriterias {
 
 	public void setOrder(List<Map<OrderCriterias, String>> order) {
 		this.order = order;
+	}
+
+	public Map<String, String> getFilters() {
+		return filters;
+	}
+
+	public void setFilters(Map<String, String> filters) {
+		this.filters = filters;
 	}
 }

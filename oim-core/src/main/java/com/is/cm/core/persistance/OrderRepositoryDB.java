@@ -42,6 +42,7 @@ import salesmachine.oim.suppliers.exception.SupplierOrderException;
 import salesmachine.util.StateCodeProperty;
 import salesmachine.util.StringHandle;
 
+import com.is.cm.core.domain.DataTableCriterias;
 import com.is.cm.core.domain.Order;
 import com.is.cm.core.domain.OrderDetail;
 import com.is.cm.core.domain.OrderDetailMod;
@@ -666,9 +667,9 @@ public class OrderRepositoryDB extends RepositoryBase implements
 	}
 
 	@Override
-	public PagedDataResult<Order> find(Map<String, String> map, int pageSize,
-			int firstResult) {
+	public PagedDataResult<Order> find(DataTableCriterias criterias) {
 
+		Map<String, String> map = criterias.getFilters();
 		Date d = new Date();
 		// basic search
 		String supplier = StringHandle.removeNull(map.get("supplier"));
@@ -689,7 +690,7 @@ public class OrderRepositoryDB extends RepositoryBase implements
 				.get("customer_email"));//
 		String customer_address = StringHandle.removeNull(map
 				.get("customer_address"));//
-		String searchText = StringHandle.removeNull(map.get("searchText"));//
+		String searchText = StringHandle.removeNull(criterias.getSearch().get("value"));//
 		String order_id = StringHandle.removeNull(map.get("customer_address"));//
 		String customer_zip = StringHandle.removeNull(map.get("customer_zip"));//
 		String customer_phone = StringHandle.removeNull(map
@@ -800,7 +801,8 @@ public class OrderRepositoryDB extends RepositoryBase implements
 							+ "o.oimOrderBatches.oimChannels.vendors.vendorId=:vid "
 							+ sort_query);
 			query.setInteger("vid", getVendorId());
-			query.setFirstResult(firstResult).setMaxResults(pageSize);
+			query.setFirstResult(criterias.getStart()).setMaxResults(
+					criterias.getLength());
 
 			for (Iterator iter = query.list().iterator(); iter.hasNext();) {
 				OimOrders oimorder = (OimOrders) iter.next();

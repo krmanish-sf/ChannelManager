@@ -148,7 +148,7 @@
 								<div class="container">
                   <div class="col-sm-2">
                     <select id="processselect1"
-											class=" width-100 pull-left">
+									class=" width-100 pull-left">
 						<option value="0">With selected</option>
                       <option value="track">Recheck Orders</option>
                       <option value="re-process">Resubmit Orders</option>
@@ -156,7 +156,7 @@
                   </div>
                   <div class="col-sm-10">
 										<a id="btnUpdateBulk" class="btn btn-info pull-left"
-											href="javascript:;">Update Selected Orders</a>
+									href="javascript:;">Update Selected Orders</a>
 									</div>
                 </div>
                 <div class="space-2"></div>
@@ -787,8 +787,7 @@
 								"serverSide" : true,
 								"sAjaxDataProp" : "data",
 								"ajax" : function(data, callback, settings) {
-									console.log(settings);
-									console.log(data);
+									var d = $.CM.planify(data);
 									var id = $('#tabs-1').is(':visible') ? '#tabs-1'
 											: '#tabs-2';
 									var map = {};
@@ -799,16 +798,17 @@
 											map[this.name] = this.value;
 										}
 									});
-									map['draw'] = data.draw;
+									//map['draw'] = data.draw;
 									//if(data.start>)
-									map['pageNum'] = data.start;
-									map['pageSize'] = data.length;
-									map['searchText'] = data.search.value;
+									//map['pageNum'] = data.start;
+									//map['pageSize'] = data.length;
+									//map['searchText'] = data.search.value;
+									d.filters = map;
 									$(this).CRUD({
 										"method" : "POST",
 										"cache" : true,
 										"url" : 'aggregators/orders/search',
-										"data" : JSON.stringify(map),
+										"data" : JSON.stringify(d),
 										"message" : true,
 										"success" : function(d) {
 											callback(d);
@@ -871,7 +871,7 @@
 											}
 										},
 										{
-											"mData" : "shippingDetails"
+											"mData" : "shippingAddress"
 										},
 										{
 											"mData" : "orderTotalAmount"
@@ -963,67 +963,71 @@
 				$('#searchBtn').click();
 			});
 			$('#btnUpdateBulk')
-			.click(
-					function() {
-						var orders = [];
-						var selected = false;
-						if ($('#processselect1 option:selected').val() == '0') {
-							alert('Please select an action to apply to selected order(s).');
-							return false;
-						}
-						$('table tr input:checkbox')
-								.each(
-										function(i, d) {
-											if ($(this).is(':checked')) {
-												selected = true;
-												var o = {};
-												var order = table_xy.row(
-														$(this).parents(
-																'tr'))
-														.data();
-												if (order != null) {
-													for (var i = 0; i < order.oimOrderDetailses.length; i++) {
-														var od = order.oimOrderDetailses[i];
-														if (od.oimSuppliers
-																&& od.oimSuppliers.supplierId > 0) {
-															o['orderId'] = order.orderId;
-															o['supplierId'] = od.oimSuppliers.supplierId;
+					.click(
+							function() {
+								var orders = [];
+								var selected = false;
+								if ($('#processselect1 option:selected').val() == '0') {
+									alert('Please select an action to apply to selected order(s).');
+									return false;
+								}
+								$('table tr input:checkbox')
+										.each(
+												function(i, d) {
+													if ($(this).is(':checked')) {
+														selected = true;
+														var o = {};
+														var order = table_xy
+																.row(
+																		$(this)
+																				.parents(
+																						'tr'))
+																.data();
+														if (order != null) {
+															for (var i = 0; i < order.oimOrderDetailses.length; i++) {
+																var od = order.oimOrderDetailses[i];
+																if (od.oimSuppliers
+																		&& od.oimSuppliers.supplierId > 0) {
+																	o['orderId'] = order.orderId;
+																	o['supplierId'] = od.oimSuppliers.supplierId;
+																}
+																orders
+																		.push(order.orderId);
+															}
 														}
-														orders
-																.push(order.orderId);
 													}
-												}
-											}
-										});
-						if (!selected) {
-							orders.length = 0;
-							alert('Please select an order.');
-							return false;
-						}
-						$(this)
-								.CRUD(
-										{
-											url : 'aggregators/orders/processed/bulk/'
-													+ $(
-															'#processselect1 option:selected')
-															.val(),
-											data : JSON.stringify(orders),
-											method : 'POST',
-											success : function(data) {
-												$.gritter
-														.add({
-															title : 'Order Bulk Update',
-															text : data.length
-																	+ ' Orders '
-																	+ $(
-																			'#processselect1 option:selected')
-																			.text()
-														});
-												table_xy.ajax.reload();
-												$.CM.updateOrderSummary();
-											}
-										});
-					});
+												});
+								if (!selected) {
+									orders.length = 0;
+									alert('Please select an order.');
+									return false;
+								}
+								$(this)
+										.CRUD(
+												{
+													url : 'aggregators/orders/processed/bulk/'
+															+ $(
+																	'#processselect1 option:selected')
+																	.val(),
+													data : JSON
+															.stringify(orders),
+													method : 'POST',
+													success : function(data) {
+														$.gritter
+																.add({
+																	title : 'Order Bulk Update',
+																	text : data.length
+																			+ ' Orders '
+																			+ $(
+																					'#processselect1 option:selected')
+																					.text()
+																});
+														table_xy.ajax.reload();
+														$.CM
+																.updateOrderSummary();
+													}
+												});
+							});
 		});
 	</script>
 </jsp:attribute>

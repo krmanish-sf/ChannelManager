@@ -10,6 +10,7 @@ import org.springframework.beans.BeanUtils;
 
 import salesmachine.hibernatedb.OimOrderDetails;
 import salesmachine.hibernatedb.OimOrders;
+import salesmachine.util.StringHandle;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -450,12 +451,23 @@ public class Order extends DomainBase implements Serializable {
 	public void setShippingMethod(ShippingMethod shippingMethod) {
 		this.shippingMethod = shippingMethod;
 	}
+
 	public String getDeliveryStateCode() {
 		return deliveryStateCode;
 	}
 
 	public void setDeliveryStateCode(String deliveryStateCode) {
 		this.deliveryStateCode = deliveryStateCode;
+	}
+
+	public String getShippingAddress() {
+		return String.format("%s %s %s %s %s %s",
+				StringHandle.removeNull(deliveryStreetAddress),
+				StringHandle.removeNull(deliverySuburb),
+				StringHandle.removeNull(deliveryCity),
+				StringHandle.removeNull(deliveryStateCode),
+				StringHandle.removeNull(deliveryZip),
+				StringHandle.removeNull(deliveryCountry));
 	}
 
 }
