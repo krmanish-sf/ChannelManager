@@ -162,7 +162,7 @@
 		            	<div class="alert alert-block alert-warning">
 		                	<i
 										class="ace-icon fa fa-exclamation-triangle bigger-120"></i>
-		                	Please make sure to edit the PO number according to supplier requirements in-order to avoid re-processing errors.
+		                	Please make sure to edit the <strong>PO number</strong> according to supplier requirements in-order to avoid re-processing errors.
 		              	</div>
               		</div>
                 </div>
@@ -442,8 +442,8 @@
                                 <tr>
                                   <th>Sku</th>
                                   <th>Name</th>
-                                  <th>Quantity</th>
-                                  <th>Sale Price</th>
+                                  <th>Qty</th>
+                                  <th>PO Number</th>
                                   <th>Supplier</th>
                                   <th>Status</th>
                                   <th></th>
@@ -624,32 +624,29 @@
 												return "<input type=\"text\" class=\"width-100\" value=\""
 														+ (orderDetail.sku ? orderDetail.sku
 																: '') + "\"/>";
-											},
-											"sWidth" : "20%"
+											}
+											
 										},
 										{
 											"mData" : function(orderDetail) {
 												return '<input type="text" class=\"width-100\" value="'
 														+ (orderDetail.productName != null ? orderDetail.productName
 																: "") + '"/>';
-											},
-											"sWidth" : "35%"
+											}
 										},
 										{
 											"mData" : function(orderDetail) {
 												return "<input type=\"text\" class=\"width-100\" value=\""
 														+ (orderDetail.quantity ? orderDetail.quantity
 																: 0) + "\"/>";
-											},
-											"sWidth" : "7%"
+											}
 										},
 										{
 											"mData" : function(orderDetail) {
 												return "<input type=\"text\" class=\"width-100\" value=\""
-														+ (orderDetail.salePrice ? orderDetail.salePrice
-																: 0) + "\"/>";
-											},
-											"sWidth" : "8%"
+														+ (orderDetail.supplierOrderNumber ? orderDetail.supplierOrderNumber
+																: '') + "\"/>";
+											}
 										},
 										{
 											"mData" : function(orderDetail) {
@@ -674,8 +671,7 @@
 												return $('<div>').append(s)
 														.html();
 
-											},
-											"sWidth" : "10%"
+											}
 										},
 										{
 											"mData" : function(orderDetail) {
@@ -695,26 +691,12 @@
 												}
 												return $('<div>').append(s)
 														.html();
-											},
-											"sWidth" : "10%"
+											}
 										},
 										{
 											"mData" : function(orderDetail) {
-												var text = '';
-
-												if (orderDetail.supplierOrderStatus) {
-													text = '<span id="orderStatus'+orderDetail.detailId+'">';
-													text += orderDetail.supplierOrderStatus
-															+ '</span>';
-												}
-												if (orderDetail.supplierOrderNumber)
-													text += '<br><a onclick="$.CM.trackOrder('
-															+ orderDetail.detailId
-															+ ');">Refresh</a>';
-												return text
-														+ '<button type="button" class="btn btn-info btn-xs pull-left " onclick="b($($(this).parent()).parent());"> <i class="icon-ok"></i>Update</button>';
-											},
-											"sWidth" : "10%"
+												return '<button type="button" class="btn btn-info btn-xs pull-left" onclick="b($($(this).parent()).parent());"><i class="icon-ok"></i>Update</button>';
+											}
 										} ],
 								"aaData" : orderTemp.oimOrderDetailses,
 								"bDestroy" : true
@@ -826,7 +808,8 @@
 											"orderable" : false
 										},
 										{
-											"mData" : "storeOrderId"
+											"mData" : "storeOrderId",
+											"orderable" : false
 										},
 										{
 											"mData" : function(order) {
@@ -852,7 +835,7 @@
 												}
 												return text;
 											},
-											"bSortable" : false
+											"orderable" : false
 										},
 										{
 											"mData" : function(order) {
@@ -868,20 +851,21 @@
 											"mData" : "deliveryName"
 										},
 										{
-											"mData" : function(order) {
-												return order.oimOrderBatches.oimChannels.channelName;
-											}
+											"mData" : "oimOrderBatches.oimChannels.channelName"
 										},
 										{
-											"mData" : "shippingAddress"
+											"mData" : "shippingAddress",
+											"orderable" : false
 										},
 										{
-											"mData" : "orderTotalAmount"
+											"mData" : "orderTotalAmount",
+											"orderable" : false
 										},
 										{
 											"mData" : function(order) {
 												return '<a href="#myModaledit" data-toggle="modal" onclick="c($($(this).parent()).parent());" class="btn btn-info btn-sm icon-pencil"></a>';
-											}
+											},
+											"orderable" : false
 										} ]
 							});
 			$('.addresspop').popover({
