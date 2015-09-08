@@ -153,31 +153,15 @@ public class ReportingQueriesController {
 
 	@RequestMapping(value = "/system/vendor-supplier-history", method = RequestMethod.POST)
 	@ResponseBody
-	public List<VendorsuppOrderhistory> getVendorSupplierHistory(
-			@RequestBody Map<String, String> dateRange) {
+	public PagedDataResult<VendorsuppOrderhistory> getVendorSupplierHistory(
+			@RequestBody DataTableCriterias criteria) {
 		LOG.debug("Getting vendor-supplier-history");
-		String st = dateRange.get("startDate");
-		String ed = dateRange.get("endDate");
-		Date startDate, endDate;
-		try {
-			Map<String, Date> dateRange1 = new HashMap<String, Date>();
-			startDate = df.parse(st);
-			endDate = df.parse(ed);
-			endDate.setHours(23);
-			endDate.setMinutes(59);
-			endDate.setSeconds(59);
-			dateRange1.put("startDate", startDate);
-			dateRange1.put("endDate", endDate);
-			ReadEvent<List<VendorsuppOrderhistory>> event = reportService
-					.getVendorSupplierHistory(new PagedDataEvent<VendorsuppOrderhistory>(
-							1, 100, dateRange1));
+			PagedDataResultEvent<VendorsuppOrderhistory> event = reportService
+					.getVendorSupplierHistory(new RequestReadEvent<DataTableCriterias>(
+							criteria));
+			event.getEntity().setDraw(criteria.getDraw());
 			return event.getEntity();
-		} catch (ParseException e) {
-			log.error("Error in parsing the provided date string",
-					e.getMessage());
-			throw new RuntimeException(
-					"Error in parsing the provided date string");
-		}
+		
 	}
 
 	@RequestMapping(value = "/system/channel-pull-history", method = RequestMethod.POST)

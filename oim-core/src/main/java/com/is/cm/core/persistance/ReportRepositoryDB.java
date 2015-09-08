@@ -1047,20 +1047,45 @@ public class ReportRepositoryDB extends RepositoryBase implements
 	}
 
 	@Override
-	public List<VendorsuppOrderhistory> getVendorSupplierHistory(int pageNum,
-			int recordCount, Date startDate, Date endDate) {
+	public PagedDataResult<VendorsuppOrderhistory> getVendorSupplierHistory(
+			DataTableCriterias criterias) {
+
+		Map<String, String> map = criterias.getFilters();
+		String searchText = criterias.getSearch().get(SearchCriterias.value);
+
+		String st = StringHandle.removeNull(map.get("startDate"));
+		String ed = StringHandle.removeNull(map.get("endDate"));
+		String errorCode = map.get("errorCode");
+		Date startDate, endDate;
+		try {
+			startDate = df.parse(st);
+			endDate = df.parse(ed);
+
+		} catch (ParseException | NullPointerException e) {
+			LOG.warn(e.getMessage());
+			startDate = new Date();
+			endDate = new Date();
+		}
+		endDate.setHours(23);
+		endDate.setMinutes(59);
+		endDate.setSeconds(59);
+		int erroCodeNum = Integer.parseInt(errorCode);
 		Session dbSession = SessionManager.currentSession();
 		Criteria createCriteria = dbSession
 				.createCriteria(OimVendorsuppOrderhistory.class)
 				// .setFirstResult(pageNum).setMaxResults(recordCount)
 				// .add(Restrictions.isNotNull("description"))
 				.add(Restrictions.isNotNull("oimSuppliers"))
-				.add(Restrictions.ne("errorCode", 0))
 				.add(Restrictions.ge("processingTm", startDate))
+				.add(Restrictions.le("processingTm", endDate))
+				.add(Restrictions.eq("errorCode", erroCodeNum))
 				// .add(Restrictions.le("processingTm", endDate))
 				.addOrder(Order.desc("processingTm"));
+		int recordsTotal = createCriteria.list().size();
+		createCriteria.setFirstResult(criterias.getStart()).setMaxResults(
+				criterias.getLength());
 		List<VendorsuppOrderhistory> list = new ArrayList<VendorsuppOrderhistory>(
-				recordCount);
+				recordsTotal);
 		List<OimVendorsuppOrderhistory> list2 = createCriteria.list();
 		for (OimVendorsuppOrderhistory object : list2) {
 			VendorsuppOrderhistory e = new VendorsuppOrderhistory(object);
@@ -1068,7 +1093,8 @@ public class ReportRepositoryDB extends RepositoryBase implements
 		}
 		LOG.trace("History Size : {} and Elements {}", list.size(),
 				list.toString());
-		return list;
+		return new PagedDataResult<VendorsuppOrderhistory>(recordsTotal, recordsTotal,
+				list);
 	}
 
 	private static final DateFormat df = new SimpleDateFormat("MM/dd/yyyy");
@@ -1086,10 +1112,10 @@ public class ReportRepositoryDB extends RepositoryBase implements
 	@Override
 	public PagedDataResult<OrderBatch> getChannelPullHistory(
 			DataTableCriterias criterias) {
-		
+
 		Map<String, String> map = criterias.getFilters();
 		String searchText = criterias.getSearch().get(SearchCriterias.value);
-		
+
 		String st = StringHandle.removeNull(map.get("startDate"));
 		String ed = StringHandle.removeNull(map.get("endDate"));
 		String errorCode = map.get("errorCode");

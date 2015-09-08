@@ -30,8 +30,8 @@ public interface ReportService {
 	ReadEvent<ReportDataWrapper> getSystemReportData(
 			RequestDownloadReportEvent event);
 
-	ReadEvent<List<VendorsuppOrderhistory>> getVendorSupplierHistory(
-			PagedDataEvent<VendorsuppOrderhistory> requestDownloadReportEvent);
+	PagedDataResultEvent<VendorsuppOrderhistory> getVendorSupplierHistory(
+			RequestReadEvent<DataTableCriterias> event);
 
 	ReadCollectionEvent getAlerts(
 			RequestReadEvent<Map<String, Map>> requestReadEvent);

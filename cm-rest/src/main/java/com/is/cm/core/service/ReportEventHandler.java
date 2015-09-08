@@ -74,14 +74,11 @@ public class ReportEventHandler implements ReportService {
 	}
 
 	@Override
-	public ReadEvent<List<VendorsuppOrderhistory>> getVendorSupplierHistory(
-			PagedDataEvent<VendorsuppOrderhistory> pagedDataEvent) {
-		List<VendorsuppOrderhistory> data = reportRepository
-				.getVendorSupplierHistory(pagedDataEvent.getPageNum(),
-						pagedDataEvent.getRecordCount(), pagedDataEvent
-								.getDateRange().get("startDate"),
-						pagedDataEvent.getDateRange().get("endDate"));
-		return new ReadEvent<List<VendorsuppOrderhistory>>(0, data);
+	public PagedDataResultEvent<VendorsuppOrderhistory> getVendorSupplierHistory(
+			RequestReadEvent<DataTableCriterias> event) {
+		PagedDataResult<VendorsuppOrderhistory> pagedDataResult = reportRepository
+				.getVendorSupplierHistory(event.getEntity());
+		return new PagedDataResultEvent<VendorsuppOrderhistory>(pagedDataResult);
 	}
 
 	@Override

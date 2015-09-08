@@ -25,8 +25,7 @@ public interface ReportRepository {
 	ReportDataWrapper getSystemReportData(String reportType, Date startDate,
 			Date endDate);
 
-	List<VendorsuppOrderhistory> getVendorSupplierHistory(int pageNum,
-			int recordCount, Date startDate, Date endDate);
+	PagedDataResult<VendorsuppOrderhistory> getVendorSupplierHistory(DataTableCriterias criterias);
 
 	List getSystemAlerts();
 
