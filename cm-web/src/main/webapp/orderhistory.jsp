@@ -147,17 +147,24 @@
 								<div class="space-2"></div>
 								<div class="container">
                   <div class="col-sm-2">
-                    <select id="processselect1"
+                    	<select id="processselect1"
 									class=" width-100 pull-left">
 						<option value="0">With selected</option>
-                      <option value="track">Recheck Orders</option>
-                      <option value="re-process">Resubmit Orders</option>
-                    </select>
-                  </div>
-                  <div class="col-sm-10">
+                      	<option value="track">Recheck Orders</option>
+                      	<option value="re-process">Resubmit Orders</option>
+                    	</select>
+                  	</div>
+                  	<div class="col-sm-3">
 										<a id="btnUpdateBulk" class="btn btn-info pull-left"
 									href="javascript:;">Update Selected Orders</a>
-									</div>
+					</div>
+					<div class="col-sm-7">
+		            	<div class="alert alert-block alert-warning">
+		                	<i
+										class="ace-icon fa fa-exclamation-triangle bigger-120"></i>
+		                	Please make sure to edit the PO number according to supplier requirements in-order to avoid re-processing errors.
+		              	</div>
+              		</div>
                 </div>
                 <div class="space-2"></div>
 								<div class="widget-main no-padding">
@@ -782,7 +789,7 @@
 			table_xy = $('#tableprocesschannel1')
 					.DataTable(
 							{
-								"order" : [ [ 2, "desc" ] ],
+								"order" : [ [ 3, "desc" ] ],
 								"processing" : true,
 								"serverSide" : true,
 								"sAjaxDataProp" : "data",
@@ -893,61 +900,7 @@
 								});
 
 					});
-			$('#recent-box [data-rel="tooltip"]').tooltip({
-				placement : tooltip_placement
-			});
-			function tooltip_placement(context, source) {
-				var $source = $(source);
-				var $parent = $source.closest('.tab-content');
-				var off1 = $parent.offset();
-				var w1 = $parent.width();
 
-				var off2 = $source.offset();
-				var w2 = $source.width();
-
-				if (parseInt(off2.left) < parseInt(off1.left)
-						+ parseInt(w1 / 2))
-					return 'right';
-				return 'left';
-			}
-
-			$('.dialogs,.comments').slimScroll({
-				height : '300px'
-			});
-
-			//Android's default browser somehow is confused when tapping on label which will lead to dragging the task
-			//so disable dragging when clicking on label
-			var agent = navigator.userAgent.toLowerCase();
-			if ("ontouchstart" in document && /applewebkit/.test(agent)
-					&& /android/.test(agent))
-				$('#tasks').on('touchstart', function(e) {
-					var li = $(e.target).closest('#tasks li');
-					if (li.length == 0)
-						return;
-					var label = li.find('label.inline').get(0);
-					if (label == e.target || $.contains(label, e.target))
-						e.stopImmediatePropagation();
-				});
-
-			$('#tasks').sortable({
-				opacity : 0.8,
-				revert : true,
-				forceHelperSize : true,
-				placeholder : 'draggable-placeholder',
-				forcePlaceholderSize : true,
-				tolerance : 'pointer',
-				stop : function(event, ui) {//just for Chrome!!!! so that dropdowns on items don't appear below other items after being moved
-					$(ui.item).css('z-index', 'auto');
-				}
-			});
-			$('#tasks').disableSelection();
-			$('#tasks input:checkbox').removeAttr('checked').on('click',
-					function() {
-						if (this.checked)
-							$(this).closest('li').addClass('selected');
-						else
-							$(this).closest('li').removeClass('selected');
-					});
 			$('#searchBtn').on('click', function() {
 				table_xy.ajax.reload();
 			});
@@ -957,6 +910,18 @@
 				$(id + " option:selected").removeAttr("selected");
 				$('#searchBtn').click();
 			});
+			$('#processselect1')
+					.on(
+							'change',
+							function(e) {
+								if ('re-process' == $(this).val()) {
+									var conf = confirm('Please make sure to edit the PO number according to supplier requirements in-order to avoid re-processing errors.');
+									if (!confirm) {
+										$(this).val('0');
+										e.preventDefault();
+									}
+								}
+							});
 			$('#btnUpdateBulk')
 					.click(
 							function() {
@@ -1007,6 +972,7 @@
 													data : JSON
 															.stringify(orders),
 													method : 'POST',
+													message : true,
 													success : function(data) {
 														$.gritter
 																.add({
