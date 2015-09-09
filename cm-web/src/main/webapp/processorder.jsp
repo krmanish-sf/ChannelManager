@@ -397,7 +397,7 @@
                                 <div class="col-sm-4">
                                   <label>Order Date</label>
                                   <input type="text" id="orderdate"
-																		data-bind-order="orderTm" readonly="readonly"
+																		data-bind-order="orderTmString" readonly="readonly"
 																		class="pull-right" name="orderdate">
                                 </div> <div class="col-sm-4">
                                   <label>Total Amount</label>

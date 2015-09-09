@@ -15,8 +15,13 @@ import org.hibernate.Criteria;
 import org.hibernate.Query;
 import org.hibernate.SQLQuery;
 import org.hibernate.Session;
+import org.hibernate.criterion.DetachedCriteria;
 import org.hibernate.criterion.Order;
+import org.hibernate.criterion.Projection;
+import org.hibernate.criterion.ProjectionList;
+import org.hibernate.criterion.Projections;
 import org.hibernate.criterion.Restrictions;
+import org.hibernate.criterion.Subqueries;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -1081,6 +1086,16 @@ public class ReportRepositoryDB extends RepositoryBase implements
 				.add(Restrictions.eq("errorCode", erroCodeNum))
 				// .add(Restrictions.le("processingTm", endDate))
 				.addOrder(Order.desc("processingTm"));
+		
+		DetachedCriteria cr = DetachedCriteria.forClass(OimVendorsuppOrderhistory.class);
+		ProjectionList projectionList = Projections.projectionList();
+		projectionList.add(Projections.max("processingTm"));
+		projectionList.add(Projections.groupProperty("errorCode"));
+		projectionList.add(Projections.groupProperty("oimSuppliers.supplierId"));
+		cr.setProjection(projectionList);
+		createCriteria.add(Subqueries.propertiesIn(new String[] { "processingTm",
+				"errorCode", "oimSuppliers.supplierId" }, cr));
+		
 		int recordsTotal = createCriteria.list().size();
 		createCriteria.setFirstResult(criterias.getStart()).setMaxResults(
 				criterias.getLength());
@@ -1093,16 +1108,18 @@ public class ReportRepositoryDB extends RepositoryBase implements
 		}
 		LOG.trace("History Size : {} and Elements {}", list.size(),
 				list.toString());
-		return new PagedDataResult<VendorsuppOrderhistory>(recordsTotal, recordsTotal,
-				list);
+		return new PagedDataResult<VendorsuppOrderhistory>(recordsTotal,
+				recordsTotal, list);
 	}
 
 	private static final DateFormat df = new SimpleDateFormat("MM/dd/yyyy");
 
 	@Override
 	public List getSystemAlerts() {
+		// StringBuilder sb = new StringBuilder(
+		// "select error_code,count(error_code) from OIM_VENDORSUPP_ORDERHISTORY where error_code>0 and processing_tm > trunc(sysdate-2) group by error_code");
 		StringBuilder sb = new StringBuilder(
-				"select error_code,count(error_code) from OIM_VENDORSUPP_ORDERHISTORY where error_code>0 and processing_tm > trunc(sysdate-2) group by error_code");
+				"select a.error_code, count(distinct a.supplier_id) from OIM_VENDORSUPP_ORDERHISTORY a where a.ERROR_CODE>0 and a.processing_tm>trunc(sysdate-2) group by a.ERROR_CODE");
 		Session dbSession = SessionManager.currentSession();
 		SQLQuery reportQuery = dbSession.createSQLQuery(sb.toString());
 		List list = reportQuery.list();
@@ -1132,13 +1149,24 @@ public class ReportRepositoryDB extends RepositoryBase implements
 		endDate.setHours(23);
 		endDate.setMinutes(59);
 		endDate.setSeconds(59);
-		int erroCodeNum = Integer.parseInt(errorCode);
+		int errorCodeNum = Integer.parseInt(errorCode);
 		Session dbSession = SessionManager.currentSession();
 		Criteria criteria = dbSession.createCriteria(OimOrderBatches.class)
 				.add(Restrictions.isNotNull("description"))
 				.add(Restrictions.ge("insertionTm", startDate))
 				.add(Restrictions.le("insertionTm", endDate))
-				.add(Restrictions.eq("errorCode", erroCodeNum));
+				.add(Restrictions.eq("errorCode", errorCodeNum));
+
+		DetachedCriteria cr = DetachedCriteria.forClass(OimOrderBatches.class);
+
+		ProjectionList projectionList = Projections.projectionList();
+		projectionList.add(Projections.max("insertionTm"));
+		projectionList.add(Projections.groupProperty("errorCode"));
+		projectionList.add(Projections.groupProperty("oimChannels.channelId"));
+		cr.setProjection(projectionList);
+		criteria.add(Subqueries.propertiesIn(new String[] { "insertionTm",
+				"errorCode", "oimChannels.channelId" }, cr));
+
 		int recordsTotal = criteria.list().size();
 		criteria.setFirstResult(criterias.getStart()).setMaxResults(
 				criterias.getLength());
@@ -1156,7 +1184,7 @@ public class ReportRepositoryDB extends RepositoryBase implements
 	@Override
 	public List getChannelAlerts() {
 		StringBuilder sb = new StringBuilder(
-				"select error_code,count(error_code) from oim_order_batches where error_code>0 and INSERTION_TM > trunc(sysdate-2) group by error_code");
+				"select a.error_code, count(distinct a.CHANNEL_ID) from OIM_ORDER_BATCHES a where a.ERROR_CODE>0 and a.insertion_tm>trunc(sysdate-2) group by a.ERROR_CODE");
 		Session dbSession = SessionManager.currentSession();
 		SQLQuery reportQuery = dbSession.createSQLQuery(sb.toString());
 		List list = reportQuery.list();

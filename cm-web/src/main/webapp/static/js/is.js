@@ -1073,7 +1073,8 @@ function drawSalesReportTable(data) {
 						if ($(this).hasClass('amazon-store')
 								|| $(this).hasClass('yahoo-store')
 								|| $(this).hasClass('shop-store')
-								|| $(this).hasClass('shopify-store'))
+								|| $(this).hasClass('shopify-store')
+								|| $(this).hasClass('bc-store'))
 							$(this).hide();
 						else
 							$(this).show();

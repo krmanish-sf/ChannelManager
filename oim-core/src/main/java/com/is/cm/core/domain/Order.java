@@ -1,6 +1,7 @@
 package com.is.cm.core.domain;
 
 import java.io.Serializable;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -66,6 +67,7 @@ public class Order extends DomainBase implements Serializable {
 	@JsonDeserialize(as = HashSet.class)
 	private Set<OrderDetail> oimOrderDetailses = new HashSet<OrderDetail>(0);
 	private ShippingMethod shippingMethod;
+	SimpleDateFormat df = new SimpleDateFormat("MM/dd/yyyy HH:mm:ss a");
 
 	public Order() {
 	}
@@ -94,6 +96,10 @@ public class Order extends DomainBase implements Serializable {
 
 	public void setOrderTm(Date orderTm) {
 		this.orderTm = orderTm;
+	}
+	
+	public String getOrderTmString(){
+		return df.format(getOrderTm());
 	}
 
 	public Date getOrderFetchTm() {
