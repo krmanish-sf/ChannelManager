@@ -19,6 +19,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.is.cm.core.domain.DataTableCriterias;
+import com.is.cm.core.domain.DataTableCriterias.OrderCriterias;
 import com.is.cm.core.domain.DataTableCriterias.SearchCriterias;
 import com.is.cm.core.domain.Order;
 import com.is.cm.core.domain.OrderDetail;
@@ -51,6 +52,23 @@ import salesmachine.util.StringHandle;
 
 public class OrderRepositoryDB extends RepositoryBase implements OrderRepository {
   private static Logger LOG = LoggerFactory.getLogger(OrderRepositoryDB.class);
+  private static Map<String, String> orderHistoryColumnMap = new HashMap<String, String>();
+  private static Map<String, String> processOrderColumnMap = new HashMap<String, String>();
+
+  static {
+    orderHistoryColumnMap.put("1", "o.orderId");
+    orderHistoryColumnMap.put("2", "d.oimOrderStatuses");
+    orderHistoryColumnMap.put("3", "o.orderFetchTm");
+    orderHistoryColumnMap.put("4", "o.deliveryName"); // o.oimOrderBatches.oimChannels.channelId
+    orderHistoryColumnMap.put("5", "c.channelName");
+    orderHistoryColumnMap.put("7", "o.orderTotalAmount");
+
+    processOrderColumnMap.put("1", "o.orderId");
+    processOrderColumnMap.put("2", "o.orderFetchTm");
+    processOrderColumnMap.put("3", "o.deliveryName");
+    processOrderColumnMap.put("4", "c.channelName");
+    processOrderColumnMap.put("7", "o.orderTotalAmount");
+  }
 
   private String implode(String inputArray[]) {
     String AsImplodedString = "";
@@ -531,23 +549,33 @@ public class OrderRepositoryDB extends RepositoryBase implements OrderRepository
   }
 
   @Override
-  public PagedDataResult<Order> findUnresolvedOrders(int firstResult, int pageSize,
-      String storeOrderId) {
+  public PagedDataResult<Order> findUnresolvedOrders(DataTableCriterias criterias) {
     Session currentSession = SessionManager.currentSession();
     List<Order> orderList = new ArrayList<Order>();
+    String storeOrderId = criterias.getSearch().get(SearchCriterias.value);
+    int firstResult = criterias.getStart();
+    int pageSize = criterias.getLength();
     // Transaction tx = null;
     long totalRecords = 0, recordsFiltered = 0;
     try {
       // tx = currentSession.beginTransaction();
       StringBuilder sb = new StringBuilder();
       sb.append("select distinct o from salesmachine.hibernatedb.OimOrders o")
-          .append(" left join fetch o.oimOrderDetailses d").append(" where o.deleteTm is null and")
+          .append(" left join fetch o.oimOrderDetailses d")
+          .append(" left join fetch o.oimOrderBatches b ")
+          .append(" left join fetch b.oimChannels c ").append(" where o.deleteTm is null and")
           .append(" d.deleteTm is null and").append(" d.oimOrderStatuses.statusId = '0' and")
           .append(" o.oimOrderBatches.oimChannels.vendors.vendorId=:vid");
       if (!StringHandle.isNullOrEmpty(storeOrderId)) {
         sb.append(" and o.storeOrderId like :storeOrderId");
       }
-      sb.append(" order by d.insertionTm desc");
+      String sort_query = " order by";
+      for (Map<OrderCriterias, String> map2 : criterias.getOrder()) {
+        String column = map2.get(OrderCriterias.column);
+        String dir = map2.get(OrderCriterias.dir);
+        sort_query += " " + processOrderColumnMap.get(column) + " " + dir + ",";
+      }
+      sb.append(sort_query.substring(0, sort_query.length() - 1));
       Query query = currentSession.createQuery(sb.toString());
       query.setInteger("vid", getVendorId());
       if (!StringHandle.isNullOrEmpty(storeOrderId)) {
@@ -615,10 +643,21 @@ public class OrderRepositoryDB extends RepositoryBase implements OrderRepository
     return osop.processVendorOrder(getVendorId(), oimOrders);
   }
 
+  public PagedDataResult<Order> find() {
+    return find(null);
+  }
+
   @Override
   public PagedDataResult<Order> find(DataTableCriterias criterias) {
 
-    Map<String, String> map = criterias.getFilters();
+    Map<String, String> map = new HashMap<String, String>();
+    int start = -1;
+    int maxResult = -1;
+    if (criterias != null) {
+      map = criterias.getFilters();
+      start = criterias.getStart();
+      maxResult = criterias.getLength();
+    }
     Date d = new Date();
     // basic search
     String supplier = StringHandle.removeNull(map.get("supplier"));
@@ -636,13 +675,16 @@ public class OrderRepositoryDB extends RepositoryBase implements OrderRepository
     String customer_name = StringHandle.removeNull(map.get("customer_name"));//
     String customer_email = StringHandle.removeNull(map.get("customer_email"));//
     String customer_address = StringHandle.removeNull(map.get("customer_address"));//
-    String searchText = StringHandle.removeNull(criterias.getSearch().get(SearchCriterias.value));//
     String order_id = StringHandle.removeNull(map.get("customer_address"));//
     String customer_zip = StringHandle.removeNull(map.get("customer_zip"));//
     String customer_phone = StringHandle.removeNull(map.get("customer_phone"));//
     String order_total_min = StringHandle.removeNull(map.get("order_total_min"));//
     String order_total_max = StringHandle.removeNull(map.get("order_total_max"));//
     String sku = StringHandle.removeNull(map.get("sku"));//
+    String searchText = "";//
+    if (criterias != null) {
+      searchText = StringHandle.removeNull(criterias.getSearch().get(SearchCriterias.value));
+    }
 
     // creating subqueries for all the possible inputs (orderdate,
     // supplierid, statusid, batchid, channelid)
@@ -710,15 +752,26 @@ public class OrderRepositoryDB extends RepositoryBase implements OrderRepository
     Session dbSession = SessionManager.currentSession();
     Transaction tx = null;
     try {
-      String sort_query = "order by o.orderFetchTm desc";
+      String sort_query = "order by";
+      if (criterias != null) {
+        for (Map<OrderCriterias, String> map2 : criterias.getOrder()) {
+          String column = map2.get(OrderCriterias.column);
+          String dir = map2.get(OrderCriterias.dir);
+          sort_query += " " + orderHistoryColumnMap.get(column) + " " + dir + ",";
+        }
+        sort_query = sort_query.substring(0, sort_query.length() - 1);
+      } else
+        sort_query += " d.oimOrderStatuses asc";
       Query query = dbSession
           .createQuery("select distinct o from salesmachine.hibernatedb.OimOrders o "
-              + "left join o.oimOrderDetailses d " + "where o.deleteTm is null and "
+              + "left join fetch o.oimOrderDetailses d " + "left join fetch o.oimOrderBatches b "
+              + "left join fetch b.oimChannels c " + "where o.deleteTm is null and "
               + "d.deleteTm is null and " + orderdatequerysubstring + supplierquerysubstring
-              + statusquerysubstring + channelquerysubstring + customer_search + price_search
-              + sku_search + "o.oimOrderBatches.oimChannels.vendors.vendorId=:vid " + sort_query);
+              + statusquerysubstring + channelquerysubstring // o.oimOrderBatches.oimChannels.channelId
+              + customer_search + price_search + sku_search
+              + "o.oimOrderBatches.oimChannels.vendors.vendorId=:vid " + sort_query);
       query.setInteger("vid", getVendorId());
-      query.setFirstResult(criterias.getStart()).setMaxResults(criterias.getLength());
+      query.setFirstResult(start).setMaxResults(maxResult);
 
       for (Iterator iter = query.list().iterator(); iter.hasNext();) {
         OimOrders oimorder = (OimOrders) iter.next();

@@ -112,9 +112,7 @@ public class OrderEventHandler implements OrderService {
 		    event.getEntity().getStart(), event.getEntity().getLength(),
 		    storeOrderId);
 	} else if ("unresolved".equalsIgnoreCase(status)) {
-	    result = orderRepository.findUnresolvedOrders(
-		    event.getEntity().getStart(), event.getEntity().getLength(),
-		    storeOrderId);
+	    result = orderRepository.findUnresolvedOrders(event.getEntity());
 	} else if ("posted".equalsIgnoreCase(status)) {
 	    result = orderRepository.findProcessedOrders(
 		    event.getEntity().getStart(), event.getEntity().getLength(),
@@ -169,15 +167,9 @@ public class OrderEventHandler implements OrderService {
 	List<Integer> orders = event.getEntity();
 	if (orders == null && "process".equalsIgnoreCase(status)) {
 	    LOG.warn("No order submitted for {}", status);
-	    // Passing null to fetch all unprocessed orders
-	    PagedDataResult<Order> findUnprocessedOrders = orderRepository
-		    .findUnprocessedOrders(-1, -1, null);
-	    orders = new ArrayList<Integer>();
-	    LOG.debug("Querying unprocessed orders..");
-	    for (Order order : findUnprocessedOrders.getData()) {
-		orders.add(order.getOrderId());
-	    }
+	    throw new RuntimeException("Order List must not be empty.");
 	}
+
 	LOG.debug("Order Size: {}", orders.size());
 	List<Order> list = new ArrayList<Order>();
 	for (Integer id : orders) {
@@ -190,8 +182,11 @@ public class OrderEventHandler implements OrderService {
 			    OimConstants.ORDER_STATUS_MANUALLY_PROCESSED));
 		    orderRepository.update(detail);
 		    list.add(Order.from(order));
+
 		}
-	    } else if ("delete".equalsIgnoreCase(status)) {
+	    } else if ("delete".equalsIgnoreCase(status))
+
+	    {
 		try {
 		    IOrderImport channelService = ChannelFactory
 			    .getIOrderImport(order.getOimOrderBatches()
@@ -210,14 +205,18 @@ public class OrderEventHandler implements OrderService {
 			| ChannelCommunicationException e) {
 		    LOG.error(e.getMessage(), e);
 		}
-	    } else if ("process".equalsIgnoreCase(status)) {
+	    } else if ("process".equalsIgnoreCase(status))
+
+	    {
 		try {
 		    processOrderInternal(Order.from(order));
 		    list.add(Order.from(order));
 		} catch (Exception e) {
 		    LOG.error("Error occured in placing order", e);
 		}
-	    } else if ("re-process".equalsIgnoreCase(status)) {
+	    } else if ("re-process".equalsIgnoreCase(status))
+
+	    {
 		try {
 		    Session dbSession = SessionManager.currentSession();
 		    OimSupplierOrderPlacement osop = new OimSupplierOrderPlacement(
@@ -229,7 +228,9 @@ public class OrderEventHandler implements OrderService {
 		} catch (Exception e) {
 		    LOG.error("Error occured in re-submitting orders", e);
 		}
-	    } else if ("track".equalsIgnoreCase(status)) {
+	    } else if ("track".equalsIgnoreCase(status))
+
+	    {
 		try {
 		    Session dbSession = SessionManager.currentSession();
 		    OimSupplierOrderPlacement osop = new OimSupplierOrderPlacement(

@@ -36,8 +36,7 @@ public interface OrderRepository {
 	PagedDataResult<Order> findUnprocessedOrders(int firstResult, int pageSize,
 			String storeOrderId);
 
-	PagedDataResult<Order> findUnresolvedOrders(int firstResult, int pageSize,
-			String storeOrderId);
+	PagedDataResult<Order> findUnresolvedOrders(DataTableCriterias criterias);
 
 	OimOrders getById(int id);
 

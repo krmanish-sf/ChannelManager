@@ -1004,10 +1004,12 @@
 									{
 										"mData" : function(order) {
 											return order.oimOrderDetailses.length;
-										}
+										},
+										"orderable" : false
 									},
 									{
-										"mData" : "shippingAddress"
+										"mData" : "shippingAddress",
+										"orderable" : false
 									},
 									{
 										"mData" : "orderTotalAmount"
