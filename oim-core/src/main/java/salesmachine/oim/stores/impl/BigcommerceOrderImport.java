@@ -421,4 +421,16 @@ public class BigcommerceOrderImport extends ChannelBase {
 		return streamBuffer.toString();
 	}
 
+  @Override
+  public void cancelOrder(OimOrders oimOrder) {
+    // TODO Auto-generated method stub
+    
+  }
+
+  @Override
+  public void cancelOrder(OimOrderDetails oimOrder) {
+    // TODO Auto-generated method stub
+    
+  }
+
 }

@@ -5,6 +5,7 @@ import org.hibernate.Session;
 import salesmachine.hibernatedb.OimOrderBatches;
 import salesmachine.hibernatedb.OimOrderBatchesTypes;
 import salesmachine.hibernatedb.OimOrderDetails;
+import salesmachine.hibernatedb.OimOrders;
 import salesmachine.oim.stores.api.ChannelBase;
 import salesmachine.oim.stores.api.IOrderImport;
 import salesmachine.oim.stores.exception.ChannelCommunicationException;
@@ -43,5 +44,17 @@ public class EbayOrderImport extends ChannelBase implements IOrderImport {
 		// Provide logic to update the Ebay store with Order status.
 		return false;
 	}
+
+  @Override
+  public void cancelOrder(OimOrders oimOrder) {
+    // TODO Auto-generated method stub
+    
+  }
+
+  @Override
+  public void cancelOrder(OimOrderDetails oimOrder) {
+    // TODO Auto-generated method stub
+    
+  }
 
 }

@@ -26,6 +26,7 @@ import org.slf4j.LoggerFactory;
 import salesmachine.hibernatedb.OimOrderBatches;
 import salesmachine.hibernatedb.OimOrderBatchesTypes;
 import salesmachine.hibernatedb.OimOrderDetails;
+import salesmachine.hibernatedb.OimOrders;
 import salesmachine.hibernatehelper.PojoHelper;
 import salesmachine.oim.api.OimConstants;
 import salesmachine.oim.stores.api.ChannelBase;
@@ -146,4 +147,16 @@ public class ShopOrderImport extends ChannelBase implements IOrderImport {
 		}
 		return true;
 	}
+
+  @Override
+  public void cancelOrder(OimOrders oimOrder) {
+    // TODO Auto-generated method stub
+    
+  }
+
+  @Override
+  public void cancelOrder(OimOrderDetails oimOrder) {
+    // TODO Auto-generated method stub
+    
+  }
 }

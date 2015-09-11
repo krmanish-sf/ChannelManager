@@ -10,27 +10,6 @@
 			<id>live</id>
 			<build>
 				<plugins>
-					<!-- <plugin>
-						<groupId>org.apache.maven.plugins</groupId>
-						<artifactId>maven-antrun-plugin</artifactId>
-						<version>1.1</version>
-						<executions>
-							<execution>
-								<phase>compile</phase>
-								<goals>
-									<goal>run</goal>
-								</goals>
-								<configuration>
-									<tasks>
-										<echo>Using config.live.properties</echo>
-										<delete file="${project.build.outputDirectory}/config.properties" />
-										<copy file="src/main/resources/config.live.properties"
-											tofile="${project.build.outputDirectory}/config.properties" />
-									</tasks>
-								</configuration>
-							</execution>
-						</executions>
-					</plugin> -->
 					<plugin>
 						<groupId>org.apache.tomcat.maven</groupId>
 						<artifactId>tomcat7-maven-plugin</artifactId>
@@ -51,26 +30,6 @@
 			<id>staging</id>
 			<build>
 				<plugins>
-					<!-- <plugin>
-						<groupId>org.apache.maven.plugins</groupId>
-						<artifactId>maven-antrun-plugin</artifactId>
-						<version>1.1</version>
-						<executions>
-							<execution>
-								<phase>compile</phase>
-								<goals>
-									<goal>run</goal>
-								</goals>
-								<configuration>
-									<tasks>
-										<echo>Using config.staging.properties</echo>
-										<copy file="src/main/resources/config.staging.properties"
-											tofile="${project.build.outputDirectory}/config.properties" />
-									</tasks>
-								</configuration>
-							</execution>
-						</executions>
-					</plugin> -->
 					<plugin>
 						<groupId>org.apache.tomcat.maven</groupId>
 						<artifactId>tomcat7-maven-plugin</artifactId>

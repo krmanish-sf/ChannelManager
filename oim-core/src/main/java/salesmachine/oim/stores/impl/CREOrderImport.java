@@ -635,4 +635,16 @@ public class CREOrderImport extends ChannelBase implements IOrderImport {
 		return false;
 	}
 
+  @Override
+  public void cancelOrder(OimOrders oimOrder) {
+    // TODO Auto-generated method stub
+    
+  }
+
+  @Override
+  public void cancelOrder(OimOrderDetails oimOrder) {
+    // TODO Auto-generated method stub
+    
+  }
+
 }

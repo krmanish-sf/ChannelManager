@@ -5,37 +5,38 @@ import org.hibernate.Session;
 import salesmachine.hibernatedb.OimOrderBatches;
 import salesmachine.hibernatedb.OimOrderBatchesTypes;
 import salesmachine.hibernatedb.OimOrderDetails;
+import salesmachine.hibernatedb.OimOrders;
 import salesmachine.oim.stores.exception.ChannelCommunicationException;
 import salesmachine.oim.stores.exception.ChannelConfigurationException;
 import salesmachine.oim.stores.exception.ChannelOrderFormatException;
 import salesmachine.oim.suppliers.modal.OrderStatus;
 
 public interface IOrderImport {
-	boolean init(int channelID, Session dbSession)
-			throws ChannelConfigurationException;
+  boolean init(int channelID, Session dbSession) throws ChannelConfigurationException;
 
-	void getVendorOrders(OimOrderBatchesTypes batchesTypes,
-			OimOrderBatches batch) throws ChannelCommunicationException,
-			ChannelOrderFormatException, ChannelConfigurationException;
+  void getVendorOrders(OimOrderBatchesTypes batchesTypes, OimOrderBatches batch)
+      throws ChannelCommunicationException, ChannelOrderFormatException,
+      ChannelConfigurationException;
 
-	boolean updateStoreOrder(OimOrderDetails oimOrderDetails,
-			OrderStatus orderStatus) throws ChannelCommunicationException,
-			ChannelOrderFormatException, ChannelConfigurationException;
+  boolean updateStoreOrder(OimOrderDetails oimOrderDetails, OrderStatus orderStatus)
+      throws ChannelCommunicationException, ChannelOrderFormatException,
+      ChannelConfigurationException;
 
-	//void cancelOrder(String stroeIrderId);
+  void cancelOrder(OimOrders oimOrder);
 
-	public static enum ChannelError {
-		CHANNEL_COMMUNICATION_ERROR(2), CHANNEL_CONFIGURATION_ERROR(1), CHANNEL_ORDERFORMAT_ERROR(
-				3);
+  void cancelOrder(OimOrderDetails oimOrder);
 
-		private final int errorCode;
+  public static enum ChannelError {
+    CHANNEL_COMMUNICATION_ERROR(2), CHANNEL_CONFIGURATION_ERROR(1), CHANNEL_ORDERFORMAT_ERROR(3);
 
-		ChannelError(int errorCode) {
-			this.errorCode = errorCode;
-		}
+    private final int errorCode;
 
-		public int getErrorCode() {
-			return errorCode;
-		}
-	}
+    ChannelError(int errorCode) {
+      this.errorCode = errorCode;
+    }
+
+    public int getErrorCode() {
+      return errorCode;
+    }
+  }
 }

@@ -790,7 +790,7 @@ public class OrderRepositoryDB extends RepositoryBase implements
 			String sort_query = "order by o.orderFetchTm desc";
 			Query query = dbSession
 					.createQuery("select distinct o from salesmachine.hibernatedb.OimOrders o "
-							+ "left join fetch o.oimOrderDetailses d "
+							+ "left join o.oimOrderDetailses d "
 							+ "where o.deleteTm is null and "
 							+ "d.deleteTm is null and "
 							+ orderdatequerysubstring
