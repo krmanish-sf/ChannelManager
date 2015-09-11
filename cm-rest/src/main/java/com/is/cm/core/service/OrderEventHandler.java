@@ -104,8 +104,7 @@ public class OrderEventHandler implements OrderService {
 			result = orderRepository.findUnprocessedOrders(event.getEntity()
 					.getStart(), event.getEntity().getLength(), storeOrderId);
 		} else if ("unresolved".equalsIgnoreCase(status)) {
-			result = orderRepository.findUnresolvedOrders(event.getEntity()
-					.getStart(), event.getEntity().getLength(), storeOrderId);
+			result = orderRepository.findUnresolvedOrders(event.getEntity());
 		} else if ("posted".equalsIgnoreCase(status)) {
 			result = orderRepository.findProcessedOrders(event.getEntity()
 					.getStart(), event.getEntity().getLength(), storeOrderId);
@@ -159,14 +158,7 @@ public class OrderEventHandler implements OrderService {
 		List<Integer> orders = event.getEntity();
 		if (orders == null && "process".equalsIgnoreCase(status)) {
 			LOG.warn("No order submitted for {}", status);
-			// Passing null to fetch all unprocessed orders
-			PagedDataResult<Order> findUnprocessedOrders = orderRepository
-					.findUnprocessedOrders(-1, -1, null);
-			orders = new ArrayList<Integer>();
-			LOG.debug("Querying unprocessed orders..");
-			for (Order order : findUnprocessedOrders.getData()) {
-				orders.add(order.getOrderId());
-			}
+			throw new RuntimeException("Order List must not be empty.");
 		}
 		LOG.debug("Order Size: {}", orders.size());
 		List<Order> list = new ArrayList<Order>();

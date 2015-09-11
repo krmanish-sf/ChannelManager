@@ -808,8 +808,7 @@
 											"orderable" : false
 										},
 										{
-											"mData" : "storeOrderId",
-											"orderable" : false
+											"mData" : "storeOrderId"
 										},
 										{
 											"mData" : function(order) {
@@ -826,16 +825,14 @@
 														text += '&nbsp;<a style="cursor:pointer;" title="Click to refresh tracking" onclick="$.CM.trackOrder('
 																+ orderDetail.detailId
 																+ ');"><i class="icon-refresh"></i></a>';
+													text += '<br/><span id="orderStatus'+orderDetail.detailId+'">' + orderDetail.oimOrderStatuses.statusValue;
 													if (orderDetail.supplierOrderStatus) {
-														text += '<br/><span id="orderStatus'+orderDetail.detailId+'">';
-														text += orderDetail.supplierOrderStatus
-																+ '</span>';
+														text += " - " + orderDetail.supplierOrderStatus;
 													}
-													text += '<div class="space-2"></div>';
+													text += '</span><div class="space-2"></div>';
 												}
 												return text;
-											},
-											"orderable" : false
+											}
 										},
 										{
 											"mData" : function(order) {
@@ -858,8 +855,7 @@
 											"orderable" : false
 										},
 										{
-											"mData" : "orderTotalAmount",
-											"orderable" : false
+											"mData" : "orderTotalAmount"
 										},
 										{
 											"mData" : function(order) {
