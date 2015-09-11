@@ -9,24 +9,26 @@ import com.is.cm.core.domain.Filetype;
 import com.is.cm.core.domain.SupportedChannel;
 import com.is.cm.core.domain.UploadedFile;
 
+import salesmachine.hibernatedb.OimChannels;
+
 public interface ChannelRepository {
-	Channel save(int channelId, Map<String, String> channelDetails);
+  Channel save(int channelId, Map<String, String> channelDetails);
 
-	void delete(int id);
+  void delete(int id);
 
-	Channel findById(int id);
+  OimChannels findById(int id);
 
-	List<Channel> findAll();
+  List<Channel> findAll();
 
-	List<Filetype> getFileTypes(int channelId);
+  List<Filetype> getFileTypes(int channelId);
 
-	List<UploadedFile> getOimUploadedFiles(int channelId);
+  List<UploadedFile> getOimUploadedFiles(int channelId);
 
-	Channel findByName(String name);
+  Channel findByName(String name);
 
-	List<ChannelShippingMap> findShippingMapping(Integer entity);
+  List<ChannelShippingMap> findShippingMapping(Integer entity);
 
-	List<SupportedChannel> findSupportedChannels();
+  List<SupportedChannel> findSupportedChannels();
 
-	Map<String, String> findBigcommerceAuthDetailsByUrl(String url);
+  Map<String, String> findBigcommerceAuthDetailsByUrl(String url);
 }

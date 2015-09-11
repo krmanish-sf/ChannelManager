@@ -2,6 +2,7 @@ package salesmachine.oim.stores.api;
 
 import org.hibernate.Session;
 
+import salesmachine.hibernatedb.OimChannels;
 import salesmachine.hibernatedb.OimOrderBatches;
 import salesmachine.hibernatedb.OimOrderBatchesTypes;
 import salesmachine.hibernatedb.OimOrderDetails;
@@ -12,19 +13,21 @@ import salesmachine.oim.stores.exception.ChannelOrderFormatException;
 import salesmachine.oim.suppliers.modal.OrderStatus;
 
 public interface IOrderImport {
-  boolean init(int channelID, Session dbSession) throws ChannelConfigurationException;
+  boolean init(OimChannels channels, Session dbSession) throws ChannelConfigurationException;
 
   void getVendorOrders(OimOrderBatchesTypes batchesTypes, OimOrderBatches batch)
       throws ChannelCommunicationException, ChannelOrderFormatException,
       ChannelConfigurationException;
 
-  boolean updateStoreOrder(OimOrderDetails oimOrderDetails, OrderStatus orderStatus)
+  void updateStoreOrder(OimOrderDetails oimOrderDetails, OrderStatus orderStatus)
       throws ChannelCommunicationException, ChannelOrderFormatException,
       ChannelConfigurationException;
 
-  void cancelOrder(OimOrders oimOrder);
+  void cancelOrder(OimOrders oimOrder)
+      throws ChannelOrderFormatException, ChannelCommunicationException;
 
-  void cancelOrder(OimOrderDetails oimOrder);
+  void cancelOrder(OimOrderDetails oimOrder)
+      throws ChannelOrderFormatException, ChannelCommunicationException;
 
   public static enum ChannelError {
     CHANNEL_COMMUNICATION_ERROR(2), CHANNEL_CONFIGURATION_ERROR(1), CHANNEL_ORDERFORMAT_ERROR(3);

@@ -19,9 +19,6 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import oracle.xml.parser.v2.DOMParser;
-import oracle.xml.parser.v2.XMLDocument;
-
 import org.hibernate.Query;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
@@ -31,7 +28,12 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
+import com.stevesoft.pat.Regex;
+
+import oracle.xml.parser.v2.DOMParser;
+import oracle.xml.parser.v2.XMLDocument;
 import salesmachine.hibernatedb.OimChannelShippingMap;
+import salesmachine.hibernatedb.OimChannels;
 import salesmachine.hibernatedb.OimOrderBatches;
 import salesmachine.hibernatedb.OimOrderBatchesTypes;
 import salesmachine.hibernatedb.OimOrderDetails;
@@ -49,602 +51,549 @@ import salesmachine.oim.stores.exception.ChannelOrderFormatException;
 import salesmachine.oim.suppliers.modal.OrderStatus;
 import salesmachine.util.StringHandle;
 
-import com.stevesoft.pat.Regex;
-
 public class CREOrderImport extends ChannelBase implements IOrderImport {
-	private static final Logger LOG = LoggerFactory
-			.getLogger(CREOrderImport.class);
-	private String m_storeURL;
+  private static final Logger LOG = LoggerFactory.getLogger(CREOrderImport.class);
+  private String m_storeURL;
 
-	public boolean init(int channelID, Session dbSession)
-			throws ChannelConfigurationException {
-		super.init(channelID, dbSession);
-		String scriptPath = PojoHelper.getChannelAccessDetailValue(m_channel,
-				OimConstants.CHANNEL_ACCESSDETAIL_SCRIPT_PATH);
-		LOG.info("Checking the script path");
-		if (StringHandle.isNullOrEmpty(scriptPath)) {
-			LOG.warn("Channel is not yet setup for automation.");
-			throw new ChannelConfigurationException(
-					"Channel is not yet setup for automation. Script not found.");
-		}
+  public boolean init(OimChannels oimChannel, Session dbSession)
+      throws ChannelConfigurationException {
+    super.init(oimChannel, dbSession);
+    String scriptPath = PojoHelper.getChannelAccessDetailValue(m_channel,
+        OimConstants.CHANNEL_ACCESSDETAIL_SCRIPT_PATH);
+    LOG.info("Checking the script path");
+    if (StringHandle.isNullOrEmpty(scriptPath)) {
+      LOG.warn("Channel is not yet setup for automation.");
+      throw new ChannelConfigurationException(
+          "Channel is not yet setup for automation. Script not found.");
+    }
 
-		Regex scriptMatch = Regex.perlCode("/https?:\\/\\/(.+?)\\/(.+)/i");
-		if (!scriptMatch.search(scriptPath)) {
-			LOG.error("FAILED TO PARSE SCRIPT LOCATION");
-			throw new ChannelConfigurationException(
-					"Script location is invalid.");
-		}
-		m_storeURL = scriptPath;
-		return true;
-	}
+    Regex scriptMatch = Regex.perlCode("/https?:\\/\\/(.+?)\\/(.+)/i");
+    if (!scriptMatch.search(scriptPath)) {
+      LOG.error("FAILED TO PARSE SCRIPT LOCATION");
+      throw new ChannelConfigurationException("Script location is invalid.");
+    }
+    m_storeURL = scriptPath;
+    return true;
+  }
 
-	@Override
-	public void getVendorOrders(OimOrderBatchesTypes batchesTypes,
-			OimOrderBatches batch) throws ChannelCommunicationException,
-			ChannelOrderFormatException, ChannelConfigurationException {
-		Transaction tx = m_dbSession.getTransaction();
-		batch.setOimChannels(m_channel);
-		batch.setOimOrderBatchesTypes(batchesTypes);
-		if (tx != null && tx.isActive())
-			tx.commit();
-		tx = m_dbSession.beginTransaction();
-		batch.setInsertionTm(new Date());
-		batch.setCreationTm(new Date());
-		m_dbSession.save(batch);
-		tx.commit();
-		List<OimOrders> orderFetched = null;
-		// try {
-		if (!pingTest()) {
-			throw new ChannelCommunicationException("Channel ping failed.");
-		}
+  @Override
+  public void getVendorOrders(OimOrderBatchesTypes batchesTypes, OimOrderBatches batch)
+      throws ChannelCommunicationException, ChannelOrderFormatException,
+      ChannelConfigurationException {
+    Transaction tx = m_dbSession.getTransaction();
+    batch.setOimChannels(m_channel);
+    batch.setOimOrderBatchesTypes(batchesTypes);
+    if (tx != null && tx.isActive())
+      tx.commit();
+    tx = m_dbSession.beginTransaction();
+    batch.setInsertionTm(new Date());
+    batch.setCreationTm(new Date());
+    m_dbSession.save(batch);
+    tx.commit();
+    List<OimOrders> orderFetched = null;
+    // try {
+    if (!pingTest()) {
+      throw new ChannelCommunicationException("Channel ping failed.");
+    }
 
-		long start = System.currentTimeMillis();
-		String response = sendGetOrdersRequest();
-		LOG.debug(response);
-		if (!StringHandle.isNullOrEmpty(response)) {
-			StringReader str = new StringReader(response);
-			orderFetched = parseGetProdResponse(str, batchesTypes);
-		} else {
-			LOG.error("FAILURE_GETPRODUCT_NULL_RESPONSE");
-			throw new ChannelOrderFormatException(
-					"Channel returned null in response to fetch Orders.");
-		}
+    long start = System.currentTimeMillis();
+    String response = sendGetOrdersRequest();
+    LOG.debug(response);
+    if (!StringHandle.isNullOrEmpty(response)) {
+      StringReader str = new StringReader(response);
+      orderFetched = parseGetProdResponse(str, batchesTypes);
+    } else {
+      LOG.error("FAILURE_GETPRODUCT_NULL_RESPONSE");
+      throw new ChannelOrderFormatException("Channel returned null in response to fetch Orders.");
+    }
 
-		long time = (System.currentTimeMillis() - start);
-		LOG.info("Finished GetProduct step in {} seconds", time / 1000);
-		try {
-			tx = m_dbSession.beginTransaction();
-			if (orderFetched.size() == 0) {
-				LOG.info("No new Orders found on store");
-				// return;
-			} else {
+    long time = (System.currentTimeMillis() - start);
+    LOG.info("Finished GetProduct step in {} seconds", time / 1000);
+    try {
+      tx = m_dbSession.beginTransaction();
+      if (orderFetched.size() == 0) {
+        LOG.info("No new Orders found on store");
+        // return;
+      } else {
 
-				// Update status
-				if (!StringHandle.isNullOrEmpty(m_orderProcessingRule
-						.getConfirmedStatus())) {
-					response = sendOrderStatusRequest(orderFetched,
-							m_orderProcessingRule.getConfirmedStatus());
-				}
+        // Update status
+        if (!StringHandle.isNullOrEmpty(m_orderProcessingRule.getConfirmedStatus())) {
+          response = sendOrderStatusRequest(orderFetched,
+              m_orderProcessingRule.getConfirmedStatus());
+        }
 
-				StringReader str = new StringReader(response);
-				List updatedOrders = parseUpdateResponse(str);
-				Set<OimOrders> confirmedOrders = new HashSet<OimOrders>();
-				if (!StringHandle.isNullOrEmpty(m_orderProcessingRule
-						.getConfirmedStatus())) {
-					for (OimOrders order : orderFetched) {
-						if (updatedOrders.contains(order.getStoreOrderId())) {
-							confirmedOrders.add(order);
-						}
-					}
-					batch.setOimOrderses(confirmedOrders);
-				}
+        StringReader str = new StringReader(response);
+        List updatedOrders = parseUpdateResponse(str);
+        Set<OimOrders> confirmedOrders = new HashSet<OimOrders>();
+        if (!StringHandle.isNullOrEmpty(m_orderProcessingRule.getConfirmedStatus())) {
+          for (OimOrders order : orderFetched) {
+            if (updatedOrders.contains(order.getStoreOrderId())) {
+              confirmedOrders.add(order);
+            }
+          }
+          batch.setOimOrderses(confirmedOrders);
+        }
 
-				// Save everything
+        // Save everything
 
-				LOG.debug("Saved batch id: {}", batch.getBatchId());
+        LOG.debug("Saved batch id: {}", batch.getBatchId());
 
-				for (Iterator oit = batch.getOimOrderses().iterator(); oit
-						.hasNext();) {
-					OimOrders order = (OimOrders) oit.next();
-					if (orderAlreadyImported(order.getStoreOrderId())) {
-						LOG.warn(
-								"Order skipping as already exists. Store order id : {}",
-								order.getStoreOrderId());
-						continue;
-					}
+        for (Iterator oit = batch.getOimOrderses().iterator(); oit.hasNext();) {
+          OimOrders order = (OimOrders) oit.next();
+          if (orderAlreadyImported(order.getStoreOrderId())) {
+            LOG.warn("Order skipping as already exists. Store order id : {}",
+                order.getStoreOrderId());
+            continue;
+          }
 
-					order.setOimOrderBatches(batch);
-					batch.getOimOrderses().add(order);
-					order.setOrderFetchTm(new Date());
-					order.setInsertionTm(new Date());
-					String shippingDetails = order.getShippingDetails();
-					for (OimChannelShippingMap entity : oimChannelShippingMapList) {
-						String shippingRegEx = entity.getShippingRegEx();
-						Pattern p = Pattern.compile(shippingRegEx,
-								Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
-						Matcher m = p.matcher(shippingDetails);
-						if (m.find() && m.groupCount() >= 2) {
-							order.setOimShippingMethod(entity
-									.getOimShippingMethod());
-							LOG.info("Shipping set to "
-									+ entity.getOimShippingMethod());
-							break;
-						}
-					}
-					if (order.getOimShippingMethod() == null)
-						LOG.warn("Shipping can't be mapped for order "
-								+ order.getStoreOrderId());
-					m_dbSession.save(order);
-					LOG.info("Saved order id: " + order.getOrderId());
+          order.setOimOrderBatches(batch);
+          batch.getOimOrderses().add(order);
+          order.setOrderFetchTm(new Date());
+          order.setInsertionTm(new Date());
+          String shippingDetails = order.getShippingDetails();
+          for (OimChannelShippingMap entity : oimChannelShippingMapList) {
+            String shippingRegEx = entity.getShippingRegEx();
+            Pattern p = Pattern.compile(shippingRegEx, Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
+            Matcher m = p.matcher(shippingDetails);
+            if (m.find() && m.groupCount() >= 2) {
+              order.setOimShippingMethod(entity.getOimShippingMethod());
+              LOG.info("Shipping set to " + entity.getOimShippingMethod());
+              break;
+            }
+          }
+          if (order.getOimShippingMethod() == null)
+            LOG.warn("Shipping can't be mapped for order " + order.getStoreOrderId());
+          m_dbSession.save(order);
+          LOG.info("Saved order id: " + order.getOrderId());
 
-					for (Iterator dit = order.getOimOrderDetailses().iterator(); dit
-							.hasNext();) {
-						OimOrderDetails detail = (OimOrderDetails) dit.next();
-						detail.setOimOrders(order);
-						detail.setInsertionTm(new Date());
-						detail.setOimOrderStatuses(new OimOrderStatuses(
-								OimConstants.ORDER_STATUS_UNPROCESSED));
-						m_dbSession.save(detail);
-						LOG.info("Saved detail id: " + detail.getDetailId());
-					}
-				}
-			}
-			m_channel.setLastFetchTm(new Date());
-			m_dbSession.persist(m_channel);
-			tx.commit();
-		} catch (RuntimeException e) {
-			if (tx != null && tx.isActive())
-				tx.rollback();
-			LOG.error(e.getMessage(), e);
-			throw new ChannelOrderFormatException(
-					"Error occured in persisting order: " + e.getMessage(), e);
-		}
+          for (Iterator dit = order.getOimOrderDetailses().iterator(); dit.hasNext();) {
+            OimOrderDetails detail = (OimOrderDetails) dit.next();
+            detail.setOimOrders(order);
+            detail.setInsertionTm(new Date());
+            detail.setOimOrderStatuses(new OimOrderStatuses(OimConstants.ORDER_STATUS_UNPROCESSED));
+            m_dbSession.save(detail);
+            LOG.info("Saved detail id: " + detail.getDetailId());
+          }
+        }
+      }
+      m_channel.setLastFetchTm(new Date());
+      m_dbSession.persist(m_channel);
+      tx.commit();
+    } catch (RuntimeException e) {
+      if (tx != null && tx.isActive())
+        tx.rollback();
+      LOG.error(e.getMessage(), e);
+      throw new ChannelOrderFormatException("Error occured in persisting order: " + e.getMessage(),
+          e);
+    }
 
-		// } catch (Exception e) {
-		// LOG.info(e.getMessage(), e);
-		// }
-		LOG.info("Returning Order batch with size: {}", batch.getOimOrderses()
-				.size());
-	}
+    // } catch (Exception e) {
+    // LOG.info(e.getMessage(), e);
+    // }
+    LOG.info("Returning Order batch with size: {}", batch.getOimOrderses().size());
+  }
 
-	public boolean pingTest() {
-		String ping_xml = "<xmlPopulate>"
-				+ "<header>"
-				+ "<requestType>Ping</requestType>"
-				+ "<passkey>"
-				+ PojoHelper.getChannelAccessDetailValue(m_channel,
-						OimConstants.CHANNEL_ACCESSDETAIL_AUTH_KEY)
-				+ "</passkey>" + "</header>" + "</xmlPopulate>";
-		String ping_response = sendRequest(ping_xml);
-		ping_response = ping_response.trim();
+  public boolean pingTest() {
+    String ping_xml = "<xmlPopulate>" + "<header>" + "<requestType>Ping</requestType>" + "<passkey>"
+        + PojoHelper.getChannelAccessDetailValue(m_channel,
+            OimConstants.CHANNEL_ACCESSDETAIL_AUTH_KEY)
+        + "</passkey>" + "</header>" + "</xmlPopulate>";
+    String ping_response = sendRequest(ping_xml);
+    ping_response = ping_response.trim();
 
-		StringReader str = new StringReader(ping_response);
-		if (!"".equals(ping_response)) {
-			if (!parsePingResponse(str, "xmlPopulateResponse")) {
-				// Try once more
-				ping_response = sendRequest(ping_xml);
-				str = new StringReader(ping_response);
-				if (!"".equals(ping_response)) {
-					return parsePingResponse(str, "xmlPopulateResponse");
-				}
-			} else
-				return true;
-		}
-		return false;
-	}
+    StringReader str = new StringReader(ping_response);
+    if (!"".equals(ping_response)) {
+      if (!parsePingResponse(str, "xmlPopulateResponse")) {
+        // Try once more
+        ping_response = sendRequest(ping_xml);
+        str = new StringReader(ping_response);
+        if (!"".equals(ping_response)) {
+          return parsePingResponse(str, "xmlPopulateResponse");
+        }
+      } else
+        return true;
+    }
+    return false;
+  }
 
-	private String sendGetOrdersRequest() {
-		String getprod_xml = "<xmlPopulate>"
-				+ "<header>"
-				+ "<requestType>GetOrders</requestType><orderStatus>"
-				+ ((OimOrderProcessingRule) m_channel
-						.getOimOrderProcessingRules().iterator().next())
-						.getPullWithStatus()
-				+ "</orderStatus>"
-				+ "<passkey>"
-				+ PojoHelper.getChannelAccessDetailValue(m_channel,
-						OimConstants.CHANNEL_ACCESSDETAIL_AUTH_KEY)
-				+ "</passkey>" + "</header></xmlPopulate>";
-		String getprod_response = sendRequest(getprod_xml);
-		return getprod_response.trim();
-	}
+  private String sendGetOrdersRequest() {
+    String getprod_xml = "<xmlPopulate>" + "<header>"
+        + "<requestType>GetOrders</requestType><orderStatus>"
+        + ((OimOrderProcessingRule) m_channel.getOimOrderProcessingRules().iterator().next())
+            .getPullWithStatus()
+        + "</orderStatus>" + "<passkey>" + PojoHelper.getChannelAccessDetailValue(m_channel,
+            OimConstants.CHANNEL_ACCESSDETAIL_AUTH_KEY)
+        + "</passkey>" + "</header></xmlPopulate>";
+    String getprod_response = sendRequest(getprod_xml);
+    return getprod_response.trim();
+  }
 
-	private List<OimOrders> parseGetProdResponse(StringReader xml_toparse,
-			OimOrderBatchesTypes batchesTypes) {
-		try {
-			DecimalFormat df = new DecimalFormat("#.##");
-			List<OimOrders> orderList = new ArrayList<OimOrders>();
-			ByteArrayOutputStream baos = new ByteArrayOutputStream(1000);
-			DOMParser parser = new DOMParser();
-			parser.setErrorStream(baos);
-			parser.parse(xml_toparse);
-			XMLDocument doc = parser.getDocument();
-			doc.getDocumentElement().normalize();
-			NodeList N_list = doc.getElementsByTagName("Order");
-			for (int s = 0; s < N_list.getLength(); s++) {
-				Node node = N_list.item(s);
-				if (node.getNodeType() == Node.ELEMENT_NODE) {
-					Element element = (Element) node;
-					OimOrders order = new OimOrders();
-					NodeList details = element
-							.getElementsByTagName("deliverydetails");
-					if (details != null && details.getLength() > 0) {
-						Element e = (Element) details.item(0);
-						order.setDeliveryName(getTagValue("name", e));
-						order.setDeliveryStreetAddress(getTagValue(
-								"streetaddress", e));
-						order.setDeliverySuburb(getTagValue("suburb", e));
-						order.setDeliveryCity(getTagValue("city", e));
-						order.setDeliveryState(getTagValue("state", e));
-						// order.setDeliveryStateCode(getTagValue("state", e));
-						order.setDeliveryCountry(getTagValue("country", e));
-						order.setDeliveryZip(getTagValue("zip", e));
-						order.setDeliveryCompany(getTagValue("company", e));
-						order.setDeliveryPhone(getTagValue("phone", e));
-						order.setDeliveryEmail(getTagValue("email", e));
+  private List<OimOrders> parseGetProdResponse(StringReader xml_toparse,
+      OimOrderBatchesTypes batchesTypes) {
+    try {
+      DecimalFormat df = new DecimalFormat("#.##");
+      List<OimOrders> orderList = new ArrayList<OimOrders>();
+      ByteArrayOutputStream baos = new ByteArrayOutputStream(1000);
+      DOMParser parser = new DOMParser();
+      parser.setErrorStream(baos);
+      parser.parse(xml_toparse);
+      XMLDocument doc = parser.getDocument();
+      doc.getDocumentElement().normalize();
+      NodeList N_list = doc.getElementsByTagName("Order");
+      for (int s = 0; s < N_list.getLength(); s++) {
+        Node node = N_list.item(s);
+        if (node.getNodeType() == Node.ELEMENT_NODE) {
+          Element element = (Element) node;
+          OimOrders order = new OimOrders();
+          NodeList details = element.getElementsByTagName("deliverydetails");
+          if (details != null && details.getLength() > 0) {
+            Element e = (Element) details.item(0);
+            order.setDeliveryName(getTagValue("name", e));
+            order.setDeliveryStreetAddress(getTagValue("streetaddress", e));
+            order.setDeliverySuburb(getTagValue("suburb", e));
+            order.setDeliveryCity(getTagValue("city", e));
+            order.setDeliveryState(getTagValue("state", e));
+            // order.setDeliveryStateCode(getTagValue("state", e));
+            order.setDeliveryCountry(getTagValue("country", e));
+            order.setDeliveryZip(getTagValue("zip", e));
+            order.setDeliveryCompany(getTagValue("company", e));
+            order.setDeliveryPhone(getTagValue("phone", e));
+            order.setDeliveryEmail(getTagValue("email", e));
 
-						if (getTagValue("state", e).length() == 2) {
-							order.setDeliveryStateCode(getTagValue("state", e));
-						} else {
-							String stateCode = validateAndGetStateCode(order);
-							if (stateCode != "")
-								order.setDeliveryStateCode(stateCode);
-						}
-					}
+            if (getTagValue("state", e).length() == 2) {
+              order.setDeliveryStateCode(getTagValue("state", e));
+            } else {
+              String stateCode = validateAndGetStateCode(order);
+              if (stateCode != "")
+                order.setDeliveryStateCode(stateCode);
+            }
+          }
 
-					details = element.getElementsByTagName("billingdetails");
-					if (details != null && details.getLength() > 0) {
-						Element e = (Element) details.item(0);
-						order.setBillingName(getTagValue("name", e));
-						order.setBillingStreetAddress(getTagValue(
-								"streetaddress", e));
-						order.setBillingSuburb(getTagValue("suburb", e));
-						order.setBillingCity(getTagValue("city", e));
-						order.setBillingState(getTagValue("state", e));
-						order.setBillingCountry(getTagValue("country", e));
-						order.setBillingZip(getTagValue("zip", e));
-						order.setBillingCompany(getTagValue("company", e));
-						order.setBillingPhone(getTagValue("phone", e));
-						order.setBillingEmail(getTagValue("email", e));
-					}
+          details = element.getElementsByTagName("billingdetails");
+          if (details != null && details.getLength() > 0) {
+            Element e = (Element) details.item(0);
+            order.setBillingName(getTagValue("name", e));
+            order.setBillingStreetAddress(getTagValue("streetaddress", e));
+            order.setBillingSuburb(getTagValue("suburb", e));
+            order.setBillingCity(getTagValue("city", e));
+            order.setBillingState(getTagValue("state", e));
+            order.setBillingCountry(getTagValue("country", e));
+            order.setBillingZip(getTagValue("zip", e));
+            order.setBillingCompany(getTagValue("company", e));
+            order.setBillingPhone(getTagValue("phone", e));
+            order.setBillingEmail(getTagValue("email", e));
+          }
 
-					details = element.getElementsByTagName("customerdetails");
-					if (details != null && details.getLength() > 0) {
-						Element e = (Element) details.item(0);
-						order.setCustomerName(getTagValue("name", e));
-						order.setCustomerStreetAddress(getTagValue(
-								"streetaddress", e));
-						order.setCustomerSuburb(getTagValue("suburb", e));
-						order.setCustomerCity(getTagValue("city", e));
-						order.setCustomerState(getTagValue("state", e));
-						order.setCustomerCountry(getTagValue("country", e));
-						order.setCustomerZip(getTagValue("zip", e));
-						order.setCustomerCompany(getTagValue("company", e));
-						order.setCustomerPhone(getTagValue("phone", e));
-						order.setCustomerEmail(getTagValue("email", e));
-					}
+          details = element.getElementsByTagName("customerdetails");
+          if (details != null && details.getLength() > 0) {
+            Element e = (Element) details.item(0);
+            order.setCustomerName(getTagValue("name", e));
+            order.setCustomerStreetAddress(getTagValue("streetaddress", e));
+            order.setCustomerSuburb(getTagValue("suburb", e));
+            order.setCustomerCity(getTagValue("city", e));
+            order.setCustomerState(getTagValue("state", e));
+            order.setCustomerCountry(getTagValue("country", e));
+            order.setCustomerZip(getTagValue("zip", e));
+            order.setCustomerCompany(getTagValue("company", e));
+            order.setCustomerPhone(getTagValue("phone", e));
+            order.setCustomerEmail(getTagValue("email", e));
+          }
 
-					order.setStoreOrderId(getTagValue("o_id", element));
-					order.setPayMethod(getTagValue("o_pay_method", element));
-					double billAmt = Double.parseDouble(getTagValue(
-							"p_bill_amount", element));
-					String billAmtFormatted = df.format(billAmt);
-					order.setOrderTotalAmount(new Double(billAmtFormatted));
+          order.setStoreOrderId(getTagValue("o_id", element));
+          order.setPayMethod(getTagValue("o_pay_method", element));
+          double billAmt = Double.parseDouble(getTagValue("p_bill_amount", element));
+          String billAmtFormatted = df.format(billAmt);
+          order.setOrderTotalAmount(new Double(billAmtFormatted));
 
-					order.setShippingDetails(getTagValue("o_shipping", element));
+          order.setShippingDetails(getTagValue("o_shipping", element));
 
-					SimpleDateFormat sdf = new SimpleDateFormat("MM-dd-yyyy");
-					Date d1 = new Date();
-					try {
-						d1 = sdf.parse(getTagValue("o_time", element));
-					} catch (ParseException e) {
-						LOG.error(e.getMessage(), e);
-					}
-					order.setOrderTm(d1);
+          SimpleDateFormat sdf = new SimpleDateFormat("MM-dd-yyyy");
+          Date d1 = new Date();
+          try {
+            d1 = sdf.parse(getTagValue("o_time", element));
+          } catch (ParseException e) {
+            LOG.error(e.getMessage(), e);
+          }
+          order.setOrderTm(d1);
 
-					details = ((Element) (element
-							.getElementsByTagName("products").item(0)))
-							.getElementsByTagName("product");
-					if (details != null && details.getLength() > 0) {
-						for (int i = 0; i < details.getLength(); i++) {
-							Element e = (Element) details.item(i);
-							String sku = getTagValue("p_model", e);
-							String qty = getTagValue("p_quantity", e);
-							String priceEach = getTagValue("p_price_each", e);
-							String productName = getTagValue("p_name", e);
-							String productCost = "0";
-							try {
-								productCost = getTagValue("p_price_cost", e);
-							} catch (Exception ex) {
-								productCost = "0";
-							}
-							if (sku.trim().length() == 0) {
-								continue;
-							}
-							LOG.info("SKU: {} Qty: {} Price each: {}", sku,
-									qty, priceEach);
+          details = ((Element) (element.getElementsByTagName("products").item(0)))
+              .getElementsByTagName("product");
+          if (details != null && details.getLength() > 0) {
+            for (int i = 0; i < details.getLength(); i++) {
+              Element e = (Element) details.item(i);
+              String sku = getTagValue("p_model", e);
+              String qty = getTagValue("p_quantity", e);
+              String priceEach = getTagValue("p_price_each", e);
+              String productName = getTagValue("p_name", e);
+              String productCost = "0";
+              try {
+                productCost = getTagValue("p_price_cost", e);
+              } catch (Exception ex) {
+                productCost = "0";
+              }
+              if (sku.trim().length() == 0) {
+                continue;
+              }
+              LOG.info("SKU: {} Qty: {} Price each: {}", sku, qty, priceEach);
 
-							/*
-							 * String prefix = ""; if (sku.length() > 2) {
-							 * prefix = sku.substring(0, 2); }
-							 */
-							OimSuppliers supplier = null;
-							for (String prefix : supplierMap.keySet()) {
-								if (sku.startsWith(prefix)) {
-									supplier = supplierMap.get(prefix);
-									break;
-								}
-							}
-							/*
-							 * if (supplierMap.containsKey(prefix)) { supplier =
-							 * (OimSuppliers) supplierMap .get(prefix); }
-							 */
-							double cost = 0;
-							try {
-								cost = Double.parseDouble(productCost);
-							} catch (Exception ex) {
-								ex.printStackTrace();
-							}
+              /*
+               * String prefix = ""; if (sku.length() > 2) { prefix = sku.substring(0, 2); }
+               */
+              OimSuppliers supplier = null;
+              for (String prefix : supplierMap.keySet()) {
+                if (sku.startsWith(prefix)) {
+                  supplier = supplierMap.get(prefix);
+                  break;
+                }
+              }
+              /*
+               * if (supplierMap.containsKey(prefix)) { supplier = (OimSuppliers) supplierMap
+               * .get(prefix); }
+               */
+              double cost = 0;
+              try {
+                cost = Double.parseDouble(productCost);
+              } catch (Exception ex) {
+                ex.printStackTrace();
+              }
 
-							double saleprice = 0;
-							int quantity = 1;
-							try {
-								saleprice = Double.parseDouble(priceEach);
-								quantity = Integer.parseInt(qty);
-							} catch (Exception ex) {
-								LOG.error(ex.getMessage(), e);
-							}
+              double saleprice = 0;
+              int quantity = 1;
+              try {
+                saleprice = Double.parseDouble(priceEach);
+                quantity = Integer.parseInt(qty);
+              } catch (Exception ex) {
+                LOG.error(ex.getMessage(), e);
+              }
 
-							OimOrderDetails detail = new OimOrderDetails();
-							detail.setSalePrice(new Double(df.format(saleprice)));
-							detail.setQuantity(new Integer(quantity));
-							detail.setSku(sku);
-							detail.setStoreOrderItemId(sku);
-							detail.setOimSuppliers(supplier);
-							if (cost > 0)
-								detail.setCostPrice(cost);
-							detail.setProductName(productName);
-							order.getOimOrderDetailses().add(detail);
-						}
-					}
+              OimOrderDetails detail = new OimOrderDetails();
+              detail.setSalePrice(new Double(df.format(saleprice)));
+              detail.setQuantity(new Integer(quantity));
+              detail.setSku(sku);
+              detail.setStoreOrderItemId(sku);
+              detail.setOimSuppliers(supplier);
+              if (cost > 0)
+                detail.setCostPrice(cost);
+              detail.setProductName(productName);
+              order.getOimOrderDetailses().add(detail);
+            }
+          }
 
-					String o_note = getTagValue("o_note", element);
-					order.setOrderComment(o_note);
+          String o_note = getTagValue("o_note", element);
+          order.setOrderComment(o_note);
 
-					LOG.info("Adding order in the batch with order id : "
-							+ order.getStoreOrderId());
-					orderList.add(order);
-				}
-			}
-			return orderList;
-		} catch (Exception e) {
-			LOG.error(e.getMessage(), e);
-		}
-		return null;
-	}
+          LOG.info("Adding order in the batch with order id : " + order.getStoreOrderId());
+          orderList.add(order);
+        }
+      }
+      return orderList;
+    } catch (Exception e) {
+      LOG.error(e.getMessage(), e);
+    }
+    return null;
+  }
 
-	private String sendRequest(String pingXML) {
-		LOG.info("Sending request to {}", m_storeURL);
-		pingXML = "XML_INPUT_VALUE=" + pingXML;
-		URL url;
-		HttpURLConnection connection = null;
-		String response = "";
-		try {
-			// Create connection
-			url = new URL(m_storeURL);
-			connection = (HttpURLConnection) url.openConnection();
-			connection.setRequestMethod("POST");
+  private String sendRequest(String pingXML) {
+    LOG.info("Sending request to {}", m_storeURL);
+    pingXML = "XML_INPUT_VALUE=" + pingXML;
+    URL url;
+    HttpURLConnection connection = null;
+    String response = "";
+    try {
+      // Create connection
+      url = new URL(m_storeURL);
+      connection = (HttpURLConnection) url.openConnection();
+      connection.setRequestMethod("POST");
 
-			byte[] req = pingXML.getBytes();
-			LOG.info("Request: {}", pingXML);
-			connection.setRequestProperty("Content-Type",
-					"application/x-www-form-urlencoded");
-			connection.setUseCaches(false);
-			connection.setDoInput(true);
-			connection.setDoOutput(true);
+      byte[] req = pingXML.getBytes();
+      LOG.info("Request: {}", pingXML);
+      connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+      connection.setUseCaches(false);
+      connection.setDoInput(true);
+      connection.setDoOutput(true);
 
-			OutputStream outputStream = connection.getOutputStream();
-			outputStream.write(req);
-			outputStream.close();
-			connection.connect();
-			BufferedReader rd = new BufferedReader(new InputStreamReader(
-					connection.getInputStream()));
-			StringBuilder sb = new StringBuilder();
-			String line;
-			while ((line = rd.readLine()) != null) {
-				sb.append(line + '\n');
-			}
-			response = sb.toString();
-			LOG.info("Response: {}", response);
-		} catch (Exception e) {
-			LOG.error("Failed to send request ...", e);
+      OutputStream outputStream = connection.getOutputStream();
+      outputStream.write(req);
+      outputStream.close();
+      connection.connect();
+      BufferedReader rd = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+      StringBuilder sb = new StringBuilder();
+      String line;
+      while ((line = rd.readLine()) != null) {
+        sb.append(line + '\n');
+      }
+      response = sb.toString();
+      LOG.info("Response: {}", response);
+    } catch (Exception e) {
+      LOG.error("Failed to send request ...", e);
 
-		} finally {
-			if (connection != null) {
-				connection.disconnect();
-			}
-		}
-		return response;
+    } finally {
+      if (connection != null) {
+        connection.disconnect();
+      }
+    }
+    return response;
 
-	}
+  }
 
-	private boolean parsePingResponse(StringReader xml_toparse, String tag_name) {
-		boolean ping_success = false;
-		String heartbeat = "";
-		DOMParser parser = new DOMParser();
-		XMLDocument doc;
-		Node node;
-		Element element;
-		try {
-			ByteArrayOutputStream baos = new ByteArrayOutputStream(1000);
-			parser.setErrorStream(baos);
-			parser.parse(xml_toparse);
-			doc = parser.getDocument();
-			doc.getDocumentElement().normalize();
-			NodeList N_list = doc.getElementsByTagName(tag_name);
-			for (int s = 0; s < N_list.getLength(); s++) {
-				node = N_list.item(s);
-				if (node.getNodeType() == Node.ELEMENT_NODE) {
-					element = (Element) node;
-					heartbeat = getTagValue("heartbeat", element);
-					LOG.info("HEARTBEAT :" + heartbeat);
-				}
-			}
-			if ("alive".equals(heartbeat.toLowerCase())) {
-				ping_success = true;
-			}
-		} catch (Exception e) {
-			LOG.error(e.getMessage(), e);
-		}
-		return ping_success;
-	}
+  private boolean parsePingResponse(StringReader xml_toparse, String tag_name) {
+    boolean ping_success = false;
+    String heartbeat = "";
+    DOMParser parser = new DOMParser();
+    XMLDocument doc;
+    Node node;
+    Element element;
+    try {
+      ByteArrayOutputStream baos = new ByteArrayOutputStream(1000);
+      parser.setErrorStream(baos);
+      parser.parse(xml_toparse);
+      doc = parser.getDocument();
+      doc.getDocumentElement().normalize();
+      NodeList N_list = doc.getElementsByTagName(tag_name);
+      for (int s = 0; s < N_list.getLength(); s++) {
+        node = N_list.item(s);
+        if (node.getNodeType() == Node.ELEMENT_NODE) {
+          element = (Element) node;
+          heartbeat = getTagValue("heartbeat", element);
+          LOG.info("HEARTBEAT :" + heartbeat);
+        }
+      }
+      if ("alive".equals(heartbeat.toLowerCase())) {
+        ping_success = true;
+      }
+    } catch (Exception e) {
+      LOG.error(e.getMessage(), e);
+    }
+    return ping_success;
+  }
 
-	private static String getTagValue(String sTag, Element eElement) {
-		NodeList nlList = eElement.getElementsByTagName(sTag).item(0)
-				.getChildNodes();
-		Node nValue = (Node) nlList.item(0);
-		if (nValue != null) {
-			return nValue.getNodeValue();
-		} else {
-			return "";
-		}
-	}
+  private static String getTagValue(String sTag, Element eElement) {
+    NodeList nlList = eElement.getElementsByTagName(sTag).item(0).getChildNodes();
+    Node nValue = (Node) nlList.item(0);
+    if (nValue != null) {
+      return nValue.getNodeValue();
+    } else {
+      return "";
+    }
+  }
 
-	public String sendOrderStatusRequest(List<OimOrders> fetchedOrders,
-			String status) {
-		StringBuffer xmlrequest = new StringBuffer("<xmlPopulate>"
-				+ "<header>"
-				+ "<requestType>updateorders</requestType><orderStatus>"
-				+ status
-				+ "</orderStatus>"
-				+ "<passkey>"
-				+ PojoHelper.getChannelAccessDetailValue(m_channel,
-						OimConstants.CHANNEL_ACCESSDETAIL_AUTH_KEY)
-				+ "</passkey>\n" + "</header>\n");
+  public String sendOrderStatusRequest(List<OimOrders> fetchedOrders, String status) {
+    StringBuffer xmlrequest = new StringBuffer(
+        "<xmlPopulate>" + "<header>" + "<requestType>updateorders</requestType><orderStatus>"
+            + status + "</orderStatus>" + "<passkey>" + PojoHelper
+                .getChannelAccessDetailValue(m_channel, OimConstants.CHANNEL_ACCESSDETAIL_AUTH_KEY)
+            + "</passkey>\n" + "</header>\n");
 
-		for (OimOrders order : fetchedOrders) {
-			xmlrequest.append("<xml_order>\n");
-			xmlrequest.append("<order_id>" + order.getStoreOrderId()
-					+ "</order_id>");
-			xmlrequest.append("<order_status>" + status + "</order_status>");
-			xmlrequest
-					.append("<order_tracking>Imported to InventorySource Channel Manager</order_tracking>");
-			xmlrequest.append("</xml_order>\n");
-		}
-		xmlrequest.append("</xmlPopulate>");
+    for (OimOrders order : fetchedOrders) {
+      xmlrequest.append("<xml_order>\n");
+      xmlrequest.append("<order_id>" + order.getStoreOrderId() + "</order_id>");
+      xmlrequest.append("<order_status>" + status + "</order_status>");
+      xmlrequest
+          .append("<order_tracking>Imported to InventorySource Channel Manager</order_tracking>");
+      xmlrequest.append("</xml_order>\n");
+    }
+    xmlrequest.append("</xmlPopulate>");
 
-		String getprod_response = sendRequest(xmlrequest.toString());
-		return getprod_response.trim();
-	}
+    String getprod_response = sendRequest(xmlrequest.toString());
+    return getprod_response.trim();
+  }
 
-	private List parseUpdateResponse(StringReader xmlToParse) {
-		List updatedOrders = new ArrayList();
-		try {
-			ByteArrayOutputStream baos = new ByteArrayOutputStream(1000);
-			DOMParser parser = new DOMParser();
-			parser.setErrorStream(baos);
-			parser.parse(xmlToParse);
-			XMLDocument doc = parser.getDocument();
-			doc.getDocumentElement().normalize();
-			NodeList N_list = doc.getElementsByTagName("UpdatedOrder");
-			for (int s = 0; s < N_list.getLength(); s++) {
-				Node node = N_list.item(s);
-				if (node.getNodeType() == Node.ELEMENT_NODE) {
-					Element element = (Element) node;
-					NodeList nlList = element.getChildNodes();
-					Node nValue = (Node) nlList.item(0);
-					if (nValue != null) {
-						LOG.debug("Updated order: {}", nValue.getNodeValue());
-						updatedOrders.add(nValue.getNodeValue());
-					}
-				}
-			}
-		} catch (Exception e) {
-			LOG.error(e.getMessage(), e);
-		}
-		return updatedOrders;
-	}
+  private List parseUpdateResponse(StringReader xmlToParse) {
+    List updatedOrders = new ArrayList();
+    try {
+      ByteArrayOutputStream baos = new ByteArrayOutputStream(1000);
+      DOMParser parser = new DOMParser();
+      parser.setErrorStream(baos);
+      parser.parse(xmlToParse);
+      XMLDocument doc = parser.getDocument();
+      doc.getDocumentElement().normalize();
+      NodeList N_list = doc.getElementsByTagName("UpdatedOrder");
+      for (int s = 0; s < N_list.getLength(); s++) {
+        Node node = N_list.item(s);
+        if (node.getNodeType() == Node.ELEMENT_NODE) {
+          Element element = (Element) node;
+          NodeList nlList = element.getChildNodes();
+          Node nValue = (Node) nlList.item(0);
+          if (nValue != null) {
+            LOG.debug("Updated order: {}", nValue.getNodeValue());
+            updatedOrders.add(nValue.getNodeValue());
+          }
+        }
+      }
+    } catch (Exception e) {
+      LOG.error(e.getMessage(), e);
+    }
+    return updatedOrders;
+  }
 
-	public void updateProcessedOrders() {
-		Transaction tx = m_dbSession.beginTransaction();
-		Query query = m_dbSession
-				.createQuery("select distinct o.storeOrderId from salesmachine.hibernatedb.OimOrders as o "
-						+ "where not exists (from salesmachine.hibernatedb.OimOrderDetails as d where d.oimOrders=o and d.processingTm is null)"
-						+ "and exists (from salesmachine.hibernatedb.OimOrderDetails as d1 where d1.oimOrders=o and d1.processingTm>trunc(sysdate-1))");
-		Iterator it = query.iterate();
-		if (!it.hasNext()) {
-			LOG.warn("No orders to update");
-			return;
-		}
+  public void updateProcessedOrders() {
+    Transaction tx = m_dbSession.beginTransaction();
+    Query query = m_dbSession
+        .createQuery("select distinct o.storeOrderId from salesmachine.hibernatedb.OimOrders as o "
+            + "where not exists (from salesmachine.hibernatedb.OimOrderDetails as d where d.oimOrders=o and d.processingTm is null)"
+            + "and exists (from salesmachine.hibernatedb.OimOrderDetails as d1 where d1.oimOrders=o and d1.processingTm>trunc(sysdate-1))");
+    Iterator it = query.iterate();
+    if (!it.hasNext()) {
+      LOG.warn("No orders to update");
+      return;
+    }
 
-		StringBuffer xmlrequest = new StringBuffer("<xmlPopulate>\n"
-				+ "<header>\n"
-				+ "<requestType>updateorders</requestType>\n"
-				+ "<passkey>"
-				+ PojoHelper.getChannelAccessDetailValue(m_channel,
-						OimConstants.CHANNEL_ACCESSDETAIL_AUTH_KEY)
-				+ "</passkey>\n" + "</header>\n");
-		while (it.hasNext()) {
-			String storeOrderId = (String) it.next();
-			LOG.info("Updating Store order: " + storeOrderId);
-			xmlrequest.append("<xml_order>\n");
-			xmlrequest.append("<order_id>" + storeOrderId + "</order_id>");
-			xmlrequest.append("<order_status>" + 3 + "</order_status>");
-			xmlrequest.append("</xml_order>\n");
-		}
+    StringBuffer xmlrequest = new StringBuffer("<xmlPopulate>\n" + "<header>\n"
+        + "<requestType>updateorders</requestType>\n" + "<passkey>" + PojoHelper
+            .getChannelAccessDetailValue(m_channel, OimConstants.CHANNEL_ACCESSDETAIL_AUTH_KEY)
+        + "</passkey>\n" + "</header>\n");
+    while (it.hasNext()) {
+      String storeOrderId = (String) it.next();
+      LOG.info("Updating Store order: " + storeOrderId);
+      xmlrequest.append("<xml_order>\n");
+      xmlrequest.append("<order_id>" + storeOrderId + "</order_id>");
+      xmlrequest.append("<order_status>" + 3 + "</order_status>");
+      xmlrequest.append("</xml_order>\n");
+    }
 
-		xmlrequest.append("</xmlPopulate>");
-		String response = sendRequest(xmlrequest.toString());
-	}
+    xmlrequest.append("</xmlPopulate>");
+    String response = sendRequest(xmlrequest.toString());
+  }
 
-	@Override
-	public boolean updateStoreOrder(OimOrderDetails oimOrderDetails,
-			OrderStatus orderStatus) throws ChannelCommunicationException,
-			ChannelOrderFormatException {
-		if (!orderStatus.isShipped()) {
-			return true;
-		}
-		StringBuffer xmlrequest = new StringBuffer("<xmlPopulate>"
-				+ "<header>"
-				+ "<requestType>updateorders</requestType><orderStatus>"
-				+ orderStatus.getStatus()
-				+ "</orderStatus>"
-				+ "<passkey>"
-				+ PojoHelper.getChannelAccessDetailValue(m_channel,
-						OimConstants.CHANNEL_ACCESSDETAIL_AUTH_KEY)
-				+ "</passkey></header>");
+  @Override
+  public void updateStoreOrder(OimOrderDetails oimOrderDetails, OrderStatus orderStatus)
+      throws ChannelCommunicationException, ChannelOrderFormatException {
+    if (!orderStatus.isShipped()) {
+      return;
+    }
+    StringBuffer xmlrequest = new StringBuffer(
+        "<xmlPopulate>" + "<header>" + "<requestType>updateorders</requestType><orderStatus>"
+            + orderStatus.getStatus() + "</orderStatus>" + "<passkey>" + PojoHelper
+                .getChannelAccessDetailValue(m_channel, OimConstants.CHANNEL_ACCESSDETAIL_AUTH_KEY)
+        + "</passkey></header>");
 
-		xmlrequest.append("<xml_order>\n");
-		xmlrequest.append("<order_id>"
-				+ oimOrderDetails.getOimOrders().getStoreOrderId()
-				+ "</order_id>");
-		xmlrequest.append("<order_status>" + orderStatus.getStatus()
-				+ "</order_status>");
-		xmlrequest.append("<order_tracking>"
-				+ (orderStatus.isShipped() ? orderStatus.getTrackingData()
-						.toString() : "Order not shipped.")
-				+ "</order_tracking>");
-		xmlrequest.append("</xml_order>\n");
+    xmlrequest.append("<xml_order>\n");
+    xmlrequest
+        .append("<order_id>" + oimOrderDetails.getOimOrders().getStoreOrderId() + "</order_id>");
+    xmlrequest.append("<order_status>" + orderStatus.getStatus() + "</order_status>");
+    xmlrequest.append("<order_tracking>" + (orderStatus.isShipped()
+        ? orderStatus.getTrackingData().toString() : "Order not shipped.") + "</order_tracking>");
+    xmlrequest.append("</xml_order>\n");
 
-		xmlrequest.append("</xmlPopulate>");
+    xmlrequest.append("</xmlPopulate>");
 
-		String getprod_response = sendRequest(xmlrequest.toString());
-		LOG.debug("Update Store order complete.");
-		LOG.debug(getprod_response.trim());
+    String getprod_response = sendRequest(xmlrequest.toString());
+    LOG.debug("Update Store order complete.");
+    LOG.debug(getprod_response.trim());
 
-		return false;
-	}
+    return;
+  }
 
   @Override
   public void cancelOrder(OimOrders oimOrder) {
     // TODO Auto-generated method stub
-    
+
   }
 
   @Override
   public void cancelOrder(OimOrderDetails oimOrder) {
     // TODO Auto-generated method stub
-    
+
   }
 
 }

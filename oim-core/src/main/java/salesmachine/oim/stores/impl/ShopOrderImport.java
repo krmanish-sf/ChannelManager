@@ -23,6 +23,7 @@ import org.hibernate.Session;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import salesmachine.hibernatedb.OimChannels;
 import salesmachine.hibernatedb.OimOrderBatches;
 import salesmachine.hibernatedb.OimOrderBatchesTypes;
 import salesmachine.hibernatedb.OimOrderDetails;
@@ -43,120 +44,107 @@ import salesmachine.oim.suppliers.modal.TrackingData;
 import salesmachine.util.StringHandle;
 
 public class ShopOrderImport extends ChannelBase implements IOrderImport {
-	private static final String STORE_ORDER_STATUS_UPDATE_URL = "https://admin-amos.shop.com/get_order_status+251.xhtml?";
-	private static final Logger LOG = LoggerFactory
-			.getLogger(ShopOrderImport.class);
-	private String catalogId;
+  private static final String STORE_ORDER_STATUS_UPDATE_URL = "https://admin-amos.shop.com/get_order_status+251.xhtml?";
+  private static final Logger LOG = LoggerFactory.getLogger(ShopOrderImport.class);
+  private String catalogId;
 
-	@Override
-	public boolean init(int channelID, Session dbSession)
-			throws ChannelConfigurationException {
-		super.init(channelID, dbSession);
-		catalogId = StringHandle.removeNull(PojoHelper
-				.getChannelAccessDetailValue(m_channel,
-						OimConstants.CHANNEL_ACCESSDETAIL_SHOP_CATALOGID));
-		if (StringHandle.isNullOrEmpty(catalogId)) {
-			LOG.error("Channel setup is not correct. Please provide this details.");
-			throw new ChannelConfigurationException(
-					"Channel setup is not correct. Please provide this details.");
+  @Override
+  public boolean init(OimChannels oimChannel, Session dbSession)
+      throws ChannelConfigurationException {
+    super.init(oimChannel, dbSession);
+    catalogId = StringHandle.removeNull(PojoHelper.getChannelAccessDetailValue(m_channel,
+        OimConstants.CHANNEL_ACCESSDETAIL_SHOP_CATALOGID));
+    if (StringHandle.isNullOrEmpty(catalogId)) {
+      LOG.error("Channel setup is not correct. Please provide this details.");
+      throw new ChannelConfigurationException(
+          "Channel setup is not correct. Please provide this details.");
 
-		}
-		return true;
-	}
+    }
+    return true;
+  }
 
-	/**
-	 * This method is not supported on this channel type, as Order are posted in
-	 * real time by shop.com to our listener url.
-	 * */
-	@Override
-	public void getVendorOrders(OimOrderBatchesTypes batchesTypes,
-			OimOrderBatches batch) throws ChannelCommunicationException,
-			ChannelOrderFormatException, ChannelConfigurationException {
+  /**
+   * This method is not supported on this channel type, as Order are posted in real time by shop.com
+   * to our listener url.
+   */
+  @Override
+  public void getVendorOrders(OimOrderBatchesTypes batchesTypes, OimOrderBatches batch)
+      throws ChannelCommunicationException, ChannelOrderFormatException,
+      ChannelConfigurationException {
 
-	}
+  }
 
-	@Override
-	public boolean updateStoreOrder(OimOrderDetails oimOrderDetails,
-			salesmachine.oim.suppliers.modal.OrderStatus orderStatus)
-			throws ChannelCommunicationException, ChannelOrderFormatException {
-		if (!orderStatus.isShipped()) {
-			return true;
-		}
-		ADIOSORDERSTATUSTRANSMISSION statusRequest = new ADIOSORDERSTATUSTRANSMISSION();
-		ADIOSHEADER header = new ADIOSHEADER();
-		header.setCATALOGID(catalogId);
-		DateFormat df = new SimpleDateFormat("M/d/yyyy h:mm:ss a");
-		header.setDATETIMESTAMP(df.format(new Date()));
-		statusRequest.setADIOSHEADER(header);
-		ADIOSSTATUS status = new ADIOSSTATUS();
-		status.setINVOICENUM(oimOrderDetails.getOimOrders().getStoreOrderId());
+  @Override
+  public void updateStoreOrder(OimOrderDetails oimOrderDetails,
+      salesmachine.oim.suppliers.modal.OrderStatus orderStatus)
+          throws ChannelCommunicationException, ChannelOrderFormatException {
+    if (!orderStatus.isShipped()) {
+      return;
+    }
+    ADIOSORDERSTATUSTRANSMISSION statusRequest = new ADIOSORDERSTATUSTRANSMISSION();
+    ADIOSHEADER header = new ADIOSHEADER();
+    header.setCATALOGID(catalogId);
+    DateFormat df = new SimpleDateFormat("M/d/yyyy h:mm:ss a");
+    header.setDATETIMESTAMP(df.format(new Date()));
+    statusRequest.setADIOSHEADER(header);
+    ADIOSSTATUS status = new ADIOSSTATUS();
+    status.setINVOICENUM(oimOrderDetails.getOimOrders().getStoreOrderId());
 
-		if (orderStatus.isShipped()) {
-			for (TrackingData td : orderStatus.getTrackingData()) {
-				ADIOSORDERSTATUSDETAIL statusDetail = new ADIOSORDERSTATUSDETAIL();
-				statusDetail.setINTERNALSTATUS(OrderStatus.Item_shipped
-						.getValue());
-				statusDetail.setEXTERNALSTATUS(OrderStatus.Item_shipped
-						.getValue());
-				statusDetail.setCARRIERTRACKINGNUM(td
-						.getShipperTrackingNumber());
-				statusDetail.setSHIPMETHOD(td.getCarrierCode() + " "
-						+ td.getShippingMethod());
-				statusDetail.setSHIPDATE(df.format(td.getShipDate()));
-				statusDetail.setPURCHASEID(oimOrderDetails
-						.getStoreOrderItemId());
-				status.getADIOSORDERSTATUSDETAILOrINTERNALTEXTOrEXTERNALTEXT()
-						.add(statusDetail);
-			}
-			statusRequest.getADIOSSTATUS().add(status);
-			DefaultHttpClient client = new DefaultHttpClient();
-			// client.setRedirectStrategy(new LaxRedirectStrategy());
-			try {
+    if (orderStatus.isShipped()) {
+      for (TrackingData td : orderStatus.getTrackingData()) {
+        ADIOSORDERSTATUSDETAIL statusDetail = new ADIOSORDERSTATUSDETAIL();
+        statusDetail.setINTERNALSTATUS(OrderStatus.Item_shipped.getValue());
+        statusDetail.setEXTERNALSTATUS(OrderStatus.Item_shipped.getValue());
+        statusDetail.setCARRIERTRACKINGNUM(td.getShipperTrackingNumber());
+        statusDetail.setSHIPMETHOD(td.getCarrierCode() + " " + td.getShippingMethod());
+        statusDetail.setSHIPDATE(df.format(td.getShipDate()));
+        statusDetail.setPURCHASEID(oimOrderDetails.getStoreOrderItemId());
+        status.getADIOSORDERSTATUSDETAILOrINTERNALTEXTOrEXTERNALTEXT().add(statusDetail);
+      }
+      statusRequest.getADIOSSTATUS().add(status);
+      DefaultHttpClient client = new DefaultHttpClient();
+      // client.setRedirectStrategy(new LaxRedirectStrategy());
+      try {
 
-				JAXBContext context = JAXBContext
-						.newInstance(ADIOSORDERSTATUSTRANSMISSION.class);
-				Marshaller marshaller = context.createMarshaller();
-				OutputStream os = new ByteArrayOutputStream();
-				marshaller.marshal(statusRequest, os);
-				LOG.info(os.toString());
-				HttpPost post = new HttpPost(STORE_ORDER_STATUS_UPDATE_URL);
-				List<BasicNameValuePair> nameValuePairs = new ArrayList<BasicNameValuePair>(
-						1);
-				nameValuePairs.add(new BasicNameValuePair("order_status_data",
-						os.toString()));
-				post.setEntity(new UrlEncodedFormEntity(nameValuePairs));
-				HttpResponse response = client.execute(post);
-				if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
-					LOG.info("Order Status updated");
-				}
+        JAXBContext context = JAXBContext.newInstance(ADIOSORDERSTATUSTRANSMISSION.class);
+        Marshaller marshaller = context.createMarshaller();
+        OutputStream os = new ByteArrayOutputStream();
+        marshaller.marshal(statusRequest, os);
+        LOG.info(os.toString());
+        HttpPost post = new HttpPost(STORE_ORDER_STATUS_UPDATE_URL);
+        List<BasicNameValuePair> nameValuePairs = new ArrayList<BasicNameValuePair>(1);
+        nameValuePairs.add(new BasicNameValuePair("order_status_data", os.toString()));
+        post.setEntity(new UrlEncodedFormEntity(nameValuePairs));
+        HttpResponse response = client.execute(post);
+        if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
+          LOG.info("Order Status updated");
+        }
 
-				byte[] resp = new byte[(int) response.getEntity()
-						.getContentLength()];
-				// response.getEntity().getContent().read(resp);
-				int c;
-				StringBuilder sb = new StringBuilder();
-				while ((c = response.getEntity().getContent().read()) != -1) {
-					sb.append(c);
-				}
-				LOG.info("Response: {}", sb);
-			} catch (JAXBException e1) {
-				LOG.error(e1.getMessage());
-			} catch (IOException e) {
-				LOG.error(e.getMessage());
-			}
-		}
-		return true;
-	}
+        byte[] resp = new byte[(int) response.getEntity().getContentLength()];
+        // response.getEntity().getContent().read(resp);
+        int c;
+        StringBuilder sb = new StringBuilder();
+        while ((c = response.getEntity().getContent().read()) != -1) {
+          sb.append(c);
+        }
+        LOG.info("Response: {}", sb);
+      } catch (JAXBException e1) {
+        LOG.error(e1.getMessage());
+      } catch (IOException e) {
+        LOG.error(e.getMessage());
+      }
+    }
+  }
 
   @Override
   public void cancelOrder(OimOrders oimOrder) {
     // TODO Auto-generated method stub
-    
+
   }
 
   @Override
   public void cancelOrder(OimOrderDetails oimOrder) {
     // TODO Auto-generated method stub
-    
+
   }
 }

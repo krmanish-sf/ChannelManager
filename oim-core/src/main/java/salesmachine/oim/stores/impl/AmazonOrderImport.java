@@ -1,6 +1,7 @@
 package salesmachine.oim.stores.impl;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigInteger;
 import java.security.MessageDigest;
@@ -45,6 +46,7 @@ import com.amazonservices.mws.orders._2013_09_01.model.OrderItem;
 import com.amazonservices.mws.orders._2013_09_01.model.ResponseHeaderMetadata;
 
 import salesmachine.hibernatedb.OimChannelShippingMap;
+import salesmachine.hibernatedb.OimChannels;
 import salesmachine.hibernatedb.OimOrderBatches;
 import salesmachine.hibernatedb.OimOrderBatchesTypes;
 import salesmachine.hibernatedb.OimOrderDetails;
@@ -74,21 +76,21 @@ public class AmazonOrderImport extends ChannelBase implements IOrderImport {
   private static final Logger log = LoggerFactory.getLogger(AmazonOrderImport.class);
   private String sellerId, mwsAuthToken;
   private List<String> marketPlaceIdList = null;
-  private static final MarketplaceWebService service;
-  private static final MarketplaceWebServiceOrdersClient client;
+  private static final MarketplaceWebService feedMwsClient;
+  private static final MarketplaceWebServiceOrdersClient orderMwsClient;
   private static JAXBContext jaxbContext;
 
   static {
     MarketplaceWebServiceConfig config = new MarketplaceWebServiceConfig();
     config.setServiceURL(ApplicationProperties.getProperty(ApplicationProperties.MWS_SERVICE_URL));
-    service = new MarketplaceWebServiceClient(
+    feedMwsClient = new MarketplaceWebServiceClient(
         ApplicationProperties.getProperty(ApplicationProperties.MWS_ACCESS_KEY),
         ApplicationProperties.getProperty(ApplicationProperties.MWS_SECRET_KEY),
         ApplicationProperties.getProperty(ApplicationProperties.MWS_APP_NAME),
         ApplicationProperties.getProperty(ApplicationProperties.MWS_APP_VERSION), config);
     // Get a client connection. Make sure you've set the variables in
     // MarketplaceWebServiceOrdersClientConfig.
-    client = MarketplaceWebServiceOrdersClientConfig.getClient();
+    orderMwsClient = MarketplaceWebServiceOrdersClientConfig.getClient();
     try {
       jaxbContext = JAXBContext.newInstance(OrderFulfillment.class, SubmitFeedRequest.class,
           OrderAcknowledgement.class, AmazonEnvelope.class);
@@ -98,8 +100,9 @@ public class AmazonOrderImport extends ChannelBase implements IOrderImport {
   }
 
   @Override
-  public boolean init(int channelID, Session dbSession) throws ChannelConfigurationException {
-    super.init(channelID, dbSession);
+  public boolean init(OimChannels oimChannel, Session dbSession)
+      throws ChannelConfigurationException {
+    super.init(oimChannel, dbSession);
     sellerId = StringHandle.removeNull(PojoHelper.getChannelAccessDetailValue(m_channel,
         OimConstants.CHANNEL_ACCESSDETAIL_AMAZON_SELLERID));
     mwsAuthToken = StringHandle.removeNull(PojoHelper.getChannelAccessDetailValue(m_channel,
@@ -152,25 +155,7 @@ public class AmazonOrderImport extends ChannelBase implements IOrderImport {
         }
         listOrdersRequest.setOrderStatus(pullWithStatus);
       }
-      SubmitFeedRequest orderAckSubmitFeedRequest = new SubmitFeedRequest();
-      orderAckSubmitFeedRequest.setMerchant(sellerId);
-      orderAckSubmitFeedRequest.setMWSAuthToken(mwsAuthToken);
-      orderAckSubmitFeedRequest.setMarketplaceIdList(new IdList(marketPlaceIdList));
-      orderAckSubmitFeedRequest.setFeedType("_POST_ORDER_ACKNOWLEDGEMENT_DATA_");
-
-      AmazonEnvelope ackAmazonEnvelope = new AmazonEnvelope();
-      Header header = new Header();
-      header.setDocumentVersion("1.01");
-      header.setMerchantIdentifier(sellerId);
-      ackAmazonEnvelope.setHeader(header);
-      ackAmazonEnvelope.setMessageType("OrderAcknowledgement");
-
-      Marshaller marshaller = null;
-      try {
-        marshaller = jaxbContext.createMarshaller();
-      } catch (JAXBException e1) {
-        log.error(e1.getMessage(), e1);
-      }
+      List<Message> msgList = new ArrayList<Message>();
       Calendar c = Calendar.getInstance();
       if (m_channel.getLastFetchTm() != null) {
         c.setTime(m_channel.getLastFetchTm());
@@ -193,7 +178,7 @@ public class AmazonOrderImport extends ChannelBase implements IOrderImport {
       int numOrdersSaved = 0;
       String nextToken = null;
       boolean lastPass = false;
-      ListOrdersResponse response = client.listOrders(listOrdersRequest);
+      ListOrdersResponse response = orderMwsClient.listOrders(listOrdersRequest);
       List<Order> orderList = response.getListOrdersResult().getOrders();
       ResponseHeaderMetadata rhmd = response.getResponseHeaderMetadata();
       if (response.getListOrdersResult().isSetNextToken())
@@ -303,27 +288,26 @@ public class AmazonOrderImport extends ChannelBase implements IOrderImport {
           }
 
           m_dbSession.saveOrUpdate(oimOrder);
-          Thread.currentThread().sleep(1000);
+          Thread.sleep(1000);
           ListOrderItemsRequest itemsRequest = new ListOrderItemsRequest();
           itemsRequest.setSellerId(sellerId);
           itemsRequest.setMWSAuthToken(mwsAuthToken);
 
           itemsRequest.setAmazonOrderId(amazonOrderId);
 
-          ListOrderItemsResponse listOrderResponse = client.listOrderItems(itemsRequest);
+          ListOrderItemsResponse listOrderResponse = orderMwsClient.listOrderItems(itemsRequest);
           ListOrderItemsResult listOrderItemsResult = listOrderResponse.getListOrderItemsResult();
           Set<OimOrderDetails> detailSet = new HashSet<OimOrderDetails>();
           try {
-            Thread.currentThread().sleep(1000);
+            Thread.sleep(1000);
           } catch (InterruptedException e) {
             log.warn(e.getMessage());
           }
           for (OrderItem orderItem : listOrderItemsResult.getOrderItems()) {
             OimOrderDetails details = new OimOrderDetails();
             double itemPrice = Double.parseDouble(orderItem.getItemPrice().getAmount());
-            // Amazon returns total price for this order item
-            // which needs to be divided by quantity before
-            // saving.
+            // Amazon returns total price for this order item which needs to be divided by quantity
+            // before saving.
             itemPrice = itemPrice / orderItem.getQuantityOrdered();
             details.setCostPrice(itemPrice);
             details.setInsertionTm(new Date());
@@ -358,20 +342,25 @@ public class AmazonOrderImport extends ChannelBase implements IOrderImport {
           Message message = new Message();
           message.setMessageID(BigInteger.valueOf(numOrdersSaved));
 
-          ackAmazonEnvelope.getMessage().add(message);
+          msgList.add(message);
           OrderAcknowledgement acknowledgement = new OrderAcknowledgement();
           message.setOrderAcknowledgement(acknowledgement);
           acknowledgement.setAmazonOrderID(amazonOrderId);
           acknowledgement.setMerchantOrderID(oimOrder.getOrderId().toString());
           acknowledgement.setStatusCode(m_orderProcessingRule.getConfirmedStatus());
-
+          for (OimOrderDetails oimOrderDetails : oimOrder.getOimOrderDetailses()) {
+            OrderAcknowledgement.Item item = new OrderAcknowledgement.Item();
+            item.setAmazonOrderItemCode(oimOrderDetails.getStoreOrderItemId());
+            item.setMerchantOrderItemID(oimOrderDetails.getDetailId().toString());
+            acknowledgement.getItem().add(item);
+          }
         }
         lastPass = false;
         if (nextToken != null) {
-          Thread.currentThread().sleep(1000);
+          Thread.sleep(1000);
           ListOrdersByNextTokenRequest listOrderByNextTokenReq = new ListOrdersByNextTokenRequest(
               sellerId, mwsAuthToken, nextToken);
-          ListOrdersByNextTokenResponse listOrdersByNextTokenResponse = client
+          ListOrdersByNextTokenResponse listOrdersByNextTokenResponse = orderMwsClient
               .listOrdersByNextToken(listOrderByNextTokenReq);
           rhmd = listOrdersByNextTokenResponse.getResponseHeaderMetadata();
           orderList = listOrdersByNextTokenResponse.getListOrdersByNextTokenResult().getOrders();
@@ -385,39 +374,15 @@ public class AmazonOrderImport extends ChannelBase implements IOrderImport {
         }
       } while (nextToken != null || lastPass);
 
-      ByteArrayOutputStream os = new ByteArrayOutputStream();
-      if (marshaller != null) {
-        try {
-          log.info("OrderAcknowledgemtFeed: {}", os.toString());
-          marshaller.marshal(ackAmazonEnvelope, os);
-        } catch (JAXBException e) {
-          log.error(e.getMessage(), e);
-          throw new ChannelOrderFormatException(
-              "Error in parsing ackAmazonEnvelope - " + e.getMessage(), e);
-        }
-      }
-      InputStream orderAcknowledgement = new ByteArrayInputStream(os.toByteArray());
-      orderAckSubmitFeedRequest.setFeedContent(orderAcknowledgement);
-
-      try {
-        orderAckSubmitFeedRequest.setContentMD5(
-            Base64.encode((MessageDigest.getInstance("MD5").digest(os.toByteArray()))));
-      } catch (NoSuchAlgorithmException e) {
-        log.error(e.getMessage(), e);
-        throw new ChannelCommunicationException(
-            "Error in sending order acknowledgement - " + e.getMessage(), e);
-      }
       m_dbSession.persist(batch);
       m_channel.setLastFetchTm(new Date());
       m_dbSession.persist(m_channel);
       tx.commit();
-      try {
-        service.submitFeed(orderAckSubmitFeedRequest);
-      } catch (MarketplaceWebServiceException e) {
-        log.error(e.getMessage(), e);
-        throw new ChannelCommunicationException(
-            "Error in sending order acknoledgement - " + e.getMessage(), e);
-      }
+
+      if (msgList.isEmpty())
+        return;// Need not to send a request to amazon.
+      createAndSendAmazonEnvelopeFor("_POST_ORDER_ACKNOWLEDGEMENT_DATA_", "OrderAcknowledgement",
+          msgList);
       log.debug("Finished importing orders...");
     } catch (RuntimeException e) {
       if (tx != null && tx.isActive())
@@ -432,35 +397,20 @@ public class AmazonOrderImport extends ChannelBase implements IOrderImport {
   }
 
   @Override
-  public boolean updateStoreOrder(OimOrderDetails oimOrderDetails, OrderStatus orderStatus)
+  public void updateStoreOrder(OimOrderDetails oimOrderDetails, OrderStatus orderStatus)
       throws ChannelCommunicationException, ChannelOrderFormatException {
     if (!orderStatus.isShipped()) {
-      return true;
+      return;
     }
-    SubmitFeedRequest submitFeedRequest = new SubmitFeedRequest();
-    submitFeedRequest.setMerchant(sellerId);
-    submitFeedRequest.setMWSAuthToken(mwsAuthToken);
-    submitFeedRequest.setMarketplaceIdList(new IdList(marketPlaceIdList));
-    submitFeedRequest.setFeedType("_POST_ORDER_FULFILLMENT_DATA_");
+
     try {
-      Marshaller marshaller = null;
-      try {
-        marshaller = jaxbContext.createMarshaller();
-      } catch (JAXBException e) {
-        log.error(e.getMessage(), e);
-        throw new ChannelOrderFormatException(e.getMessage(), e);
-      }
-      AmazonEnvelope envelope = new AmazonEnvelope();
-      Header header = new Header();
-      header.setDocumentVersion("1.01");
-      header.setMerchantIdentifier(sellerId);
-      envelope.setHeader(header);
-      envelope.setMessageType("OrderFulfillment");
+
+      List<Message> msgList = new ArrayList<Message>();
       long msgId = 1L;
       for (TrackingData td : orderStatus.getTrackingData()) {
         Message message = new Message();
         message.setMessageID(BigInteger.valueOf(msgId++));
-        envelope.getMessage().add(message);
+        msgList.add(message);
         OrderFulfillment fulfillment = new OrderFulfillment();
         message.setOrderFulfillment(fulfillment);
         fulfillment.setAmazonOrderID(oimOrderDetails.getOimOrders().getStoreOrderId());
@@ -480,56 +430,110 @@ public class AmazonOrderImport extends ChannelBase implements IOrderImport {
         fulfillment.setFulfillmentData(value);
       }
 
-      ByteArrayOutputStream os = new ByteArrayOutputStream();
-      if (marshaller != null) {
-        try {
-          marshaller.marshal(envelope, os);
-        } catch (JAXBException e) {
-          log.error(e.getMessage(), e);
-          throw new ChannelOrderFormatException("Error in Updating Store order - " + e.getMessage(),
-              e);
-        }
-      }
-      InputStream inputStream = new ByteArrayInputStream(os.toByteArray());
-      submitFeedRequest.setFeedContent(inputStream);
-      try {
-        submitFeedRequest.setContentMD5(
-            Base64.encode((MessageDigest.getInstance("MD5").digest(os.toByteArray()))));
-      } catch (NoSuchAlgorithmException e) {
-        log.error(e.getMessage(), e);
-        throw new ChannelCommunicationException(
-            "Error in submiting feed request while updating order to store - " + e.getMessage(), e);
-      }
-      log.info("SubmitFeedRequest: {}", os.toString());
-      SubmitFeedResponse submitFeed = null;
-      try {
-        Thread.sleep(60 * 1000);
-        submitFeed = service.submitFeed(submitFeedRequest);
-        log.info(submitFeed.toXML());
-      } catch (MarketplaceWebServiceException e) {
-        log.error(e.getMessage(), e);
-        throw new ChannelCommunicationException(
-            "Error in submiting feed request while updating order to store - " + e.getMessage(), e);
-      } catch (InterruptedException e) {
-        log.error(e.getMessage(), e);
-      }
-
-      return true;
+      if (msgList.isEmpty())
+        return;// Need not to send a request to amazon.
+      createAndSendAmazonEnvelopeFor("_POST_ORDER_FULFILLMENT_DATA_", "OrderFulfillment", msgList);
     } catch (RuntimeException e) {
       log.error(e.getMessage(), e);
       throw new ChannelOrderFormatException(e.getMessage(), e);
     }
   }
 
-  @Override
-  public void cancelOrder(OimOrders oimOrder) {
-    // TODO Auto-generated method stub
+  private void createAndSendAmazonEnvelopeFor(String feedType, String messageType,
+      List<Message> msgs) throws ChannelOrderFormatException, ChannelCommunicationException {
 
+    SubmitFeedRequest submitFeedRequest = new SubmitFeedRequest();
+    submitFeedRequest.setMerchant(sellerId);
+    submitFeedRequest.setMWSAuthToken(mwsAuthToken);
+    submitFeedRequest.setMarketplaceIdList(new IdList(marketPlaceIdList));
+    submitFeedRequest.setFeedType(feedType);
+
+    AmazonEnvelope envelope = new AmazonEnvelope();
+    Header header = new Header();
+    header.setDocumentVersion("1.01");
+    header.setMerchantIdentifier(sellerId);
+    envelope.setHeader(header);
+    envelope.setMessageType(messageType);
+    envelope.getMessage().addAll(msgs);
+
+    Marshaller marshaller = null;
+    try (ByteArrayOutputStream os = new ByteArrayOutputStream()) {
+      marshaller = jaxbContext.createMarshaller();
+      marshaller.marshal(envelope, os);
+      InputStream inputStream = new ByteArrayInputStream(os.toByteArray());
+      submitFeedRequest.setFeedContent(inputStream);
+      submitFeedRequest.setContentMD5(
+          Base64.encode((MessageDigest.getInstance("MD5").digest(os.toByteArray()))));
+      log.info("SubmitFeedRequest: {}", os.toString());
+      SubmitFeedResponse submitFeed = null;
+
+      Thread.sleep(60 * 1000);
+      submitFeed = feedMwsClient.submitFeed(submitFeedRequest);
+      log.info(submitFeed.toXML());
+    } catch (NoSuchAlgorithmException e) {
+      log.error(e.getMessage(), e);
+      throw new ChannelCommunicationException(
+          "Error in submiting feed request while updating order to store - " + e.getMessage(), e);
+    } catch (JAXBException | IOException e) {
+      log.error(e.getMessage(), e);
+      throw new ChannelOrderFormatException("Error in Updating Store order - " + e.getMessage(), e);
+    } catch (MarketplaceWebServiceException e) {
+      log.error(e.getMessage(), e);
+      throw new ChannelCommunicationException(
+          "Error in submiting feed request while updating order to store - " + e.getMessage(), e);
+    } catch (InterruptedException e) {
+      log.error(e.getMessage(), e);
+    }
   }
 
   @Override
-  public void cancelOrder(OimOrderDetails oimOrder) {
-    // TODO Auto-generated method stub
+  public void cancelOrder(OimOrders oimOrder)
+      throws ChannelOrderFormatException, ChannelCommunicationException {
+    List<Message> msgList = new ArrayList<>();
+    int msgId = 1;
+    Message message = new Message();
+    message.setMessageID(BigInteger.valueOf(msgId++));
+
+    msgList.add(message);
+    OrderAcknowledgement acknowledgement = new OrderAcknowledgement();
+    message.setOrderAcknowledgement(acknowledgement);
+    acknowledgement.setAmazonOrderID(oimOrder.getStoreOrderId());
+    acknowledgement.setMerchantOrderID(oimOrder.getOrderId().toString());
+    acknowledgement.setStatusCode(m_orderProcessingRule.getFailedStatus());
+
+    for (OimOrderDetails oimOrderDetails : oimOrder.getOimOrderDetailses()) {
+      OrderAcknowledgement.Item item = new OrderAcknowledgement.Item();
+      item.setAmazonOrderItemCode(oimOrderDetails.getStoreOrderItemId());
+      item.setMerchantOrderItemID(oimOrderDetails.getDetailId().toString());
+      item.setCancelReason("NoInventory");
+      acknowledgement.getItem().add(item);
+    }
+    createAndSendAmazonEnvelopeFor("_POST_ORDER_ACKNOWLEDGEMENT_DATA_", "OrderAcknowledgement",
+        msgList);
+  }
+
+  @Override
+  public void cancelOrder(OimOrderDetails oimOrderDetails)
+      throws ChannelOrderFormatException, ChannelCommunicationException {
+    List<Message> msgList = new ArrayList<>();
+    int msgId = 1;
+    Message message = new Message();
+    message.setMessageID(BigInteger.valueOf(msgId++));
+
+    msgList.add(message);
+    OrderAcknowledgement acknowledgement = new OrderAcknowledgement();
+    message.setOrderAcknowledgement(acknowledgement);
+    acknowledgement.setAmazonOrderID(oimOrderDetails.getOimOrders().getStoreOrderId());
+    acknowledgement.setMerchantOrderID(oimOrderDetails.getOimOrders().getOrderId().toString());
+    acknowledgement.setStatusCode(m_orderProcessingRule.getFailedStatus());
+
+    OrderAcknowledgement.Item item = new OrderAcknowledgement.Item();
+    item.setAmazonOrderItemCode(oimOrderDetails.getStoreOrderItemId());
+    item.setMerchantOrderItemID(oimOrderDetails.getDetailId().toString());
+    item.setCancelReason("NoInventory");
+    acknowledgement.getItem().add(item);
+    createAndSendAmazonEnvelopeFor("_POST_ORDER_ACKNOWLEDGEMENT_DATA_", "OrderAcknowledgement",
+        msgList);
 
   }
 }
