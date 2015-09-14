@@ -56,14 +56,14 @@ public class OrderRepositoryDB extends RepositoryBase implements OrderRepository
   private static Map<String, String> processOrderColumnMap = new HashMap<String, String>();
 
   static {
-    orderHistoryColumnMap.put("1", "o.orderId");
+    orderHistoryColumnMap.put("1", "o.storeOrderId");
     orderHistoryColumnMap.put("2", "d.oimOrderStatuses");
     orderHistoryColumnMap.put("3", "o.orderFetchTm");
     orderHistoryColumnMap.put("4", "o.deliveryName"); // o.oimOrderBatches.oimChannels.channelId
     orderHistoryColumnMap.put("5", "c.channelName");
     orderHistoryColumnMap.put("7", "o.orderTotalAmount");
 
-    processOrderColumnMap.put("1", "o.orderId");
+    processOrderColumnMap.put("1", "o.storeOrderId");
     processOrderColumnMap.put("2", "o.orderFetchTm");
     processOrderColumnMap.put("3", "o.deliveryName");
     processOrderColumnMap.put("4", "c.channelName");
