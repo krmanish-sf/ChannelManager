@@ -132,8 +132,6 @@ public class ChannelEventHandler implements ChannelService {
 
 	OimLogStream stream = new OimLogStream();
 	stream.println(channel.getChannelName() + " : ");
-
-	LOG.debug("Created the iorderimport object");
 	OimOrderBatches oimOrderBatches = new OimOrderBatches();
 	OimOrderBatchesTypes oimOrderBatchesTypes = new OimOrderBatchesTypes(
 		OimConstants.ORDERBATCH_TYPE_ID_MANUAL);

@@ -454,15 +454,13 @@ public class BigcommerceOrderImport extends ChannelBase {
   }
 
   @Override
-  public void cancelOrder(OimOrders oimOrder) {
-    // TODO Auto-generated method stub
-
+  public void cancelOrder(OimOrders oimOrder) throws ChannelOrderFormatException {
+    throw new ChannelOrderFormatException("Store does not allow order cancellatoins.");
   }
 
   @Override
-  public void cancelOrder(OimOrderDetails oimOrder) {
-    // TODO Auto-generated method stub
-
+  public void cancelOrder(OimOrderDetails oimOrder) throws ChannelOrderFormatException {
+    throw new ChannelOrderFormatException("Store does not allow order cancellatoins.");
   }
 
 }

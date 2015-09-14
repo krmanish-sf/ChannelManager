@@ -42,7 +42,7 @@ import salesmachine.oim.suppliers.modal.OrderStatus;
 import salesmachine.oim.suppliers.modal.TrackingData;
 import salesmachine.util.StringHandle;
 
-public class ShopifyOrderImport extends ChannelBase implements IOrderImport {
+public final class ShopifyOrderImport extends ChannelBase implements IOrderImport {
 
   private static final Logger log = LoggerFactory.getLogger(ShopifyOrderImport.class);
   private String shopifyToken;
@@ -212,7 +212,7 @@ public class ShopifyOrderImport extends ChannelBase implements IOrderImport {
             "Error in parsing response string for order pulling");
 
       JSONArray orderArr = (JSONArray) jsonObject.get("orders");
-      int numOrdersSaved = 0;
+
       for (int i = 0; i < orderArr.size(); i++) {
         JSONObject orderObj = (JSONObject) orderArr.get(i);
         String storeOrderId = orderObj.get("id").toString();
@@ -357,7 +357,6 @@ public class ShopifyOrderImport extends ChannelBase implements IOrderImport {
         }
         oimOrders.setOimOrderDetailses(detailSet);
         m_dbSession.saveOrUpdate(oimOrders);
-        numOrdersSaved++;
 
         // sending acknowledgement to shopify that we recived the order.
         requestUrl = storeUrl + "/admin/orders/" + storeOrderId + ".json"; // 704264451
@@ -478,15 +477,44 @@ public class ShopifyOrderImport extends ChannelBase implements IOrderImport {
   }
 
   @Override
-  public void cancelOrder(OimOrders oimOrder) {
-    // TODO Auto-generated method stub
+  public void cancelOrder(OimOrders oimOrder) throws ChannelCommunicationException {
 
+    // POST /admin/orders/#{id}/close.json
+    String requestCloseUrl = storeUrl + "/admin/orders/" + oimOrder.getStoreOrderId()
+        + "/cancel.json";
+    HttpClient client = new HttpClient();
+    PostMethod postMethod = new PostMethod(requestCloseUrl);
+    postMethod.addRequestHeader("X-Shopify-Access-Token", shopifyToken);
+    JSONObject orderCancelObject = new JSONObject();
+    orderCancelObject.put("reason", "inventory");
+    orderCancelObject.put("email", true);
+
+    StringRequestEntity requestEntity = null;
+    try {
+      requestEntity = new StringRequestEntity(orderCancelObject.toJSONString(), "application/json",
+          "UTF-8");
+    } catch (UnsupportedEncodingException e) {
+      log.error("Error in parsing json request for order cancellation {}", e);
+    }
+    postMethod.setRequestEntity(requestEntity);
+    int statusCode = 0;
+    try {
+      statusCode = client.executeMethod(postMethod);
+      log.info("Fullfilment statusCode is - {}", statusCode);
+
+    } catch (IOException e) {
+      log.error("error in posting request for fullfillment {}", e);
+      throw new ChannelCommunicationException(
+          "Error in posting request for fullfillment for store order id "
+              + oimOrder.getStoreOrderId(),
+          e);
+      // return false;
+    }
   }
 
   @Override
-  public void cancelOrder(OimOrderDetails oimOrder) {
-    // TODO Auto-generated method stub
-
+  public void cancelOrder(OimOrderDetails oimOrder) throws ChannelOrderFormatException {
+    throw new ChannelOrderFormatException("Store does not allow partial cancellatoins.");
   }
 
 }

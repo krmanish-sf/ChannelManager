@@ -19,7 +19,6 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.hibernate.Query;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
 import org.slf4j.Logger;
@@ -138,8 +137,7 @@ public class CREOrderImport extends ChannelBase implements IOrderImport {
 
         LOG.debug("Saved batch id: {}", batch.getBatchId());
 
-        for (Iterator oit = batch.getOimOrderses().iterator(); oit.hasNext();) {
-          OimOrders order = (OimOrders) oit.next();
+        for (OimOrders order : batch.getOimOrderses()) {
           if (orderAlreadyImported(order.getStoreOrderId())) {
             LOG.warn("Order skipping as already exists. Store order id : {}",
                 order.getStoreOrderId());
@@ -526,73 +524,44 @@ public class CREOrderImport extends ChannelBase implements IOrderImport {
     return updatedOrders;
   }
 
-  public void updateProcessedOrders() {
-    Transaction tx = m_dbSession.beginTransaction();
-    Query query = m_dbSession
-        .createQuery("select distinct o.storeOrderId from salesmachine.hibernatedb.OimOrders as o "
-            + "where not exists (from salesmachine.hibernatedb.OimOrderDetails as d where d.oimOrders=o and d.processingTm is null)"
-            + "and exists (from salesmachine.hibernatedb.OimOrderDetails as d1 where d1.oimOrders=o and d1.processingTm>trunc(sysdate-1))");
-    Iterator it = query.iterate();
-    if (!it.hasNext()) {
-      LOG.warn("No orders to update");
-      return;
-    }
-
-    StringBuffer xmlrequest = new StringBuffer("<xmlPopulate>\n" + "<header>\n"
-        + "<requestType>updateorders</requestType>\n" + "<passkey>" + PojoHelper
-            .getChannelAccessDetailValue(m_channel, OimConstants.CHANNEL_ACCESSDETAIL_AUTH_KEY)
-        + "</passkey>\n" + "</header>\n");
-    while (it.hasNext()) {
-      String storeOrderId = (String) it.next();
-      LOG.info("Updating Store order: " + storeOrderId);
-      xmlrequest.append("<xml_order>\n");
-      xmlrequest.append("<order_id>" + storeOrderId + "</order_id>");
-      xmlrequest.append("<order_status>" + 3 + "</order_status>");
-      xmlrequest.append("</xml_order>\n");
-    }
-
-    xmlrequest.append("</xmlPopulate>");
-    String response = sendRequest(xmlrequest.toString());
-  }
-
   @Override
   public void updateStoreOrder(OimOrderDetails oimOrderDetails, OrderStatus orderStatus)
       throws ChannelCommunicationException, ChannelOrderFormatException {
     if (!orderStatus.isShipped()) {
       return;
     }
+    sendOrderStatusUpdate(oimOrderDetails.getOimOrders().getStoreOrderId(), orderStatus.getStatus(),
+        (orderStatus.isShipped() ? orderStatus.getTrackingData().toString()
+            : "Order not shipped."));
+  }
+
+  private void sendOrderStatusUpdate(String storeOrderId, String status, String comment) {
     StringBuffer xmlrequest = new StringBuffer(
         "<xmlPopulate>" + "<header>" + "<requestType>updateorders</requestType><orderStatus>"
-            + orderStatus.getStatus() + "</orderStatus>" + "<passkey>" + PojoHelper
-                .getChannelAccessDetailValue(m_channel, OimConstants.CHANNEL_ACCESSDETAIL_AUTH_KEY)
-        + "</passkey></header>");
-
+            + status + "</orderStatus>" + "<passkey>" + PojoHelper.getChannelAccessDetailValue(
+                m_channel, OimConstants.CHANNEL_ACCESSDETAIL_AUTH_KEY)
+            + "</passkey></header>");
     xmlrequest.append("<xml_order>\n");
-    xmlrequest
-        .append("<order_id>" + oimOrderDetails.getOimOrders().getStoreOrderId() + "</order_id>");
-    xmlrequest.append("<order_status>" + orderStatus.getStatus() + "</order_status>");
-    xmlrequest.append("<order_tracking>" + (orderStatus.isShipped()
-        ? orderStatus.getTrackingData().toString() : "Order not shipped.") + "</order_tracking>");
+    xmlrequest.append("<order_id>" + storeOrderId + "</order_id>");
+    xmlrequest.append("<order_status>" + status + "</order_status>");
+    xmlrequest.append("<order_tracking>" + comment + "</order_tracking>");
     xmlrequest.append("</xml_order>\n");
-
     xmlrequest.append("</xmlPopulate>");
 
     String getprod_response = sendRequest(xmlrequest.toString());
     LOG.debug("Update Store order complete.");
     LOG.debug(getprod_response.trim());
-
-    return;
   }
 
   @Override
-  public void cancelOrder(OimOrders oimOrder) {
-    // TODO Auto-generated method stub
-
+  public void cancelOrder(OimOrders oimOrder) throws ChannelOrderFormatException {
+    sendOrderStatusUpdate(oimOrder.getStoreOrderId(), m_orderProcessingRule.getFailedStatus(),
+        "Cancelled from channel manager.");
   }
 
   @Override
-  public void cancelOrder(OimOrderDetails oimOrder) {
-    // TODO Auto-generated method stub
+  public void cancelOrder(OimOrderDetails oimOrder) throws ChannelOrderFormatException {
+    throw new ChannelOrderFormatException("Store does not allow partial cancellatoins.");
 
   }
 

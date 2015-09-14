@@ -11,17 +11,11 @@ import org.springframework.web.multipart.commons.CommonsMultipartResolver;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.is.cm.core.persistance.ChannelRepository;
-import com.is.cm.core.persistance.ChannelRepositoryDb;
 import com.is.cm.core.persistance.OrderRepository;
-import com.is.cm.core.persistance.OrderRepositoryDB;
 import com.is.cm.core.persistance.ReportRepository;
-import com.is.cm.core.persistance.ReportRepositoryDB;
 import com.is.cm.core.persistance.ShippingRepository;
-import com.is.cm.core.persistance.ShippingRepositoryDB;
 import com.is.cm.core.persistance.SupplierRepository;
-import com.is.cm.core.persistance.SupplierRepositoryDB;
 import com.is.cm.core.persistance.UserRepository;
-import com.is.cm.core.persistance.UserRepositoryDB;
 import com.is.cm.core.service.ChannelEventHandler;
 import com.is.cm.core.service.ChannelService;
 import com.is.cm.core.service.OrderEventHandler;
@@ -37,107 +31,63 @@ import com.is.cm.core.service.UserService;
 import com.is.cm.rest.controller.SimpleCORSFilter;
 
 @Configuration()
-// @EnableCaching
 public class CoreConfig {
-	private static final Logger LOG = LoggerFactory.getLogger(CoreConfig.class);
+    private static final Logger LOG = LoggerFactory.getLogger(CoreConfig.class);
 
-	@Bean
-	public ChannelService createChannelService(ChannelRepository repo) {
-		return new ChannelEventHandler(repo);
-	}
+    @Bean
+    public ChannelService createChannelService(ChannelRepository repo) {
+	return new ChannelEventHandler(repo);
+    }
 
-	@Bean
-	public ChannelRepository createChannelRepo() {
-		return new ChannelRepositoryDb();
-	}
+    @Bean
+    OrderService createOrderService(OrderRepository repo) {
+	return new OrderEventHandler(repo);
+    }
 
-	@Bean
-	OrderService createOrderService(OrderRepository repo) {
-		return new OrderEventHandler(repo);
-	}
+    @Bean(name = "objectMapper")
+    public ObjectMapper createObjectMapper() {
+	LOG.debug("Injecting custom ObjectMapper instance {}",
+		HibernateAwareObjectMapper.class);
+	return new HibernateAwareObjectMapper();
+    }
 
-	/*
-	 * @Autowired private CacheManager cacheManager;
-	 */
-	@Bean
-	OrderRepository createOrderRepo() {
-		return new OrderRepositoryDB();
-	}
+    @Bean
+    public SupplierService createSupplierService(
+	    SupplierRepository supplierRepository) {
+	return new SupplierEventHandler(supplierRepository);
+    }
 
-	/*
-	 * @Bean(autowire = Autowire.BY_TYPE, name = "cacheManager") public
-	 * CacheManager createCacheManager() { SimpleCacheManager c = new
-	 * SimpleCacheManager(); return c; }
-	 * 
-	 * @Bean(name = "cacheManagerBeans", autowire = Autowire.BY_TYPE)
-	 * AbstractCacheManager createcacheManagerBeans() { return new
-	 * SimpleCacheManager(); }
-	 */
-	@Bean(name = "objectMapper")
-	public ObjectMapper createObjectMapper() {
-		LOG.debug("Injecting custom ObjectMapper instance {}",
-				HibernateAwareObjectMapper.class);
-		return new HibernateAwareObjectMapper();
-	}
+    @Bean
+    public ReportService createReportService(
+	    ReportRepository reportRepository) {
+	return new ReportEventHandler(reportRepository);
+    }
 
-	@Bean
-	public SupplierRepository createSupplierRepository() {
-		return new SupplierRepositoryDB();
-	}
+    @Bean
+    public UserService createUserService(UserRepository userRepository) {
+	return new UserEventHandler(userRepository);
+    }
 
-	@Bean
-	public SupplierService createSupplierService(
-			SupplierRepository supplierRepository) {
-		return new SupplierEventHandler(supplierRepository);
-	}
+    @Bean
+    public CommonsMultipartResolver multipartResolver() {
+	return new CommonsMultipartResolver();
+    }
 
-	@Bean
-	public ReportRepository createReportRepository() {
-		return new ReportRepositoryDB();
-	}
+    @Bean
+    Filter requestLoggingFilter() {
+	Filter filter = new CommonsRequestLoggingFilter();
+	return filter;
+    }
 
-	@Bean
-	public ReportService createReportService(ReportRepository reportRepository) {
-		return new ReportEventHandler(reportRepository);
-	}
+    @Bean
+    public Filter corsFilter() {
+	return new SimpleCORSFilter();
+    }
 
-	@Bean
-	public UserRepository createUserRepository() {
-		return new UserRepositoryDB();
-	}
+    @Bean
+    ShippingService createShippingService(
+	    ShippingRepository shippingRepository) {
+	return new ShippingEventHandler(shippingRepository);
+    }
 
-	@Bean
-	public UserService createUserService(UserRepository userRepository) {
-		return new UserEventHandler(userRepository);
-	}
-
-	@Bean
-	public CommonsMultipartResolver multipartResolver() {
-		return new CommonsMultipartResolver();
-	}
-
-	@Bean
-	Filter requestLoggingFilter() {
-		Filter filter = new CommonsRequestLoggingFilter();
-		return filter;
-	}
-
-	@Bean
-	public Filter corsFilter() {
-		return new SimpleCORSFilter();
-	}
-
-	/*
-	 * @Bean public CommonsMultipartResolver multipartResolver( ServletContext
-	 * servletContext) { return new CommonsMultipartResolver(servletContext); }
-	 */
-	@Bean
-	ShippingService createShippingService(ShippingRepository shippingRepository) {
-		return new ShippingEventHandler(shippingRepository);
-	}
-
-	@Bean
-	ShippingRepository createShippingRepository() {
-		return new ShippingRepositoryDB();
-	}
 }

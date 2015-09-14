@@ -27,7 +27,7 @@ import salesmachine.util.ApplicationProperties;
 /**
  * Configuration for MarketplaceWebServiceOrders samples.
  */
-public class MarketplaceWebServiceOrdersClientConfig {
+class MarketplaceWebServiceOrdersClientConfig {
   /** Developer AWS access key. */
   private static final String accessKey = ApplicationProperties
       .getProperty(ApplicationProperties.MWS_ACCESS_KEY);

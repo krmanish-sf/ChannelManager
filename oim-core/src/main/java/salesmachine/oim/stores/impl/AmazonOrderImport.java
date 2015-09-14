@@ -72,7 +72,7 @@ import salesmachine.oim.suppliers.modal.TrackingData;
 import salesmachine.util.ApplicationProperties;
 import salesmachine.util.StringHandle;
 
-public class AmazonOrderImport extends ChannelBase implements IOrderImport {
+class AmazonOrderImport extends ChannelBase implements IOrderImport {
   private static final Logger log = LoggerFactory.getLogger(AmazonOrderImport.class);
   private String sellerId, mwsAuthToken;
   private List<String> marketPlaceIdList = null;
