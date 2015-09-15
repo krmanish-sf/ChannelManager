@@ -1,10 +1,13 @@
 package com.is.cm.core.persistance;
 
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
+import java.util.Iterator;  
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -35,6 +38,7 @@ import salesmachine.hibernatedb.OimOrderBatchesTypes;
 import salesmachine.hibernatedb.OimOrderDetails;
 import salesmachine.hibernatedb.OimOrderDetailsMods;
 import salesmachine.hibernatedb.OimOrderStatuses;
+import salesmachine.hibernatedb.OimOrderTracking;
 import salesmachine.hibernatedb.OimOrders;
 import salesmachine.hibernatedb.OimSuppliers;
 import salesmachine.hibernatedb.OimVendorsuppOrderhistory;
@@ -1098,5 +1102,85 @@ public class OrderRepositoryDB extends RepositoryBase implements OrderRepository
     stateCode = StringHandle.removeNull(stateCode);
     LOG.info("state code for {} is {}", order.getDeliveryState(), stateCode);
     return stateCode;
+  }
+
+  DateFormat format = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
+
+  @Override
+  public String updateTracking(int detailId, Map<String, String> orderTrackingMap) {
+    StringBuffer bf = new StringBuffer(0);
+    try {
+      Session session = SessionManager.currentSession();
+      OimOrderDetails detail = (OimOrderDetails) session.get(OimOrderDetails.class, detailId);
+      if (detail.getOimOrderStatuses().getStatusId().intValue() != OimConstants.ORDER_STATUS_SHIPPED
+          .intValue())
+        return "This item is not shipped. Please mark it as shipped and try again";
+      int loopCount = orderTrackingMap.size() / 6;
+      Transaction tx = session.beginTransaction();
+      int newTrackingCount = 0;
+      for (int i = 0; i <= loopCount-1; i++) {
+        String trackingIdStr = StringHandle.removeNull(orderTrackingMap.get("trackingId" + i));
+        String shipDateString = StringHandle.removeNull(orderTrackingMap.get("shipDate" + i));
+        String qty = StringHandle.removeNull(orderTrackingMap.get("shipQuantity" + i));
+        int shipQty = Integer.parseInt(qty);
+        String shipCarrier = StringHandle.removeNull(orderTrackingMap.get("shippingCarrier" + i));
+        String shipMethod = StringHandle.removeNull(orderTrackingMap.get("shippingMethod" + i));
+        String trackNo = StringHandle.removeNull(orderTrackingMap.get("trackingNumber" + i));
+        if ("".equals(shipDateString) || "".equals(qty) || "".equals(shipQty)
+            || "".equals(shipCarrier) || "".equals(shipMethod) || "".equals(trackNo)) {
+          continue;
+        }
+        Date shipDate = null;
+        try {
+          shipDate = format.parse(shipDateString);
+        } catch (ParseException e1) {
+          // TODO Auto-generated catch block
+          e1.printStackTrace();
+        }
+        if (!"undefined".equalsIgnoreCase(trackingIdStr)) {
+          try {
+            int trackingId = Integer.parseInt(trackingIdStr);
+            Set<OimOrderTracking> trackingSet = new HashSet<OimOrderTracking>(0);
+            OimOrderTracking orderTracking = (OimOrderTracking) session.get(OimOrderTracking.class,
+                trackingId);
+            orderTracking.setDetail(detail);
+            orderTracking.setShipDate(shipDate);
+            orderTracking.setShippingCarrier(shipCarrier);
+            orderTracking.setShippingMethod(shipMethod);
+            orderTracking.setShipQuantity(shipQty);
+            orderTracking.setTrackingNumber(trackNo);
+            trackingSet.add(orderTracking);
+            detail.setOimOrderTracking(trackingSet);
+            session.saveOrUpdate(orderTracking);
+            session.saveOrUpdate(detail);
+            bf.append("Tracking id " + trackingId + " updated. <br>");
+          } catch (NumberFormatException e) {
+            bf.append("Error updating existing tracking details. <br>");
+          }
+        } else if ("undefined".equalsIgnoreCase(trackingIdStr)) {
+          newTrackingCount++;
+          Set<OimOrderTracking> trackingSet = new HashSet<OimOrderTracking>(0);
+          OimOrderTracking orderTracking = new OimOrderTracking();
+          orderTracking.setDetail(detail);
+          orderTracking.setInsertionTime(new Date());
+          orderTracking.setShipDate(shipDate);
+          orderTracking.setShippingCarrier(shipCarrier);
+          orderTracking.setShippingMethod(shipMethod);
+          orderTracking.setShipQuantity(shipQty);
+          orderTracking.setTrackingNumber(trackNo);
+          trackingSet.add(orderTracking);
+          detail.setOimOrderTracking(trackingSet);
+          session.save(orderTracking);
+          session.save(detail);
+        }
+      }
+      if (newTrackingCount > 0)
+        bf.append(newTrackingCount + " tracking details has been added. <br>");
+      tx.commit();
+      return bf.toString();
+    } catch (Exception e) {
+      bf.append("Error while updating Tracking for detail ID - " + detailId);
+      return bf.toString();
+    }
   }
 }

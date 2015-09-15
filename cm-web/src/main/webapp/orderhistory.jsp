@@ -447,6 +447,7 @@
                                   <th>Supplier</th>
                                   <th>Status</th>
                                   <th></th>
+                                  <th></th>
                                 </tr>
                               </thead>
                               <tbody>
@@ -460,6 +461,49 @@
                   </div>
                   <!-- /.col --> 
                 </div>
+                
+                <!--  Tracking Modal Start -->
+                <div aria-hidden="true" role="dialog" tabindex="-1"
+								id="TrackingModal" class="modal fade">
+								<div class="modal-dialog" id="myModaleditdailog">
+					<div class="modal-content">
+                      <div class="modal-header">
+                        <button aria-hidden="true" data-dismiss="modal"
+												class="close" type="button">&times;</button>
+                        <h4 class="modal-title">Manual Tracking</h4>
+                      </div>
+                      <div class="modal-body ">
+                       <form role="form" id="trackingForm"
+												class="form-horizontal">
+                      	 <table id="editOrderTrackingTable"
+													class="table table-striped table-bordered table-hover table-responsive">
+                              <thead>
+                                <tr>
+                                <th><i class="icon-plus-sign"
+																title="Add" onclick="addRow();"></i></th>
+                                 
+                                  <th>Shipping Carrier</th>
+                                  <th>Shipping Method</th>
+                                  <th>Shipping Date</th>
+                                  <th>Shipping Quantity</th>
+                                  <th>Tracking Number</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                              </tbody>
+                            </table>
+                            </form>
+                      </div>
+                       <div class="modal-footer no-margin-top">
+                       <button type="button" id="updateTracking"
+												class="btn btn-info btn-xs pull-right"> <i
+													class="icon-ok "></i>Update</button>
+                      </div>
+                      </div>
+                      </div>
+                
+                </div>
+                <!-- Tracking Modal End -->
 								</div>
 							</div>
 						<!-- /.modal-content -->
@@ -545,6 +589,112 @@
 					'input')[3], $(e[0]).find('select')[0], $(e[0]).find(
 					'select')[1], e[0]);
 		}
+		function addRow() {
+			var table = $('#editOrderTrackingTable').DataTable();
+			$('#editOrderTrackingTable').dataTable().fnAddData(
+					[ '', '', '', '', '', '', '' ]);
+
+		}
+		function removeRow(r) {
+			console.log(r);
+			var table = $('#editOrderTrackingTable').DataTable();
+			table.row(r).remove().draw();
+		}
+		function validateForm() {
+			var str;
+			$("#trackingForm :input").each(function() {
+				if (this.value == '' || this.value == 'undefined') {
+					str += this.name + ', ';
+				}
+			});
+			if (str && str.length > 0) {
+				$.gritter.add({
+					title : "Error!!",
+					text : "These fields can not be empty - " + str
+				});
+				return false;
+			}
+			return true;
+		}
+
+		function openTrackingData(e) {
+			var orderDetail = tableModal.row(e[0]).data();
+			var orderDetailTemp = JSON.parse(JSON.stringify(orderDetail));
+			console.log(orderDetailTemp.orderTrackings);
+			$('#editOrderTrackingTable')
+					.DataTable(
+							{
+								"bFilter" : false,
+								"bSort" : false,
+								"bPaginate" : false,
+								"bInfo" : false,
+								"aoColumns" : [
+										{
+											"mData" : function() {
+												return "<span><i class='icon-trash' title='Remove this row' onclick='removeRow($(this).parent().parent().parent()	);'></i></span>";
+											}
+										},
+										{
+											"mData" : function(orderTracking,
+													row, a, b) {
+												return "<input type=text class='width-100' name='shippingCarrier"
+														+ b.row
+														+ "' value='"
+														+ (orderTracking.shippingCarrier ? orderTracking.shippingCarrier
+																: '')
+														+ "' required/> <input type='hidden' name='detailId' value='"+orderDetailTemp.detailId+"' /> <input type='hidden' name='trackingId"+b.row+"' value='"+orderTracking.orderTrackingId+"' />";
+											}
+										},
+										{
+											"mData" : function(orderTracking,
+													row, a, b) {
+												return "<input type=text class=width-100 name='shippingMethod"
+														+ b.row
+														+ "' value='"
+														+ (orderTracking.shippingMethod ? orderTracking.shippingMethod
+																: '')
+														+ "' required/>";
+											}
+										},
+										{
+											"mData" : function(orderTracking,
+													row, a, b) {
+												return "<input type=text id='datefrom' class='span2 datepicker' data-provide='datepicker' placeholder='mm/dd/yyyy' name='shipDate"
+														+ b.row
+														+ "' value='"
+														+ (orderTracking.shipDateString ? orderTracking.shipDateString
+																: '')
+														+ "' required/>";
+											}
+										},
+										{
+											"mData" : function(orderTracking,
+													row, a, b) {
+												return "<input type=text class=width-100 name='shipQuantity"
+														+ b.row
+														+ "' value='"
+														+ (orderTracking.shipQuantity ? orderTracking.shipQuantity
+																: '')
+														+ "' required/>";
+
+											}
+										},
+										{
+											"mData" : function(orderTracking,
+													row, a, b) {
+												return "<input type=text class=width-100 name='trackingNumber"
+														+ b.row
+														+ "' value='"
+														+ (orderTracking.trackingNumber ? orderTracking.trackingNumber
+																: '')
+														+ "' required/>";
+											}
+										} ],
+								"aaData" : orderDetailTemp.orderTrackings,
+								"bDestroy" : true
+							});
+
+		}
 
 		function updateOrderDetail(orderDetail, sku, name, quantity, saleprice,
 				supplier, status, button) {
@@ -625,7 +775,7 @@
 														+ (orderDetail.sku ? orderDetail.sku
 																: '') + "\"/>";
 											}
-											
+
 										},
 										{
 											"mData" : function(orderDetail) {
@@ -696,6 +846,11 @@
 										{
 											"mData" : function(orderDetail) {
 												return '<button type="button" class="btn btn-info btn-xs pull-left" onclick="b($($(this).parent()).parent());"><i class="icon-ok"></i>Update</button>';
+											}
+										},
+										{
+											"mData" : function(orderDetail) {
+												return '<a href="#TrackingModal" data-toggle="modal" onclick="openTrackingData($($(this).parent()).parent());" ><i class="icon-only icon-align-justify" title="Tracking"></i></a>';
 											}
 										} ],
 								"aaData" : orderTemp.oimOrderDetailses,
@@ -825,9 +980,11 @@
 														text += '&nbsp;<a style="cursor:pointer;" title="Click to refresh tracking" onclick="$.CM.trackOrder('
 																+ orderDetail.detailId
 																+ ');"><i class="icon-refresh"></i></a>';
-													text += '<br/><span id="orderStatus'+orderDetail.detailId+'">' + orderDetail.oimOrderStatuses.statusValue;
+													text += '<br/><span id="orderStatus'+orderDetail.detailId+'">'
+															+ orderDetail.oimOrderStatuses.statusValue;
 													if (orderDetail.supplierOrderStatus) {
-														text += " - " + orderDetail.supplierOrderStatus;
+														text += " - "
+																+ orderDetail.supplierOrderStatus;
 													}
 													text += '</span><div class="space-2"></div>';
 												}
@@ -968,6 +1125,44 @@
 																.updateOrderSummary();
 													}
 												});
+							});
+			$('#updateTracking')
+					.click(
+							function() {
+								if(validateForm()==false)
+									return;
+								
+								var map = {};
+								$("#trackingForm :input").each(function() {
+									if (this.name) {
+										if (map[this.name])
+											map[this.name] += ',';
+										map[this.name] = this.value;
+									}
+								});
+								var detailId = map.detailId;
+								delete (map.detailId);
+								$(this)
+										.CRUD(
+												{
+													url : 'aggregators/orders/orderHistory/trackingData/'
+															+ detailId,
+													data : JSON.stringify(map),
+													method : 'POST',
+													message : true,
+													success : function(data) {
+														$.gritter
+																.add({
+																	title : 'Order Tracking',
+																	text : data
+																});
+														$('#myModaledit')
+																.modal('hide');
+														$('#TrackingModal')
+																.modal('hide');
+													}
+												});
+								table_xy.ajax.reload();
 							});
 		});
 	</script>

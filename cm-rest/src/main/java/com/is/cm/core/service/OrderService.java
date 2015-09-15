@@ -66,4 +66,7 @@ public interface OrderService {
 	ReadCollectionEvent<OrderDetail> getOrderDetailByOrderId(
 			ReadEvent<String> requestReadEvent);
 
+	UpdatedEvent<String> updateTracking(
+		UpdateEvent<Map<String, String>> updateEvent);
+
 }

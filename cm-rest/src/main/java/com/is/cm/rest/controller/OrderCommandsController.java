@@ -1,6 +1,7 @@
 package com.is.cm.rest.controller;
 
 import java.util.List;
+import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,6 +22,7 @@ import salesmachine.oim.suppliers.exception.SupplierOrderException;
 
 import com.is.cm.core.domain.Order;
 import com.is.cm.core.domain.OrderDetail;
+import com.is.cm.core.domain.OrderTracking;
 import com.is.cm.core.event.UpdateEvent;
 import com.is.cm.core.event.UpdatedEvent;
 import com.is.cm.core.event.orders.CreateOrderEvent;
@@ -34,95 +36,105 @@ import com.is.cm.core.service.OrderService;
 @Controller
 @RequestMapping("/aggregators/orders")
 public class OrderCommandsController {
-	private static Logger LOG = LoggerFactory
-			.getLogger(OrderCommandsController.class);
-	@Autowired
-	private OrderService orderService;
+    private static Logger LOG = LoggerFactory
+	    .getLogger(OrderCommandsController.class);
+    @Autowired
+    private OrderService orderService;
 
-	@RequestMapping(method = RequestMethod.DELETE, value = "/{id}")
-	public ResponseEntity<Order> deleteOrder(@PathVariable String id) {
-		OrderDeletedEvent deleteOrderEvent = orderService
-				.delete(new DeleteOrderEvent(Integer.parseInt(id)));
-		if (!deleteOrderEvent.isEntityFound()) {
-			return new ResponseEntity<Order>(HttpStatus.NOT_FOUND);
-		}
-		if (deleteOrderEvent.isDeletionCompleted()) {
-			return new ResponseEntity<Order>(deleteOrderEvent.getEntity(),
-					HttpStatus.OK);
-		}
-		LOG.debug("No Order deleted.");
-		return new ResponseEntity<Order>(deleteOrderEvent.getEntity(),
-				HttpStatus.FORBIDDEN);
+    @RequestMapping(method = RequestMethod.DELETE, value = "/{id}")
+    public ResponseEntity<Order> deleteOrder(@PathVariable String id) {
+	OrderDeletedEvent deleteOrderEvent = orderService
+		.delete(new DeleteOrderEvent(Integer.parseInt(id)));
+	if (!deleteOrderEvent.isEntityFound()) {
+	    return new ResponseEntity<Order>(HttpStatus.NOT_FOUND);
 	}
-
-	@RequestMapping(method = { RequestMethod.PUT })
-	public ResponseEntity<Order> saveOrder(@RequestBody Order order,
-			UriComponentsBuilder builder) {
-		OrderCreatedEvent orderCreated = orderService
-				.createOrder(new CreateOrderEvent(order));
-		HttpHeaders headers = new HttpHeaders();
-		headers.setLocation(builder.path("/aggregators/orders/{id}")
-				.buildAndExpand(orderCreated.getNewId()).toUri());
-		return new ResponseEntity<Order>(orderCreated.getEntity(), headers,
-				HttpStatus.CREATED);
+	if (deleteOrderEvent.isDeletionCompleted()) {
+	    return new ResponseEntity<Order>(deleteOrderEvent.getEntity(),
+		    HttpStatus.OK);
 	}
+	LOG.debug("No Order deleted.");
+	return new ResponseEntity<Order>(deleteOrderEvent.getEntity(),
+		HttpStatus.FORBIDDEN);
+    }
 
-	@RequestMapping(method = { RequestMethod.PUT }, value = "/orderdetails/{detailId}")
-	public ResponseEntity<OrderDetail> updateOrderDetail(
-			@RequestBody OrderDetail orderDetail, @PathVariable int detailId,
-			UriComponentsBuilder builder) {
-		OrderDetailUpdatedEvent event = orderService
-				.update(new UpdateOrderDetailEvent(detailId, orderDetail));
-		return new ResponseEntity<OrderDetail>(event.getEntity(), HttpStatus.OK);
+    @RequestMapping(method = { RequestMethod.PUT })
+    public ResponseEntity<Order> saveOrder(@RequestBody Order order,
+	    UriComponentsBuilder builder) {
+	OrderCreatedEvent orderCreated = orderService
+		.createOrder(new CreateOrderEvent(order));
+	HttpHeaders headers = new HttpHeaders();
+	headers.setLocation(builder.path("/aggregators/orders/{id}")
+		.buildAndExpand(orderCreated.getNewId()).toUri());
+	return new ResponseEntity<Order>(orderCreated.getEntity(), headers,
+		HttpStatus.CREATED);
+    }
+
+    @RequestMapping(method = { RequestMethod.PUT }, value = "/orderdetails/{detailId}")
+    public ResponseEntity<OrderDetail> updateOrderDetail(
+	    @RequestBody OrderDetail orderDetail, @PathVariable int detailId,
+	    UriComponentsBuilder builder) {
+	OrderDetailUpdatedEvent event = orderService
+		.update(new UpdateOrderDetailEvent(detailId, orderDetail));
+	return new ResponseEntity<OrderDetail>(event.getEntity(), HttpStatus.OK);
+    }
+
+    @RequestMapping(method = { RequestMethod.POST }, value = "/processed/{orderId}")
+    public ResponseEntity<Order> processOrder(@RequestBody Order order,
+	    UriComponentsBuilder builder, @PathVariable int orderId)
+	    throws SupplierConfigurationException,
+	    SupplierCommunicationException, SupplierOrderException {
+	UpdatedEvent<Order> event = orderService
+		.processOrder(new UpdateEvent<Order>(orderId, order));
+	if (event.isUpdateCompleted()) {
+	    return new ResponseEntity<Order>(event.getEntity(), HttpStatus.OK);
+	} else {
+	    return new ResponseEntity<Order>(event.getEntity(),
+		    HttpStatus.FORBIDDEN);
 	}
+    }
 
-	@RequestMapping(method = { RequestMethod.POST }, value = "/processed/{orderId}")
-	public ResponseEntity<Order> processOrder(@RequestBody Order order,
-			UriComponentsBuilder builder, @PathVariable int orderId)
-			throws SupplierConfigurationException,
-			SupplierCommunicationException, SupplierOrderException {
-		UpdatedEvent<Order> event = orderService
-				.processOrder(new UpdateEvent<Order>(orderId, order));
-		if (event.isUpdateCompleted()) {
-			return new ResponseEntity<Order>(event.getEntity(), HttpStatus.OK);
-		} else {
-			return new ResponseEntity<Order>(event.getEntity(),
-					HttpStatus.FORBIDDEN);
-		}
-	}
+    @RequestMapping(method = { RequestMethod.GET }, value = "/processed/ifs/{orderId}")
+    public ResponseEntity<Order> processOrderForIFS(
+	    UriComponentsBuilder builder, @PathVariable int orderId) {
 
-	@RequestMapping(method = { RequestMethod.GET }, value = "/processed/ifs/{orderId}")
-	public ResponseEntity<Order> processOrderForIFS(
-			UriComponentsBuilder builder, @PathVariable int orderId) {
+	// UpdatedEvent<Order> event = orderService
+	// .processOrder(new UpdateEvent<Order>(orderId, order));
+	// if (event.isUpdateCompleted()) {
+	// return new ResponseEntity<Order>(event.getEntity(), HttpStatus.OK);
+	// } else {
+	// return new ResponseEntity<Order>(event.getEntity(),
+	// HttpStatus.FORBIDDEN);
+	// }
 
-		// UpdatedEvent<Order> event = orderService
-		// .processOrder(new UpdateEvent<Order>(orderId, order));
-		// if (event.isUpdateCompleted()) {
-		// return new ResponseEntity<Order>(event.getEntity(), HttpStatus.OK);
-		// } else {
-		// return new ResponseEntity<Order>(event.getEntity(),
-		// HttpStatus.FORBIDDEN);
-		// }
+	LOG.info("processOrderForIFS called..................................");
+	return null;
+    }
 
-		LOG.info("processOrderForIFS called..................................");
-		return null;
-	}
+    @RequestMapping(method = { RequestMethod.POST }, value = "/processed/bulk/{action}")
+    public ResponseEntity<List<Order>> processOrder(
+	    @PathVariable String action, @RequestBody List<Integer> orders) {
+	UpdatedEvent<List<Order>> event = orderService.bulkProcessOrder1(
+		action, new UpdateEvent<List<Integer>>(0, orders));
+	return new ResponseEntity<List<Order>>(event.getEntity(), HttpStatus.OK);
+    }
 
-	@RequestMapping(method = { RequestMethod.POST }, value = "/processed/bulk/{action}")
-	public ResponseEntity<List<Order>> processOrder(
-			@PathVariable String action, @RequestBody List<Integer> orders) {
-		UpdatedEvent<List<Order>> event = orderService.bulkProcessOrder1(
-				action, new UpdateEvent<List<Integer>>(0, orders));
-		return new ResponseEntity<List<Order>>(event.getEntity(), HttpStatus.OK);
-	}
+    @RequestMapping(method = { RequestMethod.GET }, value = "/track/{orderDetailId}")
+    public ResponseEntity<String> processOrder(
+	    @PathVariable Integer orderDetailId) {
+	UpdatedEvent<String> event = orderService
+		.trackOrderStatus(new UpdateEvent<Integer>(orderDetailId,
+			orderDetailId));
+	return new ResponseEntity<String>(event.getEntity(), HttpStatus.OK);
+    }
 
-	@RequestMapping(method = { RequestMethod.GET }, value = "/track/{orderDetailId}")
-	public ResponseEntity<String> processOrder(
-			@PathVariable Integer orderDetailId) {
-		UpdatedEvent<String> event = orderService
-				.trackOrderStatus(new UpdateEvent<Integer>(orderDetailId,
-						orderDetailId));
-		return new ResponseEntity<String>(event.getEntity(), HttpStatus.OK);
-	}
+    @RequestMapping(method = { RequestMethod.POST }, value = "/orderHistory/trackingData/{detailId}")
+    public ResponseEntity<String> updateTracking(
+	    @PathVariable String detailId, @RequestBody Map<String,String> orderTrackings) {
+	LOG.info(orderTrackings.toString());
+	
+	UpdatedEvent<String> event = orderService.updateTracking(
+		new UpdateEvent<Map<String,String>>(Integer.parseInt(detailId), orderTrackings));
+	return new ResponseEntity<String>(event.getEntity(), HttpStatus.OK);
+    }
 
 }

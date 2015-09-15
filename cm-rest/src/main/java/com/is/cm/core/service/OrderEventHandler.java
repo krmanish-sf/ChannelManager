@@ -3,6 +3,7 @@ package com.is.cm.core.service;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import org.hibernate.Session;
 import org.slf4j.Logger;
@@ -309,6 +310,16 @@ public class OrderEventHandler implements OrderService {
 	    list.add(OrderDetail.from(details));
 	}
 	return new ReadCollectionEvent<OrderDetail>(list);
+    }
+
+    @Override
+    public UpdatedEvent<String> updateTracking(
+	    UpdateEvent<Map<String, String>> updateEvent) {
+	Map<String, String> orderTrackings = updateEvent.getEntity();
+	int detailId = updateEvent.getId();
+	String responseString = orderRepository.updateTracking(detailId,
+		updateEvent.getEntity());
+	return new UpdatedEvent<String>(0, responseString);
     }
 
 }

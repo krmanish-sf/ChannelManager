@@ -169,6 +169,7 @@ public class Channel extends DomainBase implements Serializable {
 				.getOimSupportedChannels()));
 		target.setLastFetchTm(oimChannel.getLastFetchTm());
 		target.setInsertionTm(oimChannel.getInsertionTm());
+		target.setVendors(Vendor.from(oimChannel.getVendors()));
 		if (oimChannel.getOimChannelAccessDetailses() != null) {
 			Set<ChannelAccessDetail> channelAccessDetails = new HashSet<ChannelAccessDetail>();
 			for (Iterator<OimChannelAccessDetails> i = oimChannel
