@@ -159,15 +159,14 @@
 																aria-controls="tableprocesschannel" rowspan="1"
 																colspan="1" style="width: 75px;"
 																aria-label="Channel Name: activate to sort column ascending">Channel Name</th>
-															<th class="hidden-md hidden-sm hidden-xs sorting"
+															<th class="hidden-md hidden-sm hidden-xs "
 																role="columnheader" tabindex="0"
 																aria-controls="tableprocesschannel" rowspan="1"
 																colspan="1" style="width: 80px;"
-																aria-label="No Of Products: activate to sort column ascending">Unique SKU's</th>
-															<th class="hidden-sm hidden-xs sorting"
-																role="columnheader" tabindex="0"
-																aria-controls="tableprocesschannel" rowspan="1"
-																colspan="1" style="width: 130px;"
+																aria-label="No Of Products">Unique SKU's</th>
+															<th class="hidden-sm hidden-xs " role="columnheader"
+																tabindex="0" aria-controls="tableprocesschannel"
+																rowspan="1" colspan="1" style="width: 130px;"
 																aria-label="Shipping: activate to sort column ascending"><span>Shipping</span></th>
 															<%-- <th class="sorting" role="columnheader" tabindex="0"
 																aria-controls="tableprocesschannel" rowspan="1"
@@ -185,11 +184,10 @@
 																aria-label="Order Total: activate to sort column ascending"><i
 																class="icon-usd icon-2x blue visible-xs"></i><span
 																class="hidden-xs">Order Total</span></th>
-																<th class="sorting_disabled hidden-xs sorting"
+																<th class="sorting_disabled hidden-xs "
 																role="columnheader" tabindex="0"
 																aria-controls="tableprocesschannel" rowspan="1"
-																colspan="1" style="width: 50px;"
-																aria-label="Edit Order: activate to sort column ascending">Edit Order</th>
+																colspan="1" style="width: 50px;" aria-label="Edit Order">Edit Order</th>
 															<th class="sorting_disabled sorting" role="columnheader"
 																tabindex="0" aria-controls="tableprocesschannel"
 																rowspan="1" colspan="1" style="width: 87px;"
@@ -914,6 +912,7 @@
 		table_xy = $('#tableprocesschannel')
 				.DataTable(
 						{
+							"order" : [ 2, "desc" ],
 							"bProcessing" : true,
 							"serverSide" : true,
 							"sAjaxDataProp" : 'data',
@@ -929,7 +928,6 @@
 													data : JSON.stringify(d),
 													success : function(result) {
 														var json = result.data;
-														var unresolvedCount = 0, unprocessedCount = 0, unprocessedAmount = 0, unresolvedAmount = 0;
 														for (var i = 0; i < json.length; i++) {
 															var order = json[i];
 															order.unresolved = false;
@@ -957,16 +955,6 @@
 															if (!order.deliveryStateCode) {
 																order.unresolved = true;
 															}
-															var total = (order.orderTotalAmount != null && order.orderTotalAmount > 0) ? order.orderTotalAmount
-																	: 0;
-															if (order.unresolved) {
-																unresolvedCount++;
-																unresolvedAmount += total;
-															} else {
-																unprocessedCount++;
-																unprocessedAmount += total;
-															}
-
 														}
 														callback(result);
 													}
@@ -975,8 +963,6 @@
 							"aoColumns" : [
 									{
 										"mData" : function(order) {
-											//if (order.unresolved)
-											//	return ''
 											return '<label><input class="ace" type="checkbox" value="'+order.orderId+'"><span class="lbl"></span></label>';
 										},
 										"orderable" : false
@@ -985,13 +971,7 @@
 										"mData" : "storeOrderId"
 									},
 									{
-										"mData" : function(order) {
-											return "<span style='display:none'>"
-													+ order.orderTm
-													+ "</span>"
-													+ new Date(order.orderTm)
-															.toLocaleString();
-										}
+										"mData" : "orderTmString"
 									},
 									{
 										"mData" : "deliveryName"
@@ -1046,11 +1026,11 @@
 			}
 		};
 		if (hash && hash == '#unprocessed') {
-			table_xy.order([ 9, 'asc' ]).draw();
+			//table_xy.order([ 9, 'asc' ]).draw();
 		} else if (hash == '#unresolved') {
-			table_xy.order([ 9, 'desc' ]).draw();
+			//table_xy.order([ 9, 'desc' ]).draw();
 		} else {
-			table_xy.order([ 2, 'desc' ]).draw();
+			//table_xy.order([ 2, 'desc' ]).draw();
 		}
 		$('.addresspop').popover({
 			container : 'body'
