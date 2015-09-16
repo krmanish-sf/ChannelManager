@@ -98,8 +98,7 @@ public class OrderEventHandler implements OrderService {
 	    UpdateOrderDetailEvent updateOrderDetailEvent) {
 
 	orderRepository.update(updateOrderDetailEvent.getEntity());
-	Order order = orderRepository.findById(
-		updateOrderDetailEvent.getEntity().getOimOrders().getOrderId());
+
 	if (updateOrderDetailEvent.getEntity().getOimOrderStatuses()
 		.getStatusId().equals(OimConstants.ORDER_STATUS_CANCELED)) {
 

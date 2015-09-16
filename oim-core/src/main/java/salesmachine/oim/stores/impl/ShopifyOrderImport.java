@@ -165,10 +165,10 @@ public final class ShopifyOrderImport extends ChannelBase implements IOrderImpor
     // FIXME API didn't respond as per the specification, still getting all
     // the orders.
     if (lstFetchTime != null) {
-      SimpleDateFormat df = new SimpleDateFormat("YYYY-MM-dd hh:mm");
+      SimpleDateFormat df = new SimpleDateFormat("YYYY-MM-dd HH:mm:ss zZ");
       log.info("Cutoff time {} ", lstFetchTime);
       try {
-        requestUrl += "?" + URLEncoder.encode("created_at_min=" + df.format(lstFetchTime), "UTF-8");
+        requestUrl += "?updated_at_min=" + URLEncoder.encode(df.format(lstFetchTime), "UTF-8");
       } catch (UnsupportedEncodingException e1) {
         log.warn("Encoding type [UTF-8] is invalid");
         throw new ChannelConfigurationException("Encoding type [UTF-8] is invalid", e1);

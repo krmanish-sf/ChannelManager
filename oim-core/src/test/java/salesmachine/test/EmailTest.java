@@ -1,7 +1,10 @@
 package salesmachine.test;
 
 import java.net.InetAddress;
+import java.net.URLEncoder;
 import java.net.UnknownHostException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -40,5 +43,13 @@ public class EmailTest {
     }
     log.info("HostName: {}", hostname);
     Assert.assertNotNull(hostname);
+  }
+
+  public static void main(String[] args) {
+    SimpleDateFormat df = new SimpleDateFormat("YYYY-MM-dd HH:mm:ss zZ");
+    Date d = new Date();
+    String format = df.format(d);
+    System.out.println(format);
+    System.out.println(URLEncoder.encode(format));
   }
 }

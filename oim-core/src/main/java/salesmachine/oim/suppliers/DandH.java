@@ -306,7 +306,7 @@ public class DandH extends Supplier implements HasTracking {
           failedOrders.add(detail.getDetailId());
 
           OimChannels oimChannels = order.getOimOrderBatches().getOimChannels();
-          Integer channelId = oimChannels.getChannelId();
+          
           OimLogStream stream = new OimLogStream();
           try {
             IOrderImport iOrderImport = ChannelFactory.getIOrderImport(oimChannels);
