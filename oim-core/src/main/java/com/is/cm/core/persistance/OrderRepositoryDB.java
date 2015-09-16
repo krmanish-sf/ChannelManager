@@ -1088,10 +1088,11 @@ public class OrderRepositoryDB extends RepositoryBase implements OrderRepository
   public List<OrderDetailMod> findOrderDetailModifications(int orderDetailId) {
     Session currentSession = SessionManager.currentSession();
     Criteria orderDetailCriteria = currentSession.createCriteria(OimOrderDetailsMods.class)
-        .add(Restrictions.eq("detailId", orderDetailId)).add(Restrictions.ne("operation", "null "))
+        .add(Restrictions.eq("detailId", orderDetailId))
         .addOrder(org.hibernate.criterion.Order.asc("insertionTm"));
     List<OrderDetailMod> modList = new ArrayList<OrderDetailMod>();
-    for (OimOrderDetailsMods mods : (List<OimOrderDetailsMods>) orderDetailCriteria.list()) {
+    List<OimOrderDetailsMods> list = (List<OimOrderDetailsMods>) orderDetailCriteria.list();
+    for (OimOrderDetailsMods mods : list) {
       OrderDetailMod mod = OrderDetailMod.from(mods);
       modList.add(mod);
     }
