@@ -980,13 +980,18 @@
 														text += '&nbsp;<a style="cursor:pointer;" title="Click to refresh tracking" onclick="$.CM.trackOrder('
 																+ orderDetail.detailId
 																+ ');"><i class="icon-refresh"></i></a>';
-													text += '<br/><span id="orderStatus'+orderDetail.detailId+'">'
+													var className = '';
+													if (orderDetail.oimOrderStatuses.statusId == 6
+															|| orderDetail.oimOrderStatuses.statusId == 5) {
+														className = 'class="label label-warning arrowed arrowed-right"';
+													}
+													text += '<br/><span id="orderStatus'+orderDetail.detailId+'" '+className+'>'
 															+ orderDetail.oimOrderStatuses.statusValue;
 													if (orderDetail.supplierOrderStatus) {
-														text += " - "
+														text += " - <small>"
 																+ orderDetail.supplierOrderStatus;
 													}
-													text += '</span><div class="space-2"></div>';
+													text += '</small></span><div class="space-2"></div>';
 												}
 												return text;
 											}

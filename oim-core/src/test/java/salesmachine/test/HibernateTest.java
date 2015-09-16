@@ -99,7 +99,7 @@ public class HibernateTest extends AbstractIntegrationTest {
 
   }
 
-  @Test
+  //@Test
   public void testGenericHibernateDao() {
 
     IGenericDao<OimOrderDetails> dao = new GenericHibernateDao<>();

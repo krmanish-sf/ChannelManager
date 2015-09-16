@@ -223,75 +223,59 @@ public class ChannelRepositoryDb extends RepositoryBase implements ChannelReposi
     Transaction tx = null;
     Session dbSession = SessionManager.currentSession();
     try {
+
       tx = dbSession.beginTransaction();
       // Integer channelId = id;
-
+      OimChannels channel = (OimChannels) dbSession.byId(OimChannels.class).load(channelId);
+      channel.setDeleteTm(new Date());
+      dbSession.update(channel);
       // Delete OimChannelAccessDetails
-      Query query = dbSession.createQuery(
-          "delete from salesmachine.hibernatedb.OimChannelAccessDetails where oimChannels.channelId="
-              + channelId);
-      LOG.debug("Deleted " + query.executeUpdate() + " OimChannelAccessDetails rows");
-
-      // Delete OimChannelSupplierMap
-      query = dbSession.createQuery(
-          "delete from salesmachine.hibernatedb.OimChannelSupplierMap where oimChannels.channelId="
-              + channelId);
-      LOG.debug("Deleted " + query.executeUpdate() + " OimChannelSupplierMap rows");
-
-      // Delete OimOrderProcessingRule
-      query = dbSession.createQuery(
-          "delete from salesmachine.hibernatedb.OimOrderProcessingRule where oimChannels.channelId="
-              + channelId);
-      LOG.debug("Deleted " + query.executeUpdate() + " OimOrderProcessingRule rows");
-
-      // Delete OimChannelFiles
-      query = dbSession.createQuery(
-          "delete from salesmachine.hibernatedb.OimChannelFiles where oimChannels.channelId="
-              + channelId);
-      LOG.debug("Deleted " + query.executeUpdate() + " OimChannelFiles rows");
-
-      // Delete order details
-      Query q = dbSession.createQuery(
-          "select oo from salesmachine.hibernatedb.OimOrders oo where oo.oimOrderBatches.oimChannels.channelId = "
-              + channelId);
-      List orders = q.list();
-      if (orders.size() > 0) {
-        query = dbSession.createQuery(
-            "delete from salesmachine.hibernatedb.OimOrderDetails d where d.oimOrders in (:orders)");
-        query.setParameterList("orders", orders);
-        LOG.debug("Deleted " + query.executeUpdate() + " OimOrderDetails rows");
-      } else {
-        LOG.debug("Deleted 0 OimOrderDetails rows");
-      }
-
-      // Delete orders
-      q = dbSession.createQuery(
-          "select oob from salesmachine.hibernatedb.OimOrderBatches oob where oob.oimChannels.channelId = "
-              + channelId);
-      List batches = q.list();
-      if (batches.size() > 0) {
-        query = dbSession.createQuery(
-            "delete from salesmachine.hibernatedb.OimOrders where oimOrderBatches in (:batches)");
-        query.setParameterList("batches", batches);
-        LOG.debug("Deleted " + query.executeUpdate() + " OimOrders rows");
-      } else {
-        LOG.debug("Deleted 0 OimOrders rows");
-      }
-
-      // Delete OIM uploaded files
-      query = dbSession.createQuery(
-          "delete from salesmachine.hibernatedb.OimUploadedFiles where oimChannels.channelId="
-              + channelId);
-      LOG.debug("Deleted " + query.executeUpdate() + " OimUploadedFiles rows");
-      // Delete order batches
-      query = dbSession.createQuery(
-          "delete from salesmachine.hibernatedb.OimOrderBatches where oimChannels.channelId="
-              + channelId);
-      LOG.debug("Deleted " + query.executeUpdate() + " OimOrderBatches rows");
-      // Delete OimChannels
-      query = dbSession.createQuery(
-          "delete from salesmachine.hibernatedb.OimChannels where channelId=" + channelId);
-      LOG.debug("Deleted " + query.executeUpdate() + " OimChannels rows");
+      /*
+       * Query query = dbSession.createQuery(
+       * "delete from salesmachine.hibernatedb.OimChannelAccessDetails where oimChannels.channelId="
+       * + channelId); LOG.debug("Deleted " + query.executeUpdate() +
+       * " OimChannelAccessDetails rows");
+       * 
+       * // Delete OimChannelSupplierMap query = dbSession.createQuery(
+       * "delete from salesmachine.hibernatedb.OimChannelSupplierMap where oimChannels.channelId=" +
+       * channelId); LOG.debug("Deleted " + query.executeUpdate() + " OimChannelSupplierMap rows");
+       * 
+       * // Delete OimOrderProcessingRule query = dbSession.createQuery(
+       * "delete from salesmachine.hibernatedb.OimOrderProcessingRule where oimChannels.channelId="
+       * + channelId); LOG.debug("Deleted " + query.executeUpdate() + " OimOrderProcessingRule rows"
+       * );
+       * 
+       * // Delete OimChannelFiles query = dbSession.createQuery(
+       * "delete from salesmachine.hibernatedb.OimChannelFiles where oimChannels.channelId=" +
+       * channelId); LOG.debug("Deleted " + query.executeUpdate() + " OimChannelFiles rows");
+       * 
+       * // Delete order details Query q = dbSession.createQuery(
+       * "select oo from salesmachine.hibernatedb.OimOrders oo where oo.oimOrderBatches.oimChannels.channelId = "
+       * + channelId); List orders = q.list(); if (orders.size() > 0) { query =
+       * dbSession.createQuery(
+       * "delete from salesmachine.hibernatedb.OimOrderDetails d where d.oimOrders in (:orders)");
+       * query.setParameterList("orders", orders); LOG.debug("Deleted " + query.executeUpdate() +
+       * " OimOrderDetails rows"); } else { LOG.debug("Deleted 0 OimOrderDetails rows"); }
+       * 
+       * // Delete orders q = dbSession.createQuery(
+       * "select oob from salesmachine.hibernatedb.OimOrderBatches oob where oob.oimChannels.channelId = "
+       * + channelId); List batches = q.list(); if (batches.size() > 0) { query =
+       * dbSession.createQuery(
+       * "delete from salesmachine.hibernatedb.OimOrders where oimOrderBatches in (:batches)");
+       * query.setParameterList("batches", batches); LOG.debug("Deleted " + query.executeUpdate() +
+       * " OimOrders rows"); } else { LOG.debug("Deleted 0 OimOrders rows"); }
+       * 
+       * // Delete OIM uploaded files query = dbSession.createQuery(
+       * "delete from salesmachine.hibernatedb.OimUploadedFiles where oimChannels.channelId=" +
+       * channelId); LOG.debug("Deleted " + query.executeUpdate() + " OimUploadedFiles rows"); //
+       * Delete order batches query = dbSession.createQuery(
+       * "delete from salesmachine.hibernatedb.OimOrderBatches where oimChannels.channelId=" +
+       * channelId); LOG.debug("Deleted " + query.executeUpdate() + " OimOrderBatches rows"); //
+       * Delete OimChannels query = dbSession.createQuery(
+       * "delete from salesmachine.hibernatedb.OimChannels where channelId=" + channelId);
+       * LOG.debug("Deleted " + query.executeUpdate() + " OimChannels rows");
+       */
+      LOG.info("Channel {} marked as deleted.", channel.getChannelName());
       tx.commit();
     } catch (RuntimeException e) {
       if (tx != null && tx.isActive())
@@ -320,7 +304,9 @@ public class ChannelRepositoryDb extends RepositoryBase implements ChannelReposi
     Session dbSession = SessionManager.currentSession();
     try {
       Object oimChannels = dbSession.createCriteria(OimChannels.class)
-          .add(Restrictions.eq("channelName", name)).uniqueResult();
+          .add(Restrictions.eq("channelName", name))
+          .add(Restrictions.eq("vendors.vendorId", getVendorId()))
+          .add(Restrictions.isNull("deleteTm")).uniqueResult();
       if (oimChannels == null) {
         LOG.debug("No channel found by Name: {}", name);
       }
@@ -337,8 +323,8 @@ public class ChannelRepositoryDb extends RepositoryBase implements ChannelReposi
     List<Channel> channels = new ArrayList<Channel>();
     try {
       Criteria createCriteria = dbSession.createCriteria(OimChannels.class);
-      createCriteria.add(Restrictions.eq("vendors.vendorId", getVendorId()));
-      createCriteria.addOrder(Order.asc("channelName"));
+      createCriteria.add(Restrictions.eq("vendors.vendorId", getVendorId()))
+          .add(Restrictions.isNull("deleteTm")).addOrder(Order.asc("channelName"));
       List<OimChannels> list = createCriteria.list();
       LOG.debug("Fetched {} Channel(s) ", list.size());
       if (list != null) {
