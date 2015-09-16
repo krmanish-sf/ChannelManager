@@ -7,7 +7,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;  
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -280,14 +280,16 @@ public class OrderRepositoryDB extends RepositoryBase implements OrderRepository
     try {
       tx = dbSession.beginTransaction();
       dbSession.merge(orderDetail);
-      List<OimVendorsuppOrderhistory> list = dbSession
-          .createCriteria(OimVendorsuppOrderhistory.class)
-          .add(Restrictions.eq("vendors.vendorId", getVendorId())).add(Restrictions
-              .eq("oimSuppliers.supplierId", orderDetail.getOimSuppliers().getSupplierId()))
-          .list();
-      for (OimVendorsuppOrderhistory oimVendorsuppOrderhistory : list) {
-        oimVendorsuppOrderhistory.setDeleteTm(new Date());
-        dbSession.persist(oimVendorsuppOrderhistory);
+      if (orderDetail.getOimSuppliers() != null) {
+        List<OimVendorsuppOrderhistory> list = dbSession
+            .createCriteria(OimVendorsuppOrderhistory.class)
+            .add(Restrictions.eq("vendors.vendorId", getVendorId())).add(Restrictions
+                .eq("oimSuppliers.supplierId", orderDetail.getOimSuppliers().getSupplierId()))
+            .list();
+        for (OimVendorsuppOrderhistory oimVendorsuppOrderhistory : list) {
+          oimVendorsuppOrderhistory.setDeleteTm(new Date());
+          dbSession.persist(oimVendorsuppOrderhistory);
+        }
       }
       tx.commit();
       dbSession.flush();
@@ -1118,7 +1120,7 @@ public class OrderRepositoryDB extends RepositoryBase implements OrderRepository
       int loopCount = orderTrackingMap.size() / 6;
       Transaction tx = session.beginTransaction();
       int newTrackingCount = 0;
-      for (int i = 0; i <= loopCount-1; i++) {
+      for (int i = 0; i <= loopCount - 1; i++) {
         String trackingIdStr = StringHandle.removeNull(orderTrackingMap.get("trackingId" + i));
         String shipDateString = StringHandle.removeNull(orderTrackingMap.get("shipDate" + i));
         String qty = StringHandle.removeNull(orderTrackingMap.get("shipQuantity" + i));
