@@ -3,13 +3,14 @@
 <t:openpage>
 	<jsp:attribute name="maincontent">
 		<div class="main-container-inner">
+			
+			<div class="container">
 			<div class="page-header">
 				<h1>
 					Learn more about Channel Manager<small><i
-						class="ace-icon fa fa-angle-double-right"></i> </small>
+							class="ace-icon fa fa-angle-double-right"></i> </small>
 				</h1>
 			</div>
-			<div class="container">
 				<div class="row">
 					<div class="col-sm-12">
 						<div class="widget-box">
@@ -27,9 +28,9 @@
 												about special integrations or questions you have, please use
 												the form below.</p>
 											<hr>
-											<form id="infoform" action="${pageContext.request.contextPath}/signup"
-											method="post" class="form-horizontal"
-												role="form">
+											<form id="infoform"
+												action="${pageContext.request.contextPath}/signup"
+												method="post" class="form-horizontal" role="form">
 												<input type="hidden" name="cmd" value="contactus">
 												<div class="form-group">
 													<label class="col-sm-9 pull-right">
@@ -75,8 +76,8 @@
 												</div>
 												<div class="form-group">
 													<div class="col-md-offset-3 col-md-6">
-														<input type="submit" class="btn btn-info width-100" value="Submit"
-															/>
+														<input type="submit" class="btn btn-info width-100"
+															value="Submit" />
 															
 														
 													</div>
@@ -109,53 +110,53 @@
 	function sendEmail() {
 		$('#infoform').submit();
 	}
-// 	$(document)
-// 			.ready(
-// 					function() {
-// 						$('#infoform')
-// 								.validate(
-// 										{
-// 											invalidHandler : function(event,
-// 													validator) {
-// 												// 'this' refers to the form
-// 												var errors = validator
-// 														.numberOfInvalids();
-// 												if (errors) {
-// 													var message = errors == 1 ? 'You missed 1 field. It has been highlighted'
-// 															: 'You missed '
-// 																	+ errors
-// 																	+ ' fields. They have been highlighted';
-// // 													$.gritter.add({
-// // 														title : "Contact Us",
-// // 														text : message
-// // 													});
-// 													alert(message);
-// 												}
-// 											},
-// 											submitHandler : function(form) {
-// 												var formArray = $(form)
-// 														.serializeArray();
-// 												var formObject = {};
-// 												$
-// 														.each(
-// 																formArray,
-// 																function(i, v) {
-// 																	formObject[v.name] = v.value;
-// 																});
-// 											},
-// 											highlight : function(e) {
-// 												$(e)
-// 														.closest('.form-group')
-// 														.removeClass('has-info')
-// 														.addClass('has-error');
-// 											},
-// 											success : function(e) {
-// 												$(e).closest('.form-group')
-// 														.removeClass(
-// 																'has-error')
-// 														.addClass('has-info');
-// 												$(e).remove();
-// 											}
-// 										});
-// 					});
+	// 	$(document)
+	// 			.ready(
+	// 					function() {
+	// 						$('#infoform')
+	// 								.validate(
+	// 										{
+	// 											invalidHandler : function(event,
+	// 													validator) {
+	// 												// 'this' refers to the form
+	// 												var errors = validator
+	// 														.numberOfInvalids();
+	// 												if (errors) {
+	// 													var message = errors == 1 ? 'You missed 1 field. It has been highlighted'
+	// 															: 'You missed '
+	// 																	+ errors
+	// 																	+ ' fields. They have been highlighted';
+	// // 													$.gritter.add({
+	// // 														title : "Contact Us",
+	// // 														text : message
+	// // 													});
+	// 													alert(message);
+	// 												}
+	// 											},
+	// 											submitHandler : function(form) {
+	// 												var formArray = $(form)
+	// 														.serializeArray();
+	// 												var formObject = {};
+	// 												$
+	// 														.each(
+	// 																formArray,
+	// 																function(i, v) {
+	// 																	formObject[v.name] = v.value;
+	// 																});
+	// 											},
+	// 											highlight : function(e) {
+	// 												$(e)
+	// 														.closest('.form-group')
+	// 														.removeClass('has-info')
+	// 														.addClass('has-error');
+	// 											},
+	// 											success : function(e) {
+	// 												$(e).closest('.form-group')
+	// 														.removeClass(
+	// 																'has-error')
+	// 														.addClass('has-info');
+	// 												$(e).remove();
+	// 											}
+	// 										});
+	// 					});
 </script>

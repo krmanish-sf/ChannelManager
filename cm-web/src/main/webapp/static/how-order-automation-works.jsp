@@ -8,13 +8,14 @@
 }
 </style>
 		<div class="main-container-inner">
+			
+			<div class="container">
 			<div class="page-header">
 				<h1>
 					How it works <small> <i class="icon-ok"></i>
 					</small>
 				</h1>
 			</div>
-			<div class="container">
 				<div class="row">
 					<div class="col-sm-12">
 					<p>

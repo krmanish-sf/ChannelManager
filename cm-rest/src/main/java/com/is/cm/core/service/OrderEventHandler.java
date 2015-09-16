@@ -32,8 +32,6 @@ import com.is.cm.core.event.orders.OrderDeletedEvent;
 import com.is.cm.core.event.orders.OrderDetailUpdatedEvent;
 import com.is.cm.core.event.orders.RequestAllOrdersEvent;
 import com.is.cm.core.event.orders.UpdateOrderDetailEvent;
-import com.is.cm.core.persistance.GenericHibernateDao;
-import com.is.cm.core.persistance.IGenericDao;
 import com.is.cm.core.persistance.OrderRepository;
 
 import salesmachine.hibernatedb.OimOrderDetails;
@@ -100,9 +98,11 @@ public class OrderEventHandler implements OrderService {
 	    UpdateOrderDetailEvent updateOrderDetailEvent) {
 
 	orderRepository.update(updateOrderDetailEvent.getEntity());
+	Order order = orderRepository.findById(
+		updateOrderDetailEvent.getEntity().getOimOrders().getOrderId());
 	if (updateOrderDetailEvent.getEntity().getOimOrderStatuses()
 		.getStatusId().equals(OimConstants.ORDER_STATUS_CANCELED)) {
-	    
+
 	}
 	return new OrderDetailUpdatedEvent(
 		updateOrderDetailEvent.getEntity().getDetailId(),

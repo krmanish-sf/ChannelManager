@@ -443,7 +443,7 @@
                                   <th>Sku</th>
                                   <th>Name</th>
                                   <th>Qty</th>
-                                  <th>PO Number</th>
+                                  <th>Sale Price</th>
                                   <th>Supplier</th>
                                   <th>Status</th>
                                   <th></th>
@@ -794,7 +794,7 @@
 										{
 											"mData" : function(orderDetail) {
 												return "<input type=\"text\" class=\"width-100\" value=\""
-														+ (orderDetail.supplierOrderNumber ? orderDetail.supplierOrderNumber
+														+ (orderDetail.salePrice ? orderDetail.salePrice
 																: '') + "\"/>";
 											}
 										},

@@ -8,14 +8,14 @@
 }
 </style>
 		<div class="main-container-inner">
-			<div class="page-header">
+			
+			<div class="container">
+				<div class="page-header">
 				<h1>
 					Integrations <small> <i class="icon-ok"></i>
 					</small>
 				</h1>
 			</div>
-			<div class="container">
-				
 				<div class="row">
 					<div class="col-sm-12">
 						<div class="widget-box">
@@ -66,7 +66,8 @@
 										</div>
 										<br>
 										<div class="col-sm-3">
-												<img alt="" src="images/ebay.png" style="border: 1px solid #ccc; width:180px;padding: 9px 20px">	
+												<img alt="" src="images/ebay.png"
+												style="border: 1px solid #ccc; width: 180px; padding: 9px 20px">	
 											</div>
 										<div class="col-sm-3">
 												<img alt="" src="images/magento.gif">	
@@ -119,8 +120,7 @@
 											<p>
 												Do you have a channel you need integrated?
 												<br>
-												<a href="contact-us.jsp" target="_blank"
-					>Contact us</a> to learn how we can help.
+												<a href="contact-us.jsp" target="_blank">Contact us</a> to learn how we can help.
 												
 											</p>
 											
@@ -134,4 +134,6 @@
 					</div>
 			</div>
 		</div>
-</jsp:attribute></t:openpage>
+</div>
+</div>
+	</jsp:attribute></t:openpage>
