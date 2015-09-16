@@ -58,5 +58,11 @@
         <property name="supplierWareHouseCode" type="string">
             <column name="SUPPLIER_WAREHOUSE_CODE" length="3" />
         </property>
+         <set name="oimOrderTracking" inverse="true" lazy="false" table="OIM_ORDER_TRACKING" fetch="select">
+            <key>
+                <column name="DETAIL_ID" precision="22" scale="0" />
+            </key>
+            <one-to-many  class="salesmachine.hibernatedb.OimOrderTracking" />
+        </set>
     </class>
 </hibernate-mapping>

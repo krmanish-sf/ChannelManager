@@ -1,12 +1,16 @@
 package com.is.cm.core.domain;
 
 import java.util.Date;
+import java.util.HashSet;
+import java.util.Set;
 
 import org.springframework.beans.BeanUtils;
 
 import salesmachine.hibernatedb.OimOrderDetails;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class OrderDetail extends DomainBase implements java.io.Serializable {
@@ -27,6 +31,9 @@ public class OrderDetail extends DomainBase implements java.io.Serializable {
 	private String supplierOrderStatus;
 	private String supplierOrderNumber;
 	private String storeOrderItemId;
+	@JsonDeserialize(as = HashSet.class)
+	private Set<OrderTracking> orderTrackings = new HashSet<OrderTracking>(0);
+	
 
 	public OrderDetail() {
 	}
@@ -177,6 +184,14 @@ public class OrderDetail extends DomainBase implements java.io.Serializable {
 
 	public void setStoreOrderItemId(String storeOrderItemId) {
 		this.storeOrderItemId = storeOrderItemId;
+	}
+
+	public Set<OrderTracking> getOrderTrackings() {
+	    return orderTrackings;
+	}
+
+	public void setOrderTrackings(Set<OrderTracking> orderTrackings) {
+	    this.orderTrackings = orderTrackings;
 	}
 
 }

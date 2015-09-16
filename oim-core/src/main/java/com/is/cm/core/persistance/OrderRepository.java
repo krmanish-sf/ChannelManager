@@ -18,40 +18,40 @@ import com.is.cm.core.domain.PagedDataResult;
 
 public interface OrderRepository {
 
-	void delete(int id);
+  void delete(int id);
 
-	PagedDataResult<Order> find(DataTableCriterias criterias);
+  PagedDataResult<Order> find(DataTableCriterias criterias);
 
-	List<Order> findAll();
+  List<Order> findAll();
 
-	List<Order> findAll(String[] orderStatus);
+  List<Order> findAll(String[] orderStatus);
 
-	Order findById(int id);
+  Order findById(int id);
 
-	List<OrderDetailMod> findOrderDetailModifications(int orderDetailId);
+  List<OrderDetailMod> findOrderDetailModifications(int orderDetailId);
 
-	PagedDataResult<Order> findProcessedOrders(int firstResult, int pageSize,
-			String storeOrderId);
+  PagedDataResult<Order> findProcessedOrders(int firstResult, int pageSize, String storeOrderId);
 
-	PagedDataResult<Order> findUnprocessedOrders(int firstResult, int pageSize,
-			String storeOrderId);
+  PagedDataResult<Order> findUnprocessedOrders(int firstResult, int pageSize, String storeOrderId);
 
-	PagedDataResult<Order> findUnresolvedOrders(DataTableCriterias criterias);
+  PagedDataResult<Order> findUnresolvedOrders(DataTableCriterias criterias);
 
-	OimOrders getById(int id);
+  OimOrders getById(int id);
 
-	boolean processOrders(Order order) throws SupplierConfigurationException,
-			SupplierCommunicationException, SupplierOrderException;
+  boolean processOrders(Order order) throws SupplierConfigurationException,
+      SupplierCommunicationException, SupplierOrderException;
 
-	List<Order> save(CCTRANSMISSION entity);
+  List<Order> save(CCTRANSMISSION entity);
 
-	Order save(Order order);
+  Order save(Order order);
 
-	Order saveOrder(Map<String, String> orderData);
+  Order saveOrder(Map<String, String> orderData);
 
-	String trackOrderStatus(Integer entity);
+  String trackOrderStatus(Integer entity);
 
-	void update(OimOrderDetails orderDetail);
+  void update(OimOrderDetails orderDetail);
 
-	void update(OrderDetail orderDetail);
+  void update(OrderDetail orderDetail);
+
+  String updateTracking(int detailId, Map<String, String> entity);
 }

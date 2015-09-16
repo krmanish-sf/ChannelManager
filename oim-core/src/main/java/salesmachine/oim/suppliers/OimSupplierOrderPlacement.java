@@ -13,6 +13,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import jxl.Workbook;
+import jxl.write.Label;
+import jxl.write.WritableSheet;
+import jxl.write.WritableWorkbook;
+import jxl.write.WriteException;
+import jxl.write.biff.RowsExceededException;
+
 import org.hibernate.Criteria;
 import org.hibernate.Query;
 import org.hibernate.Session;
@@ -21,12 +28,6 @@ import org.hibernate.criterion.Restrictions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import jxl.Workbook;
-import jxl.write.Label;
-import jxl.write.WritableSheet;
-import jxl.write.WritableWorkbook;
-import jxl.write.WriteException;
-import jxl.write.biff.RowsExceededException;
 import salesmachine.automation.AutomationManager;
 import salesmachine.email.EmailUtil;
 import salesmachine.hibernatedb.OimChannelSupplierMap;
@@ -38,6 +39,7 @@ import salesmachine.hibernatedb.OimOrderBatches;
 import salesmachine.hibernatedb.OimOrderBatchesTypes;
 import salesmachine.hibernatedb.OimOrderDetails;
 import salesmachine.hibernatedb.OimOrderStatuses;
+import salesmachine.hibernatedb.OimOrderTracking;
 import salesmachine.hibernatedb.OimOrders;
 import salesmachine.hibernatedb.OimSupplierMethods;
 import salesmachine.hibernatedb.OimSuppliers;
@@ -58,6 +60,7 @@ import salesmachine.oim.suppliers.exception.SupplierOrderException;
 import salesmachine.oim.suppliers.exception.SupplierOrderTrackingException;
 import salesmachine.oim.suppliers.modal.OrderDetailResponse;
 import salesmachine.oim.suppliers.modal.OrderStatus;
+import salesmachine.oim.suppliers.modal.TrackingData;
 import salesmachine.orderfile.DatabaseFile;
 import salesmachine.orderfile.DefaultCsvFile;
 import salesmachine.orderfile.DefaultXlsFile;
@@ -116,8 +119,8 @@ public class OimSupplierOrderPlacement {
       tx = m_dbSession.beginTransaction();
 
       // Here is your db code
-      Query query = m_dbSession.createQuery(
-          "from salesmachine.hibernatedb.OimSuppliers as s where s.supplierId=:id and s.deleteTm is null");
+      Query query = m_dbSession
+          .createQuery("from salesmachine.hibernatedb.OimSuppliers as s where s.supplierId=:id and s.deleteTm is null");
       query.setInteger("id", supplierId);
       if (!query.iterate().hasNext()) {
         log.debug("No supplier found for supplier id: " + supplierId);
@@ -125,8 +128,8 @@ public class OimSupplierOrderPlacement {
       } else {
         m_supplier = (OimSuppliers) query.iterate().next();
 
-        query = m_dbSession.createQuery(
-            "select m from OimSupplierMethods as m left join m.oimSupplierMethodattrValueses v where m.deleteTm is null and m.oimSuppliers=:supp and m.oimSupplierMethodTypes.methodTypeId=:methodTypeId and v.deleteTm is null");
+        query = m_dbSession
+            .createQuery("select m from OimSupplierMethods as m left join m.oimSupplierMethodattrValueses v where m.deleteTm is null and m.oimSuppliers=:supp and m.oimSupplierMethodTypes.methodTypeId=:methodTypeId and v.deleteTm is null");
         query.setEntity("supp", m_supplier);
         query.setInteger("methodTypeId", OimConstants.SUPPLIER_METHOD_TYPE_ORDERPUSH.intValue());
         Iterator it = query.iterate();
@@ -145,33 +148,31 @@ public class OimSupplierOrderPlacement {
   }
 
   public boolean reprocessVendorOrder(Integer vendorId, OimOrders oimOrders)
-      throws SupplierConfigurationException, SupplierCommunicationException,
-      SupplierOrderException {
+      throws SupplierConfigurationException, SupplierCommunicationException, SupplierOrderException {
     for (Iterator detailIt = oimOrders.getOimOrderDetailses().iterator(); detailIt.hasNext();) {
       OimOrderDetails detail = (OimOrderDetails) detailIt.next();
       detail.setOimOrderStatuses(new OimOrderStatuses(OimConstants.ORDER_STATUS_UNPROCESSED));
       detail.setSupplierOrderStatus("Re-processing");
       m_dbSession.persist(detail);
     }
-    return processVendorOrder(vendorId, oimOrders,
-        new OimOrderBatchesTypes(OimConstants.ORDERBATCH_TYPE_ID_MANUAL));
+    return processVendorOrder(vendorId, oimOrders, new OimOrderBatchesTypes(
+        OimConstants.ORDERBATCH_TYPE_ID_MANUAL));
   }
 
   public boolean processVendorOrder(Integer vendorId, OimOrders oimOrders)
-      throws SupplierConfigurationException, SupplierCommunicationException,
-      SupplierOrderException {
-    return processVendorOrder(vendorId, oimOrders,
-        new OimOrderBatchesTypes(OimConstants.ORDERBATCH_TYPE_ID_MANUAL));
+      throws SupplierConfigurationException, SupplierCommunicationException, SupplierOrderException {
+    return processVendorOrder(vendorId, oimOrders, new OimOrderBatchesTypes(
+        OimConstants.ORDERBATCH_TYPE_ID_MANUAL));
   }
 
   public boolean processVendorOrder(Integer vendorId, OimOrders oimOrders,
       OimOrderBatchesTypes processingType) throws SupplierConfigurationException,
-          SupplierCommunicationException, SupplierOrderException {
+      SupplierCommunicationException, SupplierOrderException {
     log.debug("Processing orders for VendorId: {}", vendorId);
 
     if (oimOrders.getDeliveryStateCode() == null)
-      throw new InvalidAddressException(
-          "Please check Delivery State code for order id - " + oimOrders.getStoreOrderId());
+      throw new InvalidAddressException("Please check Delivery State code for order id - "
+          + oimOrders.getStoreOrderId());
     // Transaction tx = null;
     boolean ordersSent = false;
     try {
@@ -189,8 +190,8 @@ public class OimSupplierOrderPlacement {
         Set unprocessedDetails = new HashSet();
         for (Iterator detailIt = oimOrders.getOimOrderDetailses().iterator(); detailIt.hasNext();) {
           OimOrderDetails detail = (OimOrderDetails) detailIt.next();
-          if (OimConstants.ORDER_STATUS_UNPROCESSED
-              .equals(detail.getOimOrderStatuses().getStatusId())) {
+          if (OimConstants.ORDER_STATUS_UNPROCESSED.equals(detail.getOimOrderStatuses()
+              .getStatusId())) {
             if (detail.getOimSuppliers() == null) {
               log.warn("Unresolved order found. Skipping to process it.");
               continue;
@@ -198,8 +199,9 @@ public class OimSupplierOrderPlacement {
             Criteria channelSupplierMapQuery = m_dbSession
                 .createCriteria(OimChannelSupplierMap.class)
                 .add(Restrictions.eq("oimChannels.channelId", oimChannels.getChannelId()))
-                .add(Restrictions.eq("oimSuppliers.supplierId",
-                    detail.getOimSuppliers().getSupplierId()));
+                .add(
+                    Restrictions.eq("oimSuppliers.supplierId", detail.getOimSuppliers()
+                        .getSupplierId()));
             List<OimChannelSupplierMap> list = channelSupplierMapQuery.list();
 
             if (list.size() == 0) {
@@ -216,8 +218,8 @@ public class OimSupplierOrderPlacement {
                 if (processingType.getBatchTypeId().equals(OimConstants.ORDERBATCH_TYPE_ID_MANUAL)
                     || (batches.getOimOrderBatchesTypes().getBatchTypeId()
                         .equals(OimConstants.ORDERBATCH_TYPE_ID_AUTOMATED)
-                        && detail.getSku().startsWith(oimChannelSupplierMap.getSupplierPrefix())
-                        && oimChannelSupplierMap.getEnableOrderAutomation().equals(1))) {
+                        && detail.getSku().startsWith(oimChannelSupplierMap.getSupplierPrefix()) && oimChannelSupplierMap
+                        .getEnableOrderAutomation().equals(1))) {
                   unprocessedDetails.add(detail);
                   countToProcess++;
                 }
@@ -276,8 +278,8 @@ public class OimSupplierOrderPlacement {
     if (status == OimConstants.ORDER_STATUS_PROCESSED_SUCCESS) {
       processTime = " o.processingTm=sysdate, ";
     }
-    System.out.println(
-        "update salesmachine.hibernatedb.OimOrderDetails o set o.oimOrderStatuses.statusId="
+    System.out
+        .println("update salesmachine.hibernatedb.OimOrderDetails o set o.oimOrderStatuses.statusId="
             + status + " where o.detailId in (" + orderDetails + ")");
 
     Transaction tx = null;
@@ -299,8 +301,7 @@ public class OimSupplierOrderPlacement {
 
   }
 
-  private boolean pingSupplier(Integer vendorId, OimVendorSuppliers ovs,
-      StringBuffer errorMessage) {
+  private boolean pingSupplier(Integer vendorId, OimVendorSuppliers ovs, StringBuffer errorMessage) {
     // init(ovs.getOimSuppliers().getSupplierId());
     Integer supplierMethodNameId = m_supplierMethods.getOimSupplierMethodNames().getMethodNameId();
     if (OimConstants.SUPPLIER_METHOD_NAME_EMAIL.equals(supplierMethodNameId)) {
@@ -330,9 +331,9 @@ public class OimSupplierOrderPlacement {
       String txt = uploader.testConnection();
 
       if (txt != null) {
-        errorMessage
-            .append("Could not connect to the Supplier FTP Server with \nServer:" + ftpServer
-                + "\nLogin:" + ftpLogin + "\nPassword:" + ftpPassword + "\n\nMessage:" + txt);
+        errorMessage.append("Could not connect to the Supplier FTP Server with \nServer:"
+            + ftpServer + "\nLogin:" + ftpLogin + "\nPassword:" + ftpPassword + "\n\nMessage:"
+            + txt);
         return false;
       }
 
@@ -349,12 +350,10 @@ public class OimSupplierOrderPlacement {
 
   private boolean sendOrderToSupplier(Integer vendorId, OimOrders oimOrders,
       Map<Integer, OrderDetailResponse> successfulOrders, List<Integer> failedOrders)
-          throws SupplierConfigurationException, SupplierCommunicationException,
-          SupplierOrderException {
+      throws SupplierConfigurationException, SupplierCommunicationException, SupplierOrderException {
     List<OimOrders> orders = new ArrayList<OimOrders>();
     orders.add(oimOrders);
-    for (OimOrderDetails oimOrderDetails : (Set<OimOrderDetails>) oimOrders
-        .getOimOrderDetailses()) {
+    for (OimOrderDetails oimOrderDetails : (Set<OimOrderDetails>) oimOrders.getOimOrderDetailses()) {
       init(oimOrderDetails.getOimSuppliers().getSupplierId());
       OimVendorSuppliers ovs = null;
       boolean ping = false;
@@ -365,8 +364,8 @@ public class OimSupplierOrderPlacement {
         tx = m_dbSession.beginTransaction();
 
         // Here is your db code
-        query = m_dbSession.createQuery(
-            "from OimVendorSuppliers s where s.oimSuppliers=:supp and s.vendors.vendorId=:vid and s.deleteTm is null");
+        query = m_dbSession
+            .createQuery("from OimVendorSuppliers s where s.oimSuppliers=:supp and s.vendors.vendorId=:vid and s.deleteTm is null");
         query.setEntity("supp", m_supplier);
         query.setInteger("vid", vendorId);
         Iterator it = query.iterate();
@@ -477,20 +476,17 @@ public class OimSupplierOrderPlacement {
             log.error(e.getMessage(), e);
             Supplier.updateVendorSupplierOrderHistory(vendorId, ovs.getOimSuppliers(),
                 "Error occured in updating store order status due to ChannelConfiguration Error. "
-                    + e.getMessage(),
-                Supplier.ERROR_ORDER_PROCESSING);
+                    + e.getMessage(), Supplier.ERROR_ORDER_PROCESSING);
           } catch (ChannelCommunicationException e) {
             log.error(e.getMessage(), e);
             Supplier.updateVendorSupplierOrderHistory(vendorId, ovs.getOimSuppliers(),
                 "Error occured in updating store order status due to ChannelComunication Error. "
-                    + e.getMessage(),
-                Supplier.ERROR_ORDER_PROCESSING);
+                    + e.getMessage(), Supplier.ERROR_ORDER_PROCESSING);
           } catch (ChannelOrderFormatException e) {
             log.error(e.getMessage(), e);
             Supplier.updateVendorSupplierOrderHistory(vendorId, ovs.getOimSuppliers(),
                 "Error occured in updating store order status due to ChannelOrderFormat Error. "
-                    + e.getMessage(),
-                Supplier.ERROR_ORDER_PROCESSING);
+                    + e.getMessage(), Supplier.ERROR_ORDER_PROCESSING);
           }
         } else {
           log.debug("Unknown Supplier Id: " + supplierId);
@@ -505,8 +501,8 @@ public class OimSupplierOrderPlacement {
         if (tmp != null && tmp.length() > 0) {
           Integer fileid = Integer.valueOf(tmp);
           log.debug("Using File Id: " + fileid + " for generating supplier order file");
-          query = m_dbSession.createQuery(
-              "select f from OimFiletypes f where f.fileTypeId=:fileId and f.deleteTm is null");
+          query = m_dbSession
+              .createQuery("select f from OimFiletypes f where f.fileTypeId=:fileId and f.deleteTm is null");
           Iterator it = query.setInteger("fileId", fileid.intValue()).iterate();
           if (!it.hasNext()) {
             logStream.println("No file defined for this supplier file id: " + fileid);
@@ -548,8 +544,8 @@ public class OimSupplierOrderPlacement {
           fileName = "" + vendorId + "-" + m_supplier.getSupplierId() + ".xls";
           log.debug("Generating file " + fileName);
           try {
-            generateXlsFile(orders, ofile.getFileFieldMaps(), fileName, ofile.getFileFormatParams(),
-                ofile.getSpecificsProvider(ovs));
+            generateXlsFile(orders, ofile.getFileFieldMaps(), fileName,
+                ofile.getFileFormatParams(), ofile.getSpecificsProvider(ovs));
           } catch (Exception e) {
             log.error(e.getMessage(), e);
           }
@@ -559,8 +555,8 @@ public class OimSupplierOrderPlacement {
             fileName = name;
           log.debug("Generating file " + fileName);
           try {
-            generateCsvFile(orders, ofile.getFileFieldMaps(), fileName, ofile.getFileFormatParams(),
-                ofile.getSpecificsProvider(ovs));
+            generateCsvFile(orders, ofile.getFileFieldMaps(), fileName,
+                ofile.getFileFormatParams(), ofile.getSpecificsProvider(ovs));
           } catch (Exception e) {
             log.debug(e.getMessage(), e);
           }
@@ -571,8 +567,9 @@ public class OimSupplierOrderPlacement {
         // whom the order status email will go in case the
         // emaiNotification
         // is set for him.
-        Query q = m_dbSession.createQuery(
-            "select r from salesmachine.hibernatedb.Reps r where r.vendorId = " + vendorId);
+        Query q = m_dbSession
+            .createQuery("select r from salesmachine.hibernatedb.Reps r where r.vendorId = "
+                + vendorId);
         Reps r = new Reps();
         Iterator repsIt = q.iterate();
         if (repsIt.hasNext()) {
@@ -616,14 +613,15 @@ public class OimSupplierOrderPlacement {
               emailContent += generateMailBody(orders, ofile.getFileFieldMaps(),
                   new StandardFileSpecificsProvider(m_dbSession, ovs, new Vendors(vendorId)));
               EmailUtil.sendEmail(emailAddress, "support@inventorysource.com", r.getLogin(),
-                  "oim@inventorysource.com", m_supplier.getSupplierName() + " Orders", emailContent,
-                  "text/html");
+                  "oim@inventorysource.com", m_supplier.getSupplierName() + " Orders",
+                  emailContent, "text/html");
             } catch (Exception e1) {
               log.error(e1.getMessage(), e1);
             }
           } else {
             EmailUtil.sendEmailWithAttachment(emailAddress, "support@inventorysource.com",
-                "oim@inventorysource.com," + r.getLogin(), m_supplier.getSupplierName() + " Orders",
+                "oim@inventorysource.com," + r.getLogin(),
+                m_supplier.getSupplierName() + " Orders",
                 "Find attached the orders from my store.", fileName, "");
           }
         }
@@ -666,8 +664,8 @@ public class OimSupplierOrderPlacement {
       Hashtable fileFormatParams, IFileSpecificsProvider fileSpecifics) throws Exception {
     FileWriter outputFile = new FileWriter(fileName);
 
-    boolean useHeader = "1"
-        .equals((String) fileFormatParams.get(OimConstants.FILE_FORMAT_PARAMS_USEHEADER));
+    boolean useHeader = "1".equals((String) fileFormatParams
+        .get(OimConstants.FILE_FORMAT_PARAMS_USEHEADER));
     String fieldDelimiter = (String) fileFormatParams
         .get(OimConstants.FILE_FORMAT_PARAMS_FIELD_DELIMITER);
     String textDelimiter = (String) fileFormatParams
@@ -706,8 +704,8 @@ public class OimSupplierOrderPlacement {
           OimFileFieldMap map = (OimFileFieldMap) it.next();
           OimFields field = map.getOimFields();
           String writeModifier = StringHandle.removeNull(map.getMappedFieldModifierRuleWr());
-          String fieldValue = StringHandle
-              .removeNull(fileSpecifics.getFieldValueFromOrder(detail, map));
+          String fieldValue = StringHandle.removeNull(fileSpecifics.getFieldValueFromOrder(detail,
+              map));
           // log.debug("Field Id: "+field.getFieldId()+"\t
           // ("+field.getFieldName()+")"+"\t:"+fieldValue);
           if (j > 0)
@@ -729,8 +727,8 @@ public class OimSupplierOrderPlacement {
   public static void generateXlsFile(List orders, List fileFieldMaps, String fileName,
       Hashtable fileFormatParams, IFileSpecificsProvider fileSpecifics) throws Exception {
     int row = 0;
-    boolean useHeader = "1"
-        .equals((String) fileFormatParams.get(OimConstants.FILE_FORMAT_PARAMS_USEHEADER));
+    boolean useHeader = "1".equals((String) fileFormatParams
+        .get(OimConstants.FILE_FORMAT_PARAMS_USEHEADER));
     try {
       WritableWorkbook workbook = Workbook.createWorkbook(new File(fileName));
       WritableSheet sheet = workbook.createSheet("Sheet3", 0);
@@ -765,8 +763,8 @@ public class OimSupplierOrderPlacement {
           String colval = "";
           for (Iterator it = fileFieldMaps.iterator(); it.hasNext();) {
             OimFileFieldMap map = (OimFileFieldMap) it.next();
-            String fieldValue = StringHandle
-                .removeNull(fileSpecifics.getFieldValueFromOrder(detail, map));
+            String fieldValue = StringHandle.removeNull(fileSpecifics.getFieldValueFromOrder(
+                detail, map));
             if ("".equals(StringHandle.removeNull(map.getMappedFieldName()))) {
               colval += StringHandle.removeNull(fieldValue) + "\n";
               continue;
@@ -805,8 +803,8 @@ public class OimSupplierOrderPlacement {
         int j = 0;
         for (Iterator it = fileFieldMaps.iterator(); it.hasNext();) {
           OimFileFieldMap map = (OimFileFieldMap) it.next();
-          String fieldValue = StringHandle
-              .removeNull(fileSpecifics.getFieldValueFromOrder(detail, map));
+          String fieldValue = StringHandle.removeNull(fileSpecifics.getFieldValueFromOrder(detail,
+              map));
           // log.debug("Field Id: "+field.getFieldId()+"\t
           // ("+field.getFieldName()+")"+"\t:"+fieldValue);
           if (j > 0)
@@ -873,8 +871,8 @@ public class OimSupplierOrderPlacement {
     log.info("Tracking Status for Vendor#{} SKU# {}", vendorId, oimOrderDetails.getSku());
     HasTracking s = null;
     OimVendorSuppliers oimVendorSuppliers = null;
-    Query query = session.createQuery(
-        "from OimVendorSuppliers s where s.oimSuppliers=:supp and s.vendors.vendorId=:vid and s.deleteTm is null");
+    Query query = session
+        .createQuery("from OimVendorSuppliers s where s.oimSuppliers=:supp and s.vendors.vendorId=:vid and s.deleteTm is null");
     query.setEntity("supp", oimOrderDetails.getOimSuppliers());
     query.setInteger("vid", vendorId);
     Object it = query.uniqueResult();
@@ -884,15 +882,15 @@ public class OimSupplierOrderPlacement {
     case DandH:
       try {
         s = new DandH();
-        orderStatus = s.getOrderStatus(oimVendorSuppliers, oimOrderDetails.getSupplierOrderNumber(),
-            oimOrderDetails);
+        orderStatus = s.getOrderStatus(oimVendorSuppliers,
+            oimOrderDetails.getSupplierOrderNumber(), oimOrderDetails);
 
         oimOrderDetails.setSupplierOrderStatus(orderStatus.toString());
         if (orderStatus.isShipped()) {
-          oimOrderDetails
-              .setOimOrderStatuses(new OimOrderStatuses(OimConstants.ORDER_STATUS_SHIPPED));
-          int trackCount = AutomationManager.orderTrackMap.get(channelId) != null
-              ? AutomationManager.orderTrackMap.get(channelId) : 0;
+          oimOrderDetails.setOimOrderStatuses(new OimOrderStatuses(
+              OimConstants.ORDER_STATUS_SHIPPED));
+          int trackCount = AutomationManager.orderTrackMap.get(channelId) != null ? AutomationManager.orderTrackMap
+              .get(channelId) : 0;
           AutomationManager.orderTrackMap.put(channelId, trackCount++);
         }
         session.update(oimOrderDetails);
@@ -906,14 +904,14 @@ public class OimSupplierOrderPlacement {
     case BnF:
       try {
         s = new BF();
-        orderStatus = s.getOrderStatus(oimVendorSuppliers, oimOrderDetails.getSupplierOrderNumber(),
-            oimOrderDetails);
+        orderStatus = s.getOrderStatus(oimVendorSuppliers,
+            oimOrderDetails.getSupplierOrderNumber(), oimOrderDetails);
         oimOrderDetails.setSupplierOrderStatus(orderStatus.toString());
         if (orderStatus.isShipped()) {
-          oimOrderDetails
-              .setOimOrderStatuses(new OimOrderStatuses(OimConstants.ORDER_STATUS_SHIPPED));
-          int trackCount = AutomationManager.orderTrackMap.get(channelId) != null
-              ? AutomationManager.orderTrackMap.get(channelId) : 0;
+          oimOrderDetails.setOimOrderStatuses(new OimOrderStatuses(
+              OimConstants.ORDER_STATUS_SHIPPED));
+          int trackCount = AutomationManager.orderTrackMap.get(channelId) != null ? AutomationManager.orderTrackMap
+              .get(channelId) : 0;
           AutomationManager.orderTrackMap.put(channelId, trackCount++);
         }
         session.update(oimOrderDetails);
@@ -927,14 +925,14 @@ public class OimSupplierOrderPlacement {
     case HONESTGREEN:
       try {
         s = new HonestGreen();
-        orderStatus = s.getOrderStatus(oimVendorSuppliers, oimOrderDetails.getSupplierOrderNumber(),
-            oimOrderDetails);
+        orderStatus = s.getOrderStatus(oimVendorSuppliers,
+            oimOrderDetails.getSupplierOrderNumber(), oimOrderDetails);
         oimOrderDetails.setSupplierOrderStatus(orderStatus.toString());
         if (orderStatus.isShipped()) {
-          oimOrderDetails
-              .setOimOrderStatuses(new OimOrderStatuses(OimConstants.ORDER_STATUS_SHIPPED));
-          int trackCount = AutomationManager.orderTrackMap.get(channelId) != null
-              ? AutomationManager.orderTrackMap.get(channelId) : 0;
+          oimOrderDetails.setOimOrderStatuses(new OimOrderStatuses(
+              OimConstants.ORDER_STATUS_SHIPPED));
+          int trackCount = AutomationManager.orderTrackMap.get(channelId) != null ? AutomationManager.orderTrackMap
+              .get(channelId) : 0;
           AutomationManager.orderTrackMap.put(channelId, trackCount++);
         }
         session.update(oimOrderDetails);
@@ -951,6 +949,20 @@ public class OimSupplierOrderPlacement {
           + oimOrderDetails.getOimSuppliers().getSupplierName() + " is not suported.");
       break;
     }
+    if (orderStatus.isShipped()) {
+      List<TrackingData> trackingDataList = orderStatus.getTrackingData();
+      for (TrackingData td : trackingDataList) {
+        OimOrderTracking oimOrderTracking = new OimOrderTracking();
+        oimOrderTracking.setInsertionTime(new Date());
+        oimOrderTracking.setShipDate(td.getShipDate().toGregorianCalendar().getTime());
+        oimOrderTracking.setShippingCarrier(td.getCarrierName());
+        oimOrderTracking.setShippingMethod(td.getShippingMethod());
+        oimOrderTracking.setShipQuantity(td.getQuantity());
+        oimOrderTracking.setTrackingNumber(td.getShipperTrackingNumber());
+        oimOrderTracking.setDetail(oimOrderDetails);
+        session.persist(oimOrderTracking);
+      }
+    }
     tx.commit();
     // Update the store with tracking info
     OimOrders oimOrders = oimOrderDetails.getOimOrders();
@@ -965,24 +977,27 @@ public class OimSupplierOrderPlacement {
     } catch (ChannelConfigurationException e) {
       stream.println(e.getMessage());
       log.error(e.getMessage(), e);
-      Supplier.updateVendorSupplierOrderHistory(vendorId, oimVendorSuppliers.getOimSuppliers(),
+      Supplier.updateVendorSupplierOrderHistory(
+          vendorId,
+          oimVendorSuppliers.getOimSuppliers(),
           "Error occured in updating store order status due to ChannelConfiguration Error. "
-              + e.getMessage(),
-          Supplier.ERROR_ORDER_TRACKING);
+              + e.getMessage(), Supplier.ERROR_ORDER_TRACKING);
     } catch (ChannelCommunicationException e) {
       stream.println(e.getMessage());
       log.error(e.getMessage(), e);
-      Supplier.updateVendorSupplierOrderHistory(vendorId, oimVendorSuppliers.getOimSuppliers(),
+      Supplier.updateVendorSupplierOrderHistory(
+          vendorId,
+          oimVendorSuppliers.getOimSuppliers(),
           "Error occured in updating store order status due to ChannelCommunication Error. "
-              + e.getMessage(),
-          Supplier.ERROR_ORDER_TRACKING);
+              + e.getMessage(), Supplier.ERROR_ORDER_TRACKING);
     } catch (ChannelOrderFormatException e) {
       stream.println(e.getMessage());
       log.error(e.getMessage(), e);
-      Supplier.updateVendorSupplierOrderHistory(vendorId, oimVendorSuppliers.getOimSuppliers(),
+      Supplier.updateVendorSupplierOrderHistory(
+          vendorId,
+          oimVendorSuppliers.getOimSuppliers(),
           "Error occured in updating store order status due to ChannelOrderFormat Error. "
-              + e.getMessage(),
-          Supplier.ERROR_ORDER_TRACKING);
+              + e.getMessage(), Supplier.ERROR_ORDER_TRACKING);
     }
     if (orderStatus != null)
       stream.println(orderStatus.toString());
