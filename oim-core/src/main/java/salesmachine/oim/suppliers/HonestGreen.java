@@ -682,13 +682,13 @@ public class HonestGreen extends Supplier implements HasTracking {
         Map<Integer, String> shippingDataMap = parseFileData(shippingFileData);
         parseShippingConfirmation = parseShippingConfirmation(shippingDataMap, sku);
       } catch (FTPException e) {
-        log.error(e.getMessage(), e);
+        log.warn("Shipping {}", e.getMessage());
 
       }
       try {
         trackingFileData = ftp.get(trackingFilePath);
       } catch (FTPException e) {
-        log.error(e.getMessage(), e);
+        log.warn("Tracking {}", e.getMessage());
         trackingFileData = null;
       }
     } else {
@@ -704,10 +704,6 @@ public class HonestGreen extends Supplier implements HasTracking {
         if (shippingFileName.equals("..") || shippingFileName.equals("."))
           continue;
 
-        /*
-         * log.info( "shipping file path: {} Last Modified: {} Order Processing Time: {}" ,
-         * ftpFile.getName(), ftpFile.lastModified(), detail.getProcessingTm());
-         */
         if (ftpFile.lastModified().before(detail.getProcessingTm()))
           break;
         byte[] sippingFileData = ftp.get("shipping/" + shippingFileName);
