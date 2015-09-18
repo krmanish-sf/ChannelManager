@@ -98,28 +98,15 @@ If you have not yet configured your supplier, click "Add Supplier" to do it now.
 												action="/aggregators/suppliers" method="PUT"
 												id="supplierform">
                            <div class="form-group">
-                            <div class="col-sm-5">
                               <label
-															class="col-sm-offset-8 control-label no-padding-right">Username</label>
-													</div>
+														class="col-sm-5 control-label no-padding-right">Username</label>
                               <div class="col-sm-7">
                               <input class="width-70" name='login'
 															type='text' data-bind-vendorsupplier="login"
 															required="required" />
                             </div>
 												</div>
-                            <div class="form-group">
-                            <div class="col-sm-5">
-                              <label
-															class="col-sm-offset-8 control-label no-padding-right">Password</label>
-													</div>
-                              <div class="col-sm-7">
-                              <input class="width-70" name='password'
-															type='password' data-bind-vendorsupplier="password"
-															required="required" />
-                            </div>
-												</div>
-                            <div class="form-group">
+							<div class="form-group">
                               <label
 														class="col-sm-5 control-label no-padding-right">Account</label>
                               <div class="col-sm-7">
@@ -127,7 +114,19 @@ If you have not yet configured your supplier, click "Add Supplier" to do it now.
 															type='text' data-bind-vendorsupplier="accountNumber"
 															required="required" />
                             </div>
+							</div>
+                            <div class="form-group">
+                            
+                              <label
+														class="col-sm-5 control-label no-padding-right">Password</label>
+											
+                              <div class="col-sm-7">
+                              <input class="width-70" name='password'
+															type='password' data-bind-vendorsupplier="password"
+															required="required" />
+                            </div>
 												</div>
+                            
                             <div class="form-group"
 													style="display: none;">
                               <label
@@ -240,10 +239,8 @@ If you have not yet configured your supplier, click "Add Supplier" to do it now.
 										<div class="panel-body">
 										
 											<div class="form-group">
-							                            <div class="col-sm-5">
 							                              <label for="phi-ftp"
-																			class="col-sm-offset-8 control-label no-padding-right">FTP</label>
-														</div>
+																		class="col-sm-5 control-label no-padding-right">FTP</label>
 							                              <div class="col-sm-7">
 							                                 <input class="width-70"
 																			name="phi-ftp" minlength="2" type="text"
@@ -396,10 +393,8 @@ If you have not yet configured your supplier, click "Add Supplier" to do it now.
 												action="/aggregators/suppliers" method="PUT"
 												id="supplierAddForm">
                         <div class="form-group">
-                            <div class="col-sm-5">
                               <label for="suppliername"
-															class="col-sm-offset-8 control-label no-padding-right">Supplier</label>
-													</div>
+														class="col-sm-5 control-label no-padding-right">Supplier</label>
                               <div class="col-sm-7">
                               <select class="width-70" id="Supplieradd"
 															name="suppliername" required>
@@ -424,10 +419,8 @@ If you have not yet configured your supplier, click "Add Supplier" to do it now.
 										<div class="panel-body">
 										
 											<div class="form-group">
-							                            <div class="col-sm-5">
 							                              <label for="phi-ftp"
-																			class="col-sm-offset-8 control-label no-padding-right">FTP</label>
-														</div>
+																			class="col-sm-5 control-label no-padding-right">FTP</label>
 							                              <div class="col-sm-7">
 							                                 <input class="width-70"
 																			name="phi-ftp" minlength="2" type="text" value=""
@@ -435,35 +428,33 @@ If you have not yet configured your supplier, click "Add Supplier" to do it now.
 							                            </div>
 											</div>
 											 <div class="form-group">
-				                            <div class="col-sm-5">
+				                         
 				                              <label
-																			class="col-sm-offset-8 control-label no-padding-right">UserName</label>
-																	</div>
+																		class="col-sm-5 control-label no-padding-right">UserName</label>
+																	
 				                              <div class="col-sm-7">
 				                              <input class="width-70"
 																			name="phi-login" type="text" value="" required />
 				                            </div>
 																</div>
-				                            <div class="form-group">
-				                            <div class="col-sm-5">
+											<div class="form-group">
+				                            
 				                              <label
-																			class="col-sm-offset-8 control-label no-padding-right">Password</label>
-																	</div>
-				                              <div class="col-sm-7">
-				                              <input class="width-70"
-																			name="phi-password" type="text" value="" required />
-				                            </div>
-																</div>
-				                            <div class="form-group">
-				                             <div class="col-sm-5">
-				                              <label
-																			class="col-sm-offset-8 control-label no-padding-right">Account</label>
-											</div>
-				                              <div class="col-sm-7">
+																		class="col-sm-5 control-label no-padding-right">Account</label>
+										      <div class="col-sm-7">
 				                              <input class="width-70"
 																			name="phi-accountno" type="text" value="" required />
 				                            </div>
 																</div>
+				                            <div class="form-group">
+				                              <label
+																		class="col-sm-5 control-label no-padding-right">Password</label>
+										      <div class="col-sm-7">
+				                              <input class="width-70"
+																			name="phi-password" type="text" value="" required />
+				                            </div>
+																</div>
+				                            
 										</div>
 									</div>
 									
@@ -482,12 +473,9 @@ If you have not yet configured your supplier, click "Add Supplier" to do it now.
 							</div>
 							<div class="panel-collapse collapse" id="collapseTwo">
 											<div class="panel-body">
-										
 											<div class="form-group">
-							                            <div class="col-sm-5">
 							                              <label for="hva-ftp"
-																			class="col-sm-offset-8 control-label no-padding-right">FTP</label>
-														</div>
+																		class="col-sm-5 control-label no-padding-right">FTP</label>
 							                              <div class="col-sm-7">
 							                                 <input class="width-70"
 																			name="hva-ftp" minlength="2" type="text" value=""
@@ -495,72 +483,53 @@ If you have not yet configured your supplier, click "Add Supplier" to do it now.
 							                            </div>
 											</div>
 											 <div class="form-group">
-				                            <div class="col-sm-5">
 				                              <label
-																			class="col-sm-offset-8 control-label no-padding-right">UserName</label>
-																	</div>
+																		class="col-sm-5 control-label no-padding-right">UserName</label>
 				                              <div class="col-sm-7">
 				                              <input class="width-70"
 																			name="hva-login" type="text" value="" required />
 				                            </div>
 																</div>
-				                            <div class="form-group">
-				                            <div class="col-sm-5">
+											 <div class="form-group">
 				                              <label
-																			class="col-sm-offset-8 control-label no-padding-right">Password</label>
-																	</div>
-				                              <div class="col-sm-7">
-				                              <input class="width-70"
-																			name="hva-password" type="text" value="" required />
-				                            </div>
-																</div>
-				                            <div class="form-group">
-				                             <div class="col-sm-5">
-				                              <label
-																			class="col-sm-offset-8 control-label no-padding-right">Account</label>
-											</div>
+																		class="col-sm-5 control-label no-padding-right">Account</label>
 				                              <div class="col-sm-7">
 				                              <input class="width-70"
 																			name="hva-accountno" type="text" value="" required />
 				                            </div>
 																</div>
+				                            <div class="form-group">
+				                              <label
+																		class="col-sm-5 control-label no-padding-right">Password</label>
+				                              <div class="col-sm-7">
+				                              <input class="width-70"
+																			name="hva-password" type="text" value="" required />
+				                            </div>
+																</div>
+				                           
 										</div>
 							</div>
 					</div>
 						
 					</div>	
 						
-												 <div class="form-group supplier-class" id="customname">
-                            <div class="col-sm-5">
+					<div class="form-group supplier-class" id="customname">
                               <label for="name"
-															class="col-sm-offset-8 control-label no-padding-right">Name</label>
-													</div>
+														class="col-sm-5 control-label no-padding-right">Name</label>
                               <div class="col-sm-7">
                                  <input class="width-70" name="name"
 															minlength="2" type="text" value="" required />
                             </div>
 												</div>
                            <div class="form-group supplier-class">
-                            <div class="col-sm-5">
                               <label
-															class="col-sm-offset-8 control-label no-padding-right">UserName</label>
-													</div>
+														class="col-sm-5 control-label no-padding-right">UserName</label>
                               <div class="col-sm-7">
                               <input class="width-70" name="login"
 															type="text" value="" required />
                             </div>
 												</div>
-                            <div class="form-group supplier-class">
-                            <div class="col-sm-5">
-                              <label
-															class="col-sm-offset-8 control-label no-padding-right">Password</label>
-													</div>
-                              <div class="col-sm-7">
-                              <input class="width-70" name="password"
-															type="text" value="" required />
-                            </div>
-												</div>
-                            <div class="form-group supplier-class">
+							  <div class="form-group supplier-class">
                               <label
 														class="col-sm-5 control-label no-padding-right">Account</label>
                               <div class="col-sm-7">
@@ -568,6 +537,15 @@ If you have not yet configured your supplier, click "Add Supplier" to do it now.
 															type="text" value="" required />
                             </div>
 												</div>
+                            <div class="form-group supplier-class">
+                              <label
+														class="col-sm-5 control-label no-padding-right">Password</label>
+                              <div class="col-sm-7">
+                              <input class="width-70" name="password"
+															type="text" value="" required />
+                            </div>
+												</div>
+                          
                             <div class="form-group supplier-class"
 													style="display: none;">
                               <label
@@ -793,7 +771,7 @@ If you have not yet configured your supplier, click "Add Supplier" to do it now.
 																.row(e[0])
 																.remove();
 														table_vendorSuppliers
-																.fnDraw();
+																.draw();
 														getAlerts();
 													}
 												});

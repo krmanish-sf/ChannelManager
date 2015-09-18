@@ -46,6 +46,9 @@ $.extend( $.fn.dataTableExt.oPagination, {
                 	break;
                 case "goto":
                 	showPage = parseInt($(this).siblings('input').val(),0);
+                	if(isNaN(showPage)){
+                		return;
+                	}
                 	$(this).siblings('input').val('');
                 	showPage--;
                 	showPage = showPage<0?0:showPage;
@@ -67,7 +70,7 @@ $.extend( $.fn.dataTableExt.oPagination, {
             $(els[1]).bind( 'click.DT', { action: "next" }, fnClickHandler );
             var nGoto = $(oSettings.nTableWrapper).find('.paging-toolbar');
             var oPaging = oSettings.oInstance.fnPagingInfo();
-            nGoto.html('Jump to page <input type="text" class="width-20"> of <span>'+oPaging.iTotalPages +'</span> pages. <button>Go</button>');
+            nGoto.html('Jump to page <input type="text" class="width-20"> of <span>'+oPaging.iTotalPages +'</span> pages. <button class="btn btn-info btn-sm">Go</button>');
             $(nGoto).find('button').bind( 'click.DT', { action: "goto" }, fnClickHandler );
             $(nGoto).find('input').on('keypress.DT',function(e){
             	if(e.charCode!=0 &&( e.charCode<48 || e.charCode>57)){
