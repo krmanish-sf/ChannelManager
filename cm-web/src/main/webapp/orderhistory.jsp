@@ -931,6 +931,7 @@
 								"processing" : true,
 								"serverSide" : true,
 								"sAjaxDataProp" : "data",
+								//"dom" : 'lfrtip',
 								"ajax" : function(data, callback, settings) {
 									var d = $.CM.planify(data);
 									var id = $('#tabs-1').is(':visible') ? '#tabs-1'
@@ -1027,6 +1028,7 @@
 											"orderable" : false
 										} ]
 							});
+//			$("div.paging-toolbar").html();
 			$('.addresspop').popover({
 				container : 'body'
 			});
@@ -1135,9 +1137,9 @@
 			$('#updateTracking')
 					.click(
 							function() {
-								if(validateForm()==false)
+								if (validateForm() == false)
 									return;
-								
+
 								var map = {};
 								$("#trackingForm :input").each(function() {
 									if (this.name) {

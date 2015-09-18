@@ -7,6 +7,13 @@ import org.hibernate.cfg.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/***
+ * This class has been deprecated in favor of using the Auto-wired <a> SessionFactory<a> in
+ * GenericHibernateDao.
+ * 
+ * @author amit-yadav
+ *
+ */
 @Deprecated
 public class SessionManager {
   private SessionManager() {

@@ -411,7 +411,7 @@
 	<script type="text/javascript"
 		src="//cdn.datatables.net/1.10.3/js/jquery.dataTables.min.js"></script>
 	<script type="text/javascript"
-		src="static/js/jquery.dataTables.bootstrap.min.js"></script>
+		src="static/js/jquery.dataTables.bootstrap.js"></script>
 	<script type="text/javascript"
 		src="static/js/date-time/bootstrap-datepicker.min.js"></script>
 	<script type="text/javascript" src="static/js/bootbox.min.js"></script>

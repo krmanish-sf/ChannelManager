@@ -50,6 +50,7 @@ public class ChannelRepositoryDb extends RepositoryBase implements ChannelReposi
     List vendorSuppliers = null;
     Transaction tx = null;
     try {
+      @SuppressWarnings("deprecation")
       Session dbSession = SessionManager.currentSession();
       tx = dbSession.beginTransaction();
       Vendors v = new Vendors(getVendorId());

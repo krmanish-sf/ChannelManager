@@ -1,6 +1,6 @@
 //http://datatables.net/plug-ins/pagination#bootstrap
 $.extend( true, $.fn.dataTable.defaults, {
-	"sDom": "<'row'<'col-sm-6'l><'col-sm-6'f>r>t<'row'<'col-sm-6'i><'col-sm-6'p>>",
+	"sDom": "<'row'<'col-sm-6'l><'col-sm-6'f>r>t<'row'<'col-sm-4'i><'col-sm-4 paging-toolbar'><'col-sm-4'p>>",
 	"sPaginationType": "bootstrap",
 	"oLanguage": {
 		"sLengthMenu": "Display _MENU_ records"
@@ -26,14 +26,36 @@ $.fn.dataTableExt.oApi.fnPagingInfo = function ( oSettings )
 $.extend( $.fn.dataTableExt.oPagination, {
     "bootstrap": {
         "fnInit": function( oSettings, nPaging, fnDraw ) {
+        	//debugger;
             var oLang = oSettings.oLanguage.oPaginate;
             var fnClickHandler = function ( e ) {
                 e.preventDefault();
-                if ( oSettings.oApi._fnPageChange(oSettings, e.data.action) ) {
-                    fnDraw( oSettings );
+                var iListLength = 5;
+                var oPaging = oSettings.oInstance.fnPagingInfo();
+                var showPage;
+                switch(e.data.action){
+                case "next":
+                	var offset = oPaging.iPage % iListLength;
+                	showPage = oPaging.iPage-offset+iListLength;
+                	showPage = showPage>oPaging.iTotalPages-1?oPaging.iTotalPages-1:showPage;
+                	break;
+                case "previous":
+                	var offset = oPaging.iPage % iListLength;
+                	showPage = oPaging.iPage-offset-iListLength;
+                	showPage = showPage<0?0:showPage;
+                	break;
+                case "goto":
+                	showPage = parseInt($(this).siblings('input').val(),0);
+                	$(this).siblings('input').val('');
+                	showPage--;
+                	showPage = showPage<0?0:showPage;
+                	showPage = showPage>oPaging.iTotalPages-1?oPaging.iTotalPages-1:showPage;
+                	break;
                 }
+                oSettings._iDisplayStart = showPage * oPaging.iLength;
+                fnDraw( oSettings );
             };
- 
+           
             $(nPaging).append(
                 '<ul class="pagination">'+
                     '<li class="prev disabled"><a href="#"><i class="icon-double-angle-left"></i></a></li>'+
@@ -43,11 +65,24 @@ $.extend( $.fn.dataTableExt.oPagination, {
             var els = $('a', nPaging);
             $(els[0]).bind( 'click.DT', { action: "previous" }, fnClickHandler );
             $(els[1]).bind( 'click.DT', { action: "next" }, fnClickHandler );
+            var nGoto = $(oSettings.nTableWrapper).find('.paging-toolbar');
+            var oPaging = oSettings.oInstance.fnPagingInfo();
+            nGoto.html('Jump to page <input type="text" class="width-20"> of <span>'+oPaging.iTotalPages +'</span> pages. <button>Go</button>');
+            $(nGoto).find('button').bind( 'click.DT', { action: "goto" }, fnClickHandler );
+            $(nGoto).find('input').on('keypress.DT',function(e){
+            	if(e.charCode!=0 &&( e.charCode<48 || e.charCode>57)){
+            		e.preventDefault();
+            	}
+            });
         },
  
         "fnUpdate": function ( oSettings, fnDraw ) {
+        	//debugger;
             var iListLength = 5;
             var oPaging = oSettings.oInstance.fnPagingInfo();
+            var nGoto = $(oSettings.nTableWrapper).find('.paging-toolbar');
+            $(nGoto).find('span').html(oPaging.iTotalPages);
+            $(nGoto).find('input').prop('placeholder',oPaging.iPage+1)
             var an = oSettings.aanFeatures.p;
             var i, j, sClass, iStart, iEnd, iHalf=Math.floor(iListLength/2);
  
