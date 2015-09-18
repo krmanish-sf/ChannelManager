@@ -1,4 +1,5 @@
 //http://datatables.net/plug-ins/pagination#bootstrap
+//This file has been modified to support functions defined in story ISD-138. -Amit Yadav
 $.extend( true, $.fn.dataTable.defaults, {
 	"sDom": "<'row'<'col-sm-6'l><'col-sm-6'f>r>t<'row'<'col-sm-4'i><'col-sm-4 paging-toolbar'><'col-sm-4'p>>",
 	"sPaginationType": "bootstrap",
@@ -26,7 +27,6 @@ $.fn.dataTableExt.oApi.fnPagingInfo = function ( oSettings )
 $.extend( $.fn.dataTableExt.oPagination, {
     "bootstrap": {
         "fnInit": function( oSettings, nPaging, fnDraw ) {
-        	//debugger;
             var oLang = oSettings.oLanguage.oPaginate;
             var fnClickHandler = function ( e ) {
                 e.preventDefault();
@@ -77,7 +77,6 @@ $.extend( $.fn.dataTableExt.oPagination, {
         },
  
         "fnUpdate": function ( oSettings, fnDraw ) {
-        	//debugger;
             var iListLength = 5;
             var oPaging = oSettings.oInstance.fnPagingInfo();
             var nGoto = $(oSettings.nTableWrapper).find('.paging-toolbar');
