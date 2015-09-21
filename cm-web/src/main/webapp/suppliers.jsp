@@ -56,17 +56,18 @@ If you have not yet configured your supplier, click "Add Supplier" to do it now.
 										class="table table-bordered table-striped table-responsive">
                 <thead class="thin-border-bottom">
                   <tr>
-                    <th><i
-													class="icon-user icon-2x blue visible-xs"></i>
-													<span class="hidden-xs">Supplier Name</span></th>
-                    <th><i
-													class="icon-barcode icon-2x blue visible-xs"></i><span
-													class="hidden-xs visible-sm">Account</span></th>
-                    <%-- <th><i
+                    <th><span class="hidden-xs">Supplier Name</span>
+                    <i class="icon-user icon-2x blue visible-xs"></i>
+					</th>
+                    <%--<th><span class="hidden-xs visible-sm">Account</span>
+					<i class="icon-barcode icon-2x blue visible-xs"></i>
+					</th>
+                     <th><i
 													class="icon-plane icon-2x blue visible-xs"></i><span
 													class="hidden-xs">Shipping Method</span></th> --%>
-                    <th><i class="icon-off icon-2x blue visible-xs"></i><span
-													class="hidden-xs">Test Mode</span></th>
+                    <th><span class="hidden-xs">Test Mode</span>
+					<i class="icon-off icon-2x blue visible-xs"></i>
+					</th>
                     <th class="hidden-xs">Order Push Details</th>
                     <th class="hidden-xs">Custom Supplier</th>
                     <th class="">Edit</th>
@@ -420,7 +421,7 @@ If you have not yet configured your supplier, click "Add Supplier" to do it now.
 										
 											<div class="form-group">
 							                              <label for="phi-ftp"
-																			class="col-sm-5 control-label no-padding-right">FTP</label>
+																		class="col-sm-5 control-label no-padding-right">FTP</label>
 							                              <div class="col-sm-7">
 							                                 <input class="width-70"
 																			name="phi-ftp" minlength="2" type="text" value=""
@@ -807,10 +808,10 @@ If you have not yet configured your supplier, click "Add Supplier" to do it now.
 													+ '</div>';
 										}
 									},
-									{
+									/*{
 										"mData" : "accountNumber"
 									},
-									/* {
+									 {
 										"mData" : function(vendorSupplier) {
 											return '<a class="btn btn-info btn-sm hidden-xs icon-exchange" href="#editshippingmethods"'
 													+ ' data-toggle="modal" onclick="$.CM.viewSupplierShippingMap($(this).parent().parent());"></a><a class="btn btn-info btn-xs icon-info visible-xs btn-xs"'
@@ -865,39 +866,12 @@ If you have not yet configured your supplier, click "Add Supplier" to do it now.
 													}
 												}
 											} else {
-												for (var i = 0; i < o.oimSuppliers.oimSupplierMethodses.length; i++) {
-													var oimSupplierMethod = o.oimSuppliers.oimSupplierMethodses[i];
-													if (oimSupplierMethod.oimSupplierMethodNames) {
-														ret += oimSupplierMethod.oimSupplierMethodTypes.methodTypeName;
-														ret += " : ";
-														ret += oimSupplierMethod.oimSupplierMethodNames.methodName;
-														ret += "<br/>";
-													}
-													if (oimSupplierMethod.oimSupplierMethodattrValueses) {
-														for (var j = 0; j < oimSupplierMethod.oimSupplierMethodattrValueses.length; j++) {
-															var attrVal = oimSupplierMethod.oimSupplierMethodattrValueses[j];
-															ret += attrVal.oimSupplierMethodattrNames.attrName;
-															ret += " : ";
-															if (attrVal.oimSupplierMethodattrNames.attrId == 8) {
-																switch (attrVal.attributeValue) {
-																case "1":
-																	ret += "CSV";
-																	break;
-																case "2":
-																	ret += "XML";
-																	break;
-																case "3":
-																	ret += "Plain Text";
-																	break;
-																}
-															} else {
-																ret += attrVal.attributeValue;
-															}
-
-															ret += "<br/>";
-														}
-													}
-												}
+												ret += "<strong>Account</strong>: "
+														+ o.accountNumber;
+												ret += "<br> <strong>Login</strong>: "
+														+ o.login;
+												ret += "<br> <strong>Password</strong>: "
+														+ o.password;
 											}
 											return ret;
 										}
