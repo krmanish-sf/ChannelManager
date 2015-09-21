@@ -190,7 +190,7 @@ If you have not yet configured your supplier, click "Add Supplier" to do it now.
 												</div>
                             <div class="form-group center">
                              <button class="btn btn-info btn-sm"
-														id="update" type="button"> <i class="icon-ok "></i>Update</button>
+														id="update" type="button"> <i class="icon-save "></i>Update</button>
                             </div>
                          
                          
@@ -362,7 +362,7 @@ If you have not yet configured your supplier, click "Add Supplier" to do it now.
                             <div class="form-group center">
                              <button
 															class="btn btn-info btn-sm hideHGSpecificDiv"
-															id="updateHG" type="button"> <i class="icon-ok "></i>Update</button>
+															id="updateHG" type="button"> <i class="icon-save "></i>Update</button>
                             </div>
                          
                       </div>   
@@ -590,7 +590,7 @@ If you have not yet configured your supplier, click "Add Supplier" to do it now.
                              <div class="form-group center">
                              <button class="btn btn-info btn-sm"
 														id="savesupplier" type="button"> <i
-															class="icon-ok "></i>Save</button>
+															class="icon-save "></i>Save</button>
                             </div>
                            
                          
