@@ -362,7 +362,8 @@ If you have not yet configured your supplier, click "Add Supplier" to do it now.
                             <div class="form-group center">
                              <button
 															class="btn btn-info btn-sm hideHGSpecificDiv"
-															id="updateHG" type="button"> <i class="icon-save "></i>Update</button>
+															id="updateHG" type="button"> <i
+																class="icon-save "></i>Update</button>
                             </div>
                          
                       </div>   
@@ -834,8 +835,9 @@ If you have not yet configured your supplier, click "Add Supplier" to do it now.
 													var oimSupplierMethod = o.oimSuppliers.oimSupplierMethodses[i];
 													if (oimSupplierMethod.oimSupplierMethodNames
 															&& o.oimSuppliers.oimSupplierMethodses[i].oimVendors.vendorId == o.vendors.vendorId) {
+														ret += "<strong>";
 														ret += oimSupplierMethod.oimSupplierMethodTypes.methodTypeName;
-														ret += " : ";
+														ret += "</strong>: ";
 														ret += oimSupplierMethod.oimSupplierMethodNames.methodName;
 														ret += "<br/>";
 													}
@@ -843,8 +845,9 @@ If you have not yet configured your supplier, click "Add Supplier" to do it now.
 															&& o.oimSuppliers.oimSupplierMethodses[i].oimVendors.vendorId == o.vendors.vendorId) {
 														for (var j = 0; j < oimSupplierMethod.oimSupplierMethodattrValueses.length; j++) {
 															var attrVal = oimSupplierMethod.oimSupplierMethodattrValueses[j];
+															ret += "<strong>";
 															ret += attrVal.oimSupplierMethodattrNames.attrName;
-															ret += " : ";
+															ret += "</strong> : ";
 															if (attrVal.oimSupplierMethodattrNames.attrId == 8) {
 																switch (attrVal.attributeValue) {
 																case "1":
