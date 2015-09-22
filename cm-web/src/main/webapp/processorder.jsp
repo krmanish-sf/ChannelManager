@@ -943,7 +943,7 @@
 																		|| !od.quantity
 																		|| od.quantity <= 0) {
 																	order.unresolved = true;
-																	if ((firstSupplier && firstSupplier.supplierId != od.oimSuppliers.supplierId))
+																	if ((firstSupplier && od.oimSuppliers && firstSupplier.supplierId != od.oimSuppliers.supplierId))
 																		order.reason = 'This order has multiple suppliers. Edit the product details below, or click “Confirm” to process as a multiple supplier order.';
 																	break;
 																}
