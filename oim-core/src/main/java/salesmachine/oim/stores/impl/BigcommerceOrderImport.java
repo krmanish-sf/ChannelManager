@@ -54,6 +54,7 @@ public class BigcommerceOrderImport extends ChannelBase {
   private static HashMap<String, Integer> orderStatusIDMap = new HashMap<String, Integer>(0);
   private static String storeBaseURL = "";
   private String confirmedOrderStatusJSON;
+  private String cancelledOrderStatus;
   private Integer pullStatusID = null;
   private static final String GET_METHOD_TYPE = "GET";
   private static final String PUT_METHOD_TYPE = "PUT";
@@ -100,11 +101,21 @@ public class BigcommerceOrderImport extends ChannelBase {
     Integer orderConfirmationID = orderStatusIDMap.get(m_orderProcessingRule.getConfirmedStatus());
     if (orderConfirmationID == null) {
       throw new ChannelConfigurationException(
-          "Error in channel Setup : Check 'Order Status When imported to Channel Manager'");
+          "Error in channel Setup : Check '[Order Status When imported to Channel Manager] in channel setup step 3'");
     }
     JSONObject orderStatusJSON = new JSONObject();
     orderStatusJSON.put("status_id", orderConfirmationID);
     confirmedOrderStatusJSON = orderStatusJSON.toJSONString();
+
+    Integer orderCanceledStatusId = orderStatusIDMap.get(m_orderProcessingRule.getFailedStatus());
+    if (orderCanceledStatusId == null) {
+      throw new ChannelConfigurationException(
+          "Error in channel Setup : Check '[Order Status When Failed] in channel setup step 3'");
+    }
+    JSONObject cancelOrderStatusJSON = new JSONObject();
+    cancelOrderStatusJSON.put("status_id", orderCanceledStatusId);
+    cancelledOrderStatus = cancelOrderStatusJSON.toJSONString();
+
     return true;
   }
 
@@ -166,7 +177,8 @@ public class BigcommerceOrderImport extends ChannelBase {
     } catch (IOException e) {
       throw new ChannelCommunicationException(e.getMessage());
     } finally {
-      connection.disconnect();
+      if (connection != null)
+        connection.disconnect();
     }
     return response;
   }
@@ -400,7 +412,7 @@ public class BigcommerceOrderImport extends ChannelBase {
           // been
           // received by CM
           String orderStatusUpdateUrl = storeBaseURL + "/orders/" + storeOrderId;
-          sendRequest(confirmedOrderStatusJSON, orderStatusUpdateUrl, "PUT");
+          sendRequest(confirmedOrderStatusJSON, orderStatusUpdateUrl, PUT_METHOD_TYPE);
         }
       } while (batchPullCount == 250);
 
@@ -437,7 +449,7 @@ public class BigcommerceOrderImport extends ChannelBase {
       item.put("quantity", trackingData.getQuantity());
       items.add(item);
       shipmentJSON.put("items", items);
-      sendRequest(shipmentJSON.toString(), addShipmentURL, "POST");
+      sendRequest(shipmentJSON.toString(), addShipmentURL, POST_METHOD_TYPE);
     }
     return;
   }
@@ -454,13 +466,15 @@ public class BigcommerceOrderImport extends ChannelBase {
   }
 
   @Override
-  public void cancelOrder(OimOrders oimOrder) throws ChannelOrderFormatException {
-    throw new ChannelOrderFormatException("Store does not allow order cancellatoins.");
+  public void cancelOrder(OimOrders oimOrder) throws ChannelOrderFormatException,
+      ChannelConfigurationException, ChannelCommunicationException {
+    String requestUrl = storeBaseURL + "/orders/" + oimOrder.getStoreOrderId();
+    sendRequest(cancelledOrderStatus, requestUrl, PUT_METHOD_TYPE);
   }
 
   @Override
   public void cancelOrder(OimOrderDetails oimOrder) throws ChannelOrderFormatException {
-    throw new ChannelOrderFormatException("Store does not allow order cancellatoins.");
+    throw new ChannelOrderFormatException("Store does not allow partial order cancellatoins.");
   }
 
 }

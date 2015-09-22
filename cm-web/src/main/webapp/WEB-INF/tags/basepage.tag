@@ -432,7 +432,7 @@
 		$(document).ready(function() {
 			ace.settings.check('#navbar', 'fixed');
 			ace.settings.check('#sidebar', 'fixed');
-			$(document).on('focus', '.datepicker', function() {
+			$(document).off('focus').on('focus', '.datepicker', function() {
 				$('.datepicker').datepicker();
 			});
 

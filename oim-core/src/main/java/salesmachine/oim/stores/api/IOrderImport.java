@@ -24,7 +24,7 @@ public interface IOrderImport {
       ChannelConfigurationException;
 
   void cancelOrder(OimOrders oimOrder)
-      throws ChannelOrderFormatException, ChannelCommunicationException;
+      throws ChannelOrderFormatException, ChannelCommunicationException, ChannelConfigurationException;
 
   void cancelOrder(OimOrderDetails oimOrder)
       throws ChannelOrderFormatException, ChannelCommunicationException;
