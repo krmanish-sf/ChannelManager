@@ -14,10 +14,13 @@ import com.is.cm.core.domain.DataTableCriterias.SearchCriterias;
 import com.is.cm.core.domain.Order;
 import com.is.cm.core.domain.OrderDetail;
 import com.is.cm.core.domain.OrderDetailMod;
+import com.is.cm.core.domain.OrderTracking;
 import com.is.cm.core.domain.PagedDataResult;
 import com.is.cm.core.domain.VendorContext;
 import com.is.cm.core.event.CreateEvent;
 import com.is.cm.core.event.CreatedEvent;
+import com.is.cm.core.event.DeleteEvent;
+import com.is.cm.core.event.DeletedEvent;
 import com.is.cm.core.event.PagedDataResultEvent;
 import com.is.cm.core.event.ReadCollectionEvent;
 import com.is.cm.core.event.ReadEvent;
@@ -32,6 +35,8 @@ import com.is.cm.core.event.orders.OrderDeletedEvent;
 import com.is.cm.core.event.orders.OrderDetailUpdatedEvent;
 import com.is.cm.core.event.orders.RequestAllOrdersEvent;
 import com.is.cm.core.event.orders.UpdateOrderDetailEvent;
+import com.is.cm.core.persistance.GenericHibernateDao;
+import com.is.cm.core.persistance.IGenericDao;
 import com.is.cm.core.persistance.OrderRepository;
 
 import salesmachine.hibernatedb.OimOrderDetails;
@@ -319,6 +324,13 @@ public class OrderEventHandler implements OrderService {
 	String responseString = orderRepository.updateTracking(detailId,
 		updateEvent.getEntity());
 	return new UpdatedEvent<String>(0, responseString);
+    }
+
+    @Override
+    public DeletedEvent<OrderTracking> deleteTracking(
+	    DeleteEvent<OrderTracking> deleteEvent) {
+	orderRepository.deleteTracking(deleteEvent.getId());
+	return new DeletedEvent(deleteEvent.getId(), null);
     }
 
 }

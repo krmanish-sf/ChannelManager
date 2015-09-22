@@ -23,6 +23,9 @@ import salesmachine.oim.suppliers.exception.SupplierOrderException;
 import com.is.cm.core.domain.Order;
 import com.is.cm.core.domain.OrderDetail;
 import com.is.cm.core.domain.OrderTracking;
+import com.is.cm.core.domain.VendorSupplier;
+import com.is.cm.core.event.DeleteEvent;
+import com.is.cm.core.event.DeletedEvent;
 import com.is.cm.core.event.UpdateEvent;
 import com.is.cm.core.event.UpdatedEvent;
 import com.is.cm.core.event.orders.CreateOrderEvent;
@@ -128,13 +131,34 @@ public class OrderCommandsController {
     }
 
     @RequestMapping(method = { RequestMethod.POST }, value = "/orderHistory/trackingData/{detailId}")
-    public ResponseEntity<String> updateTracking(
-	    @PathVariable String detailId, @RequestBody Map<String,String> orderTrackings) {
+    public ResponseEntity<String> updateTracking(@PathVariable String detailId,
+	    @RequestBody Map<String, String> orderTrackings) {
 	LOG.info(orderTrackings.toString());
-	
-	UpdatedEvent<String> event = orderService.updateTracking(
-		new UpdateEvent<Map<String,String>>(Integer.parseInt(detailId), orderTrackings));
+
+	UpdatedEvent<String> event = orderService
+		.updateTracking(new UpdateEvent<Map<String, String>>(Integer
+			.parseInt(detailId), orderTrackings));
 	return new ResponseEntity<String>(event.getEntity(), HttpStatus.OK);
     }
 
+
+    @RequestMapping(method = RequestMethod.DELETE, value = "/orderHistory/trackingData/{trackingId}")
+    public ResponseEntity<OrderTracking> deleteTracking(
+	    @PathVariable String trackingId) {
+	LOG.debug("Recieved request to delete Tracking for {}", trackingId);
+	DeletedEvent<OrderTracking> deletedEvent = orderService
+		.deleteTracking(new DeleteEvent<OrderTracking>(Integer
+			.parseInt(trackingId)));
+	if (!deletedEvent.isEntityFound()) {
+	    return new ResponseEntity<OrderTracking>(HttpStatus.NOT_FOUND);
+	}
+	if (deletedEvent.isDeletionCompleted()) {
+	    return new ResponseEntity<OrderTracking>(deletedEvent.getEntity(),
+		    HttpStatus.OK);
+	}
+	LOG.debug("Delete failed for Entity:{} with Id:{}", deletedEvent
+		.getEntity().getClass(), deletedEvent.getEntity());
+	return new ResponseEntity<OrderTracking>(deletedEvent.getEntity(),
+		HttpStatus.FORBIDDEN);
+    }
 }

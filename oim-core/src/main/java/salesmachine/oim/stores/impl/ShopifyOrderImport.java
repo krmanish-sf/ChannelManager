@@ -101,13 +101,15 @@ public final class ShopifyOrderImport extends ChannelBase implements IOrderImpor
     jsonObjVal.put("tracking_company", orderStatus.getTrackingData().get(0).getCarrierName());
 
     JSONObject lineItem = new JSONObject();
-    lineItem.put("id", oimOrderDetails.getStoreOrderItemId());
+    lineItem.put("id", Integer.parseInt(oimOrderDetails.getStoreOrderItemId()));
     lineItem.put("quantity", qty);
     lineItemArray.add(lineItem);
 
     jsonObjVal.put("notify_customer", true);
-    jsonObject.put("fulfillments", jsonObjVal);
-    jsonObject.put("line_items", lineItemArray);
+    jsonObjVal.put("line_items", lineItemArray);
+    jsonObject.put("fulfillment", jsonObjVal);
+   
+    
     StringRequestEntity requestEntity = null;
     try {
       requestEntity = new StringRequestEntity(jsonObject.toJSONString(), "application/json",
@@ -186,8 +188,7 @@ public final class ShopifyOrderImport extends ChannelBase implements IOrderImpor
       log.error(e.getMessage(), e);
       throw new ChannelConfigurationException(
           "Unable to get response from shopify. Please check the store url and access token "
-              + e.getMessage(),
-          e);
+              + e.getMessage(), e);
       // return null;
     }
 
@@ -225,8 +226,8 @@ public final class ShopifyOrderImport extends ChannelBase implements IOrderImpor
         // setting billing information
         JSONObject billingObj = (JSONObject) orderObj.get("billing_address");
         if (billingObj != null) {
-          oimOrders.setBillingStreetAddress(
-              StringHandle.removeNull((String) billingObj.get("address1")));
+          oimOrders.setBillingStreetAddress(StringHandle.removeNull((String) billingObj
+              .get("address1")));
           oimOrders.setBillingSuburb(StringHandle.removeNull((String) billingObj.get("address2")));
 
           oimOrders.setBillingZip(StringHandle.removeNull((String) billingObj.get("zip")));
@@ -249,8 +250,8 @@ public final class ShopifyOrderImport extends ChannelBase implements IOrderImpor
           oimOrders.setDeliveryName(StringHandle.removeNull((String) deliveryObj.get("first_name"))
               + " " + StringHandle.removeNull((String) deliveryObj.get("last_name")));
           oimOrders.setDeliveryPhone(StringHandle.removeNull((String) deliveryObj.get("phone")));
-          oimOrders.setDeliveryStreetAddress(
-              StringHandle.removeNull((String) deliveryObj.get("address1")));
+          oimOrders.setDeliveryStreetAddress(StringHandle.removeNull((String) deliveryObj
+              .get("address1")));
           oimOrders
               .setDeliverySuburb(StringHandle.removeNull((String) deliveryObj.get("address2")));
           oimOrders.setDeliveryZip(StringHandle.removeNull((String) deliveryObj.get("zip")));
@@ -273,16 +274,16 @@ public final class ShopifyOrderImport extends ChannelBase implements IOrderImpor
           JSONObject customerObj = (JSONObject) custInfo.get("default_address");
           if (customerObj != null) {
             oimOrders.setCustomerCity(StringHandle.removeNull((String) customerObj.get("city")));
-            oimOrders
-                .setCustomerCompany(StringHandle.removeNull((String) customerObj.get("company")));
-            oimOrders
-                .setCustomerCountry(StringHandle.removeNull((String) customerObj.get("country")));
+            oimOrders.setCustomerCompany(StringHandle.removeNull((String) customerObj
+                .get("company")));
+            oimOrders.setCustomerCountry(StringHandle.removeNull((String) customerObj
+                .get("country")));
             oimOrders.setCustomerName(StringHandle.removeNull((String) customerObj.get("name")));
             oimOrders.setCustomerPhone(StringHandle.removeNull((String) customerObj.get("phone")));
-            oimOrders.setCustomerStreetAddress(
-                StringHandle.removeNull((String) customerObj.get("address1")));
-            oimOrders
-                .setCustomerSuburb(StringHandle.removeNull((String) customerObj.get("address2")));
+            oimOrders.setCustomerStreetAddress(StringHandle.removeNull((String) customerObj
+                .get("address1")));
+            oimOrders.setCustomerSuburb(StringHandle.removeNull((String) customerObj
+                .get("address2")));
             oimOrders.setCustomerZip(StringHandle.removeNull((String) customerObj.get("zip")));
             oimOrders
                 .setCustomerState(StringHandle.removeNull((String) customerObj.get("province")));
@@ -305,8 +306,15 @@ public final class ShopifyOrderImport extends ChannelBase implements IOrderImpor
         oimOrders.setOrderTm(orderTm);
         oimOrders.setOrderTotalAmount(Double.parseDouble((String) orderObj.get("total_price")));
         oimOrders.setPayMethod((String) orderObj.get("gateway"));
-        String shippingDetails = (String) ((JSONObject) ((JSONArray) orderObj.get("shipping_lines"))
-            .get(0)).get("title");
+        String shippingDetails;
+        try {
+          shippingDetails = (String) ((JSONObject) ((JSONArray) orderObj.get("shipping_lines"))
+              .get(0)).get("title");
+        } catch (IndexOutOfBoundsException e) {
+          shippingDetails = "Standard Shipping";
+          log.warn("Order {} has no shipping method from store. Assigning default [{}] ",
+              oimOrders.getStoreOrderId(), shippingDetails);
+        }
         oimOrders.setShippingDetails(shippingDetails);
         for (OimChannelShippingMap entity : oimChannelShippingMapList) {
           String shippingRegEx = entity.getShippingRegEx();
@@ -328,8 +336,8 @@ public final class ShopifyOrderImport extends ChannelBase implements IOrderImpor
           OimOrderDetails details = new OimOrderDetails();
           JSONObject item = (JSONObject) itemArray.get(j);
 
-          details.setCostPrice(
-              Double.parseDouble(StringHandle.removeNull((String) item.get("price"))));
+          details.setCostPrice(Double.parseDouble(StringHandle.removeNull((String) item
+              .get("price"))));
           details.setInsertionTm(new Date());
           details.setOimOrderStatuses(new OimOrderStatuses(OimConstants.ORDER_STATUS_UNPROCESSED));
           String sku = (String) item.get("sku");
@@ -346,8 +354,8 @@ public final class ShopifyOrderImport extends ChannelBase implements IOrderImpor
           details.setProductDesc((String) item.get("title"));
           details.setProductName((String) item.get("name"));
           details.setQuantity((int) (long) (item.get("quantity")));
-          details.setSalePrice(
-              Double.parseDouble(StringHandle.removeNull((String) item.get("price"))));
+          details.setSalePrice(Double.parseDouble(StringHandle.removeNull((String) item
+              .get("price"))));
           details.setSku(sku);
           details.setStoreOrderItemId(((long) item.get("id")) + "");
           details.setOimOrders(oimOrders);
@@ -378,8 +386,8 @@ public final class ShopifyOrderImport extends ChannelBase implements IOrderImpor
   }
 
   private boolean sendAcknowledgementToStore(String requestUrl, String storeOrderId, String status,
-      boolean isSendTrackingDetails, OrderStatus orderStatus)
-          throws ChannelCommunicationException, ChannelOrderFormatException {
+      boolean isSendTrackingDetails, OrderStatus orderStatus) throws ChannelCommunicationException,
+      ChannelOrderFormatException {
     HttpClient httpclient = new HttpClient();
     PutMethod postMethod = new PutMethod(requestUrl);
     postMethod.addRequestHeader("X-Shopify-Access-Token", shopifyToken);
@@ -411,8 +419,7 @@ public final class ShopifyOrderImport extends ChannelBase implements IOrderImpor
       log.error("Error in creating json request on sending acknowledgement {}", e);
       throw new ChannelCommunicationException(
           "Error in creating json request on sending acknowledgement for store order id -"
-              + storeOrderId,
-          e);
+              + storeOrderId, e);
       // return false;
     }
     postMethod.setRequestEntity(requestEntity);
@@ -462,15 +469,13 @@ public final class ShopifyOrderImport extends ChannelBase implements IOrderImpor
       log.error("error in posting request for fullfillment {}", e);
       throw new ChannelCommunicationException(
           "Error in posting request for fullfillment for store order id "
-              + oimOrderDetails.getOimOrders().getStoreOrderId(),
-          e);
+              + oimOrderDetails.getOimOrders().getStoreOrderId(), e);
       // return false;
     } catch (IOException e) {
       log.error("error in parsing json response payload {}", e);
       throw new ChannelCommunicationException(
           "Error in posting request for fullfillment for store order id "
-              + oimOrderDetails.getOimOrders().getStoreOrderId(),
-          e);
+              + oimOrderDetails.getOimOrders().getStoreOrderId(), e);
     }
     return true;
 
@@ -506,8 +511,7 @@ public final class ShopifyOrderImport extends ChannelBase implements IOrderImpor
       log.error("error in posting request for fullfillment {}", e);
       throw new ChannelCommunicationException(
           "Error in posting request for fullfillment for store order id "
-              + oimOrder.getStoreOrderId(),
-          e);
+              + oimOrder.getStoreOrderId(), e);
       // return false;
     }
   }

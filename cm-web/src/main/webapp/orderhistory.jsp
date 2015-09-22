@@ -596,10 +596,34 @@
 					[ '', '', '', '', '', '', '' ]);
 
 		}
-		function removeRow(r) {
-			console.log(r);
+		function removeRow(r, trackingId) {
 			var table = $('#editOrderTrackingTable').DataTable();
-			table.row(r).remove().draw();
+			if (trackingId) {
+				var isDelete = confirm("You are trying to delete an existing tracking. Are you sure?");
+				if (isDelete) {
+					$(this)
+							.CRUD(
+									{
+										url : 'aggregators/orders/orderHistory/trackingData/'
+												+ trackingId,
+										method : 'DELETE',
+										message : true,
+										success : function(data) {
+											table.row(r).remove().draw();
+											$.gritter.add({
+												title : 'Order Tracking',
+												text : "Deleted Successfully."
+											});
+											$('#myModaledit').modal('hide');
+											$('#TrackingModal').modal('hide');
+										}
+									});
+					table_xy.ajax.reload();
+				}
+			} else {
+				table.row(r).remove().draw();
+			}
+
 		}
 		function validateForm() {
 			var str;
@@ -621,36 +645,52 @@
 		function openTrackingData(e) {
 			var orderDetail = tableModal.row(e[0]).data();
 			var orderDetailTemp = JSON.parse(JSON.stringify(orderDetail));
-			console.log(orderDetailTemp.orderTrackings);
+			$('#myModaledit').modal('hide');
+			$('#editOrderTrackingTable').DataTable().destroy();
 			$('#editOrderTrackingTable')
 					.DataTable(
 							{
-								"bFilter" : false,
-								"bSort" : false,
-								"bPaginate" : false,
-								"bInfo" : false,
-								"aoColumns" : [
+								"language" : {
+									"emptyTable" : "No tracking data found."
+								},
+								"dom" : 't',
+								"sort" : false,
+								"data" : orderDetailTemp.orderTrackings,
+								"destroy" : true,
+								"columns" : [
 										{
-											"mData" : function() {
-												return "<span><i class='icon-trash' title='Remove this row' onclick='removeRow($(this).parent().parent().parent()	);'></i></span>";
+											"mData" : function(orderTracking) {
+												if ($(this)) {
+													return "<span><i class='icon-trash' title='Remove this row' onclick='removeRow($(this).parent().parent().parent(), "
+															+ orderTracking.orderTrackingId
+															+ ");'></i></span>";
+												} else {
+													return "<span></span>";
+												}
 											}
 										},
 										{
 											"mData" : function(orderTracking,
-													row, a, b) {
+													type, set, meta) {
+												if (!meta) {
+													return;
+												}
 												return "<input type=text class='width-100' name='shippingCarrier"
-														+ b.row
+														+ meta.row
 														+ "' value='"
 														+ (orderTracking.shippingCarrier ? orderTracking.shippingCarrier
 																: '')
-														+ "' required/> <input type='hidden' name='detailId' value='"+orderDetailTemp.detailId+"' /> <input type='hidden' name='trackingId"+b.row+"' value='"+orderTracking.orderTrackingId+"' />";
+														+ "' required/> <input type='hidden' name='detailId' value='"+orderDetailTemp.detailId+"' /> <input type='hidden' name='trackingId"+meta.row+"' value='"+orderTracking.orderTrackingId+"' />";
 											}
 										},
 										{
 											"mData" : function(orderTracking,
-													row, a, b) {
+													type, set, meta) {
+												if (!meta) {
+													return;
+												}
 												return "<input type=text class=width-100 name='shippingMethod"
-														+ b.row
+														+ meta.row
 														+ "' value='"
 														+ (orderTracking.shippingMethod ? orderTracking.shippingMethod
 																: '')
@@ -659,9 +699,12 @@
 										},
 										{
 											"mData" : function(orderTracking,
-													row, a, b) {
+													type, set, meta) {
+												if (!meta) {
+													return;
+												}
 												return "<input type=text id='datefrom' class='span2 datepicker' data-provide='datepicker' placeholder='mm/dd/yyyy' name='shipDate"
-														+ b.row
+														+ meta.row
 														+ "' value='"
 														+ (orderTracking.shipDateString ? orderTracking.shipDateString
 																: '')
@@ -670,9 +713,12 @@
 										},
 										{
 											"mData" : function(orderTracking,
-													row, a, b) {
+													type, set, meta) {
+												if (!meta) {
+													return;
+												}
 												return "<input type=text class=width-100 name='shipQuantity"
-														+ b.row
+														+ meta.row
 														+ "' value='"
 														+ (orderTracking.shipQuantity ? orderTracking.shipQuantity
 																: '')
@@ -682,17 +728,18 @@
 										},
 										{
 											"mData" : function(orderTracking,
-													row, a, b) {
+													type, set, meta) {
+												if (!meta) {
+													return;
+												}
 												return "<input type=text class=width-100 name='trackingNumber"
-														+ b.row
+														+ meta.row
 														+ "' value='"
 														+ (orderTracking.trackingNumber ? orderTracking.trackingNumber
 																: '')
 														+ "' required/>";
 											}
-										} ],
-								"aaData" : orderDetailTemp.orderTrackings,
-								"bDestroy" : true
+										} ]
 							});
 
 		}

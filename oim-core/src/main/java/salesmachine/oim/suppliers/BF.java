@@ -88,8 +88,9 @@ public class BF extends Supplier implements HasTracking {
 
   @Override
   public void sendOrders(Integer vendorId, OimVendorSuppliers ovs, List orders)
-      throws SupplierConfigurationException, SupplierCommunicationException, SupplierOrderException,
-      ChannelConfigurationException, ChannelCommunicationException, ChannelOrderFormatException {
+      throws SupplierConfigurationException, SupplierCommunicationException,
+      SupplierOrderException, ChannelConfigurationException, ChannelCommunicationException,
+      ChannelOrderFormatException {
     log.info("Started sending orders to BnF USA");
     // populate orderSkuPrefixMap with channel id and the prefix to be used
     // for the given supplier.
@@ -100,8 +101,8 @@ public class BF extends Supplier implements HasTracking {
     Vendors v = new Vendors();
     v.setVendorId(r.getVendorId());
     try {
-      createAndPostXMLRequest(orders, getFileFieldMap(),
-          new StandardFileSpecificsProvider(session, ovs, v), ovs, vendorId, r);
+      createAndPostXMLRequest(orders, getFileFieldMap(), new StandardFileSpecificsProvider(session,
+          ovs, v), ovs, vendorId, r);
     } catch (RuntimeException e1) {
       log.error("Error in sending order ", e1);
       throw new SupplierOrderException(e1.getMessage(), e1);
@@ -119,8 +120,8 @@ public class BF extends Supplier implements HasTracking {
         "exp", "ship_via", "Ship_acct", "inv_notes", "/processing", "/order", "item", "vend_id",
         "item_id", "qty", "/item" };
 
-    Integer mappedFieldIds[] = { 0, 2, 0, 3, 0, 4, 0, 5, 36, 7, 0, 0, 2, 0, 10, 0, 0, 0, 0, 0, 0, 1,
-        9, 0 };
+    Integer mappedFieldIds[] = { 0, 2, 0, 3, 0, 4, 0, 5, 36, 7, 0, 0, 2, 0, 10, 0, 0, 0, 0, 0, 0,
+        1, 9, 0 };
 
     for (int i = 0; i < fields.length; i++) {
       OimFields field = new OimFields(fields[i], fields[i], new Date(), null, null);
@@ -133,9 +134,9 @@ public class BF extends Supplier implements HasTracking {
 
   private void createAndPostXMLRequest(List<OimOrders> orders, List fileFieldMaps,
       IFileSpecificsProvider fileSpecifics, OimVendorSuppliers ovs, Integer vendorId, Reps r)
-          throws SupplierConfigurationException, SupplierOrderException,
-          SupplierCommunicationException, ChannelConfigurationException,
-          ChannelCommunicationException, ChannelOrderFormatException {
+      throws SupplierConfigurationException, SupplierOrderException,
+      SupplierCommunicationException, ChannelConfigurationException, ChannelCommunicationException,
+      ChannelOrderFormatException {
     String USERID = ovs.getLogin();
     String PASSWORD = ovs.getPassword();
     String lincenceKey = ovs.getAccountNumber();
@@ -147,8 +148,8 @@ public class BF extends Supplier implements HasTracking {
         + ovs.getOimSuppliers().getSupplierName() + " : - <br>";
     Vendors v = new Vendors();
     v.setVendorId(r.getVendorId());
-    List<OimSupplierShippingMethod> shippingMethods = loadSupplierShippingMap(ovs.getOimSuppliers(),
-        v);
+    List<OimSupplierShippingMethod> shippingMethods = loadSupplierShippingMap(
+        ovs.getOimSuppliers(), v);
     // Write the data now
     for (OimOrders order : orders) {
       String shippingDetails = StringHandle.removeNull(order.getShippingDetails());
@@ -156,9 +157,9 @@ public class BF extends Supplier implements HasTracking {
       OimSupplierShippingMethod shippingMethod = findShippingCodeFromUserMapping(shippingMethods,
           order.getOimShippingMethod());
       if (shippingMethod == null) {
-        log.warn(
-            shippingDetails + ": Couldnt find the shipping code | Assigning the default shipping : "
-                + ovs.getDefShippingMethodCode());
+        log.warn(shippingDetails
+            + ": Couldnt find the shipping code | Assigning the default shipping : "
+            + ovs.getDefShippingMethodCode());
         shippingMethodCode = StringHandle.removeNull(ovs.getDefShippingMethodCode());
       } else {
         log.info("Shipping method code found : " + shippingMethod);
@@ -175,10 +176,9 @@ public class BF extends Supplier implements HasTracking {
         // for all the order details
         for (Iterator it = fileFieldMaps.iterator(); it.hasNext();) {
           OimFileFieldMap map = (OimFileFieldMap) it.next();
-          String fieldValue = StringHandle
-              .removeNull(fileSpecifics.getFieldValueFromOrder(detail, map));
-          if ("id".equals(StringHandle.removeNull(map.getMappedFieldName()))
-              && addShippingDetails) {
+          String fieldValue = StringHandle.removeNull(fileSpecifics.getFieldValueFromOrder(detail,
+              map));
+          if ("id".equals(StringHandle.removeNull(map.getMappedFieldName())) && addShippingDetails) {
             val += "<order>\n" + "<" + map.getMappedFieldName() + "><![CDATA["
                 + StringHandle.removeNull(fieldValue) + "]]></" + map.getMappedFieldName() + ">\n";
           } else if ("shipping".equals(StringHandle.removeNull(map.getMappedFieldName()))
@@ -290,13 +290,11 @@ public class BF extends Supplier implements HasTracking {
         if (unmarshal instanceof OrderXMLresp) {
           OrderXMLresp orderXMLresp = (OrderXMLresp) unmarshal;
           if (orderXMLresp.getOrder() != null) {
-            log.info("Recieved order submit reponse for Order# {}",
-                orderXMLresp.getOrder().getId());
+            log.info("Recieved order submit reponse for Order# {}", orderXMLresp.getOrder().getId());
             for (Item item : orderXMLresp.getItems().getItem()) {
               String itemId = item.getItemId();
               String status = item.getAction();
-              for (Iterator detailIt = order.getOimOrderDetailses().iterator(); detailIt
-                  .hasNext();) {
+              for (Iterator detailIt = order.getOimOrderDetailses().iterator(); detailIt.hasNext();) {
                 OimOrderDetails detail = (OimOrderDetails) detailIt.next();
                 if (detail.getSku().contains(itemId)) {
                   // detail.setSupplierOrderStatus(status);
@@ -307,10 +305,10 @@ public class BF extends Supplier implements HasTracking {
                   if (failedStatus.contains(status)) {
                     failedOrders.add(detail.getDetailId());
                   } else {
-                    String poNum = String
-                        .valueOf(orderXMLresp.getOrder().getProcessing().getInvNum());
-                    successfulOrders.put(detail.getDetailId(),
-                        new OrderDetailResponse(poNum, status, null));
+                    String poNum = String.valueOf(orderXMLresp.getOrder().getProcessing()
+                        .getInvNum());
+                    successfulOrders.put(detail.getDetailId(), new OrderDetailResponse(poNum,
+                        status, null));
                   }
                   // Session session = SessionManager.currentSession();
                   // session.update(detail);
@@ -335,8 +333,8 @@ public class BF extends Supplier implements HasTracking {
               detail.setSupplierOrderStatus(orderXMLresp.getErrorResponse().getMSG().get(0));
               failedOrders.add(detail.getDetailId());
             }
-            updateVendorSupplierOrderHistory(vendorId, ovs.getOimSuppliers(),
-                orderXMLresp.getErrorResponse().getMSG().get(0), ERROR_ORDER_PROCESSING);
+            updateVendorSupplierOrderHistory(vendorId, ovs.getOimSuppliers(), orderXMLresp
+                .getErrorResponse().getMSG().get(0), ERROR_ORDER_PROCESSING);
           }
         } else {
           for (Iterator detailIt = order.getOimOrderDetailses().iterator(); detailIt.hasNext();) {
@@ -355,9 +353,8 @@ public class BF extends Supplier implements HasTracking {
       // Send Email Notifications if is set to true.
       if (order.getOimOrderBatches().getOimChannels().getEmailNotifications() == 1) {
         emailNotification = true;
-        String orderStatus = (xmlResponse != null
-            && xmlResponse.indexOf("<xml_action>" + action + "</xml_action>") != -1) == true
-                ? "Successfully Places" : "Failed to place order";
+        String orderStatus = (xmlResponse != null && xmlResponse.indexOf("<xml_action>" + action
+            + "</xml_action>") != -1) == true ? "Successfully Places" : "Failed to place order";
         emailContent += "<b>Store Order ID " + order.getStoreOrderId() + "</b> -> " + orderStatus
             + " ";
         emailContent += "<br>";
@@ -374,8 +371,7 @@ public class BF extends Supplier implements HasTracking {
             + "---------\n\n";
         logEmailContent += "Order Placed : "
             + ((xmlResponse.indexOf("<xml_action>PROCESS</xml_action>") != -1) == true ? "Yes"
-                : "No")
-            + "\n\n";
+                : "No") + "\n\n";
         logEmailContent += "-------------- XML SOAP REQUEST SENT -------------\n";
         logEmailContent += xmlRequest + "\n";
         logEmailContent += "--------------------------------------------------";
@@ -394,8 +390,7 @@ public class BF extends Supplier implements HasTracking {
   }
 
   private String postRequest(String request, Reps r, String service)
-      throws SupplierConfigurationException, SupplierOrderException,
-      SupplierCommunicationException {
+      throws SupplierConfigurationException, SupplierOrderException, SupplierCommunicationException {
     URL url;
     HttpsURLConnection connection = null;
     String response = "";
@@ -463,7 +458,7 @@ public class BF extends Supplier implements HasTracking {
   @Override
   public salesmachine.oim.suppliers.modal.OrderStatus getOrderStatus(
       OimVendorSuppliers oimVendorSuppliers, Object trackingMeta, OimOrderDetails oimOrderDetails)
-          throws SupplierOrderTrackingException {
+      throws SupplierOrderTrackingException {
     salesmachine.oim.suppliers.modal.OrderStatus orderStatus = new salesmachine.oim.suppliers.modal.OrderStatus();
     orderStatus.setStatus(oimOrderDetails.getSupplierOrderStatus());
     if (!(trackingMeta instanceof String))
@@ -537,8 +532,8 @@ public class BF extends Supplier implements HasTracking {
               trackingData = new TrackingData();
               trackingData.setCarrierCode(trackResponse.getTrackingInfo().getCarrier());
               trackingData.setCarrierName(trackResponse.getTrackingInfo().getCarrier());
-              trackingData
-                  .setShipperTrackingNumber(trackResponse.getTrackingInfo().getTrackingNumber());
+              trackingData.setShipperTrackingNumber(trackResponse.getTrackingInfo()
+                  .getTrackingNumber());
               trackingData.setShippingMethod(trackResponse.getTrackingInfo().getService());
               String shipDate = trackResponse.getTrackingInfo().getShipDate();// YYYYMMDD
 
@@ -558,16 +553,6 @@ public class BF extends Supplier implements HasTracking {
 
         }
       }
-      if (orderStatus.getStatus() == null) {
-        throw new SupplierOrderTrackingException(
-            "Error in getting order status from Supplier while tracking Tracking Id- "
-                + trackingMeta);
-      }
-      if (orderStatus.getTrackingData() == null)
-        throw new SupplierOrderTrackingException(
-            "Error in getting tracking details from Supplier while tracking Tracking Id- "
-                + trackingMeta);
-
     } catch (JAXBException | SupplierConfigurationException | SupplierOrderException
         | SupplierCommunicationException e) {
       log.error(e.getMessage(), e);

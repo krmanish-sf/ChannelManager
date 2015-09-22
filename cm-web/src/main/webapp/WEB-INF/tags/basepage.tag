@@ -59,6 +59,8 @@
 	width: 150px;
 	display: none;
 }
+
+.datepicker{z-index:1151 !important;}
 </style>
 
 </head>

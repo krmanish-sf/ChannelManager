@@ -31,6 +31,8 @@ public class OimOrderTracking implements java.io.Serializable {
   private String shippingCarrier;
   private int shipQuantity;
   private Date shipDate;
+  private Date deleteTm;
+
 
   @Id
   @SequenceGenerator(name = "oimOrderTrackingSequence", sequenceName = "OIM_ORDER_TRACKING_SEQUENCES", allocationSize = 1)
@@ -52,6 +54,16 @@ public class OimOrderTracking implements java.io.Serializable {
 
   public void setInsertionTime(Date insertionTime) {
     this.insertionTime = insertionTime;
+  }
+  
+  @Temporal(TemporalType.TIMESTAMP)
+  @Column(name = "DELETE_TM", nullable = true, length = 7)
+  public Date getDeleteTm() {
+    return deleteTm;
+  }
+
+  public void setDeleteTm(Date deleteTm) {
+    this.deleteTm = deleteTm;
   }
 
   @ManyToOne(fetch = FetchType.LAZY, optional = false)

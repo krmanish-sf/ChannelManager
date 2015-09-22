@@ -54,4 +54,6 @@ public interface OrderRepository {
   void update(OrderDetail orderDetail);
 
   String updateTracking(int detailId, Map<String, String> entity);
+
+  void deleteTracking(int trackingId);
 }

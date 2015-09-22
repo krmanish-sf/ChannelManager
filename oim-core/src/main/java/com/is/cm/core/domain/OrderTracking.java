@@ -30,7 +30,7 @@ public class OrderTracking extends DomainBase implements Serializable {
   private String shippingCarrier;
   private int shipQuantity;
   private Date shipDate;
-  SimpleDateFormat df = new SimpleDateFormat("MM/dd/yyyy HH:mm:ss a");
+  SimpleDateFormat df = new SimpleDateFormat("MM/dd/yyyy");
 
   public int getOrderTrackingId() {
     return orderTrackingId;
@@ -97,7 +97,7 @@ public class OrderTracking extends DomainBase implements Serializable {
   }
 
   public String getShipDateString() {
-    return df.format(getShipDate());
+    return getShipDate() != null ? df.format(getShipDate()) : "";
   }
 
   public static OrderTracking from(OimOrderTracking oimorderTracking) {
@@ -105,7 +105,7 @@ public class OrderTracking extends DomainBase implements Serializable {
       return null;
     OrderTracking orderTracking = new OrderTracking();
     BeanUtils.copyProperties(oimorderTracking, orderTracking, new String[] { "detail" });
-    orderTracking.detail = OrderDetail.from(oimorderTracking.getDetail());
+    // orderTracking.detail = OrderDetail.from(oimorderTracking.getDetail());
 
     return orderTracking;
   }
