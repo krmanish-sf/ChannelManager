@@ -101,7 +101,7 @@ public final class ShopifyOrderImport extends ChannelBase implements IOrderImpor
     jsonObjVal.put("tracking_company", orderStatus.getTrackingData().get(0).getCarrierName());
 
     JSONObject lineItem = new JSONObject();
-    lineItem.put("id", Integer.parseInt(oimOrderDetails.getStoreOrderItemId()));
+    lineItem.put("id", oimOrderDetails.getStoreOrderItemId());
     lineItem.put("quantity", qty);
     lineItemArray.add(lineItem);
 
