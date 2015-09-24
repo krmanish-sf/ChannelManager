@@ -20,6 +20,12 @@ import salesmachine.hibernatedb.Reps;
 import salesmachine.hibernatedb.Vendors;
 import salesmachine.hibernatehelper.SessionManager;
 import salesmachine.oim.api.OimConstants;
+import salesmachine.oim.stores.exception.ChannelCommunicationException;
+import salesmachine.oim.stores.exception.ChannelConfigurationException;
+import salesmachine.oim.stores.exception.ChannelOrderFormatException;
+import salesmachine.oim.suppliers.exception.SupplierCommunicationException;
+import salesmachine.oim.suppliers.exception.SupplierConfigurationException;
+import salesmachine.oim.suppliers.exception.SupplierOrderException;
 import salesmachine.oim.suppliers.modal.OrderDetailResponse;
 import salesmachine.util.StringHandle;
 
@@ -61,7 +67,7 @@ public class Rax extends Supplier {
 		fileFormatParams.put(OimConstants.FILE_FORMAT_PARAMS_FIELD_DELIMITER, "TAB");
 		fileFormatParams.put(OimConstants.FILE_FORMAT_PARAMS_TEXT_DELIMITER, "");
 		try {
-			OimSupplierOrderPlacement.generateCsvFile(orders,getFileFieldMap(), uploadfilename, fileFormatParams, 
+			SupplierFactory.generateCsvFile(orders,getFileFieldMap(), uploadfilename, fileFormatParams, 
 					new StandardFileSpecificsProvider(session,ovs,v));						
 			String emailAddress = r.getLogin();
 			String emailBody = "Account Number : "+accountNumber+"\n Find attached the orders from my store.";
@@ -114,5 +120,13 @@ public class Rax extends Supplier {
 		}
 		
 		return fileFieldMaps;				
-	}			
+	}
+
+  @Override
+  public void sendOrders(Integer vendorId, OimVendorSuppliers ovs, OimOrders orders)
+      throws SupplierConfigurationException, SupplierCommunicationException, SupplierOrderException,
+      ChannelConfigurationException, ChannelCommunicationException, ChannelOrderFormatException {
+    // TODO Auto-generated method stub
+    
+  }			
 }

@@ -21,6 +21,12 @@ import salesmachine.hibernatedb.Reps;
 import salesmachine.hibernatedb.Vendors;
 import salesmachine.hibernatehelper.SessionManager;
 import salesmachine.oim.api.OimConstants;
+import salesmachine.oim.stores.exception.ChannelCommunicationException;
+import salesmachine.oim.stores.exception.ChannelConfigurationException;
+import salesmachine.oim.stores.exception.ChannelOrderFormatException;
+import salesmachine.oim.suppliers.exception.SupplierCommunicationException;
+import salesmachine.oim.suppliers.exception.SupplierConfigurationException;
+import salesmachine.oim.suppliers.exception.SupplierOrderException;
 import salesmachine.oim.suppliers.modal.OrderDetailResponse;
 import salesmachine.util.StringHandle;
 
@@ -62,7 +68,7 @@ public class Petra extends Supplier {
 		fileFormatParams.put(OimConstants.FILE_FORMAT_PARAMS_FIELD_DELIMITER, "TAB");
 		fileFormatParams.put(OimConstants.FILE_FORMAT_PARAMS_TEXT_DELIMITER, "\"");
 		try {
-			OimSupplierOrderPlacement.generateCsvFile(orders,getFileFieldMap(), uploadfilename, fileFormatParams, new PetraFileSpecificsProvider(session, ovs, v));						
+			SupplierFactory.generateCsvFile(orders,getFileFieldMap(), uploadfilename, fileFormatParams, new PetraFileSpecificsProvider(session, ovs, v));						
 			String emailAddress = "flatfileorders@petra.com";			
 			//EmailUtil.sendEmailWithAttachment(emailAddress,"support@inventorysource.com", "mayank@inventorysource.com", "Orders", "Find attached the orders from my store.",uploadfilename);
 			EmailUtil.sendEmailWithAttachment(emailAddress,"support@inventorysource.com","oim@inventorysource.com,"+r.getLogin(), "Petra Orders", "Find attached the orders from my store.",uploadfilename,"");
@@ -154,5 +160,13 @@ public class Petra extends Supplier {
 		duplicateMapWithPrefixes(finalMap, map, uspsprefixes);
 
 		return finalMap;
-	}	
+	}
+
+  @Override
+  public void sendOrders(Integer vendorId, OimVendorSuppliers ovs, OimOrders orders)
+      throws SupplierConfigurationException, SupplierCommunicationException, SupplierOrderException,
+      ChannelConfigurationException, ChannelCommunicationException, ChannelOrderFormatException {
+    // TODO Auto-generated method stub
+    
+  }	
 }

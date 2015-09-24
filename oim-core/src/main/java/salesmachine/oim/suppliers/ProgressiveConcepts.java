@@ -13,6 +13,12 @@ import salesmachine.hibernatedb.OimVendorSuppliers;
 import salesmachine.hibernatedb.Reps;
 import salesmachine.hibernatedb.Vendors;
 import salesmachine.hibernatehelper.SessionManager;
+import salesmachine.oim.stores.exception.ChannelCommunicationException;
+import salesmachine.oim.stores.exception.ChannelConfigurationException;
+import salesmachine.oim.stores.exception.ChannelOrderFormatException;
+import salesmachine.oim.suppliers.exception.SupplierCommunicationException;
+import salesmachine.oim.suppliers.exception.SupplierConfigurationException;
+import salesmachine.oim.suppliers.exception.SupplierOrderException;
 import salesmachine.oim.suppliers.modal.OrderDetailResponse;
 import salesmachine.orderfile.DefaultCsvFile;
 import salesmachine.orderfile.OrderFile;
@@ -46,7 +52,7 @@ public class ProgressiveConcepts extends Supplier {
 			+ ovs.getOimSuppliers().getSupplierName() + " : - <br>";
 		boolean emailNotification = false;
 		try {
-			emailContent += OimSupplierOrderPlacement.generateMailBody(orders,getFileFieldMap(session), new StandardFileSpecificsProvider(session,ovs,v));
+			emailContent += SupplierFactory.generateMailBody(orders,getFileFieldMap(session), new StandardFileSpecificsProvider(session,ovs,v));
 			String emailAddress = "pcimktgorders@teletouch.com";
 			EmailUtil.sendEmail(emailAddress, "support@inventorysource.com",r.getLogin(),"oim@inventorysource.com,"+r.getLogin(), "Progressive Concepts Orders", emailContent, "text/html");
 			//EmailUtil.sendEmail(r.getLogin(), "support@inventorysource.com",r.getLogin(),null,"oim@inventorysource.com,"+r.getLogin(), "Progressive Concepts Orders", emailContent, "text/html");
@@ -83,5 +89,13 @@ public class ProgressiveConcepts extends Supplier {
 		OrderFile ofile = new DefaultCsvFile(session);
 		ofile.build();
 		return ofile.getFileFieldMaps();
-	}		
+	}
+
+  @Override
+  public void sendOrders(Integer vendorId, OimVendorSuppliers ovs, OimOrders orders)
+      throws SupplierConfigurationException, SupplierCommunicationException, SupplierOrderException,
+      ChannelConfigurationException, ChannelCommunicationException, ChannelOrderFormatException {
+    // TODO Auto-generated method stub
+    
+  }		
 }

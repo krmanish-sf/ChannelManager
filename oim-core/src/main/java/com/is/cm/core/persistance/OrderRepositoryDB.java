@@ -57,7 +57,7 @@ import salesmachine.oim.stores.impl.ChannelFactory;
 import salesmachine.oim.stores.modal.shop.order.CCORDER;
 import salesmachine.oim.stores.modal.shop.order.CCTRANSMISSION;
 import salesmachine.oim.stores.modal.shop.order.ITEMS;
-import salesmachine.oim.suppliers.OimSupplierOrderPlacement;
+import salesmachine.oim.suppliers.SupplierFactory;
 import salesmachine.oim.suppliers.Supplier;
 import salesmachine.oim.suppliers.exception.SupplierCommunicationException;
 import salesmachine.oim.suppliers.exception.SupplierConfigurationException;
@@ -660,7 +660,7 @@ public class OrderRepositoryDB extends RepositoryBase implements OrderRepository
   public boolean processOrders(Order order) throws SupplierConfigurationException,
       SupplierCommunicationException, SupplierOrderException {
     Session dbSession = SessionManager.currentSession();
-    OimSupplierOrderPlacement osop = new OimSupplierOrderPlacement(dbSession);
+    SupplierFactory osop = new SupplierFactory(dbSession);
     OimOrders oimOrders = getById(order.getOrderId());
     return osop.processVendorOrder(getVendorId(), oimOrders);
   }
@@ -847,7 +847,7 @@ public class OrderRepositoryDB extends RepositoryBase implements OrderRepository
   @Override
   public String trackOrderStatus(Integer entity) {
     Session session = SessionManager.currentSession();
-    OimSupplierOrderPlacement osop = new OimSupplierOrderPlacement(session);
+    SupplierFactory osop = new SupplierFactory(session);
     return osop.trackOrder(getVendorId(), entity);
 
   }

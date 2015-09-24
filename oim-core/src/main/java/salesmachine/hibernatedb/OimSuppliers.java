@@ -12,12 +12,14 @@ import java.util.TreeSet;
  */
 public class OimSuppliers implements java.io.Serializable {
 
-	private Integer supplierId;
+  private static final long serialVersionUID = 1L;
+  private Integer supplierId;
 	private String supplierName;
 	private Integer isCustom;
 	private Date insertionTm;
 	private Date deleteTm;
 	private String description;
+	private String className;
 	private Set<OimSupplierMethods> oimSupplierMethodses = new TreeSet<OimSupplierMethods>();
 	private Set oimVendorsuppOrderhistories = new HashSet(0);
 	private Set oimOrderDetailses = new HashSet(0);
@@ -131,5 +133,13 @@ public class OimSuppliers implements java.io.Serializable {
 	public void setOimChannelSupplierMaps(Set oimChannelSupplierMaps) {
 		this.oimChannelSupplierMaps = oimChannelSupplierMaps;
 	}
+
+  public String getClassName() {
+    return className;
+  }
+
+  public void setClassName(String className) {
+    this.className = className;
+  }
 
 }

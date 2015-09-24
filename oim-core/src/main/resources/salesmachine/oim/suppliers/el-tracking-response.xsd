@@ -1,0 +1,29 @@
+<xs:schema attributeFormDefault="unqualified"
+	elementFormDefault="qualified" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+	<xs:element name="XML_Orders">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element name="Order">
+					<xs:complexType>
+						<xs:sequence>
+							<xs:element type="xs:string" name="response_code" />
+							<xs:element type="xs:int" name="web_order_number" />
+							<xs:element type="xs:float" name="cod_amount" />
+							<xs:element type="xs:string" name="tracking_number" />
+							<xs:element type="xs:int" name="current_box_number" />
+							<xs:element type="xs:int" name="no_of_boxes" />
+							<xs:element type="xs:string" name="carrier_code" />
+							<xs:element type="xs:string" name="service_code" />
+							<xs:element type="xs:string" name="turns_invoice_number" />
+							<xs:element type="xs:string" name="date_shipment" />
+							<xs:element type="xs:string" name="customer_account_no" />
+							<xs:element type="xs:string" name="expected_delivery" />
+							<xs:element type="xs:float" name="shipping_cost" />
+						</xs:sequence>
+					</xs:complexType>
+				</xs:element>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+</xs:schema>
+

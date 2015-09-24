@@ -87,7 +87,7 @@ public class BF extends Supplier implements HasTracking {
   private Reps r;
 
   @Override
-  public void sendOrders(Integer vendorId, OimVendorSuppliers ovs, List orders)
+  public void sendOrders(Integer vendorId, OimVendorSuppliers ovs, OimOrders orders)
       throws SupplierConfigurationException, SupplierCommunicationException,
       SupplierOrderException, ChannelConfigurationException, ChannelCommunicationException,
       ChannelOrderFormatException {
@@ -132,7 +132,7 @@ public class BF extends Supplier implements HasTracking {
     return fileFieldMaps;
   }
 
-  private void createAndPostXMLRequest(List<OimOrders> orders, List fileFieldMaps,
+  private void createAndPostXMLRequest(OimOrders order, List fileFieldMaps,
       IFileSpecificsProvider fileSpecifics, OimVendorSuppliers ovs, Integer vendorId, Reps r)
       throws SupplierConfigurationException, SupplierOrderException,
       SupplierCommunicationException, ChannelConfigurationException, ChannelCommunicationException,
@@ -151,7 +151,7 @@ public class BF extends Supplier implements HasTracking {
     List<OimSupplierShippingMethod> shippingMethods = loadSupplierShippingMap(
         ovs.getOimSuppliers(), v);
     // Write the data now
-    for (OimOrders order : orders) {
+   // for (OimOrders order : orders) {
       String shippingDetails = StringHandle.removeNull(order.getShippingDetails());
       String shippingMethodCode;
       OimSupplierShippingMethod shippingMethod = findShippingCodeFromUserMapping(shippingMethods,
@@ -381,7 +381,7 @@ public class BF extends Supplier implements HasTracking {
       }
       EmailUtil.sendEmail("orders@inventorysource.com", "support@inventorysource.com", "",
           "Logs of order processing for order : " + order.getStoreOrderId(), logEmailContent);
-    } // END for(int i=0;i<orders.size();i++) {
+    //} // END for(int i=0;i<orders.size();i++) {
     if (emailNotification) {
       emailContent += "<br>Thanks, <br>Inventory Source Team<br>";
       EmailUtil.sendEmail(r.getLogin(), "support@inventorysource.com", "",

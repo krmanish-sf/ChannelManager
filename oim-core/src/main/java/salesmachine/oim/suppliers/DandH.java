@@ -91,8 +91,8 @@ public class DandH extends Supplier implements HasTracking {
    * @throws ChannelOrderFormatException
    * @throws ChannelCommunicationException
    */
-
-  public void sendOrders(Integer vendorId, OimVendorSuppliers ovs, List orders)
+  @Override
+  public void sendOrders(Integer vendorId, OimVendorSuppliers ovs, OimOrders orders)
       throws SupplierConfigurationException, SupplierCommunicationException, SupplierOrderException,
       ChannelConfigurationException, ChannelCommunicationException, ChannelOrderFormatException {
     logStream.println("Started sending orders to DandH");
@@ -138,7 +138,7 @@ public class DandH extends Supplier implements HasTracking {
     return fileFieldMaps;
   }
 
-  private void createAndPostXMLRequest(List orders, List<OimFileFieldMap> fileFieldMaps,
+  private void createAndPostXMLRequest(OimOrders order, List<OimFileFieldMap> fileFieldMaps,
       IFileSpecificsProvider fileSpecifics, OimVendorSuppliers ovs, Integer vendorId, Reps r)
           throws SupplierConfigurationException, SupplierCommunicationException,
           SupplierOrderException, ChannelCommunicationException, ChannelOrderFormatException {
@@ -152,213 +152,212 @@ public class DandH extends Supplier implements HasTracking {
     emailContent += "<br>Following is the status of the orders processed for the supplier "
         + ovs.getOimSuppliers().getSupplierName() + " : - <br>";
     // Write the data now
-    for (int i = 0; i < orders.size(); i++) {
-      OimOrders order = (OimOrders) orders.get(i);
-      boolean addShippingDetails = true;
-      StringBuilder xmlOrder = new StringBuilder();
+    // for (int i = 0; i < orders.size(); i++) {
+    // OimOrders order = (OimOrders) orders.get(i);
+    boolean addShippingDetails = true;
+    StringBuilder xmlOrder = new StringBuilder();
 
+    for (Iterator detailIt = order.getOimOrderDetailses().iterator(); detailIt.hasNext();) {
+      OimOrderDetails detail = (OimOrderDetails) detailIt.next();
+      if (!detail.getOimSuppliers().getSupplierId().equals(ovs.getOimSuppliers().getSupplierId()))
+        continue;
+      try { // for all the order details
+        for (OimFileFieldMap map : fileFieldMaps) {
+          String fieldValue = StringHandle
+              .removeNull(fileSpecifics.getFieldValueFromOrder(detail, map));
+          String mappedFieldName = StringHandle.removeNull(map.getMappedFieldName());
+          if (addShippingDetails) {
+            switch (mappedFieldName) {
+            case "SHIPTONAME":
+              xmlOrder.append("<SHIPTONAME><![CDATA[").append(fieldValue)
+                  .append("]]></SHIPTONAME>");
+              break;
+            case "SHIPTOATTN":
+              xmlOrder.append("<SHIPTOATTN></SHIPTOATTN>");
+              break;
+            case "SHIPTOADDRESS":
+              xmlOrder.append("<SHIPTOADDRESS><![CDATA[").append(fieldValue)
+                  .append("]]></SHIPTOADDRESS>");
+              break;
+            case "SHIPTOADDRESS2":
+              xmlOrder.append("<SHIPTOADDRESS2><![CDATA[").append(fieldValue)
+                  .append("]]></SHIPTOADDRESS2>");
+              break;
+            case "SHIPTOCITY":
+              xmlOrder.append("<SHIPTOCITY><![CDATA[").append(fieldValue)
+                  .append("]]></SHIPTOCITY>");
+              break;
+            case "SHIPTOSTATE":
+              xmlOrder.append("<SHIPTOSTATE><![CDATA[").append(fieldValue)
+                  .append("]]></SHIPTOSTATE>");
+              break;
+            case "SHIPTOZIP":
+              xmlOrder.append("<SHIPTOZIP><![CDATA[").append(fieldValue).append("]]></SHIPTOZIP>");
+              break;
+            case "SHIPCARRIER":
+              xmlOrder.append("<SHIPCARRIER><![CDATA[").append(fieldValue)
+                  .append("]]></SHIPCARRIER>");
+              break;
+            case "SHIPSERVICE":
+              xmlOrder.append("<SHIPSERVICE><![CDATA[").append(fieldValue)
+                  .append("]]></SHIPSERVICE>");
+              break;
+            case "PONUM":
+              xmlOrder.append("<PONUM><![CDATA[DH-").append(fieldValue).append("]]></PONUM>");
+              break;
+            case "/ORDERHEADER":
+              xmlOrder.append("</ORDERHEADER>");
+              break;
+            case "ORDERITEMS":
+              xmlOrder.append("<ORDERITEMS>");
+              addShippingDetails = false;
+              break;
+            }
+          } else {
+            switch (mappedFieldName) {
+            case "ITEM":
+              xmlOrder.append("<ITEM>");
+              break;
+            case "PARTNUM":
+              xmlOrder.append("<PARTNUM><![CDATA[").append(fieldValue).append("]]></PARTNUM>");
+              break;
+            case "QTY":
+              xmlOrder.append("<QTY><![CDATA[").append(fieldValue).append("]]></QTY>");
+              break;
+            case "/ITEM":
+              xmlOrder.append("</ITEM>");
+              break;
+            }
+          }
+        }
+      } catch (RuntimeException e) {
+        log.error(e.getMessage(), e);
+        String message = "Error in posting order";
+        updateVendorSupplierOrderHistory(vendorId, ovs.getOimSuppliers(),
+            message + ": " + e.getMessage(), ERROR_ORDER_PROCESSING);
+        failedOrders.add(detail.getDetailId());
+        detail.setSupplierOrderStatus(message);
+        Session session = SessionManager.currentSession();
+        session.update(detail);
+        xmlOrder = new StringBuilder();
+      }
+    }
+    if (xmlOrder.length() == 0)
+      return;
+    String xmlRequest = "<XMLFORMPOST>\n" + "<REQUEST>orderEntry</REQUEST>\n" + "<LOGIN>\n"
+        + "<USERID>" + USERID + "</USERID>\n" + "<PASSWORD>" + PASSWORD + "</PASSWORD>\n"
+        + "</LOGIN>\n" + "<ORDERHEADER>\n" + "<BACKORDERALLOW>N</BACKORDERALLOW>\n" + xmlOrder
+        + "</ORDERITEMS>\n" + "</XMLFORMPOST>";
+
+    log.debug("Post Request : {}", xmlRequest);
+    String xmlResponse = null;
+    try {
+      xmlResponse = postRequest(xmlRequest, r);
+    } catch (RuntimeException e) {
+      log.error(e.getMessage(), e);
+    }
+    String orderMessage = "";
+    if (xmlResponse == null) {
+      orderMessage = "There was error in sending order to Supplier.";
+    } else if (getXPath(xmlResponse, "/XMLRESPONSE/STATUS/text()").equalsIgnoreCase("SUCCESS")) {
       for (Iterator detailIt = order.getOimOrderDetailses().iterator(); detailIt.hasNext();) {
         OimOrderDetails detail = (OimOrderDetails) detailIt.next();
         if (!detail.getOimSuppliers().getSupplierId().equals(ovs.getOimSuppliers().getSupplierId()))
           continue;
-        try { // for all the order details
-          for (OimFileFieldMap map : fileFieldMaps) {
-            String fieldValue = StringHandle
-                .removeNull(fileSpecifics.getFieldValueFromOrder(detail, map));
-            String mappedFieldName = StringHandle.removeNull(map.getMappedFieldName());
-            if (addShippingDetails) {
-              switch (mappedFieldName) {
-              case "SHIPTONAME":
-                xmlOrder.append("<SHIPTONAME><![CDATA[").append(fieldValue)
-                    .append("]]></SHIPTONAME>");
-                break;
-              case "SHIPTOATTN":
-                xmlOrder.append("<SHIPTOATTN></SHIPTOATTN>");
-                break;
-              case "SHIPTOADDRESS":
-                xmlOrder.append("<SHIPTOADDRESS><![CDATA[").append(fieldValue)
-                    .append("]]></SHIPTOADDRESS>");
-                break;
-              case "SHIPTOADDRESS2":
-                xmlOrder.append("<SHIPTOADDRESS2><![CDATA[").append(fieldValue)
-                    .append("]]></SHIPTOADDRESS2>");
-                break;
-              case "SHIPTOCITY":
-                xmlOrder.append("<SHIPTOCITY><![CDATA[").append(fieldValue)
-                    .append("]]></SHIPTOCITY>");
-                break;
-              case "SHIPTOSTATE":
-                xmlOrder.append("<SHIPTOSTATE><![CDATA[").append(fieldValue)
-                    .append("]]></SHIPTOSTATE>");
-                break;
-              case "SHIPTOZIP":
-                xmlOrder.append("<SHIPTOZIP><![CDATA[").append(fieldValue)
-                    .append("]]></SHIPTOZIP>");
-                break;
-              case "SHIPCARRIER":
-                xmlOrder.append("<SHIPCARRIER><![CDATA[").append(fieldValue)
-                    .append("]]></SHIPCARRIER>");
-                break;
-              case "SHIPSERVICE":
-                xmlOrder.append("<SHIPSERVICE><![CDATA[").append(fieldValue)
-                    .append("]]></SHIPSERVICE>");
-                break;
-              case "PONUM":
-                xmlOrder.append("<PONUM><![CDATA[DH-").append(fieldValue).append("]]></PONUM>");
-                break;
-              case "/ORDERHEADER":
-                xmlOrder.append("</ORDERHEADER>");
-                break;
-              case "ORDERITEMS":
-                xmlOrder.append("<ORDERITEMS>");
-                addShippingDetails = false;
-                break;
-              }
-            } else {
-              switch (mappedFieldName) {
-              case "ITEM":
-                xmlOrder.append("<ITEM>");
-                break;
-              case "PARTNUM":
-                xmlOrder.append("<PARTNUM><![CDATA[").append(fieldValue).append("]]></PARTNUM>");
-                break;
-              case "QTY":
-                xmlOrder.append("<QTY><![CDATA[").append(fieldValue).append("]]></QTY>");
-                break;
-              case "/ITEM":
-                xmlOrder.append("</ITEM>");
-                break;
-              }
-            }
-          }
-        } catch (RuntimeException e) {
-          log.error(e.getMessage(), e);
-          String message = "Error in posting order";
-          updateVendorSupplierOrderHistory(vendorId, ovs.getOimSuppliers(),
-              message + ": " + e.getMessage(), ERROR_ORDER_PROCESSING);
-          failedOrders.add(detail.getDetailId());
-          detail.setSupplierOrderStatus(message);
-          Session session = SessionManager.currentSession();
-          session.update(detail);
-          xmlOrder = new StringBuilder();
+        orderMessage = getXPath(xmlResponse, "/XMLRESPONSE/ORDERNUM/text()");
+        // detail.setSupplierOrderNumber(orderMessage);
+        // detail.setSupplierOrderStatus("Sent to supplier.");
+        // Session session = SessionManager.currentSession();
+        // session.update(detail);
+        successfulOrders.put(detail.getDetailId(),
+            new OrderDetailResponse(orderMessage, "Sent to supplier.", null));
+
+        OimChannels oimChannels = order.getOimOrderBatches().getOimChannels();
+        // Integer channelId = oimChannels.getChannelId();
+
+        OimLogStream stream = new OimLogStream();
+        try {
+          IOrderImport iOrderImport = ChannelFactory.getIOrderImport(oimChannels);
+          OrderStatus orderStatus = new OrderStatus();
+          orderStatus.setStatus(
+              ((OimOrderProcessingRule) oimChannels.getOimOrderProcessingRules().iterator().next())
+                  .getProcessedStatus());
+          iOrderImport.updateStoreOrder(detail, orderStatus);
+
+        } catch (ChannelConfigurationException e) {
+          stream.println(e.getMessage());
         }
+
       }
-      if (xmlOrder.length() == 0)
-        return;
-      String xmlRequest = "<XMLFORMPOST>\n" + "<REQUEST>orderEntry</REQUEST>\n" + "<LOGIN>\n"
-          + "<USERID>" + USERID + "</USERID>\n" + "<PASSWORD>" + PASSWORD + "</PASSWORD>\n"
-          + "</LOGIN>\n" + "<ORDERHEADER>\n" + "<BACKORDERALLOW>N</BACKORDERALLOW>\n" + xmlOrder
-          + "</ORDERITEMS>\n" + "</XMLFORMPOST>";
+    } else {
+      for (Iterator detailIt = order.getOimOrderDetailses().iterator(); detailIt.hasNext();) {
+        OimOrderDetails detail = (OimOrderDetails) detailIt.next();
+        if (!detail.getOimSuppliers().getSupplierId().equals(ovs.getOimSuppliers().getSupplierId()))
+          continue;
+        // <?xml version="1.0" encoding="UTF-8" ?>
+        // <XMLRESPONSE><STATUS>failure</STATUS><MESSAGE>Duplicate
+        // PO Number</MESSAGE></XMLRESPONSE>
+        orderMessage = getXPath(xmlResponse, "/XMLRESPONSE/MESSAGE/text()");
+        detail.setSupplierOrderStatus(orderMessage);
+        Session session = SessionManager.currentSession();
+        session.update(detail);
+        failedOrders.add(detail.getDetailId());
 
-      log.debug("Post Request : {}", xmlRequest);
-      String xmlResponse = null;
-      try {
-        xmlResponse = postRequest(xmlRequest, r);
-      } catch (RuntimeException e) {
-        log.error(e.getMessage(), e);
-      }
-      String orderMessage = "";
-      if (xmlResponse == null) {
-        orderMessage = "There was error in sending order to Supplier.";
-      } else if (getXPath(xmlResponse, "/XMLRESPONSE/STATUS/text()").equalsIgnoreCase("SUCCESS")) {
-        for (Iterator detailIt = order.getOimOrderDetailses().iterator(); detailIt.hasNext();) {
-          OimOrderDetails detail = (OimOrderDetails) detailIt.next();
-          if (!detail.getOimSuppliers().getSupplierId()
-              .equals(ovs.getOimSuppliers().getSupplierId()))
-            continue;
-          orderMessage = getXPath(xmlResponse, "/XMLRESPONSE/ORDERNUM/text()");
-          // detail.setSupplierOrderNumber(orderMessage);
-          // detail.setSupplierOrderStatus("Sent to supplier.");
-          // Session session = SessionManager.currentSession();
-          // session.update(detail);
-          successfulOrders.put(detail.getDetailId(),
-              new OrderDetailResponse(orderMessage, "Sent to supplier.", null));
+        OimChannels oimChannels = order.getOimOrderBatches().getOimChannels();
 
-          OimChannels oimChannels = order.getOimOrderBatches().getOimChannels();
-          // Integer channelId = oimChannels.getChannelId();
+        OimLogStream stream = new OimLogStream();
+        try {
+          IOrderImport iOrderImport = ChannelFactory.getIOrderImport(oimChannels);
+          OrderStatus orderStatus = new OrderStatus();
+          orderStatus.setStatus(
+              ((OimOrderProcessingRule) oimChannels.getOimOrderProcessingRules().iterator().next())
+                  .getFailedStatus());
+          iOrderImport.updateStoreOrder(detail, orderStatus);
 
-          OimLogStream stream = new OimLogStream();
-          try {
-            IOrderImport iOrderImport = ChannelFactory.getIOrderImport(oimChannels);
-            OrderStatus orderStatus = new OrderStatus();
-            orderStatus.setStatus(((OimOrderProcessingRule) oimChannels.getOimOrderProcessingRules()
-                .iterator().next()).getProcessedStatus());
-            iOrderImport.updateStoreOrder(detail, orderStatus);
-
-          } catch (ChannelConfigurationException e) {
-            stream.println(e.getMessage());
-          }
-
+        } catch (ChannelConfigurationException e) {
+          stream.println(e.getMessage());
         }
-      } else {
-        for (Iterator detailIt = order.getOimOrderDetailses().iterator(); detailIt.hasNext();) {
-          OimOrderDetails detail = (OimOrderDetails) detailIt.next();
-          if (!detail.getOimSuppliers().getSupplierId()
-              .equals(ovs.getOimSuppliers().getSupplierId()))
-            continue;
-          // <?xml version="1.0" encoding="UTF-8" ?>
-          // <XMLRESPONSE><STATUS>failure</STATUS><MESSAGE>Duplicate
-          // PO Number</MESSAGE></XMLRESPONSE>
-          orderMessage = getXPath(xmlResponse, "/XMLRESPONSE/MESSAGE/text()");
-          detail.setSupplierOrderStatus(orderMessage);
-          Session session = SessionManager.currentSession();
-          session.update(detail);
-          failedOrders.add(detail.getDetailId());
 
-          OimChannels oimChannels = order.getOimOrderBatches().getOimChannels();
-          
-          OimLogStream stream = new OimLogStream();
-          try {
-            IOrderImport iOrderImport = ChannelFactory.getIOrderImport(oimChannels);
-            OrderStatus orderStatus = new OrderStatus();
-            orderStatus.setStatus(((OimOrderProcessingRule) oimChannels.getOimOrderProcessingRules()
-                .iterator().next()).getFailedStatus());
-            iOrderImport.updateStoreOrder(detail, orderStatus);
-
-          } catch (ChannelConfigurationException e) {
-            stream.println(e.getMessage());
-          }
-
-        }
-        updateVendorSupplierOrderHistory(vendorId, ovs.getOimSuppliers(), orderMessage,
-            orderMessage.contains("login") ? ERROR_UNCONFIGURED_SUPPLIER : ERROR_ORDER_PROCESSING);
       }
+      updateVendorSupplierOrderHistory(vendorId, ovs.getOimSuppliers(), orderMessage,
+          orderMessage.contains("login") ? ERROR_UNCONFIGURED_SUPPLIER : ERROR_ORDER_PROCESSING);
+    }
 
-      // Send Email Notifications if is set to true.
-      if (order.getOimOrderBatches().getOimChannels().getEmailNotifications() == 1) {
-        emailNotification = true;
-        String orderStatus = (xmlResponse != null
-            && xmlResponse.indexOf("<STATUS>success</STATUS>") != -1) == true
-                ? "Successfully Placed" : "Failed to place order";
-        emailContent += "<b>Store Order ID " + order.getStoreOrderId() + "</b> -> " + orderStatus
-            + " ";
-        emailContent += "<br>";
-      }
+    // Send Email Notifications if is set to true.
+    if (order.getOimOrderBatches().getOimChannels().getEmailNotifications() == 1) {
+      emailNotification = true;
+      String orderStatus = (xmlResponse != null
+          && xmlResponse.indexOf("<STATUS>success</STATUS>") != -1) == true ? "Successfully Placed"
+              : "Failed to place order";
+      emailContent += "<b>Store Order ID " + order.getStoreOrderId() + "</b> -> " + orderStatus
+          + " ";
+      emailContent += "<br>";
+    }
 
-      String logEmailContent = "";
-      if (xmlResponse != null) {
-        logStream
-            .println("!! ---------------STORE ORDER ID : " + order.getStoreOrderId() + "---------");
-        logStream.println("!! ORDER PLACED : "
-            + ((xmlResponse.indexOf("<xml_action>PROCESS</xml_action>") != -1) == true ? "Yes"
-                : "No"));
-        logStream.println("!! GET RETURN VALUE : " + xmlResponse);
-        logEmailContent = "----------------Store ORDER ID : " + order.getStoreOrderId()
-            + "---------\n\n";
-        logEmailContent += "Order Placed : "
-            + ((xmlResponse.indexOf("<STATUS>success</STATUS>") != -1) == true ? "Yes" : "No")
-            + "\n\n";
-        logEmailContent += "-------------- XML SOAP REQUEST SENT -------------\n";
-        logEmailContent += xmlRequest + "\n";
-        logEmailContent += "--------------------------------------------------";
-        logEmailContent += "-------------- XML SOAP RESPONSE CAME -------------\n";
-        logEmailContent += xmlResponse + "\n";
-        logEmailContent += "--------------------------------------------------";
-      }
-      EmailUtil.sendEmail("oim@inventorysource.com", "support@inventorysource.com", "",
-          "Logs of order processing for order : " + order.getStoreOrderId(), logEmailContent);
+    String logEmailContent = "";
+    if (xmlResponse != null) {
+      logStream
+          .println("!! ---------------STORE ORDER ID : " + order.getStoreOrderId() + "---------");
+      logStream.println("!! ORDER PLACED : "
+          + ((xmlResponse.indexOf("<xml_action>PROCESS</xml_action>") != -1) == true ? "Yes"
+              : "No"));
+      logStream.println("!! GET RETURN VALUE : " + xmlResponse);
+      logEmailContent = "----------------Store ORDER ID : " + order.getStoreOrderId()
+          + "---------\n\n";
+      logEmailContent += "Order Placed : "
+          + ((xmlResponse.indexOf("<STATUS>success</STATUS>") != -1) == true ? "Yes" : "No")
+          + "\n\n";
+      logEmailContent += "-------------- XML SOAP REQUEST SENT -------------\n";
+      logEmailContent += xmlRequest + "\n";
+      logEmailContent += "--------------------------------------------------";
+      logEmailContent += "-------------- XML SOAP RESPONSE CAME -------------\n";
+      logEmailContent += xmlResponse + "\n";
+      logEmailContent += "--------------------------------------------------";
+    }
+    EmailUtil.sendEmail("oim@inventorysource.com", "support@inventorysource.com", "",
+        "Logs of order processing for order : " + order.getStoreOrderId(), logEmailContent);
 
-    } // END for(int i=0;i<orders.size();i++) {
+    // } // END for(int i=0;i<orders.size();i++) {
     if (emailNotification) {
       emailContent += "<br>Thanks, <br>Inventory Source Team<br>";
       logStream.println("Sending email to " + r.getLogin());
@@ -418,7 +417,7 @@ public class DandH extends Supplier implements HasTracking {
       throw new SupplierConfigurationException("Supplier Communication URL is invalid.", e);
     } catch (IOException e) {
       log.error(e.getMessage());
-      throw new SupplierCommunicationException();
+      throw new SupplierCommunicationException(e.getMessage(), e.getCause());
     } finally {
       if (connection != null) {
         connection.disconnect();

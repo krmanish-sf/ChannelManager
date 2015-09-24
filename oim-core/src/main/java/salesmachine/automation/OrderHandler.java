@@ -19,7 +19,7 @@ import salesmachine.oim.stores.exception.ChannelCommunicationException;
 import salesmachine.oim.stores.exception.ChannelConfigurationException;
 import salesmachine.oim.stores.exception.ChannelOrderFormatException;
 import salesmachine.oim.stores.impl.ChannelFactory;
-import salesmachine.oim.suppliers.OimSupplierOrderPlacement;
+import salesmachine.oim.suppliers.SupplierFactory;
 
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
@@ -39,7 +39,7 @@ public class OrderHandler {
     for (Object object : orderBatches.getOimOrderses()) {
       try {
         OimOrders oimOrders = (OimOrders) object;
-        OimSupplierOrderPlacement osop = new OimSupplierOrderPlacement(
+        SupplierFactory osop = new SupplierFactory(
             SessionManager.currentSession());
         Session session = SessionManager.currentSession();
         session.createCriteria(OimChannelSupplierMap.class)
@@ -65,7 +65,7 @@ public class OrderHandler {
   public void handleOrderTracking(OimOrderDetails orderDetails) {
     try {
       log.info("Order Tracking :{}", orderDetails.getDetailId());
-      OimSupplierOrderPlacement osop = new OimSupplierOrderPlacement(
+      SupplierFactory osop = new SupplierFactory(
           SessionManager.currentSession());
       String trackOrder = osop.trackOrder(orderDetails.getOimOrders().getOimOrderBatches()
           .getOimChannels().getVendors().getVendorId(), orderDetails.getDetailId());

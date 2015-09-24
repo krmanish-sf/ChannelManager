@@ -141,7 +141,7 @@ public class HonestGreen extends Supplier implements HasTracking {
   }
 
   @Override
-  public void sendOrders(Integer vendorId, OimVendorSuppliers ovs, List orders)
+  public void sendOrders(Integer vendorId, OimVendorSuppliers ovs, OimOrders order)
       throws SupplierConfigurationException, SupplierCommunicationException, SupplierOrderException,
       ChannelConfigurationException, ChannelCommunicationException, ChannelOrderFormatException {
     log.info("Sending orders of Account: {}", ovs.getAccountNumber());
@@ -162,76 +162,71 @@ public class HonestGreen extends Supplier implements HasTracking {
     emailContent += "<br>Following is the status of the orders file uploaded on FTP for the supplier "
         + ovs.getOimSuppliers().getSupplierName() + " : - <br>";
 
-    for (Object object : orders) {
-      boolean emailNotification = false;
+    // for (Object object : orders) {
+    boolean emailNotification = false;
 
-      if (object instanceof OimOrders) {
-        OimOrders order = (OimOrders) object;
-        boolean isOrderFromAmazonStore = isOrderFromAmazonStore(order);
-        String poNum;
-        if (isOrderFromAmazonStore)
-          poNum = order.getStoreOrderId();
-        else
-          poNum = ovs.getVendors().getVendorId() + "-" + order.getStoreOrderId();
-        try {
-          Set<OimOrderDetails> phiItems = new HashSet<OimOrderDetails>();
-          Set<OimOrderDetails> hvaItems = new HashSet<OimOrderDetails>();
+    boolean isOrderFromAmazonStore = isOrderFromAmazonStore(order);
+    String poNum;
+    if (isOrderFromAmazonStore)
+      poNum = order.getStoreOrderId();
+    else
+      poNum = ovs.getVendors().getVendorId() + "-" + order.getStoreOrderId();
+    try {
+      Set<OimOrderDetails> phiItems = new HashSet<OimOrderDetails>();
+      Set<OimOrderDetails> hvaItems = new HashSet<OimOrderDetails>();
 
-          for (OimOrderDetails orderDetail : ((Set<OimOrderDetails>) order
-              .getOimOrderDetailses())) {
-            boolean isHva = isRestricted(orderDetail.getSku(), vendorId);
-            if (isHva) {
-              hvaItems.add(orderDetail);
-            } else {
-              phiItems.add(orderDetail);
-            }
-          }
-          // ***************************************************
-          if (order.getOimOrderBatches().getOimChannels().getEmailNotifications() == 1) {
-            emailNotification = true;
-            String orderStatus = "Successfully Placed";
-            emailContent += "<b>Store Order ID " + order.getStoreOrderId() + "</b> -> "
-                + orderStatus + " ";
-            emailContent += "<br>";
-          }
-
-          if (hvaItems.size() > 0) {
-            // create order file and send order to Hva configured
-            // ftp
-            FtpDetail ftpDetails = getFtpDetails(ovs, true);
-
-            String fileName = createOrderFile(order, ovs, hvaItems, ftpDetails, poNum);
-
-            sendToFTP(fileName, ftpDetails);
-            for (OimOrderDetails od : hvaItems) {
-
-              successfulOrders.put(od.getDetailId(), new OrderDetailResponse(poNum,
-                  OimConstants.OIM_SUPPLER_ORDER_STATUS_SENT_TO_SUPPLIER, "H"));
-            }
-            // if (emailNotification) {
-            sendEmail(emailContent, ftpDetails, fileName, "");
-            // }
-
-          }
-          if (phiItems.size() > 0) {
-            // create order file and send order to PHI configured
-            // ftp
-            FtpDetail ftpDetails = getFtpDetails(ovs, false);
-            String fileName = createOrderFile(order, ovs, phiItems, ftpDetails, poNum);
-            sendToFTP(fileName, ftpDetails);
-            for (OimOrderDetails od : phiItems) {
-              successfulOrders.put(od.getDetailId(), new OrderDetailResponse(poNum,
-                  OimConstants.OIM_SUPPLER_ORDER_STATUS_SENT_TO_SUPPLIER, "P"));
-            }
-            // if (emailNotification) {
-            sendEmail(emailContent, ftpDetails, fileName, "");
-            // }
-
-          }
-        } catch (RuntimeException e) {
-          log.error(e.getMessage(), e);
+      for (OimOrderDetails orderDetail : ((Set<OimOrderDetails>) order.getOimOrderDetailses())) {
+        boolean isHva = isRestricted(orderDetail.getSku(), vendorId);
+        if (isHva) {
+          hvaItems.add(orderDetail);
+        } else {
+          phiItems.add(orderDetail);
         }
       }
+      // ***************************************************
+      if (order.getOimOrderBatches().getOimChannels().getEmailNotifications() == 1) {
+        emailNotification = true;
+        String orderStatus = "Successfully Placed";
+        emailContent += "<b>Store Order ID " + order.getStoreOrderId() + "</b> -> " + orderStatus
+            + " ";
+        emailContent += "<br>";
+      }
+
+      if (hvaItems.size() > 0) {
+        // create order file and send order to Hva configured
+        // ftp
+        FtpDetail ftpDetails = getFtpDetails(ovs, true);
+
+        String fileName = createOrderFile(order, ovs, hvaItems, ftpDetails, poNum);
+
+        sendToFTP(fileName, ftpDetails);
+        for (OimOrderDetails od : hvaItems) {
+
+          successfulOrders.put(od.getDetailId(), new OrderDetailResponse(poNum,
+              OimConstants.OIM_SUPPLER_ORDER_STATUS_SENT_TO_SUPPLIER, "H"));
+        }
+        // if (emailNotification) {
+        sendEmail(emailContent, ftpDetails, fileName, "");
+        // }
+
+      }
+      if (phiItems.size() > 0) {
+        // create order file and send order to PHI configured
+        // ftp
+        FtpDetail ftpDetails = getFtpDetails(ovs, false);
+        String fileName = createOrderFile(order, ovs, phiItems, ftpDetails, poNum);
+        sendToFTP(fileName, ftpDetails);
+        for (OimOrderDetails od : phiItems) {
+          successfulOrders.put(od.getDetailId(), new OrderDetailResponse(poNum,
+              OimConstants.OIM_SUPPLER_ORDER_STATUS_SENT_TO_SUPPLIER, "P"));
+        }
+        // if (emailNotification) {
+        sendEmail(emailContent, ftpDetails, fileName, "");
+        // }
+
+      }
+    } catch (RuntimeException e) {
+      log.error(e.getMessage(), e);
     }
   }
 

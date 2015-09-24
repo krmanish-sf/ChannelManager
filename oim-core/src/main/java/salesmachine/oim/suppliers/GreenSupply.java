@@ -47,7 +47,7 @@ public class GreenSupply extends Supplier {
   private static final String COMMA = ",";
 
   @Override
-  public void sendOrders(Integer vendorId, OimVendorSuppliers ovs, List orders)
+  public void sendOrders(Integer vendorId, OimVendorSuppliers ovs, OimOrders order)
       throws SupplierConfigurationException, SupplierCommunicationException, SupplierOrderException,
       ChannelConfigurationException, ChannelCommunicationException, ChannelOrderFormatException {
     log.info("Sending orders of Account: {}", ovs.getAccountNumber());
@@ -69,7 +69,7 @@ public class GreenSupply extends Supplier {
     String accountNumber = ovs.getAccountNumber();
     // Transaction tx = session.beginTransaction();
     try {
-      String fileName = createOrderFile(orders, ovs, getFileFieldMap(),
+      String fileName = createOrderFile(order, ovs, getFileFieldMap(),
           new StandardFileSpecificsProvider(session, ovs, v));
       System.out.println(fileName);
       FTPClient ftp = new FTPClient();
@@ -96,17 +96,13 @@ public class GreenSupply extends Supplier {
 
     boolean emailNotification = false;
 
-    for (Object object : orders) {
-      if (object instanceof OimOrders) {
-        OimOrders order = (OimOrders) object;
-        if (order.getOimOrderBatches().getOimChannels().getEmailNotifications() == 1) {
-          emailNotification = true;
-          String orderStatus = "Successfully Placed";
-          emailContent += "<b>Store Order ID " + order.getStoreOrderId() + "</b> -> " + orderStatus
-              + " ";
-          emailContent += "<br>";
-        }
-      }
+    // for (Object object : orders) {
+    if (order.getOimOrderBatches().getOimChannels().getEmailNotifications() == 1) {
+      emailNotification = true;
+      String orderStatus = "Successfully Placed";
+      emailContent += "<b>Store Order ID " + order.getStoreOrderId() + "</b> -> " + orderStatus
+          + " ";
+      emailContent += "<br>";
     }
 
     if (emailNotification) {
@@ -139,7 +135,7 @@ public class GreenSupply extends Supplier {
     return fileFieldMaps;
   }
 
-  private String createOrderFile(List orders, OimVendorSuppliers ovs,
+  private String createOrderFile(OimOrders order, OimVendorSuppliers ovs,
       List<OimFileFieldMap> fileFieldMaps, IFileSpecificsProvider fileSpecifics)
           throws ChannelCommunicationException, ChannelOrderFormatException {
 
@@ -149,56 +145,54 @@ public class GreenSupply extends Supplier {
       fw.write(ORDERHEADER);
       fw.write(NEWLINE);
       Session session = SessionManager.currentSession();
-      for (Object object : orders) {
-        if (object instanceof OimOrders) {
-          OimOrders order = (OimOrders) object;
+      // for (Object object : orders) {
 
-          for (OimOrderDetails od : ((Set<OimOrderDetails>) order.getOimOrderDetailses())) {
-            StringBuilder sb = new StringBuilder();
-            // for (OimFileFieldMap map : fileFieldMaps) {
-            String poNumber = null;
-            for (int i = 0; i < fileFieldMaps.size(); i++) {
-              OimFileFieldMap map = fileFieldMaps.get(i);
-              String mappedFieldName = StringHandle.removeNull(map.getMappedFieldName());
-              String fieldValue = "";
-              if (mappedFieldName.equals("RushPack")) {
-                fieldValue = "N";
-              } else if (mappedFieldName.equals("Fulfillment")) {
-                fieldValue = "Y";
-              } else {
-                fieldValue = StringHandle.removeNull(fileSpecifics.getFieldValueFromOrder(od, map));
-              }
-              sb.append(fieldValue.replaceAll(",", " "));
-              if (mappedFieldName.equalsIgnoreCase("PO Number")) {
-                poNumber = fieldValue;
-              }
-              if (i == fileFieldMaps.size() - 1) {
-                sb.append(NEWLINE);
-              } else {
-                sb.append(COMMA);
-              }
-            }
-            fw.write(sb.toString());
-            // od.setSupplierOrderStatus("Sent to supplier.");
-            // session.update(od);
-            successfulOrders.put(od.getDetailId(),
-                new OrderDetailResponse(poNumber, "Sent to supplier.", null));
-            OimChannels oimChannels = order.getOimOrderBatches().getOimChannels();
-            OimLogStream stream = new OimLogStream();
-            try {
-              {
-                IOrderImport iOrderImport = ChannelFactory.getIOrderImport(oimChannels);
-                OrderStatus orderStatus = new OrderStatus();
-                orderStatus.setStatus(((OimOrderProcessingRule) oimChannels
-                    .getOimOrderProcessingRules().iterator().next()).getProcessedStatus());
-                iOrderImport.updateStoreOrder(od, orderStatus);
-              }
-            } catch (ChannelConfigurationException e) {
-              stream.println(e.getMessage());
-            }
+      for (OimOrderDetails od : ((Set<OimOrderDetails>) order.getOimOrderDetailses())) {
+        StringBuilder sb = new StringBuilder();
+        // for (OimFileFieldMap map : fileFieldMaps) {
+        String poNumber = null;
+        for (int i = 0; i < fileFieldMaps.size(); i++) {
+          OimFileFieldMap map = fileFieldMaps.get(i);
+          String mappedFieldName = StringHandle.removeNull(map.getMappedFieldName());
+          String fieldValue = "";
+          if (mappedFieldName.equals("RushPack")) {
+            fieldValue = "N";
+          } else if (mappedFieldName.equals("Fulfillment")) {
+            fieldValue = "Y";
+          } else {
+            fieldValue = StringHandle.removeNull(fileSpecifics.getFieldValueFromOrder(od, map));
+          }
+          sb.append(fieldValue.replaceAll(",", " "));
+          if (mappedFieldName.equalsIgnoreCase("PO Number")) {
+            poNumber = fieldValue;
+          }
+          if (i == fileFieldMaps.size() - 1) {
+            sb.append(NEWLINE);
+          } else {
+            sb.append(COMMA);
           }
         }
+        fw.write(sb.toString());
+        // od.setSupplierOrderStatus("Sent to supplier.");
+        // session.update(od);
+        successfulOrders.put(od.getDetailId(),
+            new OrderDetailResponse(poNumber, "Sent to supplier.", null));
+        OimChannels oimChannels = order.getOimOrderBatches().getOimChannels();
+        OimLogStream stream = new OimLogStream();
+        try {
+          {
+            IOrderImport iOrderImport = ChannelFactory.getIOrderImport(oimChannels);
+            OrderStatus orderStatus = new OrderStatus();
+            orderStatus.setStatus(((OimOrderProcessingRule) oimChannels.getOimOrderProcessingRules()
+                .iterator().next()).getProcessedStatus());
+            iOrderImport.updateStoreOrder(od, orderStatus);
+          }
+        } catch (ChannelConfigurationException e) {
+          stream.println(e.getMessage());
+        }
       }
+      // }
+      // }
     } catch (IOException e) {
       e.printStackTrace();
     }

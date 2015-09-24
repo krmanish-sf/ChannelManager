@@ -1,0 +1,25 @@
+<xs:schema attributeFormDefault="unqualified"
+	elementFormDefault="qualified" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+	<xs:element name="ELTrackRequest">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element type="xs:string" name="key" />
+				<xs:element name="XML_Orders">
+					<xs:complexType>
+						<xs:sequence>
+							<xs:element name="Order">
+								<xs:complexType>
+									<xs:sequence>
+										<xs:element type="xs:int" name="Order_id" />
+										<xs:element type="xs:string" name="Order_customer" />
+										<xs:element type="xs:boolean" name="Order_shipping_cost" />
+									</xs:sequence>
+								</xs:complexType>
+							</xs:element>
+						</xs:sequence>
+					</xs:complexType>
+				</xs:element>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+</xs:schema>

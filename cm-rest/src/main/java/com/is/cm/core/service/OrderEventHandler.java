@@ -50,7 +50,7 @@ import salesmachine.oim.stores.exception.ChannelConfigurationException;
 import salesmachine.oim.stores.exception.ChannelOrderFormatException;
 import salesmachine.oim.stores.impl.ChannelFactory;
 import salesmachine.oim.stores.modal.shop.order.CCTRANSMISSION;
-import salesmachine.oim.suppliers.OimSupplierOrderPlacement;
+import salesmachine.oim.suppliers.SupplierFactory;
 import salesmachine.oim.suppliers.exception.SupplierCommunicationException;
 import salesmachine.oim.suppliers.exception.SupplierConfigurationException;
 import salesmachine.oim.suppliers.exception.SupplierOrderException;
@@ -152,7 +152,7 @@ public class OrderEventHandler implements OrderService {
 	    throws SupplierConfigurationException,
 	    SupplierCommunicationException, SupplierOrderException {
 	Session dbSession = SessionManager.currentSession();
-	OimSupplierOrderPlacement osop = new OimSupplierOrderPlacement(
+	SupplierFactory osop = new SupplierFactory(
 		dbSession);
 	OimOrders oimOrders = orderRepository.getById(order.getOrderId());
 	return osop.processVendorOrder(VendorContext.get(), oimOrders);
@@ -231,7 +231,7 @@ public class OrderEventHandler implements OrderService {
 	    {
 		try {
 		    Session dbSession = SessionManager.currentSession();
-		    OimSupplierOrderPlacement osop = new OimSupplierOrderPlacement(
+		    SupplierFactory osop = new SupplierFactory(
 			    dbSession);
 		    OimOrders oimOrders = orderRepository
 			    .getById(order.getOrderId());
@@ -245,7 +245,7 @@ public class OrderEventHandler implements OrderService {
 	    {
 		try {
 		    Session dbSession = SessionManager.currentSession();
-		    OimSupplierOrderPlacement osop = new OimSupplierOrderPlacement(
+		    SupplierFactory osop = new SupplierFactory(
 			    dbSession);
 
 		    for (Iterator dit = order.getOimOrderDetailses()

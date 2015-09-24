@@ -22,6 +22,12 @@ import salesmachine.hibernatedb.OimVendorSuppliers;
 import salesmachine.hibernatedb.Reps;
 import salesmachine.hibernatedb.Vendors;
 import salesmachine.hibernatehelper.SessionManager;
+import salesmachine.oim.stores.exception.ChannelCommunicationException;
+import salesmachine.oim.stores.exception.ChannelConfigurationException;
+import salesmachine.oim.stores.exception.ChannelOrderFormatException;
+import salesmachine.oim.suppliers.exception.SupplierCommunicationException;
+import salesmachine.oim.suppliers.exception.SupplierConfigurationException;
+import salesmachine.oim.suppliers.exception.SupplierOrderException;
 import salesmachine.oim.suppliers.modal.OrderDetailResponse;
 import salesmachine.util.StringHandle;
 
@@ -480,4 +486,12 @@ public class Mobileline extends Supplier {
 
 		return shippingMethods;
 	}
+
+  @Override
+  public void sendOrders(Integer vendorId, OimVendorSuppliers ovs, OimOrders orders)
+      throws SupplierConfigurationException, SupplierCommunicationException, SupplierOrderException,
+      ChannelConfigurationException, ChannelCommunicationException, ChannelOrderFormatException {
+    // TODO Auto-generated method stub
+    
+  }
 }

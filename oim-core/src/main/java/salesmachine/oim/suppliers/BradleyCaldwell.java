@@ -28,7 +28,9 @@ import com.enterprisedt.net.ftp.FTPClient;
 
 public class BradleyCaldwell extends Supplier {
 
-	public void sendOrders(Integer vendorId, OimVendorSuppliers ovs, List orders) {
+	public void sendOrders(Integer vendorId, OimVendorSuppliers ovs, OimOrders order1) {
+	  List<OimOrders> orders = new ArrayList<>();
+	  orders.add(order1);
 		logStream.println("!!Started sending orders to BradleyCaldwell");
 		orderSkuPrefixMap = setSkuPrefixForOrders(ovs); // populate
 														// orderSkuPrefixMap

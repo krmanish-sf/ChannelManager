@@ -9,7 +9,8 @@ import java.util.Date;
  */
 public class OimVendorSuppliers implements java.io.Serializable {
 
-	private Integer vendorSupplierId;
+  private static final long serialVersionUID = 1L;
+  private Integer vendorSupplierId;
 	private Vendors vendors;
 	private OimSuppliers oimSuppliers;
 	private String accountNumber;

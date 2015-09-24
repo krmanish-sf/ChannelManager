@@ -1,0 +1,40 @@
+<xs:schema attributeFormDefault="unqualified"
+	elementFormDefault="qualified" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+	<xs:element name="XML_InputOrder">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element type="xs:string" name="key" />
+				<xs:element type="xs:string" name="AccountId" />
+				<xs:element type="xs:string" name="Name" />
+				<xs:element type="xs:string" name="AddressLine1" />
+				<xs:element type="xs:string" name="AddressLine2" />
+				<xs:element type="xs:string" name="City" />
+				<xs:element type="xs:string" name="StateCode" />
+				<xs:element type="xs:string" name="ZipCode" />
+				<xs:element type="xs:string" name="CountryCode" />
+				<xs:element type="xs:string" name="PhoneNumber" />
+				<xs:element type="xs:string" name="EnteredByCode" />
+				<xs:element type="xs:string" name="SourceCode" />
+				<xs:element type="xs:string" name="CustPONumber" />
+				<xs:element type="xs:string" name="ShipVia" />
+				<xs:element type="xs:string" name="SpecialInstructions" />
+				<xs:element type="xs:string" name="SourceOrderNumber" />
+				<xs:element name="Products">
+					<xs:complexType>
+						<xs:sequence>
+							<xs:element name="Product" maxOccurs="unbounded"
+								minOccurs="1">
+								<xs:complexType>
+									<xs:sequence>
+										<xs:element type="xs:string" name="Code" />
+										<xs:element type="xs:int" name="Quantity" />
+									</xs:sequence>
+								</xs:complexType>
+							</xs:element>
+						</xs:sequence>
+					</xs:complexType>
+				</xs:element>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+</xs:schema>
