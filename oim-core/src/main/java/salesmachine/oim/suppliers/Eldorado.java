@@ -134,8 +134,7 @@ public class Eldorado extends Supplier implements HasTracking {
       OimSupplierShippingMethod code = Supplier.findShippingCodeFromUserMapping(
           Supplier.loadSupplierShippingMap(ovs.getOimSuppliers(), ovs.getVendors()),
           order.getOimShippingMethod());
-      code.getCarrierName();
-      elOrder.setShipVia(code.toString());
+      elOrder.setShipVia("F1FR"/*code.toString()*/);
       elOrder.setProducts(products);
       try (ByteArrayOutputStream os = new ByteArrayOutputStream()) {
         marshaller.marshal(elOrder, os);
