@@ -1001,8 +1001,6 @@
 										"message" : true,
 										"success" : function(d) {
 											callback(d);
-											console.log("printing data ---");
-											console.log(d);
 										}
 									});
 								},
@@ -1218,9 +1216,10 @@
 																.modal('hide');
 														$('#TrackingModal')
 																.modal('hide');
+														table_xy.ajax.reload();
 													}
 												});
-								table_xy.ajax.reload();
+								
 							});
 		});
 	</script>
