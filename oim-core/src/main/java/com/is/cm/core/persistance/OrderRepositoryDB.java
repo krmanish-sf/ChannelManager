@@ -1201,7 +1201,7 @@ public class OrderRepositoryDB extends RepositoryBase implements OrderRepository
           orderTracking.setTrackingNumber(trackNo);
           trackingSet.add(orderTracking);
           detail.setOimOrderTracking(trackingSet);
-          session.save(orderTracking);
+          session.persist(orderTracking);
           session.save(detail);
           orderTrackingList.add(orderTracking);
          // updateStoreOrder(detail, orderTracking, session);
@@ -1211,7 +1211,7 @@ public class OrderRepositoryDB extends RepositoryBase implements OrderRepository
       if (newTrackingCount > 0)
         bf.append(newTrackingCount + " tracking details has been added. <br>");
       tx.commit();
-
+    
       bf.append("Tracking sent to store <br>");
 
       return bf.toString();

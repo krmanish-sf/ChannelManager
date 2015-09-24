@@ -3,12 +3,16 @@ package com.is.cm.core.domain;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 
+import org.hibernate.Session;
+import org.hibernate.criterion.Restrictions;
 import org.springframework.beans.BeanUtils;
 
 import salesmachine.hibernatedb.OimOrderDetails;
 import salesmachine.hibernatedb.OimOrderTracking;
+import salesmachine.hibernatehelper.SessionManager;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -145,13 +149,17 @@ public class OrderDetail extends DomainBase implements java.io.Serializable {
 
   public static OrderDetail from(OimOrderDetails oimOrderDetails) {
     OrderDetail detail = new OrderDetail();
+    Session currentSession = SessionManager.currentSession();
     BeanUtils.copyProperties(oimOrderDetails, detail, new String[] { "oimSuppliers",
         "oimOrderStatuses", "oimOrders", "orderTrackings" });
     detail.oimOrderStatuses = OrderStatus.from(oimOrderDetails.getOimOrderStatuses());
     detail.oimSuppliers = Supplier.from(oimOrderDetails.getOimSuppliers());
-    if (oimOrderDetails.getOimOrderTracking() != null) {
-      Iterator<OimOrderTracking> odIter = oimOrderDetails.getOimOrderTracking().iterator();
+    List<OimOrderTracking> trackingList = currentSession.createCriteria(OimOrderTracking.class)
+        .add(Restrictions.eq("detail.detailId", oimOrderDetails.getDetailId())).list();
+    if (trackingList != null) {
+      Iterator<OimOrderTracking> odIter = trackingList.iterator();
       Set<OrderTracking> trackings = new HashSet<OrderTracking>();
+      
       while (odIter.hasNext()) {
         OimOrderTracking od = (OimOrderTracking) odIter.next();
         if (od.getDeleteTm() == null)
