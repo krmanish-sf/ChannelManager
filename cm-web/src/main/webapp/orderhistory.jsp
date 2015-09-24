@@ -555,6 +555,7 @@
 	<script type="text/javascript">
 		var table_xy = null;
 		var MY_SUPPLIERS = null;
+		var table_tracking = null;
 		function a(e) {
 			var order = table_xy.row(e[0]).data();
 			$('#tableorderdetails')
@@ -628,7 +629,7 @@
 		function validateForm() {
 			var str;
 			$("#trackingForm :input").each(function() {
-				if (this.value == '' || this.value == 'undefined') {
+				if (this.value == '') {
 					str += this.name + ', ';
 				}
 			});
@@ -647,7 +648,7 @@
 			var orderDetailTemp = JSON.parse(JSON.stringify(orderDetail));
 			$('#myModaledit').modal('hide');
 			$('#editOrderTrackingTable').DataTable().destroy();
-			$('#editOrderTrackingTable')
+			table_tracking = $('#editOrderTrackingTable')
 					.DataTable(
 							{
 								"language" : {
@@ -1000,6 +1001,8 @@
 										"message" : true,
 										"success" : function(d) {
 											callback(d);
+											console.log("printing data ---");
+											console.log(d);
 										}
 									});
 								},
