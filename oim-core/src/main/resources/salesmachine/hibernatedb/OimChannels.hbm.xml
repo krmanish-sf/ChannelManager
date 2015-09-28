@@ -37,7 +37,9 @@
 		<property name="lastFetchTm" type="java.util.Date">
 			<column name="LAST_FETCH_TM" length="7" />
 		</property>
-
+		<property name="testMode" type="java.lang.Integer">
+			<column name="TEST_MODE" precision="22" scale="0"/>
+		</property>
 		<set name="oimChannelAccessDetailses" inverse="true" lazy="true"
 			table="OIM_CHANNEL_ACCESS_DETAILS" fetch="select">
 			<key>

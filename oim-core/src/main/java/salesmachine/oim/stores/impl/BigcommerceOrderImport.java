@@ -408,11 +408,14 @@ public class BigcommerceOrderImport extends ChannelBase {
             m_dbSession.save(details);
             detailSet.add(details);
           }
-          // update order status on store aka acknowledge order has
-          // been
-          // received by CM
-          String orderStatusUpdateUrl = storeBaseURL + "/orders/" + storeOrderId;
-          sendRequest(confirmedOrderStatusJSON, orderStatusUpdateUrl, PUT_METHOD_TYPE);
+          // Check if store is not in test mode.
+          if (m_channel.getTestMode() == 0) {
+            // update order status on store to acknowledge order has been received by CM
+            String orderStatusUpdateUrl = storeBaseURL + "/orders/" + storeOrderId;
+            sendRequest(confirmedOrderStatusJSON, orderStatusUpdateUrl, PUT_METHOD_TYPE);
+          } else {
+            log.warn("Acknowledgement to channel was not sent as Channel is set to test mode.");
+          }
         }
       } while (batchPullCount == 250);
 

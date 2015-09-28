@@ -1,22 +1,22 @@
 var STATUS = [ {
-			"statusId" : 6,
-			"statusValue" : "Canceled"
-		}, {
-			"statusId" : 3,
-			"statusValue" : "Failed"
-		}, {
-			"statusId" : 5,
-			"statusValue" : "Manually Processed"
-		}, {
-			"statusId" : 2,
-			"statusValue" : "Processed"
-		}, {
-			"statusId" : 7,
-			"statusValue" : "Shipped"
-		}, {
-			"statusId" : 0,
-			"statusValue" : "Unprocessed"
-		} ];
+	"statusId" : 6,
+	"statusValue" : "Canceled"
+}, {
+	"statusId" : 3,
+	"statusValue" : "Failed"
+}, {
+	"statusId" : 5,
+	"statusValue" : "Manually Processed"
+}, {
+	"statusId" : 2,
+	"statusValue" : "Processed"
+}, {
+	"statusId" : 7,
+	"statusValue" : "Shipped"
+}, {
+	"statusId" : 0,
+	"statusValue" : "Unprocessed"
+} ];
 
 var $tooltip = $(
 		"<div class='tooltip top in'><div class='tooltip-inner'></div></div>")
@@ -1028,7 +1028,15 @@ function drawSalesReportTable(data) {
 										}
 									},
 									{
-										"mData" : "oimSupportedChannels.channelName"
+										"mData" : function(channel) {
+											if (channel.testMode) {
+												return channel.oimSupportedChannels.channelName
+														+ "<p><strong>(Test Mode)</strong></p>"
+											} else {
+												return channel.oimSupportedChannels.channelName
+											}
+
+										}
 									},
 									{
 										"bSortable" : false,

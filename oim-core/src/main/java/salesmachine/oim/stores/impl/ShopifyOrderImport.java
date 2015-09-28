@@ -362,11 +362,16 @@ public final class ShopifyOrderImport extends ChannelBase implements IOrderImpor
         oimOrders.setOimOrderDetailses(detailSet);
         m_dbSession.saveOrUpdate(oimOrders);
 
-        // sending acknowledgement to shopify that we recived the order.
         requestUrl = storeUrl + "/admin/orders/" + storeOrderId + ".json"; // 704264451
         // /admin/products/#{id}/metafields.json
         // requestUrl = storeUrl + "/admin/orders/" + storeOrderId + ".json";
-        sendAcknowledgementToStore(requestUrl, storeOrderId, tags);
+        // Check the channel setting if channel is not in test mode.
+        if (m_channel.getTestMode() == 0) {
+          // sending acknowledgement to shopify that we recived the order.
+          sendAcknowledgementToStore(requestUrl, storeOrderId, tags);
+        } else {
+          log.warn("Acknowledgement to channel was not sent as Channel is set to test mode.");
+        }
       }
       log.info("Fetched {} order(s)", orderArr.size());
       m_channel.setLastFetchTm(new Date());
