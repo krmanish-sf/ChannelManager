@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -315,11 +316,23 @@ class AmazonOrderImport extends ChannelBase implements IOrderImport {
                 .setOimOrderStatuses(new OimOrderStatuses(OimConstants.ORDER_STATUS_UNPROCESSED));
             String sku = orderItem.getSellerSKU();
             OimSuppliers oimSuppliers = null;
-            for (String prefix : supplierMap.keySet()) {
-              if (sku.startsWith(prefix)) {
-                oimSuppliers = supplierMap.get(prefix);
+            String prefix = null;
+            List<OimSuppliers> blankPrefixSupplierList = new ArrayList<OimSuppliers>();
+            for (Iterator<OimSuppliers> itr = supplierMap.keySet().iterator();itr.hasNext();) {
+              OimSuppliers supplier = itr.next();
+              prefix = supplierMap.get(supplier);
+              if (prefix==null) {
+                blankPrefixSupplierList.add(supplier);
+                continue;
+              }
+              if (sku.toUpperCase().startsWith(prefix)) {
+                oimSuppliers = supplier;
                 break;
               }
+            }
+            if (oimSuppliers == null && blankPrefixSupplierList.size() == 1) {
+              oimSuppliers = blankPrefixSupplierList.get(0);
+
             }
             if (oimSuppliers != null) {
               details.setOimSuppliers(oimSuppliers);

@@ -29,7 +29,7 @@ public abstract class ChannelBase implements IOrderImport {
   protected Session m_dbSession;
   protected OimChannels m_channel;
   protected OimOrderProcessingRule m_orderProcessingRule;
-  protected Map<String, OimSuppliers> supplierMap;
+  protected Map<OimSuppliers,String> supplierMap;
   protected List<OimChannelShippingMap> oimChannelShippingMapList;
 
   @Override
@@ -50,7 +50,7 @@ public abstract class ChannelBase implements IOrderImport {
           "No associated order processing rule found  with : " + m_channel.getChannelName());
     }
     Set suppliers = m_channel.getOimChannelSupplierMaps();
-    supplierMap = new HashMap<String, OimSuppliers>();
+    supplierMap = new HashMap<OimSuppliers,String>();
     Iterator itr = suppliers.iterator();
     while (itr.hasNext()) {
       OimChannelSupplierMap map = (OimChannelSupplierMap) itr.next();
@@ -60,7 +60,7 @@ public abstract class ChannelBase implements IOrderImport {
       String prefix = map.getSupplierPrefix();
       OimSuppliers supplier = map.getOimSuppliers();
       log.info("Supplier Prefix: {} ID: {}", prefix, supplier.getSupplierId());
-      supplierMap.put(prefix, supplier);
+      supplierMap.put(supplier,prefix);
     }
 
     Criteria findCriteria = m_dbSession.createCriteria(OimChannelShippingMap.class);
