@@ -13,10 +13,13 @@ import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
 import javax.xml.bind.Unmarshaller;
+import javax.xml.datatype.XMLGregorianCalendar;
 
 import org.apache.axis.utils.ByteArrayOutputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.amazonservices.mws.client.MwsUtl;
 
 import salesmachine.hibernatedb.OimOrderDetails;
 import salesmachine.hibernatedb.OimOrders;
@@ -31,6 +34,7 @@ import salesmachine.oim.suppliers.exception.SupplierOrderException;
 import salesmachine.oim.suppliers.exception.SupplierOrderTrackingException;
 import salesmachine.oim.suppliers.modal.OrderDetailResponse;
 import salesmachine.oim.suppliers.modal.OrderStatus;
+import salesmachine.oim.suppliers.modal.TrackingData;
 import salesmachine.oim.suppliers.modal.el.XMLInputOrder;
 import salesmachine.oim.suppliers.modal.el.XMLInputOrder.Products;
 import salesmachine.oim.suppliers.modal.el.XMLInputOrder.Products.Product;
@@ -53,7 +57,8 @@ public class Eldorado extends Supplier implements HasTracking {
 
   static {
     try {
-      jaxbContext = JAXBContext.newInstance(XMLInputOrder.class, XMLOrders.class);
+      jaxbContext = JAXBContext.newInstance(XMLInputOrder.class, XMLOrders.class,
+          ELTrackRequest.class);
     } catch (JAXBException e) {
       log.error("Error in initializing XML parsing context.");
     }
@@ -63,7 +68,7 @@ public class Eldorado extends Supplier implements HasTracking {
   public OrderStatus getOrderStatus(OimVendorSuppliers ovs, Object trackingMeta,
       OimOrderDetails oimOrderDetails) throws SupplierOrderTrackingException {
     String urlString = "https://www.eldoradopartner.com/shipping_updates/index.php";
-
+    OrderStatus status = new OrderStatus();
     try (ByteArrayOutputStream os = new ByteArrayOutputStream()) {
       Marshaller marshaller = jaxbContext.createMarshaller();
       Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
@@ -72,27 +77,46 @@ public class Eldorado extends Supplier implements HasTracking {
       salesmachine.oim.suppliers.modal.el.tracking.ELTrackRequest.XMLOrders xmlOrder = new salesmachine.oim.suppliers.modal.el.tracking.ELTrackRequest.XMLOrders();
       Order order = new Order();
       order.setOrderCustomer(ovs.getAccountNumber());
-      // FIXME maybe store order id
-      order.setOrderId(oimOrderDetails.getOimOrders().getOrderId());
+      Integer trackingId = Integer.parseInt(trackingMeta.toString());
+      order.setOrderId(trackingId);
       order.setOrderShippingCost(false);
       xmlOrder.setOrder(order);
       request.setXMLOrders(xmlOrder);
       marshaller.marshal(request, os);
-      postRequest(urlString,
+      String response = postRequest(urlString,
           os.toString().replace("<ELTrackRequest>", "").replace("</ELTrackRequest>", ""));
-    } catch (JAXBException e) {
+      salesmachine.oim.suppliers.modal.el.tracking.XMLOrders trackingResponse = (salesmachine.oim.suppliers.modal.el.tracking.XMLOrders) unmarshaller
+          .unmarshal(new StringReader(response));
+      String responseCode = trackingResponse.getOrder().getResponseCode();
+      switch (responseCode) {
+      case "RECORD":
+        TrackingData trackingData = new TrackingData();
+        trackingData.setCarrierName(trackingResponse.getOrder().getCarrierCode());
+        trackingData.setShippingMethod(trackingResponse.getOrder().getServiceCode());
+        trackingData.setQuantity(oimOrderDetails.getQuantity());
+        trackingData.setShipperTrackingNumber(trackingResponse.getOrder().getTrackingNumber());
+        XMLGregorianCalendar shipDate = MwsUtl.getDTF().newXMLGregorianCalendar();
+        String[] shipped = trackingResponse.getOrder().getDateShipment().split("/");
+        shipDate.setDay(Integer.parseInt(shipped[0]));
+        shipDate.setMonth(Integer.parseInt(shipped[1]));
+        shipDate.setYear(Integer.parseInt(shipped[2]));
+        trackingData.setShipDate(shipDate);
+        status.addTrackingData(trackingData);
+        break;
+      case "NO_RECORD":
+        throw new SupplierOrderTrackingException(
+            "No record found with the given order id:" + trackingMeta);
+      case "BAD_REQUEST":
+        throw new SupplierOrderTrackingException(
+            "Eldorado system failed to process request for PO:" + trackingMeta);
+      }
+    } catch (JAXBException | SupplierConfigurationException | SupplierCommunicationException
+        | SupplierOrderException | IOException e) {
       log.error(e.getMessage(), e);
-    } catch (SupplierConfigurationException e) {
-      log.error(e.getMessage(), e);
-    } catch (SupplierCommunicationException e) {
-      log.error(e.getMessage(), e);
-    } catch (SupplierOrderException e) {
-      log.error(e.getMessage(), e);
-    } catch (IOException e) {
-      log.error(e.getMessage(), e);
+      throw new SupplierOrderTrackingException(e.getMessage(), e);
     }
 
-    return null;
+    return status;
   }
 
   @Override
@@ -134,7 +158,7 @@ public class Eldorado extends Supplier implements HasTracking {
       OimSupplierShippingMethod code = Supplier.findShippingCodeFromUserMapping(
           Supplier.loadSupplierShippingMap(ovs.getOimSuppliers(), ovs.getVendors()),
           order.getOimShippingMethod());
-      elOrder.setShipVia("F1FR"/*code.toString()*/);
+      elOrder.setShipVia("UGR"/* code.toString() */);
       elOrder.setProducts(products);
       try (ByteArrayOutputStream os = new ByteArrayOutputStream()) {
         marshaller.marshal(elOrder, os);
