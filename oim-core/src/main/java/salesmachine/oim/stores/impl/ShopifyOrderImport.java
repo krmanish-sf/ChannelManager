@@ -4,8 +4,13 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.httpclient.HttpClient;
@@ -122,6 +127,12 @@ public final class ShopifyOrderImport extends ChannelBase implements IOrderImpor
     try {
       statusCode = client.executeMethod(postMethod);
       log.info("fullfilment statusCode is - {}", statusCode);
+      if (statusCode != 200 && statusCode != 201) {
+        log.error("fullfilment rejected by store with status code {}", statusCode);
+        throw new ChannelCommunicationException(
+            "Error in posting request for fullfillment. fullfilment rejected by store with status code - "
+                + statusCode);
+      }
 
     } catch (HttpException e) {
       log.error("error in posting request for fullfillment {}", e);
@@ -131,9 +142,9 @@ public final class ShopifyOrderImport extends ChannelBase implements IOrderImpor
       throw new ChannelCommunicationException("Error in parsing json response payload", e);
     }
     // closing the order
-    if (statusCode == 200 || statusCode == 201) {
-      closeOrder(oimOrderDetails);
-    }
+    // if (statusCode == 200 || statusCode == 201) {
+    // closeOrder(oimOrderDetails);
+    // }
   }
 
   @Override
@@ -338,11 +349,23 @@ public final class ShopifyOrderImport extends ChannelBase implements IOrderImpor
           details.setOimOrderStatuses(new OimOrderStatuses(OimConstants.ORDER_STATUS_UNPROCESSED));
           String sku = (String) item.get("sku");
           OimSuppliers oimSuppliers = null;
-          for (String prefix : supplierMap.keySet()) {
+          String prefix = null;
+          List<OimSuppliers> blankPrefixSupplierList = new ArrayList<OimSuppliers>();
+          for (Iterator<OimSuppliers> itr = supplierMap.keySet().iterator();itr.hasNext();) {
+            OimSuppliers supplier = itr.next();
+            prefix = supplierMap.get(supplier);
+            if (prefix==null) {
+              blankPrefixSupplierList.add(supplier);
+              continue;
+            }
             if (sku.toUpperCase().startsWith(prefix)) {
-              oimSuppliers = supplierMap.get(prefix);
+              oimSuppliers = supplier;
               break;
             }
+          }
+          if (oimSuppliers == null && blankPrefixSupplierList.size() == 1) {
+            oimSuppliers = blankPrefixSupplierList.get(0);
+
           }
           if (oimSuppliers != null) {
             details.setOimSuppliers(oimSuppliers);

@@ -12,6 +12,7 @@ import java.util.TreeSet;
  */
 public class OimSuppliers implements java.io.Serializable {
 
+
   private static final long serialVersionUID = 1L;
   private Integer supplierId;
 	private String supplierName;
@@ -141,5 +142,44 @@ public class OimSuppliers implements java.io.Serializable {
   public void setClassName(String className) {
     this.className = className;
   }
+
+  @Override
+  public int hashCode() {
+    final int prime = 31;
+    int result = 1;
+    result = prime * result + ((insertionTm == null) ? 0 : insertionTm.hashCode());
+    result = prime * result + ((supplierId == null) ? 0 : supplierId.hashCode());
+    result = prime * result + ((supplierName == null) ? 0 : supplierName.hashCode());
+    return result;
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (this == obj)
+      return true;
+    if (obj == null)
+      return false;
+    if (getClass() != obj.getClass())
+      return false;
+    OimSuppliers other = (OimSuppliers) obj;
+    if (insertionTm == null) {
+      if (other.insertionTm != null)
+        return false;
+    } else if (!insertionTm.equals(other.insertionTm))
+      return false;
+    if (supplierId == null) {
+      if (other.supplierId != null)
+        return false;
+    } else if (!supplierId.equals(other.supplierId))
+      return false;
+    if (supplierName == null) {
+      if (other.supplierName != null)
+        return false;
+    } else if (!supplierName.equals(other.supplierName))
+      return false;
+    return true;
+  }
+  
+
 
 }

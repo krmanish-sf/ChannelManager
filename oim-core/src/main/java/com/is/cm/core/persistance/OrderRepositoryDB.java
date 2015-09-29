@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
 import javax.xml.datatype.XMLGregorianCalendar;
 
@@ -296,10 +297,9 @@ public class OrderRepositoryDB extends RepositoryBase implements OrderRepository
       if (orderDetail.getOimSuppliers() != null) {
         List<OimVendorsuppOrderhistory> list = dbSession
             .createCriteria(OimVendorsuppOrderhistory.class)
-            .add(Restrictions.eq("vendors.vendorId", getVendorId()))
-            .add(
-                Restrictions.eq("oimSuppliers.supplierId", orderDetail.getOimSuppliers()
-                    .getSupplierId())).list();
+            .add(Restrictions.eq("vendors.vendorId", getVendorId())).add(Restrictions
+                .eq("oimSuppliers.supplierId", orderDetail.getOimSuppliers().getSupplierId()))
+            .list();
         for (OimVendorsuppOrderhistory oimVendorsuppOrderhistory : list) {
           oimVendorsuppOrderhistory.setDeleteTm(new Date());
           dbSession.persist(oimVendorsuppOrderhistory);
@@ -333,10 +333,9 @@ public class OrderRepositoryDB extends RepositoryBase implements OrderRepository
         details.setOimSuppliers(orderDetail.getOimSuppliers().toOimSupplier());
         List<OimVendorsuppOrderhistory> list = dbSession
             .createCriteria(OimVendorsuppOrderhistory.class)
-            .add(Restrictions.eq("vendors.vendorId", getVendorId()))
-            .add(
-                Restrictions.eq("oimSuppliers.supplierId", orderDetail.getOimSuppliers()
-                    .getSupplierId())).list();
+            .add(Restrictions.eq("vendors.vendorId", getVendorId())).add(Restrictions
+                .eq("oimSuppliers.supplierId", orderDetail.getOimSuppliers().getSupplierId()))
+            .list();
         for (OimVendorsuppOrderhistory oimVendorsuppOrderhistory : list) {
           oimVendorsuppOrderhistory.setDeleteTm(new Date());
           dbSession.persist(oimVendorsuppOrderhistory);
@@ -500,8 +499,7 @@ public class OrderRepositoryDB extends RepositoryBase implements OrderRepository
       // tx = currentSession.beginTransaction();
       StringBuilder sb = new StringBuilder();
       sb.append("select distinct o from salesmachine.hibernatedb.OimOrders o")
-          .append(" left join fetch o.oimOrderDetailses d")
-          .append(" where o.deleteTm is null and")
+          .append(" left join fetch o.oimOrderDetailses d").append(" where o.deleteTm is null and")
           .append(" d.deleteTm is null and")
           .append(
               " d.oimOrderStatuses.statusId = '0' and d.oimSuppliers.supplierId is not null and")
@@ -789,8 +787,7 @@ public class OrderRepositoryDB extends RepositoryBase implements OrderRepository
               + "left join fetch o.oimOrderDetailses d " + "left join fetch o.oimOrderBatches b "
               + "left join fetch b.oimChannels c " + "where o.deleteTm is null and "
               + "d.deleteTm is null and " + orderdatequerysubstring + supplierquerysubstring
-              + statusquerysubstring
-              + channelquerysubstring // o.oimOrderBatches.oimChannels.channelId
+              + statusquerysubstring + channelquerysubstring // o.oimOrderBatches.oimChannels.channelId
               + customer_search + price_search + sku_search
               + "o.oimOrderBatches.oimChannels.vendors.vendorId=:vid " + sort_query);
       query.setInteger("vid", getVendorId());
@@ -814,17 +811,11 @@ public class OrderRepositoryDB extends RepositoryBase implements OrderRepository
         order.setOimOrderDetailses(details);
       }
 
-      Query countQuery = dbSession
-          .createQuery("select count( distinct o.orderId) from salesmachine.hibernatedb.OimOrders o "
-              + "left join o.oimOrderDetailses d "
-              + "where o.deleteTm is null and "
-              + "d.deleteTm is null and "
-              + orderdatequerysubstring
-              + supplierquerysubstring
-              + statusquerysubstring
-              + channelquerysubstring
-              + customer_search
-              + price_search
+      Query countQuery = dbSession.createQuery(
+          "select count( distinct o.orderId) from salesmachine.hibernatedb.OimOrders o "
+              + "left join o.oimOrderDetailses d " + "where o.deleteTm is null and "
+              + "d.deleteTm is null and " + orderdatequerysubstring + supplierquerysubstring
+              + statusquerysubstring + channelquerysubstring + customer_search + price_search
               + sku_search + "o.oimOrderBatches.oimChannels.vendors.vendorId=:vid " + sort_query);
       countQuery.setInteger("vid", getVendorId());
       Object uniqueResult = countQuery.uniqueResult();
@@ -949,8 +940,8 @@ public class OrderRepositoryDB extends RepositoryBase implements OrderRepository
 
       OimOrderBatches batch = new OimOrderBatches();
       batch.setOimChannels(oimChannel);
-      batch.setOimOrderBatchesTypes(new OimOrderBatchesTypes(
-          OimConstants.ORDERBATCH_TYPE_ID_AUTOMATED));
+      batch.setOimOrderBatchesTypes(
+          new OimOrderBatchesTypes(OimConstants.ORDERBATCH_TYPE_ID_AUTOMATED));
 
       // Save Batch..
       tx = m_dbSession.beginTransaction();
@@ -1015,8 +1006,8 @@ public class OrderRepositoryDB extends RepositoryBase implements OrderRepository
         order.setShippingDetails(shippingDetails);
 
         Criteria findCriteria = m_dbSession.createCriteria(OimChannelShippingMap.class);
-        findCriteria.add(Restrictions.eq("oimSupportedChannel.supportedChannelId",
-            supportedChannelId));
+        findCriteria
+            .add(Restrictions.eq("oimSupportedChannel.supportedChannelId", supportedChannelId));
         List<OimChannelShippingMap> list = findCriteria.list();
         for (OimChannelShippingMap shippingMap : list) {
           String shippingRegEx = shippingMap.getShippingRegEx();
@@ -1094,11 +1085,9 @@ public class OrderRepositoryDB extends RepositoryBase implements OrderRepository
 
   private OimChannels getOimChannel(String ccatalogId) {
     Session currentSession = SessionManager.currentSession();
-    Criteria add = currentSession
-        .createCriteria(OimChannelAccessDetails.class)
-        .add(
-            Restrictions.eq("oimChannelAccessFields.fieldId",
-                OimConstants.CHANNEL_ACCESSDETAIL_SHOP_CATALOGID))
+    Criteria add = currentSession.createCriteria(OimChannelAccessDetails.class)
+        .add(Restrictions.eq("oimChannelAccessFields.fieldId",
+            OimConstants.CHANNEL_ACCESSDETAIL_SHOP_CATALOGID))
         .add(Restrictions.eq("detailFieldValue", ccatalogId));
 
     List<OimChannelAccessDetails> list = add.list();
@@ -1137,6 +1126,7 @@ public class OrderRepositoryDB extends RepositoryBase implements OrderRepository
   @Override
   public String updateTracking(int detailId, Map<String, String> orderTrackingMap) {
     StringBuffer bf = new StringBuffer(0);
+    Transaction tx = null;
     try {
       Session session = SessionManager.currentSession();
       OimOrderDetails detail = (OimOrderDetails) session.get(OimOrderDetails.class, detailId);
@@ -1144,7 +1134,7 @@ public class OrderRepositoryDB extends RepositoryBase implements OrderRepository
           .intValue())
         return "This item is not shipped. Please mark it as shipped and try again";
       int loopCount = orderTrackingMap.size() / 6;
-      Transaction tx = session.beginTransaction();
+      tx = session.beginTransaction();
       int newTrackingCount = 0;
       List<OimOrderTracking> orderTrackingList = new ArrayList<OimOrderTracking>();
       for (int i = 0; i <= loopCount - 1; i++) {
@@ -1183,8 +1173,7 @@ public class OrderRepositoryDB extends RepositoryBase implements OrderRepository
             session.saveOrUpdate(orderTracking);
             session.saveOrUpdate(detail);
             bf.append("Tracking id " + trackingId + " updated. <br>");
-            orderTrackingList.add(orderTracking);
-           // updateStoreOrder(detail, orderTracking, session);
+            // orderTrackingList.add(orderTracking);
           } catch (NumberFormatException e) {
             bf.append("Error updating existing tracking details. <br>");
           }
@@ -1201,59 +1190,61 @@ public class OrderRepositoryDB extends RepositoryBase implements OrderRepository
           orderTracking.setTrackingNumber(trackNo);
           trackingSet.add(orderTracking);
           detail.setOimOrderTracking(trackingSet);
-          session.persist(orderTracking);
+          session.save(orderTracking);
           session.save(detail);
           orderTrackingList.add(orderTracking);
-         // updateStoreOrder(detail, orderTracking, session);
         }
       }
       updateStoreOrder(detail, orderTrackingList, session);
-      if (newTrackingCount > 0)
-        bf.append(newTrackingCount + " tracking details has been added. <br>");
+      if (newTrackingCount > 0) {
+        bf.append(newTrackingCount + " tracking details has been added and sent to store . <br>");
+      }
       tx.commit();
-    
-      bf.append("Tracking sent to store <br>");
 
       return bf.toString();
     } catch (Exception e) {
+      e.printStackTrace();
+      bf = new StringBuffer();
       bf.append("Error while updating Tracking for detail ID - " + detailId);
+      if (tx != null && tx.isActive())
+        tx.rollback();
       return bf.toString();
     }
   }
 
   private void updateStoreOrder(OimOrderDetails detail, List<OimOrderTracking> orderTrackingList,
-      Session session) {
+      Session session) throws ChannelCommunicationException, ChannelOrderFormatException,
+          ChannelConfigurationException {
     // new OimSupplierOrderPlacement(session).trackOrder(detail.getOimOrders().getOimOrderBatches()
     // .getOimChannels().getVendors().getVendorId(), detail.getDetailId());
     OimChannels oimChannels = detail.getOimOrders().getOimOrderBatches().getOimChannels();
 
-    try {
-      IOrderImport iOrderImport = ChannelFactory.getIOrderImport(oimChannels);
-      OrderStatus orderStatus = new OrderStatus();
-      orderStatus.setStatus(OimConstants.OIM_SUPPLER_ORDER_STATUS_SHIPPED);
-      for(int i=0;i<orderTrackingList.size();i++){
-        OimOrderTracking orderTracking = orderTrackingList.get(i);
-        TrackingData td = new TrackingData();
-        GregorianCalendar c = new GregorianCalendar();
-        c.setTime(orderTracking.getShipDate());
-        XMLGregorianCalendar date2 = DatatypeFactory.newInstance().newXMLGregorianCalendar(c);
-        td.setShipDate(date2);
-        td.setCarrierName(orderTracking.getShippingCarrier());
-        td.setCarrierCode(orderTracking.getShippingCarrier());
-        td.setQuantity(orderTracking.getShipQuantity());
-        td.setShipperTrackingNumber(orderTracking.getTrackingNumber());
-        td.setShippingMethod(orderTracking.getShippingMethod());
-        orderStatus.addTrackingData(td);
+    IOrderImport iOrderImport = ChannelFactory.getIOrderImport(oimChannels);
+    OrderStatus orderStatus = new OrderStatus();
+    orderStatus.setStatus(OimConstants.OIM_SUPPLER_ORDER_STATUS_SHIPPED);
+    for (int i = 0; i < orderTrackingList.size(); i++) {
+      OimOrderTracking orderTracking = orderTrackingList.get(i);
+      TrackingData td = new TrackingData();
+      GregorianCalendar c = new GregorianCalendar();
+      c.setTime(orderTracking.getShipDate());
+      XMLGregorianCalendar date2 = null;
+      try {
+        date2 = DatatypeFactory.newInstance().newXMLGregorianCalendar(c);
+      } catch (DatatypeConfigurationException e) {
+        // TODO Auto-generated catch block
+        e.printStackTrace();
       }
-     
-
-      if (orderStatus != null)
-        iOrderImport.updateStoreOrder(detail, orderStatus);
-
-    } catch (Exception e) {
-      LOG.error(e.getMessage(), e);
-
+      td.setShipDate(date2);
+      td.setCarrierName(orderTracking.getShippingCarrier());
+      td.setCarrierCode(orderTracking.getShippingCarrier());
+      td.setQuantity(orderTracking.getShipQuantity());
+      td.setShipperTrackingNumber(orderTracking.getTrackingNumber());
+      td.setShippingMethod(orderTracking.getShippingMethod());
+      orderStatus.addTrackingData(td);
     }
+    if (orderStatus != null)
+      iOrderImport.updateStoreOrder(detail, orderStatus);
+
   }
 
   @Override

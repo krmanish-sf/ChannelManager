@@ -10,9 +10,12 @@ import java.io.OutputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 
 import javax.net.ssl.HttpsURLConnection;
@@ -148,7 +151,12 @@ public class BigcommerceOrderImport extends ChannelBase {
       responseCode = connection.getResponseCode();
       if (responseCode == 200 || responseCode == 201) {
         response = getStringFromStream(connection.getInputStream());
-      } else if (responseCode == 429) {
+      } 
+      else if (responseCode == 204) {
+    	  log.info("Request Successful, but no response, cause there may be no data");
+    	  return response;
+      }
+      else if (responseCode == 429) {
         connection.disconnect();
         int waitTime = Integer.parseInt(connection.getHeaderField("X-Retry-After"));
         log.info("API rate limit exceeded, waiting for " + waitTime + " seconds");
@@ -387,11 +395,23 @@ public class BigcommerceOrderImport extends ChannelBase {
                 .setOimOrderStatuses(new OimOrderStatuses(OimConstants.ORDER_STATUS_UNPROCESSED));
             String sku = removeNull(orderItem.get("sku")).toUpperCase();
             OimSuppliers oimSuppliers = null;
-            for (String prefix : supplierMap.keySet()) {
-              if (sku.startsWith(prefix)) {
-                oimSuppliers = supplierMap.get(prefix);
+            String prefix = null;
+            List<OimSuppliers> blankPrefixSupplierList = new ArrayList<OimSuppliers>();
+            for (Iterator<OimSuppliers> itr = supplierMap.keySet().iterator();itr.hasNext();) {
+              OimSuppliers supplier = itr.next();
+              prefix = supplierMap.get(supplier);
+              if (prefix==null) {
+                blankPrefixSupplierList.add(supplier);
+                continue;
+              }
+              if (sku.toUpperCase().startsWith(prefix)) {
+                oimSuppliers = supplier;
                 break;
               }
+            }
+            if (oimSuppliers == null && blankPrefixSupplierList.size() == 1) {
+              oimSuppliers = blankPrefixSupplierList.get(0);
+
             }
             if (oimSuppliers != null) {
               details.setOimSuppliers(oimSuppliers);

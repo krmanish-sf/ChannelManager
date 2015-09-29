@@ -339,11 +339,23 @@ public class CREOrderImport extends ChannelBase implements IOrderImport {
                * String prefix = ""; if (sku.length() > 2) { prefix = sku.substring(0, 2); }
                */
               OimSuppliers supplier = null;
-              for (String prefix : supplierMap.keySet()) {
-                if (sku.startsWith(prefix)) {
-                  supplier = supplierMap.get(prefix);
+              String prefix = null;
+              List<OimSuppliers> blankPrefixSupplierList = new ArrayList<OimSuppliers>();
+              for (Iterator<OimSuppliers> itr = supplierMap.keySet().iterator();itr.hasNext();) {
+                OimSuppliers loopSupplier = itr.next();
+                prefix = supplierMap.get(loopSupplier);
+                if (prefix==null) {
+                  blankPrefixSupplierList.add(loopSupplier);
+                  continue;
+                }
+                if (sku.toUpperCase().startsWith(prefix)) {
+                  supplier = loopSupplier;
                   break;
                 }
+              }
+              if (supplier == null && blankPrefixSupplierList.size() == 1) {
+                supplier = blankPrefixSupplierList.get(0);
+
               }
               /*
                * if (supplierMap.containsKey(prefix)) { supplier = (OimSuppliers) supplierMap

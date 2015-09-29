@@ -264,7 +264,7 @@
 									},
 									{
 										"mData" : function(s) {
-											return '<input type="text" class="width-100 pp"  style="display:none;" name="ss_'+s.oimSuppliers.supplierId	+'_skuprefix" id="ss_'+s.oimSuppliers.supplierId+'_skuprefix" data-bind-channel="customMapper:oimChannelSupplierMaps[oimSuppliers.supplierId='+ s.oimSuppliers.supplierId+'].supplierPrefix" required="required"/>';
+											return '<input type="text" class="width-100 pp"  style="display:none;" name="ss_'+s.oimSuppliers.supplierId	+'_skuprefix" id="ss_'+s.oimSuppliers.supplierId+'_skuprefix" data-bind-channel="customMapper:oimChannelSupplierMaps[oimSuppliers.supplierId='+ s.oimSuppliers.supplierId+'].supplierPrefix"/>';
 										}
 									},
 									{
