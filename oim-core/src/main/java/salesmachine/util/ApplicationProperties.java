@@ -37,8 +37,8 @@ public class ApplicationProperties {
   public static final String BIGCOMMERCE_CLIENT_ID = "cm.bigcommerce.clientId";
   public static final String BIGCOMMERCE_CLIENT_SECRET = "cm.bigcommerce.clientSecret";
 
-  public static final String EL_PARTNER_KEY = "";
-  public static final String EL_API_ORDER_ENDPOINT = "";
+  public static final String EL_PARTNER_KEY = "cm.supplier.el.partnerKey";
+  public static final String EL_API_ORDER_ENDPOINT = "cm.supplier.el.api.orders.endpoint";
 
   private static final Logger log = LoggerFactory.getLogger(ApplicationProperties.class);
   private static final Properties prop = new Properties();

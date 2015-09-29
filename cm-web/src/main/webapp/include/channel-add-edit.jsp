@@ -181,7 +181,8 @@
 											</div>
 											<div class="form-group store-info bc-store">
 												<label for="store-hash"
-													class="col-sm-5 control-label no-padding-right">Store Hash</label>
+													class="col-sm-5 control-label no-padding-right">Store
+													Hash</label>
 												<div class="col-sm-7">
 													<input type="text" id="store-hash" name="store-hash"
 														class="width-70" placeholder="Store Hash"
@@ -216,13 +217,17 @@
 											</div>
 											<div class="form-group store-info bc-store">
 												<div class="col-sm-5"></div>
-												<div class="col-sm-7"><a style="cursor: pointer;"
-															onclick="fetchBigcommerceAuthData();">Get Access Token</a></div>
+												<div class="col-sm-7">
+													<a style="cursor: pointer;"
+														onclick="fetchBigcommerceAuthData();">Get Access Token</a>
+												</div>
 											</div>
 											<div class="form-group store-info shopify-store">
 												<div class="col-sm-5"></div>
-												<div class="col-sm-7"><a style="cursor: pointer;"
-															onclick="openUrl()">Get Access Token</a></div>
+												<div class="col-sm-7">
+													<a style="cursor: pointer;" onclick="openUrl()">Get
+														Access Token</a>
+												</div>
 											</div>
 											<div class="form-group center">
 												<!-- <input type="button"
@@ -324,6 +329,16 @@
 													data-bind-channel="oimOrderProcessingRules[0].failedStatus" />
 											</div>
 										</div>
+										<div class="form-group">
+											<label for="test-mode"
+												class="col-sm-5 control-label no-padding-right no-padding-top">Test
+												Mode</label>
+											<div class="col-sm-7">
+												<input type="checkbox" class="ace ace-switch ace-switch-4"
+													name="test-mode" data-bind-channel="testMode" value="1" />
+												<span class="lbl middle"></span>
+											</div>
+										</div>
 										<div class="form-group center">
 											<button class="btn btn-info btn-sm" type="button"
 												id="btnSave">
@@ -341,20 +356,23 @@
 	</div>
 </div>
 <script>
-function openUrl(){
-var strUrl = document.getElementsByName('storeurl')[0].value;
-if(strUrl){
- 	var m = window.open(strUrl+'/admin/oauth/authorize?client_id=<%=ApplicationProperties.getProperty(ApplicationProperties.SHOPIFY_API_KEY)%>&scope=read_content,write_content,read_products,write_products,read_customers,write_customers,read_orders,write_orders,read_shipping,write_shipping,read_fulfillments,write_fulfillments', 'shopify Access Permission', 
- 	'height=600,width=600,toolbar=no,directories=no,status=no,menubar=no,scrollbars=no,location=no,resizable=yes,modal=yes');
-// var m = window.open(strUrl+'/admin/oauth/authorize?client_id=bc312f5e1bebb835d7a910516cd5c7b9&scope=read_content,write_content,read_products,write_products,read_customers,write_customers,read_orders,write_orders,read_shipping,write_shipping,read_fulfillments,write_fulfillments', 'shopify Access Permission',
-// 'height=600,width=600,toolbar=no,directories=no,status=no,menubar=no,scrollbars=no,location=no,resizable=yes,modal=yes');
-}
-else{
-	alert('Please enter Store url');
+	function openUrl() {
+		var strUrl = document.getElementsByName('storeurl')[0].value;
+		if (strUrl) {
+			var m = window
+					.open(
+							strUrl
+									+ '/admin/oauth/authorize?client_id=${ApplicationProperties.getProperty(ApplicationProperties.SHOPIFY_API_KEY)}&scope=read_content,write_content,read_products,write_products,read_customers,write_customers,read_orders,write_orders,read_shipping,write_shipping,read_fulfillments,write_fulfillments',
+							'shopify Access Permission',
+							'height=600,width=600,toolbar=no,directories=no,status=no,menubar=no,scrollbars=no,location=no,resizable=yes,modal=yes');
+			// var m = window.open(strUrl+'/admin/oauth/authorize?client_id=bc312f5e1bebb835d7a910516cd5c7b9&scope=read_content,write_content,read_products,write_products,read_customers,write_customers,read_orders,write_orders,read_shipping,write_shipping,read_fulfillments,write_fulfillments', 'shopify Access Permission',
+			// 'height=600,width=600,toolbar=no,directories=no,status=no,menubar=no,scrollbars=no,location=no,resizable=yes,modal=yes');
+		} else {
+			alert('Please enter Store url');
+		}
 	}
-}
 
-function put(val){
-	$('#shopifyAuthId').val(val);
-}
+	function put(val) {
+		$('#shopifyAuthId').val(val);
+	}
 </script>

@@ -379,10 +379,15 @@ class AmazonOrderImport extends ChannelBase implements IOrderImport {
       m_dbSession.persist(m_channel);
       tx.commit();
 
-      if (msgList.isEmpty())
-        return;// Need not to send a request to amazon.
-      createAndSendAmazonEnvelopeFor("_POST_ORDER_ACKNOWLEDGEMENT_DATA_", "OrderAcknowledgement",
-          msgList);
+      if (msgList.isEmpty()) {
+        log.debug("Acknowledegement message list is empty.");
+      } else if (m_channel.getTestMode() == 1) {
+        log.warn("Acknowledgement to channel was not sent as Channel is set to test mode.");
+      } else {
+        // Need not to send acknowledgement request to amazon.
+        createAndSendAmazonEnvelopeFor("_POST_ORDER_ACKNOWLEDGEMENT_DATA_", "OrderAcknowledgement",
+            msgList);
+      }
       log.debug("Finished importing orders...");
     } catch (RuntimeException e) {
       if (tx != null && tx.isActive())

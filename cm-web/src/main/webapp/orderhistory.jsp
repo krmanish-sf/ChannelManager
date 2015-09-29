@@ -159,7 +159,7 @@
 										<a id="btnUpdateBulk" class="btn btn-info pull-left"
 									href="javascript:;">Update Selected Orders</a>
 					</div>
-					<div class="col-sm-7">
+					<div class="col-sm-7" style="display: none;">
 		            	<div class="alert alert-block alert-warning">
 		                	<i
 										class="ace-icon fa fa-exclamation-triangle bigger-120"></i>

@@ -156,6 +156,8 @@ public class ChannelRepositoryDb extends RepositoryBase implements ChannelReposi
     String channelName = request.get("channelname");
     boolean emailUpdates = ("on".equals(request.get("emailupdates")));
     int supportedChannelId = Integer.parseInt(request.get("supportedChannelId"));
+    String testMode = request.get("test-mode");
+    c.setTestMode(StringHandle.isNullOrEmpty(testMode) ? 0 : 1);
     OimSupportedChannels oimSupportedChannels = new OimSupportedChannels();
     oimSupportedChannels.setSupportedChannelId(supportedChannelId);
     c.setOimSupportedChannels(oimSupportedChannels);

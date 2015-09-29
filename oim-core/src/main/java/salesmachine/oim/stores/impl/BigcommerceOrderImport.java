@@ -148,7 +148,12 @@ public class BigcommerceOrderImport extends ChannelBase {
       responseCode = connection.getResponseCode();
       if (responseCode == 200 || responseCode == 201) {
         response = getStringFromStream(connection.getInputStream());
-      } else if (responseCode == 429) {
+      } 
+      else if (responseCode == 204) {
+    	  log.info("Request Successful, but no response, cause there may be no data");
+    	  return response;
+      }
+      else if (responseCode == 429) {
         connection.disconnect();
         int waitTime = Integer.parseInt(connection.getHeaderField("X-Retry-After"));
         log.info("API rate limit exceeded, waiting for " + waitTime + " seconds");
@@ -408,11 +413,14 @@ public class BigcommerceOrderImport extends ChannelBase {
             m_dbSession.save(details);
             detailSet.add(details);
           }
-          // update order status on store aka acknowledge order has
-          // been
-          // received by CM
-          String orderStatusUpdateUrl = storeBaseURL + "/orders/" + storeOrderId;
-          sendRequest(confirmedOrderStatusJSON, orderStatusUpdateUrl, PUT_METHOD_TYPE);
+          // Check if store is not in test mode.
+          if (m_channel.getTestMode() == 0) {
+            // update order status on store to acknowledge order has been received by CM
+            String orderStatusUpdateUrl = storeBaseURL + "/orders/" + storeOrderId;
+            sendRequest(confirmedOrderStatusJSON, orderStatusUpdateUrl, PUT_METHOD_TYPE);
+          } else {
+            log.warn("Acknowledgement to channel was not sent as Channel is set to test mode.");
+          }
         }
       } while (batchPullCount == 250);
 

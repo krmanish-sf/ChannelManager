@@ -117,16 +117,17 @@ public class CREOrderImport extends ChannelBase implements IOrderImport {
 
         // Update status
         if (!StringHandle.isNullOrEmpty(m_orderProcessingRule.getConfirmedStatus())) {
-          response = sendOrderStatusRequest(orderFetched,
-              m_orderProcessingRule.getConfirmedStatus());
-        }
+          List updatedOrders = null;
+          if (m_channel.getTestMode() == 0) {
+            response = sendOrderStatusRequest(orderFetched,
+                m_orderProcessingRule.getConfirmedStatus());
+            StringReader str = new StringReader(response);
+            updatedOrders = parseUpdateResponse(str);
+          }
+          Set<OimOrders> confirmedOrders = new HashSet<OimOrders>();
 
-        StringReader str = new StringReader(response);
-        List updatedOrders = parseUpdateResponse(str);
-        Set<OimOrders> confirmedOrders = new HashSet<OimOrders>();
-        if (!StringHandle.isNullOrEmpty(m_orderProcessingRule.getConfirmedStatus())) {
           for (OimOrders order : orderFetched) {
-            if (updatedOrders.contains(order.getStoreOrderId())) {
+            if (m_channel.getTestMode() == 1 || updatedOrders.contains(order.getStoreOrderId())) {
               confirmedOrders.add(order);
             }
           }
@@ -475,7 +476,7 @@ public class CREOrderImport extends ChannelBase implements IOrderImport {
     }
   }
 
-  public String sendOrderStatusRequest(List<OimOrders> fetchedOrders, String status) {
+  private String sendOrderStatusRequest(List<OimOrders> fetchedOrders, String status) {
     StringBuffer xmlrequest = new StringBuffer(
         "<xmlPopulate>" + "<header>" + "<requestType>updateorders</requestType><orderStatus>"
             + status + "</orderStatus>" + "<passkey>" + PojoHelper
