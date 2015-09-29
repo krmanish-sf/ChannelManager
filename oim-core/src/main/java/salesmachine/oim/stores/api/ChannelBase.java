@@ -47,7 +47,7 @@ public abstract class ChannelBase implements IOrderImport {
       m_orderProcessingRule = (OimOrderProcessingRule) iter.next();
     } else {
       throw new ChannelConfigurationException(
-          "No associated o" + "rder processing rule found  with : " + m_channel.getChannelName());
+          "No associated order processing rule found  with : " + m_channel.getChannelName());
     }
     Set suppliers = m_channel.getOimChannelSupplierMaps();
     supplierMap = new HashMap<String, OimSuppliers>();
@@ -89,8 +89,8 @@ public abstract class ChannelBase implements IOrderImport {
         "select o from salesmachine.hibernatedb.OimOrders o where o.oimOrderBatches.oimChannels=:chan and o.storeOrderId=:storeOrderId");
     query.setEntity("chan", m_channel);
     query.setString("storeOrderId", storeOrderId);
-    Object obj = query.uniqueResult();
-    return obj instanceof OimOrders;
+    int rowCount = query.list().size();
+    return rowCount > 0;
 
   }
 
