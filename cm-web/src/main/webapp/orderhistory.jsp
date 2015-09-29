@@ -626,7 +626,7 @@
 			}
 
 		}
-		function validateForm() {
+		function validateForm(quantity) {
 			var str;
 			$("#trackingForm :input").each(function() {
 				if (this.value == '') {
@@ -640,7 +640,65 @@
 				});
 				return false;
 			}
+			if (quantity) {
+				debugger;
+				var quan = 0;
+				$("#trackingForm :input").each(function() {
+					if (startsWith(this.name, 'shipQuantity')) {
+						quan += this.value;
+					}
+				});
+				var intQuan = parseInt(quan);
+				var intQuantity = parseInt(quantity);
+				if (intQuan > intQuantity) {
+					$.gritter
+							.add({
+								title : "Error!!",
+								text : "Total number of Tracking quantity can not be greater than "
+										+ quantity
+							});
+					return false;
+				}
+			}
+			var invalidShipDate = '';
+			$("#trackingForm :input").each(function() {
+				if (startsWith(this.name, 'shipDate')) {
+					var shipDate = this.value;
+					if (!compareWithCurrentDate(shipDate)) {
+						invalidShipDate += shipDate + ', ';
+						str += this.name + ', ';
+					}
+				}
+			});
+			if (invalidShipDate.length > 0) {
+				$.gritter.add({
+					title : "Error!!",
+					text : "Ship date(s) " + invalidShipDate
+							+ "can not be greater than current date "
+				});
+				return false;
+			}
+
 			return true;
+		}
+		function startsWith(str, prefix) {
+			return str.indexOf(prefix) === 0;
+		}
+		function compareWithCurrentDate(dateStr) { //09/23/2015
+			var q = new Date();
+			var m = q.getMonth();
+			var d = q.getDate();
+			var y = q.getFullYear();
+
+			var date = new Date(y, m, d);
+
+			var mydate = new Date(dateStr);
+
+			if (mydate > date) {
+				return false;
+			} else {
+				return true;
+			}
 		}
 
 		function openTrackingData(e) {
@@ -681,7 +739,7 @@
 														+ "' value='"
 														+ (orderTracking.shippingCarrier ? orderTracking.shippingCarrier
 																: '')
-														+ "' required/> <input type='hidden' name='detailId' value='"+orderDetailTemp.detailId+"' /> <input type='hidden' name='trackingId"+meta.row+"' value='"+orderTracking.orderTrackingId+"' />";
+														+ "' required/> <input type='hidden' name='detailId' value='"+orderDetailTemp.detailId+"' /><input type='hidden' name='quantity' value='"+orderDetailTemp.quantity+"' /> <input type='hidden' name='trackingId"+meta.row+"' value='"+orderTracking.orderTrackingId+"' />";
 											}
 										},
 										{
@@ -1076,7 +1134,7 @@
 											"orderable" : false
 										} ]
 							});
-//			$("div.paging-toolbar").html();
+			//			$("div.paging-toolbar").html();
 			$('.addresspop').popover({
 				container : 'body'
 			});
@@ -1185,7 +1243,7 @@
 			$('#updateTracking')
 					.click(
 							function() {
-								if (validateForm() == false)
+								if (!validateForm())
 									return;
 
 								var map = {};
@@ -1197,6 +1255,10 @@
 									}
 								});
 								var detailId = map.detailId;
+								var quantity = map.quantity;
+								if (!validateForm(quantity))
+									return;
+								delete (map.quantity);
 								delete (map.detailId);
 								$(this)
 										.CRUD(
@@ -1219,7 +1281,7 @@
 														table_xy.ajax.reload();
 													}
 												});
-								
+
 							});
 		});
 	</script>
