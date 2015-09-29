@@ -148,7 +148,12 @@ public class BigcommerceOrderImport extends ChannelBase {
       responseCode = connection.getResponseCode();
       if (responseCode == 200 || responseCode == 201) {
         response = getStringFromStream(connection.getInputStream());
-      } else if (responseCode == 429) {
+      } 
+      else if (responseCode == 204) {
+    	  log.info("Request Successful, but no response, cause there may be no data");
+    	  return response;
+      }
+      else if (responseCode == 429) {
         connection.disconnect();
         int waitTime = Integer.parseInt(connection.getHeaderField("X-Retry-After"));
         log.info("API rate limit exceeded, waiting for " + waitTime + " seconds");
