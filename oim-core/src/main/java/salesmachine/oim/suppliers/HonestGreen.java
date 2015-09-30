@@ -1212,11 +1212,7 @@ public class HonestGreen extends Supplier implements HasTracking {
             String purchaseOrder = orderTrackingResponse.getPO().getPurchaseOrder();
             String[] poArray = { purchaseOrder, purchaseOrder.replaceFirst("P", ""),
                 purchaseOrder.replaceFirst("H", "") };
-            // OimOrderDetails detail = (OimOrderDetails) session
-            // .createCriteria(OimOrderDetails.class)
-            // .add(Restrictions.in("supplierOrderNumber",
-            // poArray)).uniqueResult();
-
+            log.info("PO Array: {}", poArray);
             List<OimOrderDetails> detailList = session.createCriteria(OimOrderDetails.class)
                 .add(Restrictions.in("supplierOrderNumber", poArray)).list();
             for (OimOrderDetails detail : detailList) {

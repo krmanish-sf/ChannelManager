@@ -145,9 +145,21 @@ public class Eldorado extends Supplier implements HasTracking {
       elOrder.setStateCode(order.getDeliveryStateCode());
       elOrder.setZipCode(order.getDeliveryZip());
       Products products = new Products();
+
       for (OimOrderDetails oimOrderDetails : order.getOimOrderDetailses()) {
+        if (!oimOrderDetails.getOimSuppliers().getSupplierId()
+            .equals(ovs.getOimSuppliers().getSupplierId()))
+          continue;
+        String skuPrefix = null, sku = oimOrderDetails.getSku();
+        if (!orderSkuPrefixMap.isEmpty()) {
+          skuPrefix = orderSkuPrefixMap.values().toArray()[0].toString();
+        }
+        skuPrefix = StringHandle.removeNull(skuPrefix);
+        if (sku.startsWith(skuPrefix)) {
+          sku = sku.substring(skuPrefix.length());
+        }
         Product product = new Product();
-        product.setCode(oimOrderDetails.getSku());
+        product.setCode(sku);
         product.setQuantity(oimOrderDetails.getQuantity());
         products.getProduct().add(product);
       }

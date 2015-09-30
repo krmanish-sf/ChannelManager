@@ -56,7 +56,7 @@
             <column name="DELIVERY_COMPANY" length="20" />
         </property>
         <property name="deliveryPhone" type="string">
-            <column name="DELIVERY_PHONE" length="20" />
+            <column name="DELIVERY_PHONE" length="50" />
         </property>
         <property name="deliveryEmail" type="string">
             <column name="DELIVERY_EMAIL" length="100" />

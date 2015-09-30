@@ -120,7 +120,6 @@ public class OrderPullTask extends TimerTask {
               if (tx != null && tx.isActive())
                 tx.commit();
               tx = m_dbSession.beginTransaction();
-
               m_dbSession.save(vendorOrders);
               tx.commit();
             }
