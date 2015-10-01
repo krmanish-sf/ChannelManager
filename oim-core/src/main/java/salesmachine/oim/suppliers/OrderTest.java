@@ -238,8 +238,9 @@ public class OrderTest {
     }
     out.close();
 
-    EmailUtil.sendEmailWithAttachment("manish@inventorysource.com", "manish@inventorysource.com",
-        "", emailSubject, emailBody, f.getAbsolutePath());
+    EmailUtil.sendEmailWithAttachment("orders@inventorysource.com",
+        "support@inventorysource.com", "abheeshek@inventorysource.com, kelly@inventorysource.com, andrew@inventorysource.com",
+        emailSubject, emailBody, f.getAbsolutePath());
     log.info("Email sent successfully");
   }
 
