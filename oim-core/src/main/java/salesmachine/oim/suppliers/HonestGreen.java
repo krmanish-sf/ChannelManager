@@ -1220,7 +1220,6 @@ public class HonestGreen extends Supplier implements HasTracking {
             String purchaseOrder = orderTrackingResponse.getPO().getPurchaseOrder();
             String[] poArray = { purchaseOrder, purchaseOrder.replaceFirst("P", ""),
                 purchaseOrder.replaceFirst("H", "") };
-            log.info("PO Array: {}", poArray);
             List<OimOrderDetails> detailList = session.createCriteria(OimOrderDetails.class)
                 .add(Restrictions.in("supplierOrderNumber", poArray)).list();
             for (OimOrderDetails detail : detailList) {
@@ -1437,5 +1436,58 @@ class FtpDetail {
   public void setWhareHouseType(WareHouseType whareHouseType) {
     this.wareHouseType = whareHouseType;
   }
+
+  @Override
+  public String toString() {
+    return "FtpDetail [accountNumber=" + accountNumber + ", url=" + url + ", userName=" + userName
+        + ", password=" + password + ", wareHouseType=" + wareHouseType + "]";
+  }
+
+  @Override
+  public int hashCode() {
+    final int prime = 31;
+    int result = 1;
+    result = prime * result + ((accountNumber == null) ? 0 : accountNumber.hashCode());
+    result = prime * result + ((password == null) ? 0 : password.hashCode());
+    result = prime * result + ((url == null) ? 0 : url.hashCode());
+    result = prime * result + ((userName == null) ? 0 : userName.hashCode());
+    result = prime * result + ((wareHouseType == null) ? 0 : wareHouseType.hashCode());
+    return result;
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (this == obj)
+      return true;
+    if (obj == null)
+      return false;
+    if (getClass() != obj.getClass())
+      return false;
+    FtpDetail other = (FtpDetail) obj;
+    if (accountNumber == null) {
+      if (other.accountNumber != null)
+        return false;
+    } else if (!accountNumber.equals(other.accountNumber))
+      return false;
+    if (password == null) {
+      if (other.password != null)
+        return false;
+    } else if (!password.equals(other.password))
+      return false;
+    if (url == null) {
+      if (other.url != null)
+        return false;
+    } else if (!url.equals(other.url))
+      return false;
+    if (userName == null) {
+      if (other.userName != null)
+        return false;
+    } else if (!userName.equals(other.userName))
+      return false;
+    if (wareHouseType != other.wareHouseType)
+      return false;
+    return true;
+  }
+  
 
 }
