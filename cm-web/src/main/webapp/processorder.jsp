@@ -517,7 +517,13 @@
 																		data-bind-order="deliveryStateCode" class="pull-right"
 																		maxlength="2" name="deliveryStateCode">
                                 </div>
-                               
+                                <div class="col-sm-4">
+                                  <label>Country Code</label>
+                                  <input type="text"
+																		data-bind-order="deliveryCountryCode"
+																		class="pull-right" maxlength="2"
+																		name="deliveryCountryCode">
+                                </div>
                                 
                               </div>
                                <div class="space-4"></div>
@@ -943,7 +949,8 @@
 																		|| !od.quantity
 																		|| od.quantity <= 0) {
 																	order.unresolved = true;
-																	if ((firstSupplier && od.oimSuppliers && firstSupplier.supplierId != od.oimSuppliers.supplierId))
+																	if ((firstSupplier
+																			&& od.oimSuppliers && firstSupplier.supplierId != od.oimSuppliers.supplierId))
 																		order.reason = 'This order has multiple suppliers. Edit the product details below, or click “Confirm” to process as a multiple supplier order.';
 																	break;
 																}

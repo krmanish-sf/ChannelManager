@@ -17,17 +17,17 @@
 		<div class="widget-main padding-0">
 			<div class="tab-content padding-0 overflow-visible">
 				<div id="product-tab" class="tab-pane active">
-				<table id="tasks2" class="table hover row-border">
-				<thead>
-					<tr>
-						<th>SKU</th>
-						<th>Sale Price</th>
-					</tr>
-				</thead>
-				<tbody>
-				</tbody>
-	</table>
-<!-- 					<ul id="tasks2" class="item-list"></ul> -->
+					<table id="tasks2" class="table hover row-border">
+						<thead>
+							<tr>
+								<th>SKU</th>
+								<th>Total Sale</th>
+							</tr>
+						</thead>
+						<tbody>
+						</tbody>
+					</table>
+					<!-- 					<ul id="tasks2" class="item-list"></ul> -->
 				</div>
 				<div id="task-tab" class="tab-pane">
 					<ul id="tasks" class="item-list"></ul>

@@ -243,7 +243,7 @@ function evalArray(obj, expr) {
 };
 
 function drawSalesReportTable(data) {
-	var table = $('#tasks2').DataTable();
+	var table = $('#tasks2').DataTable({'dom':'t'});
 	table.clear().draw();
 	for (var i = 0; i < data.length; i++) {
 		table.row.add([ data[i].sku, "$" + data[i].totalSales ]).draw();
