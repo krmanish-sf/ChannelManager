@@ -21,6 +21,7 @@ import salesmachine.hibernatedb.OimOrderProcessingRule;
 import salesmachine.hibernatedb.OimOrders;
 import salesmachine.hibernatedb.OimSuppliers;
 import salesmachine.oim.stores.exception.ChannelConfigurationException;
+import salesmachine.util.CountryCodeProperty;
 import salesmachine.util.StateCodeProperty;
 import salesmachine.util.StringHandle;
 
@@ -29,7 +30,7 @@ public abstract class ChannelBase implements IOrderImport {
   protected Session m_dbSession;
   protected OimChannels m_channel;
   protected OimOrderProcessingRule m_orderProcessingRule;
-  protected Map<OimSuppliers,String> supplierMap;
+  protected Map<OimSuppliers, String> supplierMap;
   protected List<OimChannelShippingMap> oimChannelShippingMapList;
 
   @Override
@@ -50,7 +51,7 @@ public abstract class ChannelBase implements IOrderImport {
           "No associated order processing rule found  with : " + m_channel.getChannelName());
     }
     Set suppliers = m_channel.getOimChannelSupplierMaps();
-    supplierMap = new HashMap<OimSuppliers,String>();
+    supplierMap = new HashMap<OimSuppliers, String>();
     Iterator itr = suppliers.iterator();
     while (itr.hasNext()) {
       OimChannelSupplierMap map = (OimChannelSupplierMap) itr.next();
@@ -60,7 +61,7 @@ public abstract class ChannelBase implements IOrderImport {
       String prefix = map.getSupplierPrefix();
       OimSuppliers supplier = map.getOimSuppliers();
       log.info("Supplier Prefix: {} ID: {}", prefix, supplier.getSupplierId());
-      supplierMap.put(supplier,prefix);
+      supplierMap.put(supplier, prefix);
     }
 
     Criteria findCriteria = m_dbSession.createCriteria(OimChannelShippingMap.class);
@@ -100,6 +101,14 @@ public abstract class ChannelBase implements IOrderImport {
     stateCode = StringHandle.removeNull(stateCode);
     log.info("state code for {} is {}", order.getDeliveryState(), stateCode);
     return stateCode;
+  }
+
+  public static String validateAndGetCountryCode(OimOrders order) {
+    log.info("Getting Country code for - {}", order.getDeliveryCountry());
+    String countryCode = CountryCodeProperty.getProperty(order.getDeliveryCountry());
+    countryCode = StringHandle.removeNull(countryCode);
+    log.info("Country code for {} is {}", order.getDeliveryCountry(), countryCode);
+    return countryCode;
   }
 
 }

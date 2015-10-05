@@ -46,6 +46,7 @@ import salesmachine.hibernatedb.OimVendorSuppliers;
 import salesmachine.hibernatedb.Reps;
 import salesmachine.hibernatehelper.PojoHelper;
 import salesmachine.oim.api.OimConstants;
+import salesmachine.oim.stores.api.ChannelBase;
 import salesmachine.oim.stores.api.IOrderImport;
 import salesmachine.oim.stores.exception.ChannelCommunicationException;
 import salesmachine.oim.stores.exception.ChannelConfigurationException;
@@ -158,6 +159,14 @@ public class SupplierFactory {
       throw new InvalidAddressException(
           "Please check Delivery State code for order id - " + oimOrders.getStoreOrderId());
     // Transaction tx = null;
+    if (StringHandle.isNullOrEmpty(oimOrders.getDeliveryCountryCode())) {
+      String countryCode = ChannelBase.validateAndGetCountryCode(oimOrders);
+      if (StringHandle.isNullOrEmpty(countryCode)) {
+        throw new SupplierOrderException(
+            "Country Code is missing; please update the order with Country Code.");
+      }
+      oimOrders.setDeliveryCountryCode(countryCode);
+    }
     boolean ordersSent = false;
     try {
 
@@ -377,6 +386,7 @@ public class SupplierFactory {
           s = (Supplier) clazz.newInstance();
 
           s.setLogStream(logStream);
+
           s.sendOrders(vendorId, ovs, oimOrder);
           successfulOrders.putAll(s.successfulOrders);
           failedOrders.addAll(s.failedOrders);

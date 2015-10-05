@@ -288,6 +288,7 @@ class AmazonOrderImport extends ChannelBase implements IOrderImport {
               oimOrder.setDeliveryStateCode(stateCode);
           }
 
+          oimOrder.setDeliveryCountryCode(order.getShippingAddress().getCountryCode());
           m_dbSession.saveOrUpdate(oimOrder);
           Thread.sleep(1000);
           ListOrderItemsRequest itemsRequest = new ListOrderItemsRequest();
@@ -318,10 +319,10 @@ class AmazonOrderImport extends ChannelBase implements IOrderImport {
             OimSuppliers oimSuppliers = null;
             String prefix = null;
             List<OimSuppliers> blankPrefixSupplierList = new ArrayList<OimSuppliers>();
-            for (Iterator<OimSuppliers> itr = supplierMap.keySet().iterator();itr.hasNext();) {
+            for (Iterator<OimSuppliers> itr = supplierMap.keySet().iterator(); itr.hasNext();) {
               OimSuppliers supplier = itr.next();
               prefix = supplierMap.get(supplier);
-              if (prefix==null) {
+              if (prefix == null) {
                 blankPrefixSupplierList.add(supplier);
                 continue;
               }

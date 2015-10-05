@@ -29,6 +29,7 @@ public class OimOrders implements java.io.Serializable {
   private String deliveryPhone;
   private String deliveryEmail;
   private String deliveryStateCode;
+  private String deliveryCountryCode;
   private String billingName;
   private String billingStreetAddress;
   private String billingSuburb;
@@ -410,6 +411,14 @@ public class OimOrders implements java.io.Serializable {
 
   public void setDeliveryStateCode(String deliveryStateCode) {
     this.deliveryStateCode = deliveryStateCode;
+  }
+
+  public String getDeliveryCountryCode() {
+    return deliveryCountryCode;
+  }
+
+  public void setDeliveryCountryCode(String deliveryCountryCode) {
+    this.deliveryCountryCode = deliveryCountryCode;
   }
 
 }

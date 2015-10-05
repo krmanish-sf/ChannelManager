@@ -618,7 +618,8 @@ function drawSalesReportTable(data) {
 										"mData" : "supplierOrderNumber"
 									},
 									{
-										"mData" : "supplier.supplierName"
+										"mData" : "supplier.supplierName",
+										"defaultContent" : "--"
 									},
 									{
 										"mData" : "quantity"

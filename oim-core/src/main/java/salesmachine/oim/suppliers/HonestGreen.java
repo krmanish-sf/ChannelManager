@@ -439,15 +439,16 @@ public class HonestGreen extends Supplier implements HasTracking {
 
   private String createOrderFile(OimOrders order, OimVendorSuppliers ovs,
       Set<OimOrderDetails> detailSet, FtpDetail ftpDetails, String poNum)
-          throws ChannelCommunicationException, ChannelOrderFormatException {
+          throws ChannelCommunicationException, ChannelOrderFormatException,
+          SupplierOrderException {
 
     String uploadfilename = "/tmp/" + "HG_" + ftpDetails.getAccountNumber() + "_"
         + new Random().nextLong() + ".txt";
     File f = new File(uploadfilename);
     log.info("created file name for HG:{}", f.getName());
     log.debug("Creating order file for PO:{}", order.getOrderId());
-    try {
-      FileOutputStream fOut = new FileOutputStream(f);
+    try (FileOutputStream fOut = new FileOutputStream(f)) {
+
       // Integer orderSize = order.getOimOrderDetailses().size();
       fOut.write("1".getBytes(ASCII));
       fOut.write(NEW_LINE);
@@ -468,25 +469,28 @@ public class HonestGreen extends Supplier implements HasTracking {
           StringHandle.removeComma(StringHandle.removeNull(order.getDeliveryName()).toUpperCase())
               .getBytes(ASCII));
       fOut.write(COMMA);
-      fOut.write(StringHandle
-          .removeComma(StringHandle.removeNull(order.getDeliveryStreetAddress()).toUpperCase())
-          .getBytes(ASCII));
+      String address = null;
+      String addressLine1 = StringHandle
+          .removeComma(StringHandle.removeNull(order.getDeliveryStreetAddress()).toUpperCase());
+      String addressLine2 = StringHandle
+          .removeComma(StringHandle.removeNull(order.getDeliverySuburb()).toUpperCase());
+      address = addressLine1 + " " + addressLine2;
+      if (address.length() > 50) {
+        throw new SupplierOrderException(
+            "Street Address and Suburb Address length is more than 50 characters, which can't fit the given Honest green validation rules. Please edit the order and resubmit.");
+      } else {
+        addressLine1 = address.substring(0, 24);
+        addressLine2 = address.substring(24, address.length() - 1);
+      }
+      fOut.write(addressLine1.getBytes(ASCII));
       fOut.write(COMMA);
-      fOut.write(
-          StringHandle.removeComma(StringHandle.removeNull(order.getDeliverySuburb()).toUpperCase())
-              .getBytes(ASCII));
+      fOut.write(addressLine2.getBytes(ASCII));
       fOut.write(COMMA);
-      fOut.write(
-          StringHandle.removeComma(StringHandle.removeNull(order.getDeliveryCity()).toUpperCase())
-              .getBytes(ASCII));
+      fOut.write(getBytes(order.getDeliveryCity()));
       fOut.write(COMMA);
-      fOut.write(StringHandle
-          .removeComma(StringHandle.removeNull(order.getDeliveryStateCode()).toUpperCase())
-          .getBytes(ASCII));
+      fOut.write(getBytes(order.getDeliveryStateCode()));
       fOut.write(COMMA);
-      fOut.write(
-          StringHandle.removeComma(StringHandle.removeNull(order.getDeliveryZip()).toUpperCase())
-              .getBytes(ASCII));
+      fOut.write(getBytes(order.getDeliveryZip()));
       fOut.write(COMMA);
       fOut.write(COMMA);
       fOut.write('A');
@@ -541,6 +545,10 @@ public class HonestGreen extends Supplier implements HasTracking {
       log.error(e.getMessage(), e);
     }
     return uploadfilename;
+  }
+
+  private byte[] getBytes(String str) throws UnsupportedEncodingException {
+    return StringHandle.removeComma(StringHandle.removeNull(str).toUpperCase()).getBytes(ASCII);
   }
 
   private static final String ORDER_CONFIRMATION_FILE_PATH_TEMPLATE = "confirmations/%s.O%sA.txt";

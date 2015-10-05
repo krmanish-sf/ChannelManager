@@ -46,6 +46,9 @@
          <property name="deliveryStateCode" type="string">
             <column name="DELIVERY_STATE_CODE" length="5" />
         </property>
+        <property name="deliveryCountryCode" type="string">
+            <column name="DELIVERY_COUNTRY_CODE" length="2" />
+        </property>
         <property name="deliveryCountry" type="string">
             <column name="DELIVERY_COUNTRY" length="20" />
         </property>
