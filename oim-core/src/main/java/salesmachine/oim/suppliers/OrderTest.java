@@ -13,6 +13,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Reader;
 import java.math.BigDecimal;
+import java.net.SocketException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -64,7 +65,6 @@ public class OrderTest {
       startDate = args[0];
       endDate = args[1];
     }
-    long startTime = System.currentTimeMillis();
     log.info("Strated getting all ftp details...");
     ftpDetailMap = getFtpDetails();
     log.info("Total {} number of ftp details found", ftpDetailMap.size());
@@ -84,9 +84,6 @@ public class OrderTest {
       String fileCleanupEndTimStr = convertLongToDateString(fileCleanupEndTime);
       log.info("ftp file move process ended at {} for {}", fileCleanupEndTimStr, ftpDetail);
       String vendorId = ftpDetailMap.get(ftpDetail);
-      int confCount = 0;
-      int shipCount = 0;
-      int trackCount = 0;
       // "/home/staging/cm-orders/report/"
       String confirmationPath = "/home/staging/cm-orders/report/" + vendorId + "_"
           + ftpDetail.getUserName() + "/confirmations/";
@@ -110,11 +107,15 @@ public class OrderTest {
         String fileDownloadStartTimeStr = convertLongToDateString(fileDownloadStartTime);
         log.info("Started downloading files at {} from ftp : {}", fileDownloadStartTimeStr,
             ftpDetail);
-        downloadFiles(ftpDetail, vendorId, confirmationPath, shippingPath, trackingPath, confCount,
-            shipCount, trackCount);
-        log.info("Total number of files matched at confirmation dir - {}", confCount);
-        log.info("Total number of files matched at shipping dir - {}", shipCount);
-        log.info("Total number of files matched at tracking dir - {}", trackCount);
+        try {
+          downloadFiles(ftpDetail, vendorId, confirmationPath, shippingPath, trackingPath);
+        } catch (Exception e) {
+          log.error("Error occured while downloading files for ftp {} {}", ftpDetail, e);
+          if (e instanceof SocketException) {
+            downloadFiles(ftpDetail, vendorId, confirmationPath, shippingPath, trackingPath);
+
+          }
+        }
       } catch (Exception e) {
         log.error("error occure while downloading files from ftp ", e);
       }
@@ -144,6 +145,9 @@ public class OrderTest {
     long sendEmailCompleteTime = System.currentTimeMillis();
     String sendEmailCompleteTimeStr = convertLongToDateString(sendEmailCompleteTime);
     log.info("report created and sent as an email at {}", sendEmailCompleteTimeStr);
+    long total_time = sendEmailCompleteTime-processStartTime;
+    int minutes = (int) ((total_time / (1000*60)) % 60);
+    log.info("process completed in {} minutes ",minutes);
     log.info("Process complete...");
   }
 
@@ -155,6 +159,7 @@ public class OrderTest {
       List<PHIHVAData> dataList = vendorDataMap.get(vendorId);
       if (dataList == null || dataList.size() == 0)
         continue;
+      // File file = new File("/home/staging/cm-orders/report/" + vendorId + "_" + "Report.csv");
       File file = new File("/home/staging/cm-orders/report/" + vendorId + "_" + "Report.csv");
       fileList.add(file);
       try {
@@ -216,95 +221,129 @@ public class OrderTest {
     String emailSubject = null;
     if (!StringHandle.removeNull(startDate).equals("")
         && !StringHandle.removeNull(endDate).equals("")) {
-      emailSubject = "Evox Order status for " + startDate + " to " + endDate;
+      emailSubject = "Honest Green Order status for " + startDate + " to " + endDate;
     } else
-      emailSubject = "Evox Order status for last 2 days";
-    final File f = new File("/home/staging/cm-orders/report/HG_Order_Status.zip");
-    final ZipOutputStream out = new ZipOutputStream(new FileOutputStream(f));
-    for (int i = 0; i < fileList.size(); i++) {
+      emailSubject = "Honest Green order status for last 2 days";
+    if (fileList.size() > 0) {
+      final File f = new File("/home/staging/cm-orders/report/HG_Order_Status.zip");
+      final ZipOutputStream out = new ZipOutputStream(new FileOutputStream(f));
+      for (int i = 0; i < fileList.size(); i++) {
 
-      File file = fileList.get(i);
-      FileInputStream fis = new FileInputStream(file);
-      ZipEntry zipEntry = new ZipEntry(file.getAbsolutePath());
-      out.putNextEntry(zipEntry);
+        File file = fileList.get(i);
+        FileInputStream fis = new FileInputStream(file);
+        ZipEntry zipEntry = new ZipEntry(file.getName());
+        out.putNextEntry(zipEntry);
 
-      byte[] bytes = new byte[1024];
-      int length;
-      while ((length = fis.read(bytes)) >= 0) {
-        out.write(bytes, 0, length);
+        byte[] bytes = new byte[1024];
+        int length;
+        while ((length = fis.read(bytes)) >= 0) {
+          out.write(bytes, 0, length);
+        }
+        out.closeEntry();
+        fis.close();
       }
-      out.closeEntry();
-      fis.close();
-    }
-    out.close();
+      out.close();
 
-    EmailUtil.sendEmailWithAttachment("orders@inventorysource.com",
-        "support@inventorysource.com", "abheeshek@inventorysource.com, kelly@inventorysource.com, andrew@inventorysource.com",
-        emailSubject, emailBody, f.getAbsolutePath());
-    log.info("Email sent successfully");
+      EmailUtil.sendEmailWithAttachment("orders@inventorysource.com", "support@inventorysource.com",
+          "abheeshek@inventorysource.com, kelly@inventorysource.com, andrew@inventorysource.com",
+          emailSubject, emailBody, f.getAbsolutePath());
+      log.info("Email with attachment sent successfully.");
+    } else {
+      emailBody = "There is no order found for last two days.";
+      EmailUtil.sendEmail("orders@inventorysource.com", "support@inventorysource.com",
+          "abheeshek@inventorysource.com, kelly@inventorysource.com, andrew@inventorysource.com",
+          emailSubject, emailBody);
+      log.info("Email without attachment sent successfully.");
+    }
   }
 
   private static void downloadFiles(FtpDetail ftpDetail, String vendorId, String confirmationPath,
-      String shippingPath, String trackingPath, int confCount, int shipCount, int trackCount) {
+      String shippingPath, String trackingPath) throws IOException, FTPException, SocketException {
+    int confCount = 0;
+    int shipCount = 0;
+    int trackCount = 0;
     FTPClient ftp = new FTPClient();
+    ftp.setRemoteHost(ftpDetail.getUrl());
+    ftp.setDetectTransferMode(true);
+    ftp.connect();
+    ftp.login(ftpDetail.getUserName(), ftpDetail.getPassword());
+    String fileDir = "/users/" + ftpDetail.getUserName() + "/";
+    FTPFile[] ftpFiles;
     try {
-      ftp.setRemoteHost(ftpDetail.getUrl());
-      ftp.setDetectTransferMode(true);
-      ftp.connect();
-      ftp.login(ftpDetail.getUserName(), ftpDetail.getPassword());
-      String fileDir = "/users/" + ftpDetail.getUserName() + "/";
-      FTPFile[] ftpFiles = ftp.dirDetails(fileDir);
-      for (int i = 0; i < ftpFiles.length; i++) {
-        FTPFile ff = ftpFiles[i];
-        if (ff.getName().startsWith(".") || ff.getName().startsWith(".."))
-          continue;
-        if (ff.isDir()) {
-          String dirName = ff.getName() + "/";
-          log.info("downloading files from {} directory", ff.getName());
+      ftpFiles = ftp.dirDetails(fileDir);
+    } catch (ParseException e) {
+      log.error("Error occure while getting ftp files..");
+      throw new FTPException("Unable to get ftpFiles.");
+    }
+    for (int i = 0; i < ftpFiles.length; i++) {
+      FTPFile ff = ftpFiles[i];
+      if (ff.getName().startsWith(".") || ff.getName().startsWith(".."))
+        continue;
+      if (ff.isDir()) {
+        String dirName = ff.getName() + "/";
+        log.info("downloading files from {} directory", ff.getName());
 
-          if (ff.getName().startsWith("confirmations")) {
+        if (ff.getName().startsWith("confirmations")) {
+          try {
             FTPFile[] confirmedFileList = ftp.dirDetails(fileDir + dirName);
             for (int j = 0; j < confirmedFileList.length; j++) {
               String fileNme = ((FTPFile) confirmedFileList[j]).getName();
-              log.info("Downloading file : {}", fileNme);
+              if (fileNme.startsWith(".") || fileNme.startsWith(".."))
+                continue;
+
               File tmp = new File(confirmationPath + fileNme);
               if (!tmp.exists()) {
+                log.info("Downloading file : {}", fileNme);
                 ftp.get(confirmationPath + fileNme, fileDir + dirName + fileNme);
                 confCount++;
               }
             }
+          } catch (ParseException e) {
+            log.error("Error while listing confirmation directory.", e);
           }
-          if (ff.getName().startsWith("shipping")) {
+        }
+        if (ff.getName().startsWith("shipping")) {
+          try {
             FTPFile[] confirmedFileList = ftp.dirDetails(fileDir + dirName);
             for (int j = 0; j < confirmedFileList.length; j++) {
               String fileNme = ((FTPFile) confirmedFileList[j]).getName();
-              log.info("Downloading file : {}", fileNme);
+              if (fileNme.startsWith(".") || fileNme.startsWith(".."))
+                continue;
               File tmp = new File(shippingPath + fileNme);
               if (!tmp.exists()) {
+                log.info("Downloading file : {}", fileNme);
                 ftp.get(shippingPath + fileNme, fileDir + dirName + fileNme);
                 shipCount++;
               }
             }
+          } catch (ParseException e) {
+            log.error("Error while listing shipping directory.", e);
           }
-          if (ff.getName().startsWith("tracking")) {
+        }
+        if (ff.getName().startsWith("tracking")) {
+          try {
             FTPFile[] confirmedFileList = ftp.dirDetails(fileDir + dirName);
             for (int j = 0; j < confirmedFileList.length; j++) {
               String fileNme = ((FTPFile) confirmedFileList[j]).getName();
-              log.info("Downloading file : {}", fileNme);
+              if (fileNme.startsWith(".") || fileNme.startsWith(".."))
+                continue;
+
               File tmp = new File(trackingPath + fileNme);
               if (!tmp.exists()) {
+                log.info("Downloading file : {}", fileNme);
                 ftp.get(trackingPath + fileNme, fileDir + dirName + fileNme);
                 trackCount++;
               }
             }
+          } catch (ParseException e) {
+            log.error("Error while listing tracking directory.", e);
           }
         }
       }
-    } catch (Exception e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
     }
-
+    log.info("Total number of files downloaded from confirmation Dir - {}", confCount++);
+    log.info("Total number of files downloaded from shipping Dir - {}", shipCount++);
+    log.info("Total number of files downloaded from tracking Dir - {}", trackCount++);
   }
 
   private static List<PHIHVAData> getData(FtpDetail ftpDetail, String confirmationPath,
@@ -343,7 +382,7 @@ public class OrderTest {
           "select STORE_ORDER_ITEM_ID, DETAIL_ID, SUPPLIER_ORDER_NUMBER, os.STATUS_VALUE , to_char(INSERTION_TM, 'DD-MON-YYYY'), to_char(PROCESSING_TM, 'DD-MON-YYYY') from "
               + "OIM_ORDER_DETAILS od inner join OIM_ORDER_STATUSES os on os.STATUS_ID=od.STATUS_ID where ORDER_ID "
               + "in (select ORDER_ID from OIM_ORDERS where BATCH_ID in (select BATCH_ID from OIM_ORDER_BATCHES where "
-              + "CHANNEL_ID (select channel_id from kdyer.oim_channel_supplier_map where supplier_id=1822 and channel_id in"
+              + "CHANNEL_ID in (select channel_id from kdyer.oim_channel_supplier_map where supplier_id=1822 and channel_id in"
               + "(select channel_id from kdyer.oim_channels where delete_tm is null)) and CREATION_TM > TO_DATE('"
               + startDate + " 23:59:59','MM/DD/YYYY HH24:MI:SS') and " + "CREATION_TM < TO_DATE('"
               + endDate + " 23:59:59','MM/DD/YYYY HH24:MI:SS'))) and od.SUPPLIER_WAREHOUSE_CODE='"
