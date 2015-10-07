@@ -82,5 +82,12 @@
 			</key>
 			<one-to-many class="salesmachine.hibernatedb.OimChannelFiles" />
 		</set>
+		<set name="oimChannelShippingMap" inverse="true" lazy="true"
+			table="oim_channel_shipping_method" fetch="select">
+			<key>
+				<column name="CHANNEL_ID" precision="22" scale="0" />
+			</key>
+			<one-to-many class="salesmachine.hibernatedb.OimChannelShippingMap" />
+		</set>
 	</class>
 </hibernate-mapping>

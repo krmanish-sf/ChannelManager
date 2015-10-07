@@ -24,5 +24,9 @@
 			class="salesmachine.hibernatedb.OimShippingMethod" fetch="join" lazy="false">
 			<column name="CARRIER_METHOD_ID" />
 		</many-to-one>
+		<many-to-one name="oimChannel" class="salesmachine.hibernatedb.OimChannels"
+			fetch="select">
+			<column name="CHANNEL_ID" precision="22" scale="0" />
+		</many-to-one>
 	</class>
 </hibernate-mapping>

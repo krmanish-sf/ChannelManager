@@ -27,7 +27,8 @@ public class OimChannels implements java.io.Serializable {
   private Set oimUploadedFileses = new HashSet(0);
   private Set<OimChannelSupplierMap> oimChannelSupplierMaps = new HashSet<>(0);
   private Set oimChannelFileses = new HashSet(0);
-
+  private Set<OimChannelShippingMap> oimChannelShippingMap = new HashSet<>();
+  
   public OimChannels() {
   }
 
@@ -157,6 +158,14 @@ public class OimChannels implements java.io.Serializable {
 
   public void setTestMode(Integer testMode) {
     this.testMode = testMode;
+  }
+
+  public Set<OimChannelShippingMap> getOimChannelShippingMap() {
+    return oimChannelShippingMap;
+  }
+
+  public void setOimChannelShippingMap(Set<OimChannelShippingMap> oimChannelShippingMap) {
+    this.oimChannelShippingMap = oimChannelShippingMap;
   }
 
 }
