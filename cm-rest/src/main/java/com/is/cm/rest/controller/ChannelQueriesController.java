@@ -60,12 +60,12 @@ public class ChannelQueriesController {
 		return new ResponseEntity<Channel>(details.getEntity(), HttpStatus.OK);
 	}
 
-	@RequestMapping(method = RequestMethod.GET, value = "/shipping/{supportedChannelId}")
+	@RequestMapping(method = RequestMethod.GET, value = "/shipping/{channelId}")
 	public ResponseEntity<Collection<ChannelShippingMap>> viewChannelShipping(
-			@PathVariable int supportedChannelId) {
+			@PathVariable int channelId) {
 		ReadCollectionEvent<ChannelShippingMap> details = channelService
 				.findShippingMethods(new RequestReadEvent<Integer>(
-						supportedChannelId));
+						channelId));
 		if (!details.isEntityFound()) {
 			return new ResponseEntity<Collection<ChannelShippingMap>>(
 					HttpStatus.NOT_FOUND);

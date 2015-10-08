@@ -243,7 +243,9 @@ function evalArray(obj, expr) {
 };
 
 function drawSalesReportTable(data) {
-	var table = $('#tasks2').DataTable({'dom':'t'});
+	var table = $('#tasks2').DataTable({
+		'dom' : 't'
+	});
 	table.clear().draw();
 	for (var i = 0; i < data.length; i++) {
 		table.row.add([ data[i].sku, "$" + data[i].totalSales ]).draw();
@@ -754,15 +756,18 @@ function drawSalesReportTable(data) {
 							}
 						});
 	};
+	var tableShippingMap;
 	$.CM.viewShippingMap = function(e) {
 		var channel = tableimportchannel.row(e[0]).data();
-		$('#tableShippingMap').DataTable(
+		$("#channelHidenField").val(channel.channelId);
+		
+		tableShippingMap = $('#tableShippingMap').DataTable(
 				{
 					"bPaginate" : false,
 					"bDestroy" : true,
 					"bLengthChange" : false,
 					"sAjaxSource" : "/aggregators/channels/shipping/"
-							+ channel.oimSupportedChannels.supportedChannelId,
+							+ channel.channelId,
 					"fnServerData" : function(sSource, aoData, fnCallback,
 							oSettings) {
 						oSettings.jqXHR = $(this).CRUD({
@@ -1150,6 +1155,37 @@ function drawSalesReportTable(data) {
 			}
 		});
 	};
+
+	// test
+
+	$.CM.addShippingMapping = function(shippingMethod) {
+		var methodId = shippingMethod.id;
+		var carrierId = shippingMethod.shippingCarrier.id;
+		var channelId = $("#channelHidenField").val();
+		var shippingText = $("#shippingText").val();
+		var d = {
+			"channelId" : channelId,
+			"methodId" : methodId,
+			"carrierId" : carrierId,
+			"shippingText" : shippingText
+		};
+		var data = JSON.stringify(d);
+		$(this).CRUD({
+			method : "POST",
+			url : 'aggregators/channels/addShippingMethods/addShipping',
+			data : data,
+			success : function(a, b, c) {
+				$.gritter.add({
+					title : 'Add Shipping',
+					text : a,
+					class_name : 'gritter-success'
+				});
+				tableShippingMap.ajax.reload();
+			}
+
+		});
+	};
+
 }(jQuery));
 $.fn.dataTableExt.oApi.fnReloadAjax = function(oSettings, sNewSource,
 		fnCallback, bStandingRedraw) {

@@ -35,6 +35,7 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import salesmachine.hibernatedb.OimChannelFiles;
+import salesmachine.hibernatedb.OimChannelShippingMap;
 import salesmachine.hibernatedb.OimChannelSupplierMap;
 import salesmachine.hibernatedb.OimChannels;
 import salesmachine.hibernatedb.OimFields;
@@ -46,6 +47,8 @@ import salesmachine.hibernatedb.OimOrderBatches;
 import salesmachine.hibernatedb.OimOrderBatchesTypes;
 import salesmachine.hibernatedb.OimOrderDetails;
 import salesmachine.hibernatedb.OimOrders;
+import salesmachine.hibernatedb.OimShippingCarrier;
+import salesmachine.hibernatedb.OimShippingMethod;
 import salesmachine.hibernatedb.OimSuppliers;
 import salesmachine.hibernatedb.OimUploadedFiles;
 import salesmachine.hibernatehelper.SessionManager;
@@ -75,8 +78,7 @@ import com.is.cm.core.service.OrderService;
 @Controller
 @RequestMapping("/aggregators/channels")
 public class ChannelCommandsController extends BaseController {
-	private static Logger LOG = LoggerFactory
-			.getLogger(ChannelCommandsController.class);
+	private static Logger LOG = LoggerFactory.getLogger(ChannelCommandsController.class);
 
 	@Autowired
 	private ChannelService channelService;
@@ -86,77 +88,57 @@ public class ChannelCommandsController extends BaseController {
 	@RequestMapping(method = RequestMethod.DELETE, value = "/{id}")
 	public ResponseEntity<Channel> deleteChannel(@PathVariable String id) {
 		LOG.debug("Recieved request to delete Channel:{}", id);
-		ChannelDeletedEvent deletedEvent = channelService
-				.deleteChannel(new DeleteChannelEvent(Integer.parseInt(id)));
+		ChannelDeletedEvent deletedEvent = channelService.deleteChannel(new DeleteChannelEvent(Integer.parseInt(id)));
 		return createResponseBody(deletedEvent);
 	}
 
 	@RequestMapping(method = RequestMethod.PUT, value = "/{id}")
-	public ResponseEntity<Channel> updateChannel(
-			@RequestBody Map<String, String> channel, @PathVariable int id) {
+	public ResponseEntity<Channel> updateChannel(@RequestBody Map<String, String> channel, @PathVariable int id) {
 		LOG.debug("Recieved request to update Channel:{}", id);
-		UpdatedEvent<Channel> updatedEvent = channelService
-				.update(new UpdateEvent<Map<String, String>>(id, channel));
+		UpdatedEvent<Channel> updatedEvent = channelService.update(new UpdateEvent<Map<String, String>>(id, channel));
 		return createResponseBody(updatedEvent);
 	}
 
 	@RequestMapping(method = RequestMethod.PUT)
-	public ResponseEntity<Channel> createChannel(
-			@RequestBody Map<String, String> channel) {
+	public ResponseEntity<Channel> createChannel(@RequestBody Map<String, String> channel) {
 		LOG.debug("Recieved request to create Channel");
-		CreatedEvent<Channel> createdEvent = channelService
-				.create(new CreateEvent<Map<String, String>>(channel));
+		CreatedEvent<Channel> createdEvent = channelService.create(new CreateEvent<Map<String, String>>(channel));
 		if (createdEvent.isAlradyExists()) {
-			return new ResponseEntity<Channel>(createdEvent.getEntity(),
-					HttpStatus.CONFLICT);
+			return new ResponseEntity<Channel>(createdEvent.getEntity(), HttpStatus.CONFLICT);
 		}
-		return new ResponseEntity<Channel>(createdEvent.getEntity(),
-				HttpStatus.CREATED);
+		return new ResponseEntity<Channel>(createdEvent.getEntity(), HttpStatus.CREATED);
 	}
 
 	@RequestMapping(method = RequestMethod.PUT, value = "/{channelId}/orders")
-	public ResponseEntity<Order> createSingleOrder(
-			@RequestBody Map<String, String> orderData,
+	public ResponseEntity<Order> createSingleOrder(@RequestBody Map<String, String> orderData,
 			@PathVariable int channelId, UriComponentsBuilder builder) {
 		orderData.put("channelId", String.valueOf(channelId));
-		OrderCreatedEvent orderCreated = orderService
-				.createOrder(new CreateOrderEvent(orderData, null));
+		OrderCreatedEvent orderCreated = orderService.createOrder(new CreateOrderEvent(orderData, null));
 		HttpHeaders headers = new HttpHeaders();
-		headers.setLocation(builder.path("/aggregators/orders/{id}")
-				.buildAndExpand(orderCreated.getNewId()).toUri());
-		return new ResponseEntity<Order>(orderCreated.getEntity(), headers,
-				HttpStatus.CREATED);
+		headers.setLocation(builder.path("/aggregators/orders/{id}").buildAndExpand(orderCreated.getNewId()).toUri());
+		return new ResponseEntity<Order>(orderCreated.getEntity(), headers, HttpStatus.CREATED);
 	}
 
 	@RequestMapping(method = RequestMethod.GET, value = "/{channelId}/pull")
 	public ResponseEntity<String> pullOrders(@PathVariable int channelId) {
 		try {
-			ReadEvent<String> readEvent = channelService
-					.pullOrders(new ReadEvent<Channel>(channelId));
-			return new ResponseEntity<String>(readEvent.getEntity(),
-					HttpStatus.OK);
+			ReadEvent<String> readEvent = channelService.pullOrders(new ReadEvent<Channel>(channelId));
+			return new ResponseEntity<String>(readEvent.getEntity(), HttpStatus.OK);
 		} catch (RuntimeException e) {
-			return new ResponseEntity<String>(
-					"Channel not configured properly", HttpStatus.OK);
+			return new ResponseEntity<String>("Channel not configured properly", HttpStatus.OK);
 		}
 	}
 
 	@RequestMapping(method = RequestMethod.GET, value = "/{channelId}/filetypes")
-	public ResponseEntity<List<Filetype>> getFileTypes(
-			@PathVariable int channelId) {
-		ReadEvent<List<Filetype>> readEvent = channelService
-				.getFileTypes(new ReadEvent<Integer>(channelId));
-		return new ResponseEntity<List<Filetype>>(readEvent.getEntity(),
-				HttpStatus.OK);
+	public ResponseEntity<List<Filetype>> getFileTypes(@PathVariable int channelId) {
+		ReadEvent<List<Filetype>> readEvent = channelService.getFileTypes(new ReadEvent<Integer>(channelId));
+		return new ResponseEntity<List<Filetype>>(readEvent.getEntity(), HttpStatus.OK);
 	}
 
 	@RequestMapping(method = RequestMethod.GET, value = "/{channelId}/uploadedfiles")
-	public ResponseEntity<List<UploadedFile>> getUploadedFiles(
-			@PathVariable int channelId) {
-		ReadEvent<List<UploadedFile>> readEvent = channelService
-				.getUploadedFiles(new ReadEvent<Integer>(channelId));
-		return new ResponseEntity<List<UploadedFile>>(readEvent.getEntity(),
-				HttpStatus.OK);
+	public ResponseEntity<List<UploadedFile>> getUploadedFiles(@PathVariable int channelId) {
+		ReadEvent<List<UploadedFile>> readEvent = channelService.getUploadedFiles(new ReadEvent<Integer>(channelId));
+		return new ResponseEntity<List<UploadedFile>>(readEvent.getEntity(), HttpStatus.OK);
 	}
 
 	int m_channelId;
@@ -168,8 +150,8 @@ public class ChannelCommandsController extends BaseController {
 		private final String uploadedfilename;
 		private final int filetypeId;
 
-		public UploadResponse(final String status, final List<String> header,
-				final int channelId, final String filename, final int filetypeId) {
+		public UploadResponse(final String status, final List<String> header, final int channelId,
+				final String filename, final int filetypeId) {
 			this.status = status;
 			this.header = header;
 			this.channelId = channelId;
@@ -200,12 +182,9 @@ public class ChannelCommandsController extends BaseController {
 	}
 
 	@RequestMapping(method = RequestMethod.POST, value = "/{channelId}/uploadfile")
-	public ResponseEntity<UploadResponse> UploadFile(
-			@PathVariable int channelId, @RequestParam MultipartFile upload,
-			@RequestParam int filetype, @RequestParam String filename,
-			@RequestParam String hasheader,
-			@RequestParam String fieldDelimiter,
-			@RequestParam String textDelimiter, @RequestHeader int vid) {
+	public ResponseEntity<UploadResponse> UploadFile(@PathVariable int channelId, @RequestParam MultipartFile upload,
+			@RequestParam int filetype, @RequestParam String filename, @RequestParam String hasheader,
+			@RequestParam String fieldDelimiter, @RequestParam String textDelimiter, @RequestHeader int vid) {
 
 		LOG.info("Going to process uploaded file");
 		String fullFileName = vid + upload.getName() + ".txt";
@@ -217,7 +196,7 @@ public class ChannelCommandsController extends BaseController {
 			LOG.error(e1.getMessage(), e1);
 		} catch (IOException e1) {
 			LOG.error(e1.getMessage(), e1);
-		}// FileUtils.copyFile(m_upload, theFile);
+		} // FileUtils.copyFile(m_upload, theFile);
 		LOG.info("Copied the file to local-zone");
 		if (filetype == -1) {
 			// Show the column mapping interface
@@ -230,8 +209,7 @@ public class ChannelCommandsController extends BaseController {
 			if ("quotes".equalsIgnoreCase(textDelimiter))
 				textDelimiter = "\"";
 			LOG.info("Computing headers");
-			List<String> header = CsvHelper.getColumnHeaders(theFile,
-					fieldDelimiter, textDelimiter,
+			List<String> header = CsvHelper.getColumnHeaders(theFile, fieldDelimiter, textDelimiter,
 					hasheader.equalsIgnoreCase("yes"));
 
 			// Check if the headers of the file are readable or not
@@ -251,17 +229,15 @@ public class ChannelCommandsController extends BaseController {
 				report = "Orders file uploaded and parsed successfully";
 			}
 			LOG.info("Determined headers");
-			return new ResponseEntity<UploadResponse>(new UploadResponse(
-					report, header, channelId, fullFileName, filetype),
-					HttpStatus.OK);
+			return new ResponseEntity<UploadResponse>(
+					new UploadResponse(report, header, channelId, fullFileName, filetype), HttpStatus.OK);
 		} else {
 			// Simply import the orders from the file
 			Session dbSession = SessionManager.currentSession();
 			try {
 				// processImportOrders(dbSession, theFile, filetype, filename);
-				return new ResponseEntity<UploadResponse>(new UploadResponse(
-						"Orders file uploaded successfully.", null, channelId,
-						fullFileName, filetype), HttpStatus.OK);
+				return new ResponseEntity<UploadResponse>(new UploadResponse("Orders file uploaded successfully.", null,
+						channelId, fullFileName, filetype), HttpStatus.OK);
 			} catch (Exception e) {
 				LOG.error(e.getMessage(), e);
 			}
@@ -271,8 +247,8 @@ public class ChannelCommandsController extends BaseController {
 	}
 
 	@RequestMapping(method = RequestMethod.POST, value = "/{channelId}/newfile")
-	public ResponseEntity<OrderBatch> saveNewFile(@PathVariable int channelId,
-			@RequestHeader int vid, @RequestBody Map<String, String> fieldMap) {
+	public ResponseEntity<OrderBatch> saveNewFile(@PathVariable int channelId, @RequestHeader int vid,
+			@RequestBody Map<String, String> fieldMap) {
 		this.m_channelId = channelId;
 		String fieldDelimiter = fieldMap.get("fieldDelimiter");
 		String textDelimiter = fieldMap.get("textDelimiter");
@@ -305,8 +281,7 @@ public class ChannelCommandsController extends BaseController {
 				dbSession.save(ocf);
 
 				LOG.info("Saving file format parameters");
-				saveFileFormatParam(dbSession, oft, "USE_HEADER",
-						hasheader.equalsIgnoreCase("yes") ? "1" : "0");
+				saveFileFormatParam(dbSession, oft, "USE_HEADER", hasheader.equalsIgnoreCase("yes") ? "1" : "0");
 				String delim = fieldDelimiter;
 				if ("COMMA".equalsIgnoreCase(fieldDelimiter))
 					delim = ",";
@@ -349,8 +324,8 @@ public class ChannelCommandsController extends BaseController {
 			}
 
 			LOG.info("Importing orders from data file now");
-			OrderBatch orderBatch = processImportOrders(dbSession, new File(
-					uploadedfilename), filetype, uploadedfilename);
+			OrderBatch orderBatch = processImportOrders(dbSession, new File(uploadedfilename), filetype,
+					uploadedfilename);
 			return new ResponseEntity<OrderBatch>(orderBatch, HttpStatus.OK);
 		} catch (RuntimeException e) {
 			if (tx != null && tx.isActive())
@@ -365,8 +340,8 @@ public class ChannelCommandsController extends BaseController {
 	}
 
 	@RequestMapping(method = RequestMethod.POST, value = "/{channelId}/confirmupload")
-	public ResponseEntity<Integer> confirmOrder(@PathVariable int channelId,
-			@RequestHeader int vid, @RequestBody OrderBatch orderBatch) {
+	public ResponseEntity<Integer> confirmOrder(@PathVariable int channelId, @RequestHeader int vid,
+			@RequestBody OrderBatch orderBatch) {
 
 		int batchId = orderBatch.getBatchId();
 		Integer[] orderIdArr = new Integer[orderBatch.getOimOrderses().size()];
@@ -378,8 +353,7 @@ public class ChannelCommandsController extends BaseController {
 				orderIds += ",";
 			orderIds += o.getOrderId();
 
-			for (Iterator dit = o.getOimOrderDetailses().iterator(); dit
-					.hasNext();) {
+			for (Iterator dit = o.getOimOrderDetailses().iterator(); dit.hasNext();) {
 				OrderDetail d = (OrderDetail) dit.next();
 				if (orderDetailIds.length() > 0)
 					orderDetailIds += ",";
@@ -388,8 +362,7 @@ public class ChannelCommandsController extends BaseController {
 		}
 		String uploadedfileid = "";
 		if (orderBatch.getOimUploadedFileses() != null) {
-			for (Iterator dit = orderBatch.getOimUploadedFileses().iterator(); dit
-					.hasNext();) {
+			for (Iterator dit = orderBatch.getOimUploadedFileses().iterator(); dit.hasNext();) {
 				UploadedFile d = (UploadedFile) dit.next();
 				if (uploadedfileid.length() > 0)
 					uploadedfileid += ",";
@@ -403,15 +376,14 @@ public class ChannelCommandsController extends BaseController {
 			tx = dbSession.beginTransaction();
 
 			// Here is your db code
-			Query q = dbSession
-					.createQuery("update salesmachine.hibernatedb.OimUploadedFiles f set f.deleteTm=null where f.fileId in ("
+			Query q = dbSession.createQuery(
+					"update salesmachine.hibernatedb.OimUploadedFiles f set f.deleteTm=null where f.fileId in ("
 							+ uploadedfileid + ")");
 			int rows = q.executeUpdate();
 			LOG.info("Updated uploadedfile. Rows changed: " + rows);
 
-			q = dbSession
-					.createQuery("update salesmachine.hibernatedb.OimOrderBatches b set b.deleteTm=null where b.batchId="
-							+ batchId);
+			q = dbSession.createQuery(
+					"update salesmachine.hibernatedb.OimOrderBatches b set b.deleteTm=null where b.batchId=" + batchId);
 			rows = q.executeUpdate();
 			LOG.info("Updated batch. Rows changed: " + rows);
 
@@ -421,8 +393,8 @@ public class ChannelCommandsController extends BaseController {
 			rows = q.executeUpdate();
 			LOG.info("Updated orders. Rows changed: " + rows);
 
-			q = dbSession
-					.createQuery("update salesmachine.hibernatedb.OimOrderDetails o set o.deleteTm=null where o.detailId in ("
+			q = dbSession.createQuery(
+					"update salesmachine.hibernatedb.OimOrderDetails o set o.deleteTm=null where o.detailId in ("
 							+ orderDetailIds + ")");
 			rows = q.executeUpdate();
 			LOG.info("Updated order details. Rows changed: " + rows);
@@ -438,21 +410,18 @@ public class ChannelCommandsController extends BaseController {
 		return new ResponseEntity<Integer>(0, HttpStatus.OK);
 	}
 
-	private OrderBatch processImportOrders(Session dbSession, File file,
-			Integer filetypeid, String uploadFileName) throws Exception {
+	private OrderBatch processImportOrders(Session dbSession, File file, Integer filetypeid, String uploadFileName)
+			throws Exception {
 		LOG.info("Processing orders for filetypeid: " + filetypeid);
 
 		Transaction tx = null;
 		try {
 			tx = dbSession.beginTransaction();
-			OimOrderBatches b = CsvHelper.processOrdersFromFile(dbSession,
-					file, filetypeid);
+			OimOrderBatches b = CsvHelper.processOrdersFromFile(dbSession, file, filetypeid);
 			saveOrderBatchAsDeleted(dbSession, b);
-			OimUploadedFiles ouf = saveUploadedFileAsDeleted(dbSession, b,
-					filetypeid, file, uploadFileName);
+			OimUploadedFiles ouf = saveUploadedFileAsDeleted(dbSession, b, filetypeid, file, uploadFileName);
 			b.getOimUploadedFileses().add(ouf);
-			LOG.debug("File :" + uploadFileName
-					+ " added successfully with id# {}", ouf.getFileId());
+			LOG.debug("File :" + uploadFileName + " added successfully with id# {}", ouf.getFileId());
 			/*
 			 * String orderIds = ""; String orderDetailIds = ""; for (Iterator
 			 * it = b.getOimOrderses().iterator(); it.hasNext();) { OimOrders o
@@ -504,17 +473,15 @@ public class ChannelCommandsController extends BaseController {
 		dbSession.save(b);
 		System.out.println("Saved batch id: " + b.getBatchId());
 
-		Query q = dbSession
-				.createQuery("from salesmachine.hibernatedb.OimChannelSupplierMap m where m.deleteTm is null and m.oimChannels=:channel");
+		Query q = dbSession.createQuery(
+				"from salesmachine.hibernatedb.OimChannelSupplierMap m where m.deleteTm is null and m.oimChannels=:channel");
 		Map supplierMap = new HashMap();
-		for (Iterator it = q.setEntity("channel", c).list().iterator(); it
-				.hasNext();) {
+		for (Iterator it = q.setEntity("channel", c).list().iterator(); it.hasNext();) {
 			OimChannelSupplierMap map = (OimChannelSupplierMap) it.next();
 
 			String prefix = map.getSupplierPrefix();
 			OimSuppliers supplier = map.getOimSuppliers();
-			LOG.info("prefix# {} supplierID# {} ", prefix,
-					supplier.getSupplierId());
+			LOG.info("prefix# {} supplierID# {} ", prefix, supplier.getSupplierId());
 			supplierMap.put(prefix, supplier);
 		}
 
@@ -527,19 +494,16 @@ public class ChannelCommandsController extends BaseController {
 			dbSession.save(order);
 			LOG.info("Saved order id: {}", order.getOrderId());
 
-			for (Iterator dit = order.getOimOrderDetailses().iterator(); dit
-					.hasNext();) {
+			for (Iterator dit = order.getOimOrderDetailses().iterator(); dit.hasNext();) {
 				OimOrderDetails detail = (OimOrderDetails) dit.next();
 				detail.setOimOrders(order);
 				detail.setInsertionTm(new Date());
 				detail.setDeleteTm(new Date());
 				LOG.info("Processing order detail with SKU:{}", detail.getSku());
 				if (detail.getSku() != null && detail.getSku().length() > 2) {
-					String prefix = StringHandle.removeNull(detail.getSku())
-							.substring(0, 2);
+					String prefix = StringHandle.removeNull(detail.getSku()).substring(0, 2);
 					if (supplierMap.containsKey(prefix)) {
-						OimSuppliers supplier = (OimSuppliers) supplierMap
-								.get(prefix);
+						OimSuppliers supplier = (OimSuppliers) supplierMap.get(prefix);
 						detail.setOimSuppliers(supplier);
 					}
 				}
@@ -549,9 +513,8 @@ public class ChannelCommandsController extends BaseController {
 		}
 	}
 
-	private OimUploadedFiles saveUploadedFileAsDeleted(Session dbSession,
-			OimOrderBatches b, Integer filetypeId, File file,
-			String uploadFileName) {
+	private OimUploadedFiles saveUploadedFileAsDeleted(Session dbSession, OimOrderBatches b, Integer filetypeId,
+			File file, String uploadFileName) {
 		OimUploadedFiles ouf = new OimUploadedFiles();
 		ouf.setOimOrderBatches(b);
 
@@ -572,8 +535,7 @@ public class ChannelCommandsController extends BaseController {
 		return ouf;
 	}
 
-	private void saveFileFormatParam(Session dbSession, OimFiletypes oft,
-			String paramName, String paramValue) {
+	private void saveFileFormatParam(Session dbSession, OimFiletypes oft, String paramName, String paramValue) {
 		OimFileformatParams params = new OimFileformatParams();
 		params.setInsertionTm(new Date());
 		params.setOimFiletypes(oft);
@@ -597,13 +559,50 @@ public class ChannelCommandsController extends BaseController {
 	@RequestMapping(method = RequestMethod.GET, value = "/pull")
 	public ResponseEntity<String> pullOrders() {
 		try {
-			ReadEvent<String> readEvent = channelService
-					.pullOrders(new RequestReadEvent<Channel>());
-			return new ResponseEntity<String>(readEvent.getEntity(),
-					HttpStatus.OK);
+			ReadEvent<String> readEvent = channelService.pullOrders(new RequestReadEvent<Channel>());
+			return new ResponseEntity<String>(readEvent.getEntity(), HttpStatus.OK);
 		} catch (RuntimeException e) {
-			return new ResponseEntity<String>(
-					"Channel not configured properly", HttpStatus.OK);
+			return new ResponseEntity<String>("Channel not configured properly", HttpStatus.OK);
 		}
+	}
+
+	// @RequestBody Map<String, String> fieldMap
+	@RequestMapping(method = RequestMethod.POST, value = "/addShippingMethods/addShipping")
+	public ResponseEntity<String> saveChannelBasedShipping(@RequestBody Map<String, String> fieldMap) {
+		String channelId = fieldMap.get("channelId");
+		String methodId = fieldMap.get("methodId");
+		String carrierId = fieldMap.get("carrierId");
+		String shippingText = fieldMap.get("shippingText");
+		Session dbSession = SessionManager.currentSession();
+		Transaction tx = null;
+		try {
+			tx = dbSession.beginTransaction();
+			OimChannels channel = (OimChannels) dbSession.get(OimChannels.class, Integer.parseInt(channelId));
+			OimShippingCarrier carrier = (OimShippingCarrier) dbSession.get(OimShippingCarrier.class,
+					Integer.parseInt(carrierId));
+			OimShippingMethod method = (OimShippingMethod) dbSession.get(OimShippingMethod.class,
+					Integer.parseInt(methodId));
+			OimChannelShippingMap channelShippingMap = new OimChannelShippingMap();
+			channelShippingMap.setOimChannel(channel);
+			channelShippingMap.setOimShippingCarrier(carrier);
+			channelShippingMap.setOimShippingMethod(method);
+			channelShippingMap.setOimSupportedChannel(channel.getOimSupportedChannels());
+			channelShippingMap.setShippingRegEx(shippingText);
+			dbSession.save(channelShippingMap);
+			tx.commit();
+			return new ResponseEntity<String>("Shipping saved", HttpStatus.OK);
+		} catch (RuntimeException e) {
+			if (tx != null && tx.isActive())
+				tx.rollback();
+			LOG.error("Exception occured while adding channel based shipping", e);
+
+		} catch (Exception e) {
+			if (tx != null && tx.isActive())
+				tx.rollback();
+			LOG.error("Exception occured while adding channel based shipping", e);
+		}
+		return new ResponseEntity<String>("Error occured while adding channel based shipping",
+				HttpStatus.INTERNAL_SERVER_ERROR);
+
 	}
 }

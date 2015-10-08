@@ -11,6 +11,7 @@ public class ChannelShippingMap implements Serializable {
 	private String shippingRegEx;
 	private ShippingCarrier oimShippingCarrier;
 	private ShippingMethod oimShippingMethod;
+	private Channel oimChannel;
 
 	public int getId() {
 		return id;
@@ -52,6 +53,16 @@ public class ChannelShippingMap implements Serializable {
 		channelShippingMap.setShippingMethod(ShippingMethod.from(entity
 				.getOimShippingMethod()));
 		channelShippingMap.setShippingRegEx(entity.getShippingRegEx());
+		channelShippingMap.setOimChannel(Channel.from(entity.getOimChannel()));
+		
 		return channelShippingMap;
 	}
+
+  public Channel getOimChannel() {
+    return oimChannel;
+  }
+
+  public void setOimChannel(Channel oimChannel) {
+    this.oimChannel = oimChannel;
+  }
 }
