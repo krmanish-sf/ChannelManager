@@ -5,8 +5,10 @@
 	<class name="salesmachine.hibernatedb.OimChannelShippingMap"
 		table="oim_channel_shipping_method">
 		<id name="id" type="int">
-			<column name="ID" />
-			<generator class="assigned" />
+			<column name="ID" precision="22" scale="0" />
+			<generator class="sequence">
+				<param name="sequence">OIM_CHNL_SHIP_METHOD_SEQ</param>
+			</generator>
 		</id>
 		<many-to-one name="oimSupportedChannel"
 			class="salesmachine.hibernatedb.OimSupportedChannels" fetch="join">

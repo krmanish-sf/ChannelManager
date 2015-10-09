@@ -821,7 +821,6 @@
 		for (var i = 0; i < data.overAllSales.length; i++) {
 			salesData.push(data.overAllSales[i]);
 		}
-		console.log(salesData);
 	}
 	function copyFields(from_prefix, to_prefix) {
 		$('#' + to_prefix + 'NAME').val(('#' + from_prefix + 'NAME').val());

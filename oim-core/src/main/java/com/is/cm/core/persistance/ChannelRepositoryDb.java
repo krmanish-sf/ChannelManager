@@ -375,10 +375,12 @@ public class ChannelRepositoryDb extends RepositoryBase implements ChannelReposi
   }
 
   @Override
-  public List<ChannelShippingMap> findShippingMapping(Integer supportedChannelId) {
+  public List<ChannelShippingMap> findShippingMapping(Integer channelId) {
     Session dbSession = SessionManager.currentSession();
+    OimChannels channel = (OimChannels)dbSession.get(OimChannels.class, channelId);
     Criteria findCriteria = dbSession.createCriteria(OimChannelShippingMap.class);
-    findCriteria.add(Restrictions.eq("oimSupportedChannel.supportedChannelId", supportedChannelId));
+    findCriteria.add(Restrictions.eq("oimSupportedChannel.supportedChannelId", channel.getOimSupportedChannels().getSupportedChannelId()));
+    findCriteria.add(Restrictions.or(Restrictions.eq("oimChannel", channel),Restrictions.isNull("oimChannel")));
     List<OimChannelShippingMap> list = findCriteria.list();
     List<ChannelShippingMap> retList = new ArrayList<ChannelShippingMap>();
     for (OimChannelShippingMap entity : list) {

@@ -66,7 +66,7 @@ public abstract class ChannelBase implements IOrderImport {
 
     Criteria findCriteria = m_dbSession.createCriteria(OimChannelShippingMap.class);
     findCriteria.add(Restrictions.eq("oimSupportedChannel", m_channel.getOimSupportedChannels()));
-    findCriteria.add(Restrictions.eqOrIsNull("oimChannel", m_channel));
+    findCriteria.add(Restrictions.or(Restrictions.eq("oimChannel", m_channel),Restrictions.isNull("oimChannel")));
 
     oimChannelShippingMapList = findCriteria.list();
     return true;
