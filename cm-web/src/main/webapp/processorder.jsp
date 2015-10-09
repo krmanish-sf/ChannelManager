@@ -593,54 +593,12 @@
                                 </tr>
                               </thead>
                               <tbody>
-                               <%--  <tr>
-                                  <td><input type="text"
-																		value="RS1234" readonly=""
-																		class="pull-right width-100" name="billno"></td>
-                                  <td><input type="text"
-																		value="Ravish Test Product" readonly=""
-																		class="pull-right width-100" name="orderdate"></td>
-                                  <td><input type="text" value="4"
-																		readonly="" class="pull-right width-100"
-																		name="Quantity"></td>
-                                  <td><input type="text"
-																		value="0.0" readonly="" class="pull-right width-100"
-																		name="SalePrice"></td>
-                                  <td><input type="text"
-																		value="Unprocessed" readonly=""
-																		class="pull-right width-100" name="Status"></td>
-                                </tr> --%>
                               </tbody>
                             </table>
                           </div>
                             </div>
                         </div>
                       </div>
-                      <!-- <div class="row">
-                              <div class="col-sm-4">
-                                <label>Sku</label>
-                                <input type="text" name="billno" class="pull-right" readonly value="RS1234"/>
-                              </div>
-                              <div class="col-sm-4">
-                                <label>Name</label>
-                                <input type="text" name="orderdate" class="pull-right" readonly value="Ravish Test Product"/>
-                              </div>
-                              <div class="col-sm-4">
-                                <label>Quantity</label>
-                                <input type="text" name="Quantity" class="pull-right" readonly value="4"/>
-                              </div>
-                            </div>
-                            <div class="space-4"></div>
-                            <div class="row">
-                              <div class="col-sm-4">
-                                <label>SalePrice</label>
-                                <input type="text" name="SalePrice" class="pull-right" readonly value="0.0"/>
-                              </div>
-                              <div class="col-sm-4">
-                                <label>Status</label>
-                                <input type="text" name="Status" class="pull-right" readonly value="Unprocessed"/>
-                              </div>
-                            </div>--> 
                     </div>
                     <!-- PAGE CONTENT ENDS --> 
                   </div>
@@ -772,32 +730,28 @@
 											return "<input type=\"text\" class=\"width-100\" value=\""
 													+ (orderDetail.sku ? orderDetail.sku
 															: '') + "\"/>";
-										},
-										"sWidth" : "20%"
+										}
 									},
 									{
 										"mData" : function(orderDetail) {
 											return '<input type="text" class=\"width-100\" value="'
 													+ (orderDetail.productName != null ? orderDetail.productName
 															: "") + '"/>';
-										},
-										"sWidth" : "35%"
+										}
 									},
 									{
 										"mData" : function(orderDetail) {
 											return "<input type=\"text\" class=\"width-100\" value=\""
 													+ (orderDetail.quantity ? orderDetail.quantity
 															: 0) + "\"/>";
-										},
-										"sWidth" : "7%"
+										}
 									},
 									{
 										"mData" : function(orderDetail) {
 											return "<input type=\"text\" class=\"width-100\" value=\""
 													+ (orderDetail.salePrice ? orderDetail.salePrice
 															: 0) + "\"/>";
-										},
-										"sWidth" : "8%"
+										}
 									},
 									{
 										"mData" : function(orderDetail) {
@@ -821,8 +775,7 @@
 											}
 											return $('<div>').append(s).html();
 
-										},
-										"sWidth" : "10%"
+										}
 									},
 									{
 										"mData" : function(orderDetail) {
@@ -841,14 +794,12 @@
 												}
 											}
 											return $('<div>').append(s).html();
-										},
-										"sWidth" : "10%"
+										}
 									},
 									{
 										"mData" : function(orderDetail) {
 											return '<button type="button" class="btn btn-info btn-xs pull-left " onclick="b($($(this).parent()).parent());"> <i class="icon-ok"></i>Update</button>';
-										},
-										"sWidth" : "10%"
+										}
 									} ],
 							"aaData" : orderTemp.oimOrderDetailses,
 							"bDestroy" : true
@@ -1090,7 +1041,6 @@
 															$(this).parents(
 																	'tr'))
 															.data();
-													debugger;
 													if (order != null) {
 														for (var i = 0; i < order.oimOrderDetailses.length; i++) {
 															var od = order.oimOrderDetailses[i];

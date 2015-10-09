@@ -441,12 +441,13 @@
 														class="table table-striped table-bordered table-hover table-responsive">
                               <thead>
                                 <tr>
-                                  <th>Sku</th>
+                                  <th>SKU</th>
                                   <th>Name</th>
                                   <th>Qty</th>
                                   <th>Sale Price</th>
                                   <th>Supplier</th>
                                   <th>Status</th>
+                                  <th>PO Number</th>
                                   <th></th>
                                   <th></th>
                                 </tr>
@@ -551,45 +552,39 @@
 									</div>
 	</jsp:attribute>
 	<jsp:attribute name="pagejs">
-	<!-- inline scripts related to this page -->
+	<!-- in-line scripts related to this page -->
 	<script type="text/javascript">
 		var table_xy = null;
 		var MY_SUPPLIERS = null;
 		var table_tracking = null;
 		function a(e) {
 			var order = table_xy.row(e[0]).data();
-			$('#tableorderdetails')
-					.DataTable(
-							{
-								"aoColumns" : [
-										{
-											"mData" : "sku"
-										},
-										{
-											"mData" : "productName"
-										},
-										{
-											"mData" : "quantity"
-										},
-										{
-											"mData" : "salePrice"
-										},
-										{
-											"mData" : function(orderDetail) {
-												return orderDetail.oimOrderStatuses == null ? ''
-														: orderDetail.oimOrderStatuses.statusValue;
-											}
-										} ],
-								"aaData" : order.oimOrderDetailses,
-								"bDestroy" : true
-							});
+			$('#tableorderdetails').DataTable({
+				"columns" : [ {
+					"data" : "sku"
+				}, {
+					"data" : "productName"
+				}, {
+					"data" : "quantity"
+				}, {
+					"data" : "salePrice"
+				}, {
+					"data" : "orderDetail.oimOrderStatuses.statusValue",
+					"defaultContent" : ''
+				} ],
+				"data" : order.oimOrderDetailses,
+				"destroy" : true
+			});
 		}
 		function b(e) {
-			var orderDetail = tableModal.row(e[0]).data();
-			updateOrderDetail(orderDetail, $(e[0]).find('input')[0], $(e[0])
-					.find('input')[1], $(e[0]).find('input')[2], $(e[0]).find(
-					'input')[3], $(e[0]).find('select')[0], $(e[0]).find(
-					'select')[1], e[0]);
+			var tr = $(e).parents('tr');
+			var orderDetail = tableModal.row(tr).data();
+			debugger;
+			updateOrderDetail(orderDetail, tr.find('input')[0], tr
+					.find('input')[1], tr.find('input')[2],
+					tr.find('input')[3], tr.find('select')[0], tr
+							.find('select')[1], tr.find('.po-number-input'),
+					$(e));
 		}
 		function addRow() {
 			var table = $('#editOrderTrackingTable').DataTable();
@@ -804,7 +799,7 @@
 		}
 
 		function updateOrderDetail(orderDetail, sku, name, quantity, saleprice,
-				supplier, status, button) {
+				supplier, status, poNum, button) {
 			if (!sku.value) {
 				alert('SKU is required');
 				sku.focus();
@@ -844,7 +839,7 @@
 			} else {
 				orderDetail.oimSuppliers = null;
 			}
-
+			orderDetail.supplierOrderNumber = $(poNum).val();
 			$(button).CRUD(
 					{
 						method : "PUT",
@@ -858,7 +853,7 @@
 							});
 							table_xy.ajax.reload();
 							getAlerts();
-							$('#myModaledit').modal('hide');
+							//$('#myModaledit').modal('hide');
 						},
 						error : function(data, textStatus, jqXHR) {
 							$.gritter.add({
@@ -907,7 +902,7 @@
 										},
 										{
 											"mData" : function(orderDetail) {
-												var s = $("<select id=\"selectId\" name=\"selectName\" class=\"pull-right width-100\" />");
+												var s = $("<select name=\"selectName\" class=\"pull-right width-100 supplier-select\" />");
 												$("<option />", {
 													value : "",
 													text : ""
@@ -952,7 +947,14 @@
 										},
 										{
 											"mData" : function(orderDetail) {
-												return '<button type="button" class="btn btn-info btn-xs pull-left" onclick="b($($(this).parent()).parent());"><i class="icon-ok"></i>Update</button>';
+												return "<input type=\"text\" class=\"width-100 po-number-input\" value=\""
+														+ (orderDetail.supplierOrderNumber ? orderDetail.supplierOrderNumber
+																: '') + "\"/>";
+											}
+										},
+										{
+											"mData" : function(orderDetail) {
+												return '<button type="button" class="btn btn-info btn-xs pull-left" onclick="b(this);"><i class="icon-ok"></i>Update</button>';
 											}
 										},
 										{
@@ -990,6 +992,23 @@
 		}
 
 		jQuery(function($) {
+			$(document).on(
+					'change',
+					'input.po-number-input',
+					function(e) {
+						var currentSupplier = $(this).parents('tr').find(
+								'.supplier-select').val();
+						var newPO = this.value;
+						var rows = $(this).parents('tr').siblings();
+						$.each(rows, function(i, e) {
+							var thisSupplier = $(e).find('.supplier-select')
+									.val();
+							if (thisSupplier == currentSupplier) {
+								$(e).find('input.po-number-input').val(newPO)
+										.css('background-color', 'yellow');
+							}
+						});
+					});
 			var order_status = '${param["order_status"]}';
 			for (var val = 0; val < STATUS.length; val++) {
 				if (order_status != '' && order_status == STATUS[val].statusId) {

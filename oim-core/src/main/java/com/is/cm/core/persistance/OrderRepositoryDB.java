@@ -327,6 +327,8 @@ public class OrderRepositoryDB extends RepositoryBase implements OrderRepository
       details.setProductName(orderDetail.getProductName());
       details.setSalePrice(orderDetail.getSalePrice());
       details.setOimOrderStatuses(orderDetail.getOimOrderStatuses().toOimOrderStatus());
+      if (!StringHandle.isNullOrEmpty(orderDetail.getSupplierOrderNumber()))
+        details.setSupplierOrderNumber(orderDetail.getSupplierOrderNumber());
       if (orderDetail.getOimSuppliers() == null) {
         details.setOimSuppliers(null);
       } else {
