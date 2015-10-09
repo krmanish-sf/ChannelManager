@@ -144,10 +144,10 @@ public class Eldorado extends Supplier implements HasTracking {
       elOrder.setCity(order.getDeliveryCity());
       elOrder.setCountryCode(order.getDeliveryCountryCode());
       elOrder.setCustPONumber(order.getOrderId().toString());// EL requires numbers only PO
-      elOrder.setEnteredByCode("API");
+      elOrder.setEnteredByCode(ovs.getLogin());
       elOrder.setName(order.getDeliveryName());
       elOrder.setPhoneNumber(order.getDeliveryPhone());
-      elOrder.setSourceCode("API");
+      elOrder.setSourceCode(ovs.getPassword());
       elOrder.setSourceOrderNumber(order.getOrderId().toString());
       elOrder.setSpecialInstructions(order.getOrderComment());
       elOrder.setStateCode(order.getDeliveryStateCode());

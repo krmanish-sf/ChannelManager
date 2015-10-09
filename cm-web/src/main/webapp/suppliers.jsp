@@ -98,15 +98,7 @@ If you have not yet configured your supplier, click "Add Supplier" to do it now.
                         <form class="form-horizontal" role="form"
 												action="/aggregators/suppliers" method="PUT"
 												id="supplierform">
-                           <div class="form-group">
-                              <label
-														class="col-sm-5 control-label no-padding-right">Username</label>
-                              <div class="col-sm-7">
-                              <input class="width-70" name='login'
-															type='text' data-bind-vendorsupplier="login"
-															required="required" />
-                            </div>
-												</div>
+                         
 							<div class="form-group">
                               <label
 														class="col-sm-5 control-label no-padding-right">Account</label>
@@ -116,6 +108,15 @@ If you have not yet configured your supplier, click "Add Supplier" to do it now.
 															required="required" />
                             </div>
 							</div>
+							  <div class="form-group">
+                              <label
+														class="col-sm-5 control-label no-padding-right">Username</label>
+                              <div class="col-sm-7">
+                              <input class="width-70" name='login'
+															type='text' data-bind-vendorsupplier="login"
+															required="required" />
+                            </div>
+												</div>
                             <div class="form-group">
                             
                               <label
