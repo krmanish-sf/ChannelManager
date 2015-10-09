@@ -7,24 +7,29 @@ import java.io.OutputStream;
 import java.io.StringReader;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.GregorianCalendar;
 
 import javax.net.ssl.HttpsURLConnection;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
 import javax.xml.bind.Unmarshaller;
+import javax.xml.datatype.DatatypeConfigurationException;
+import javax.xml.datatype.DatatypeFactory;
 import javax.xml.datatype.XMLGregorianCalendar;
 
 import org.apache.axis.utils.ByteArrayOutputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.amazonservices.mws.client.MwsUtl;
-
 import salesmachine.hibernatedb.OimOrderDetails;
 import salesmachine.hibernatedb.OimOrders;
 import salesmachine.hibernatedb.OimSupplierShippingMethod;
 import salesmachine.hibernatedb.OimVendorSuppliers;
+import salesmachine.oim.api.OimConstants;
 import salesmachine.oim.stores.exception.ChannelCommunicationException;
 import salesmachine.oim.stores.exception.ChannelConfigurationException;
 import salesmachine.oim.stores.exception.ChannelOrderFormatException;
@@ -58,7 +63,7 @@ public class Eldorado extends Supplier implements HasTracking {
   static {
     try {
       jaxbContext = JAXBContext.newInstance(XMLInputOrder.class, XMLOrders.class,
-          ELTrackRequest.class);
+          ELTrackRequest.class, salesmachine.oim.suppliers.modal.el.tracking.XMLOrders.class);
     } catch (JAXBException e) {
       log.error("Error in initializing XML parsing context.");
     }
@@ -69,6 +74,7 @@ public class Eldorado extends Supplier implements HasTracking {
       OimOrderDetails oimOrderDetails) throws SupplierOrderTrackingException {
     String urlString = "https://www.eldoradopartner.com/shipping_updates/index.php";
     OrderStatus status = new OrderStatus();
+    status.setStatus(oimOrderDetails.getSupplierOrderStatus());
     try (ByteArrayOutputStream os = new ByteArrayOutputStream()) {
       Marshaller marshaller = jaxbContext.createMarshaller();
       Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
@@ -91,16 +97,17 @@ public class Eldorado extends Supplier implements HasTracking {
       switch (responseCode) {
       case "RECORD":
         TrackingData trackingData = new TrackingData();
-        trackingData.setCarrierName(trackingResponse.getOrder().getCarrierCode());
+        trackingData.setCarrierCode(trackingResponse.getOrder().getCarrierCode());
         trackingData.setShippingMethod(trackingResponse.getOrder().getServiceCode());
         trackingData.setQuantity(oimOrderDetails.getQuantity());
         trackingData.setShipperTrackingNumber(trackingResponse.getOrder().getTrackingNumber());
-        XMLGregorianCalendar shipDate = MwsUtl.getDTF().newXMLGregorianCalendar();
-        String[] shipped = trackingResponse.getOrder().getDateShipment().split("/");
-        shipDate.setDay(Integer.parseInt(shipped[0]));
-        shipDate.setMonth(Integer.parseInt(shipped[1]));
-        shipDate.setYear(Integer.parseInt(shipped[2]));
+        SimpleDateFormat df = new SimpleDateFormat("MM/dd/yyyy hh:mm:ss a");
+        GregorianCalendar c = new GregorianCalendar();
+        Date date = df.parse(trackingResponse.getOrder().getDateShipment());
+        c.setTime(date);
+        XMLGregorianCalendar shipDate = DatatypeFactory.newInstance().newXMLGregorianCalendar(c);
         trackingData.setShipDate(shipDate);
+        status.setStatus(OimConstants.OIM_SUPPLER_ORDER_STATUS_SHIPPED);
         status.addTrackingData(trackingData);
         break;
       case "NO_RECORD":
@@ -111,7 +118,8 @@ public class Eldorado extends Supplier implements HasTracking {
             "Eldorado system failed to process request for PO:" + trackingMeta);
       }
     } catch (JAXBException | SupplierConfigurationException | SupplierCommunicationException
-        | SupplierOrderException | IOException e) {
+        | SupplierOrderException | IOException | ParseException
+        | DatatypeConfigurationException e) {
       log.error(e.getMessage(), e);
       throw new SupplierOrderTrackingException(e.getMessage(), e);
     }

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<XML_Orders>
+	<Order>
+		<response_code>RECORD</response_code>
+		<web_order_number>416721</web_order_number>
+		<cod_amount>0.00</cod_amount>
+		<tracking_number>1Z8045930301783189</tracking_number>
+		<current_box_number>1</current_box_number>
+		<no_of_boxes>1</no_of_boxes>
+		<carrier_code>UPS Ground</carrier_code>
+		<service_code>UGR</service_code>
+		<turns_invoice_number>1166609</turns_invoice_number>
+		<date_shipment>10/07/2015 09:41:00 AM</date_shipment>
+		<customer_account_no>37190PF</customer_account_no>
+		<shipping_cost>13.75</shipping_cost>
+	</Order>
+</XML_Orders>
