@@ -162,7 +162,9 @@ public final class ShopifyOrderImport extends ChannelBase implements IOrderImpor
     m_dbSession.save(batch);
     tx.commit();
     HttpClient client = new HttpClient();
-    String requestUrl = storeUrl + "/admin/orders.json";
+   // String requestUrl = storeUrl + "/admin/orders.json";
+    String status = m_orderProcessingRule.getPullWithStatus();
+    String requestUrl = storeUrl + "/admin/orders.json?fulfillment_status="+status;
     Date lstFetchTime = m_channel.getLastFetchTm();
     // FIXME API didn't respond as per the specification, still getting all
     // the orders.
