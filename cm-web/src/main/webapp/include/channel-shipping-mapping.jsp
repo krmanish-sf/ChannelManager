@@ -45,6 +45,8 @@
 											class="hidden-xs visible-sm">Shipping Carrier</span></th>
 										<th><i class="icon-plane icon-2x blue visible-xs"></i><span
 											class="hidden-xs">Shipping Method</span></th>
+											<th><i class="icon-plane icon-2x blue visible-xs"></i><span
+											class="hidden-xs">Edit/Delete</span></th>
 									</tr>
 								</thead>
 								<tbody>

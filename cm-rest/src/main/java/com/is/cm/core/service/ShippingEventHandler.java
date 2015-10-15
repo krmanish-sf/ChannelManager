@@ -4,9 +4,12 @@ import java.util.List;
 import java.util.Map;
 
 import com.is.cm.core.domain.ChannelShippingMap;
+import com.is.cm.core.domain.OrderTracking;
 import com.is.cm.core.domain.ShippingMethod;
 import com.is.cm.core.event.CreateEvent;
 import com.is.cm.core.event.CreatedEvent;
+import com.is.cm.core.event.DeleteEvent;
+import com.is.cm.core.event.DeletedEvent;
 import com.is.cm.core.event.ReadCollectionEvent;
 import com.is.cm.core.event.RequestReadEvent;
 import com.is.cm.core.persistance.ShippingRepository;
@@ -45,6 +48,11 @@ public class ShippingEventHandler implements ShippingService {
 				shippingMethodId, supportedChannelId, rexex);
 
 		return new CreatedEvent<ChannelShippingMap>(entity.getId(), entity);
+	}
+	@Override
+	public DeletedEvent<OrderTracking> deleteChannelShippingMapping(DeleteEvent<ChannelShippingMap> deleteEvent) {
+		shippingRepository.deleteChannelShippingMapping(deleteEvent.getId());
+		return new DeletedEvent(deleteEvent.getId(), null);
 	}
 
 }

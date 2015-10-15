@@ -19,9 +19,12 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
 import com.is.cm.core.domain.ChannelShippingMap;
+import com.is.cm.core.domain.OrderTracking;
 import com.is.cm.core.domain.ShippingMethod;
 import com.is.cm.core.event.CreateEvent;
 import com.is.cm.core.event.CreatedEvent;
+import com.is.cm.core.event.DeleteEvent;
+import com.is.cm.core.event.DeletedEvent;
 import com.is.cm.core.event.ReadCollectionEvent;
 import com.is.cm.core.event.RequestReadEvent;
 import com.is.cm.core.service.ShippingService;
@@ -76,4 +79,26 @@ public class ShippingMappingController {
 		return new ResponseEntity<ChannelShippingMap>(details.getEntity(),
 				HttpStatus.OK);
 	}
+	
+	  @RequestMapping(method = RequestMethod.DELETE, value = "/deleteShipping/{shippingMethodId}")
+	    public ResponseEntity<OrderTracking> deleteChannelShippingMapping(
+	      @PathVariable String shippingMethodId) {
+	  LOG.debug("Recieved request to delete shipping Mapping for {}", shippingMethodId);
+	  DeletedEvent<OrderTracking> deletedEvent = shippingService
+	    .deleteChannelShippingMapping(new DeleteEvent<ChannelShippingMap>(Integer
+	      .parseInt(shippingMethodId)));
+	  if (!deletedEvent.isEntityFound()) {
+	      return new ResponseEntity<OrderTracking>(HttpStatus.NOT_FOUND);
+	  }
+	  if (deletedEvent.isDeletionCompleted()) {
+	      return new ResponseEntity<OrderTracking>(deletedEvent.getEntity(),
+	        HttpStatus.OK);
+	  }
+	  LOG.debug("Delete failed for Entity:{} with Id:{}", deletedEvent
+	    .getEntity().getClass(), deletedEvent.getEntity());
+	  return new ResponseEntity<OrderTracking>(deletedEvent.getEntity(),
+	    HttpStatus.FORBIDDEN);
+	    }
+	
+	
 }
