@@ -15,4 +15,6 @@ public interface ShippingRepository {
 	ChannelShippingMap saveChannelShippingMap(int shippingMethodId,
 			int supportedChannelId, String rexex);
 
+  void deleteChannelShippingMapping(int id);
+
 }

@@ -1,12 +1,17 @@
 package com.is.cm.core.persistance;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import org.hibernate.Session;
+import org.hibernate.Transaction;
 import org.hibernate.criterion.Restrictions;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import salesmachine.hibernatedb.OimChannelShippingMap;
+import salesmachine.hibernatedb.OimOrderTracking;
 import salesmachine.hibernatedb.OimShippingMethod;
 import salesmachine.hibernatedb.OimSupportedChannels;
 import salesmachine.hibernatehelper.SessionManager;
@@ -16,7 +21,7 @@ import com.is.cm.core.domain.ShippingMethod;
 
 public class ShippingRepositoryDB extends RepositoryBase implements
 		ShippingRepository {
-
+  private static Logger LOG = LoggerFactory.getLogger(ShippingRepositoryDB.class);
 	@Override
 	public List<ShippingMethod> findShippingMethods() {
 		Session dbSession = SessionManager.currentSession();
@@ -61,5 +66,25 @@ public class ShippingRepositoryDB extends RepositoryBase implements
 				.getOimShippingCarrier());
 		dbSession.save(channelShippingMap);
 		return ChannelShippingMap.from(channelShippingMap);
+	}
+	
+	@Override
+	public void deleteChannelShippingMapping(int id) {
+
+    Session currentSession = SessionManager.currentSession();
+    Transaction tx = null;
+    try {
+      tx = currentSession.beginTransaction();
+      OimChannelShippingMap entity = (OimChannelShippingMap) currentSession.get(OimChannelShippingMap.class,
+          id);
+     currentSession.delete(entity);
+      tx.commit();
+    } catch (RuntimeException e) {
+      if (tx != null && tx.isActive())
+        tx.rollback();
+      LOG.error("Error occurred while deleting shippingMapping", e);
+    }
+  
+	  
 	}
 }

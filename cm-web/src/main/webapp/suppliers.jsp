@@ -516,14 +516,14 @@ If you have not yet configured your supplier, click "Add Supplier" to do it now.
 						
 					</div>	
 						
-					<div class="form-group supplier-class" id="customname">
-                              <label for="name"
-														class="col-sm-5 control-label no-padding-right">Name</label>
-                              <div class="col-sm-7">
-                                 <input class="width-70" name="name"
-															minlength="2" type="text" value="" required />
-                            </div>
-												</div>
+<!-- 					<div class="form-group supplier-class" id="customname"> -->
+<!--                               <label for="name" -->
+<!-- 														class="col-sm-5 control-label no-padding-right">Name</label> -->
+<!--                               <div class="col-sm-7"> -->
+<!--                                  <input class="width-70" name="name" -->
+<!-- 															minlength="2" type="text" value="" required /> -->
+<!--                             </div> -->
+<!-- 												</div> -->
                            <div class="form-group supplier-class">
                               <label
 														class="col-sm-5 control-label no-padding-right">UserName</label>

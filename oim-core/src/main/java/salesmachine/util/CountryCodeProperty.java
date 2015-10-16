@@ -34,8 +34,13 @@ public class CountryCodeProperty {
   private CountryCodeProperty() {
   }
 
+  // public static final String getProperty(String key) {
+  // key = key.trim().toLowerCase();
+  // return prop.getProperty(key);
+  // }
+
   public static final String getProperty(String key) {
-    key = key.trim().toLowerCase();
+    key = key.trim().replaceAll(" ", "_").toLowerCase();
     return prop.getProperty(key);
   }
 }

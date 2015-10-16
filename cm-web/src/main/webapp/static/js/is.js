@@ -243,9 +243,10 @@ function evalArray(obj, expr) {
 };
 
 function drawSalesReportTable(data) {
-	var table = $('#tasks2').DataTable({
-		'dom' : 't'
-	});
+//	var table = $('#tasks2').DataTable({
+//		'dom' : 't'
+//	});
+	var table = $('#tasks2').DataTable();
 	table.clear().draw();
 	for (var i = 0; i < data.length; i++) {
 		table.row.add([ data[i].sku, "$" + data[i].totalSales ]).draw();
@@ -775,8 +776,12 @@ function drawSalesReportTable(data) {
 							url : sSource,
 							data : aoData,
 							cache : false,
-							success : fnCallback
+							success: function(data) { 
+								fnCallback(data); 
+								console.log(data);
+							}
 						});
+						
 					},
 					"sAjaxDataProp" : '',
 					"aoColumns" : [ {
@@ -785,9 +790,42 @@ function drawSalesReportTable(data) {
 						"mData" : "oimShippingCarrier.name"
 					}, {
 						"mData" : "shippingMethod.name"
-					} ]
+					},
+					{
+						"mData" : function(obj) {
+							return "<span><i class='icon-trash' title='Remove this row' onclick='$.CM.removeRow($(this).parent().parent().parent(), "
+							+ obj.id
+							+ ");'></i></span>";
+						},
+						"bsortable":"false"
+					}
+					]
 				});
 	};
+	
+	$.CM.removeRow = function(e,shippingMethodId){
+		var isDelete = confirm("You are trying to delete an existing tracking. Are you sure?");
+		if (isDelete) {
+			$(this)
+					.CRUD(
+							{
+								url : 'aggregators/shipping/deleteShipping/'
+										+ shippingMethodId,
+								method : 'DELETE',
+								message : true,
+								success : function(data) {
+									$.gritter.add({
+										title : 'Shipping Method',
+										text : "Deleted Successfully."
+									});
+									tableShippingMap.ajax.reload();
+								}
+							});
+			
+		}
+		
+	}
+	
 	$.CM.viewSupplierShippingMap = function(e, tableId) {
 		var supplierId;
 		if (typeof e == 'number')
