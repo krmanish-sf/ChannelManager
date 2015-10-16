@@ -74,7 +74,7 @@
 									<div class="row">
 										<div class="col-sm-12">
 											<ul class="list-unstyled spaced">
-											<li><i class="icon-ok"></i> $249/Month Order Automation</li>
+											<li><i class="icon-ok"></i> $299/Month Order Automation</li>
 											<li><i class="icon-ok"></i> 10,000 Monthly Order Volume</li>
 											<li><i class="icon-ok"></i> Full Shipping/Tracking Automation</li>
 											<li><i class="icon-ok"></i> Phone &amp; Email Support</li>

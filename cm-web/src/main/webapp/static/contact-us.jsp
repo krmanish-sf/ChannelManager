@@ -10,7 +10,7 @@
 				<center>
 						<table style="width: 70%">
 					<tr>
-							<td><center><img alt="" style="width: 75%;"
+							<td><br/><center><img alt="" style="width: 75%;"
 									src="${pageContext.request.contextPath}/static/images/channel-manager.png"></center></td>
 						</tr>
 					<tr>
