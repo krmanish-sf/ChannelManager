@@ -39,14 +39,30 @@
 						<td style="text-align: center;padding-top: 4px;padding-bottom: 4px;"><b>$299/month</b></td>
 						</tr>
 						</table> 
-						<br /><br /><br /><br />
-						
+						<br />
 						</td>
 					</tr>
 					<tr>
 					<td>
 					<center>
 					<table style="width: 70%;">
+					<tr>
+					<td>
+					&nbsp;&nbsp;
+					<%-- <img alt="" style="width: 75%;"
+									src="${pageContext.request.contextPath}/static/images/support_phicon.png"> --%>
+									<center><h2 style="width: auto;
+background: url(images/support_phicon.png) no-repeat left top;
+padding: 0 0 20px 0;
+margin: 0;
+color: #cc202a;
+font-family: Arial, Helvetica, sans-serif;
+line-height: normal;
+font-size: 54px;
+font-weight: normal;
+text-shadow: 1px 1px 1px #333;">888-351-3497</h2></center>
+					</td>
+					</tr>
 					<tr>
 					<td>
 					
