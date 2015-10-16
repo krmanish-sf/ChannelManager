@@ -793,7 +793,6 @@ function drawSalesReportTable(data) {
 					},
 					{
 						"mData" : function(obj) {
-							console.log(obj);
 							return "<span><i class='icon-trash' title='Remove this row' onclick='$.CM.removeRow($(this).parent().parent().parent(), "
 							+ obj.id
 							+ ");'></i></span>";
@@ -807,8 +806,6 @@ function drawSalesReportTable(data) {
 	$.CM.removeRow = function(e,shippingMethodId){
 		var isDelete = confirm("You are trying to delete an existing tracking. Are you sure?");
 		if (isDelete) {
-			console.log(shippingMethodId);
-			console.log(e);
 			$(this)
 					.CRUD(
 							{

@@ -162,9 +162,9 @@ public final class ShopifyOrderImport extends ChannelBase implements IOrderImpor
     m_dbSession.save(batch);
     tx.commit();
     HttpClient client = new HttpClient();
-   // String requestUrl = storeUrl + "/admin/orders.json";
+    // String requestUrl = storeUrl + "/admin/orders.json";
     String status = m_orderProcessingRule.getPullWithStatus();
-    String requestUrl = storeUrl + "/admin/orders.json?fulfillment_status="+status;
+    String requestUrl = storeUrl + "/admin/orders.json?fulfillment_status=" + status;
     Date lstFetchTime = m_channel.getLastFetchTm();
     // FIXME API didn't respond as per the specification, still getting all
     // the orders.
@@ -257,6 +257,8 @@ public final class ShopifyOrderImport extends ChannelBase implements IOrderImpor
                 .setDeliveryCompany(StringHandle.removeNull((String) deliveryObj.get("company")));
             oimOrders
                 .setDeliveryCountry(StringHandle.removeNull((String) deliveryObj.get("country")));
+            oimOrders.setDeliveryCountry(
+                StringHandle.removeNull((String) deliveryObj.get("country_code")));
             oimOrders
                 .setDeliveryName(StringHandle.removeNull((String) deliveryObj.get("first_name"))
                     + " " + StringHandle.removeNull((String) deliveryObj.get("last_name")));
@@ -398,7 +400,7 @@ public final class ShopifyOrderImport extends ChannelBase implements IOrderImpor
           // Check the channel setting if channel is not in test mode.
           if (m_channel.getTestMode() == 0) {
             // sending acknowledgement to shopify that we recived the order.
-            sendAcknowledgementToStore(requestUrl, storeOrderId, tags); 
+            sendAcknowledgementToStore(requestUrl, storeOrderId, tags);
           } else {
             log.warn("Acknowledgement to channel was not sent as Channel is set to test mode.");
           }
