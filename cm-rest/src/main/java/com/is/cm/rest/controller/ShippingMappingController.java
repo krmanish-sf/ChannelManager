@@ -27,13 +27,14 @@ import com.is.cm.core.event.DeleteEvent;
 import com.is.cm.core.event.DeletedEvent;
 import com.is.cm.core.event.ReadCollectionEvent;
 import com.is.cm.core.event.RequestReadEvent;
+import com.is.cm.core.event.UpdateEvent;
+import com.is.cm.core.event.UpdatedEvent;
 import com.is.cm.core.service.ShippingService;
 
 @Controller
 @RequestMapping("/aggregators/shipping")
 public class ShippingMappingController {
-	private static final Logger LOG = LoggerFactory
-			.getLogger(ShippingMappingController.class);
+	private static final Logger LOG = LoggerFactory.getLogger(ShippingMappingController.class);
 	@Autowired
 	private ShippingService shippingService;
 
@@ -45,60 +46,58 @@ public class ShippingMappingController {
 	}
 
 	@RequestMapping(method = RequestMethod.GET, value = "/{shippingMethodId}/{supportedChannelId}")
-	public ResponseEntity<Collection<ChannelShippingMap>> viewChannelShipping(
-			@PathVariable int supportedChannelId,
+	public ResponseEntity<Collection<ChannelShippingMap>> viewChannelShipping(@PathVariable int supportedChannelId,
 			@PathVariable int shippingMethodId) {
 		Map<String, Integer> args = new HashMap<String, Integer>();
 		args.put("SMID", shippingMethodId);
 		args.put("SCID", supportedChannelId);
 		ReadCollectionEvent<ChannelShippingMap> details = shippingService
-				.findShippingMethods(new RequestReadEvent<Map<String, Integer>>(
-						args));
+				.findShippingMethods(new RequestReadEvent<Map<String, Integer>>(args));
 		if (!details.isEntityFound()) {
-			return new ResponseEntity<Collection<ChannelShippingMap>>(
-					HttpStatus.NOT_FOUND);
+			return new ResponseEntity<Collection<ChannelShippingMap>>(HttpStatus.NOT_FOUND);
 		}
-		return new ResponseEntity<Collection<ChannelShippingMap>>(
-				details.getEntity(), HttpStatus.OK);
+		return new ResponseEntity<Collection<ChannelShippingMap>>(details.getEntity(), HttpStatus.OK);
 	}
 
 	@RequestMapping(method = RequestMethod.PUT, value = "/{shippingMethodId}/{supportedChannelId}")
-	public ResponseEntity<ChannelShippingMap> createChannelShipping(
-			@PathVariable int supportedChannelId,
+	public ResponseEntity<ChannelShippingMap> createChannelShipping(@PathVariable int supportedChannelId,
 			@PathVariable int shippingMethodId, @RequestBody String regex) {
 		Map<String, Object> args = new HashMap<String, Object>();
 		args.put("SMID", shippingMethodId);
 		args.put("SCID", supportedChannelId);
 		args.put("REGEX", regex);
 		CreatedEvent<ChannelShippingMap> details = shippingService
-				.createShippingMethods(new CreateEvent<Map<String, Object>>(
-						args));
+				.createShippingMethods(new CreateEvent<Map<String, Object>>(args));
 		if (!details.isAlradyExists()) {
 			return new ResponseEntity<ChannelShippingMap>(HttpStatus.FORBIDDEN);
 		}
-		return new ResponseEntity<ChannelShippingMap>(details.getEntity(),
-				HttpStatus.OK);
+		return new ResponseEntity<ChannelShippingMap>(details.getEntity(), HttpStatus.OK);
 	}
-	
-	  @RequestMapping(method = RequestMethod.DELETE, value = "/deleteShipping/{shippingMethodId}")
-	    public ResponseEntity<OrderTracking> deleteChannelShippingMapping(
-	      @PathVariable String shippingMethodId) {
-	  LOG.debug("Recieved request to delete shipping Mapping for {}", shippingMethodId);
-	  DeletedEvent<OrderTracking> deletedEvent = shippingService
-	    .deleteChannelShippingMapping(new DeleteEvent<ChannelShippingMap>(Integer
-	      .parseInt(shippingMethodId)));
-	  if (!deletedEvent.isEntityFound()) {
-	      return new ResponseEntity<OrderTracking>(HttpStatus.NOT_FOUND);
-	  }
-	  if (deletedEvent.isDeletionCompleted()) {
-	      return new ResponseEntity<OrderTracking>(deletedEvent.getEntity(),
-	        HttpStatus.OK);
-	  }
-	  LOG.debug("Delete failed for Entity:{} with Id:{}", deletedEvent
-	    .getEntity().getClass(), deletedEvent.getEntity());
-	  return new ResponseEntity<OrderTracking>(deletedEvent.getEntity(),
-	    HttpStatus.FORBIDDEN);
-	    }
-	
-	
+
+	@RequestMapping(method = RequestMethod.DELETE, value = "/deleteShipping/{shippingMethodId}")
+	public ResponseEntity<ChannelShippingMap> deleteChannelShippingMapping(@PathVariable String shippingMethodId) {
+		LOG.debug("Recieved request to delete shipping Mapping for {}", shippingMethodId);
+		DeletedEvent<ChannelShippingMap> deletedEvent = shippingService
+				.deleteChannelShippingMapping(new DeleteEvent<ChannelShippingMap>(Integer.parseInt(shippingMethodId)));
+		if (!deletedEvent.isEntityFound()) {
+			return new ResponseEntity<ChannelShippingMap>(HttpStatus.NOT_FOUND);
+		}
+		if (deletedEvent.isDeletionCompleted()) {
+			return new ResponseEntity<ChannelShippingMap>(deletedEvent.getEntity(), HttpStatus.OK);
+		}
+		LOG.debug("Delete failed for Entity:{} with Id:{}", deletedEvent.getEntity().getClass(),
+				deletedEvent.getEntity());
+		return new ResponseEntity<ChannelShippingMap>(deletedEvent.getEntity(), HttpStatus.FORBIDDEN);
+	}
+
+	@RequestMapping(method = { RequestMethod.POST }, value = "/updateShipping/{channelShippingId}")
+	public ResponseEntity<String> updateShippingMapping(@PathVariable String channelShippingId,
+			@RequestBody Map<String, String> shippingMappings) {
+		LOG.info(shippingMappings.toString());
+
+		UpdatedEvent<String> event = shippingService.updateShippingMapping(
+				new UpdateEvent<Map<String, String>>(Integer.parseInt(channelShippingId), shippingMappings));
+		return new ResponseEntity<String>(event.getEntity(), HttpStatus.OK);
+	}
+
 }

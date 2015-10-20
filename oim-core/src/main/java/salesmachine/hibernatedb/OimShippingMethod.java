@@ -50,5 +50,9 @@ public class OimShippingMethod implements Serializable {
 	public void setDescription(String description) {
 		this.description = description;
 	}
+	
+	public String getFullName(){
+	  return this.oimShippingCarrier.getName() + " " + this.getName();
+	}
 
 }

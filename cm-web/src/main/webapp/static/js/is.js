@@ -243,9 +243,9 @@ function evalArray(obj, expr) {
 };
 
 function drawSalesReportTable(data) {
-//	var table = $('#tasks2').DataTable({
-//		'dom' : 't'
-//	});
+	// var table = $('#tasks2').DataTable({
+	// 'dom' : 't'
+	// });
 	var table = $('#tasks2').DataTable();
 	table.clear().draw();
 	for (var i = 0; i < data.length; i++) {
@@ -758,74 +758,226 @@ function drawSalesReportTable(data) {
 						});
 	};
 	var tableShippingMap;
+	var existingShippingMapping;
 	$.CM.viewShippingMap = function(e) {
 		var channel = tableimportchannel.row(e[0]).data();
 		$("#channelHidenField").val(channel.channelId);
-		
-		tableShippingMap = $('#tableShippingMap').DataTable(
-				{
-					"bPaginate" : false,
-					"bDestroy" : true,
-					"bLengthChange" : false,
-					"sAjaxSource" : "/aggregators/channels/shipping/"
-							+ channel.channelId,
-					"fnServerData" : function(sSource, aoData, fnCallback,
-							oSettings) {
-						oSettings.jqXHR = $(this).CRUD({
-							type : "GET",
-							url : sSource,
-							data : aoData,
-							cache : false,
-							success: function(data) { 
-								fnCallback(data); 
-								console.log(data);
-							}
+
+		tableShippingMap = $('#tableShippingMap')
+				.DataTable(
+						{
+							"bPaginate" : false,
+							"bDestroy" : true,
+							"bLengthChange" : false,
+							"sAjaxSource" : "/aggregators/channels/shipping/"
+									+ channel.channelId,
+							"fnServerData" : function(sSource, aoData,
+									fnCallback, oSettings) {
+								oSettings.jqXHR = $(this).CRUD({
+									type : "GET",
+									url : sSource,
+									data : aoData,
+									cache : false,
+									success : function(data) {
+										fnCallback(data);
+										existingShippingMapping = data;
+
+									}
+								});
+
+							},
+							"sAjaxDataProp" : '',
+							"aoColumns" : [
+									{
+										"mData" : "shippingRegEx"
+									},
+									{
+										"mData" : "oimShippingCarrier.name"
+									},
+									{
+										"mData" : "shippingMethod.name"
+									},
+
+									{
+										"mData" : function(obj) {
+											if (obj.oimChannel == null) {
+												return '<a class="btn btn-info btn-minier radius-2 dropdown-hover" disabled><i class="icon-pencil"></i></a>'
+														+ '<a class="btn btn-danger btn-minier radius-2 dropdown-hover" disabled><i class="icon-trash" disabled></i></a>'
+											} else {
+												var channelId = obj.oimChannel != null ? obj.oimChannel.channelId
+														: null;
+												return '<a class="btn btn-info btn-minier radius-2 dropdown-hover" onclick="$.CM.editShippingMethod($(this).parent().parent(), '
+														+ obj.id
+														+ ','
+														+ channelId
+														+ ')";><i class="icon-pencil"></i>'
+														+ '<span data-rel="tooltip" class="dropdown-menu tooltip-success purple dropdown-menu dropdown-yellow pull-right dropdown-caret dropdown-close">Update</span></a>'
+														+ '<a class="btn btn-danger btn-minier radius-2 dropdown-hover" onclick="$.CM.deleteShippingMethod($(this).parent().parent(), '
+														+ obj.id
+														+ ','
+														+ channelId
+														+ ')";><i class="icon-trash"></i>'
+														+ '<span data-rel="tooltip" class="dropdown-menu tooltip-success purple dropdown-menu dropdown-yellow pull-right dropdown-caret dropdown-close">Delete</span></a>';
+
+											}
+										},
+										"bsortable" : "false"
+									} ]
 						});
-						
-					},
-					"sAjaxDataProp" : '',
-					"aoColumns" : [ {
-						"mData" : "shippingRegEx"
-					}, {
-						"mData" : "oimShippingCarrier.name"
-					}, {
-						"mData" : "shippingMethod.name"
-					},
-					{
-						"mData" : function(obj) {
-							return "<span><i class='icon-trash' title='Remove this row' onclick='$.CM.removeRow($(this).parent().parent().parent(), "
-							+ obj.id
-							+ ");'></i></span>";
-						},
-						"bsortable":"false"
-					}
-					]
-				});
 	};
-	
-	$.CM.removeRow = function(e,shippingMethodId){
+
+	$.CM.deleteShippingMethod = function(e, shippingMethodId, channelId) {
+		if (!channelId) {
+			$.gritter
+					.add({
+						title : 'Not Allowed',
+						text : "This shipping method is not specific to any channel. So you can not delete it."
+					});
+			return;
+		}
 		var isDelete = confirm("You are trying to delete an existing tracking. Are you sure?");
 		if (isDelete) {
-			$(this)
-					.CRUD(
-							{
-								url : 'aggregators/shipping/deleteShipping/'
-										+ shippingMethodId,
-								method : 'DELETE',
-								message : true,
-								success : function(data) {
-									$.gritter.add({
-										title : 'Shipping Method',
-										text : "Deleted Successfully."
-									});
-									tableShippingMap.ajax.reload();
-								}
+			$(this).CRUD(
+					{
+						url : 'aggregators/shipping/deleteShipping/'
+								+ shippingMethodId,
+						method : 'DELETE',
+						message : true,
+						success : function(data) {
+							$.gritter.add({
+								title : 'Shipping Method',
+								text : "Deleted Successfully."
 							});
-			
+							tableShippingMap.ajax.reload();
+						}
+					});
+
 		}
-		
+
 	}
-	
+
+	var shippingMapEditTable;
+	var tempShippingMethod;
+	$.CM.editShippingMethod = function(e, objId, channelId) {
+		tempShippingMethod = null;
+		$(this).CRUD({
+			type : "GET",
+			url : "aggregators/suppliers/shippingmethods",
+			message : true,
+			cache : true,
+			success : function(json) {
+				var data = new Array();
+				$.each(json, function(i, e) {
+					data.push({
+						label : e.fullName,
+						value : e
+					});
+				});
+				$("#shippingCarrierMap1").autocomplete({
+					minLength : 0,
+					appendTo : $("#shippingCarrierMap1").parent(),
+					source : data,
+					select : function(event, ui) {
+						event.preventDefault();
+						$('#shippingCarrierMap1').val(ui.item.label);
+						tempShippingMethod = ui.item.value;
+					}
+				});
+			}
+		});
+		if (!channelId) {
+			$.gritter
+					.add({
+						title : 'Not Allowed',
+						text : "This shipping method is not specific to any channel. So you can not update it."
+					});
+			return;
+		}
+		// href="#EditChannelShippingModal" data-toggle="modal"
+		$('#EditChannelShippingModal').modal('show');
+		var shipping = tableShippingMap.row(e[0]).data();
+		var shippingTemp = JSON.parse(JSON.stringify(shipping));
+		var shippingArray = null;
+		shippingArray = new Array(shippingTemp);
+		$('#tableChannelShippingMap').DataTable().destroy();
+		shippingMapEditTable = $('#tableChannelShippingMap')
+				.DataTable(
+						{
+							"dom" : 't',
+							"sort" : false,
+							"data" : shippingArray,
+							"destroy" : true,
+							"columns" : [
+									{
+										"mData" : function(obj) {
+											return "<input type=text class='width-100' id='shippingText1' name='shippingText' value='"
+													+ shippingArray[0].shippingRegEx
+													+ "' required/>";
+										}
+									},
+									{
+										"mData" : function() {
+											return "<input type=text class='form-control ui-autocomplete-input width-100' id='shippingCarrierMap1' name='shippingCarrier' value='"
+													+ shippingArray[0].shippingMethod.fullName
+													+ "' required/>";
+										}
+									},
+									{
+										"mData" : function() {
+											return '<a class="btn btn-success radius-2 dropdown-hover" onclick="$.CM.updateShippingMethod($(this).parent().parent(),'
+													+ shippingArray[0].id
+													+ ')";><i class="icon-save">Update</i>'
+													+ '<span data-rel="tooltip" class="dropdown-menu tooltip-success purple dropdown-menu dropdown-yellow pull-right dropdown-caret dropdown-close">update</span></a>';
+										}
+									} ]
+						});
+
+		return;
+
+	}
+	// shippingCarrierMap1
+
+	$.CM.updateShippingMethod = function(e, channelShippingId) {
+		var d = shippingMapEditTable.row(e[0]).data();
+		var carrierId;
+		var methodId
+		if (!tempShippingMethod) {
+			carrierId = d.oimShippingCarrier.id;
+			methodId = d.shippingMethod.id;
+		} else {
+			var carrierId = tempShippingMethod.shippingCarrier.id;
+			var methodId = tempShippingMethod.id;
+		}
+		var channelId = d.oimChannel.channelId;
+		var shippingText = $("#shippingText1").val();
+		var mappingText = $("#shippingCarrierMap1").val();
+
+		var requestData = {
+			"channelId" : channelId,
+			"methodId" : methodId,
+			"carrierId" : carrierId,
+			"shippingText" : shippingText,
+			"channelShippingId" : channelShippingId,
+			"mappingText" : mappingText
+
+		};
+		// {"channelId":3041,"methodId":34,"carrierId":2,"shippingText":"Tier3","channelShippingId":102}
+		$(this).CRUD({
+			url : 'aggregators/shipping/updateShipping/' + channelShippingId,
+			method : 'POST',
+			data : JSON.stringify(requestData),
+			message : true,
+			success : function(data) {
+				$.gritter.add({
+					title : 'Shipping Method',
+					text : data
+				});
+				$('#EditChannelShippingModal').modal('hide');
+				tableShippingMap.ajax.reload();
+			}
+		});
+
+	}
 	$.CM.viewSupplierShippingMap = function(e, tableId) {
 		var supplierId;
 		if (typeof e == 'number')
@@ -1201,6 +1353,19 @@ function drawSalesReportTable(data) {
 		var carrierId = shippingMethod.shippingCarrier.id;
 		var channelId = $("#channelHidenField").val();
 		var shippingText = $("#shippingText").val();
+		// existingShippingMapping
+		for (var i = 0; i < existingShippingMapping.length; i++) {
+			var obj = existingShippingMapping[i];
+			if (shippingText.localeCompare(obj.shippingRegEx) == 0) {
+				$.gritter
+						.add({
+							title : 'Add Shipping',
+							text : "Shipping Text already exists. Please try different value",
+							class_name : 'gritter-error'
+						});
+				return;
+			}
+		}
 		var d = {
 			"channelId" : channelId,
 			"methodId" : methodId,

@@ -12,6 +12,8 @@ import com.is.cm.core.event.DeleteEvent;
 import com.is.cm.core.event.DeletedEvent;
 import com.is.cm.core.event.ReadCollectionEvent;
 import com.is.cm.core.event.RequestReadEvent;
+import com.is.cm.core.event.UpdateEvent;
+import com.is.cm.core.event.UpdatedEvent;
 
 public interface ShippingService {
 
@@ -20,11 +22,10 @@ public interface ShippingService {
 	ReadCollectionEvent<ChannelShippingMap> findShippingMethods(
 			RequestReadEvent<Map<String, Integer>> requestReadEvent);
 
-	CreatedEvent<ChannelShippingMap> createShippingMethods(
-			CreateEvent<Map<String, Object>> createEvent);
+	CreatedEvent<ChannelShippingMap> createShippingMethods(CreateEvent<Map<String, Object>> createEvent);
 
-	DeletedEvent<OrderTracking> deleteChannelShippingMapping(DeleteEvent<ChannelShippingMap> deleteEvent);
+	DeletedEvent<ChannelShippingMap> deleteChannelShippingMapping(DeleteEvent<ChannelShippingMap> deleteEvent);
 
-	
-	
+	UpdatedEvent<String> updateShippingMapping(UpdateEvent<Map<String, String>> updateEvent);
+
 }
