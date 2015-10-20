@@ -177,6 +177,13 @@ public class HonestGreen extends Supplier implements HasTracking {
 
       for (OimOrderDetails orderDetail : ((Set<OimOrderDetails>) order.getOimOrderDetailses())) {
         boolean isHva = isRestricted(orderDetail.getSku(), vendorId);
+        FtpDetail hvaFtpDetail = getFtpDetails(ovs, true);
+        FtpDetail phiFtpDetail = getFtpDetails(ovs, false);
+        
+        if(hvaFtpDetail.getUrl()!=null && phiFtpDetail.getUrl()==null)
+          isHva = true;
+        else if(phiFtpDetail.getUrl()!=null && hvaFtpDetail.getUrl()==null)
+          isHva=false;
         if (isHva) {
           hvaItems.add(orderDetail);
         } else {
@@ -479,8 +486,10 @@ public class HonestGreen extends Supplier implements HasTracking {
         throw new SupplierOrderException(
             "Street Address and Suburb Address length is more than 50 characters, which can't fit the given Honest green validation rules. Please edit the order and resubmit.");
       } else {
+        if(address.length()>24){
         addressLine1 = address.substring(0, 24);
         addressLine2 = address.substring(24, address.length() - 1);
+        }
       }
       fOut.write(addressLine1.getBytes(ASCII));
       fOut.write(COMMA);
