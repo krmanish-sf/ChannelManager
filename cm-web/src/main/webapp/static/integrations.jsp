@@ -34,13 +34,16 @@
 										</div>
 										<br><br>
 										<div class="col-sm-3">
-												<img alt="" src="images/amazon-webstore.gif">	
+												<img alt="" src="images/amazon-logo.png">	
 											</div>
 											<div class="col-sm-3">
 												<img alt="" src="images/shopify.gif">	
 											</div>
 											<div class="col-sm-3">
 												<img alt="" src="images/zencart.gif">	
+											</div>
+											<div class="col-sm-3">
+												<img alt="" src="images/bigcommerce-logo.png">	
 											</div>
 									</div>
 								</div>
@@ -134,6 +137,8 @@
 					</div>
 			</div>
 		</div>
+		<br/><br/><br/><br/>
 </div>
+
 </div>
 	</jsp:attribute></t:openpage>
