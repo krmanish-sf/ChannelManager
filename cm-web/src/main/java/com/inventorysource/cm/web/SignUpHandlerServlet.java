@@ -284,7 +284,7 @@ public class SignUpHandlerServlet extends HttpServlet {
 				.append(email).append(" \r\n Phone: ").append(phone)
 				.append(" \r\n Comment: ").append(comments);
 		EmailUtil
-				.sendEmail("support@inventorysource.com",
+				.sendEmail("sales@inventorysource.com",
 						"support@inventorysource.com", "",
 						"Channel Manager - Order Integration Questions.",
 						sb.toString());
