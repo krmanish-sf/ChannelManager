@@ -151,6 +151,9 @@ public class HonestGreen extends Supplier implements HasTracking {
     // populate orderSkuPrefixMap with channel id and the prefix to be used
     // for the given supplier.
     orderSkuPrefixMap = setSkuPrefixForOrders(ovs);
+    String supplierDefaultPrefix = ovs.getOimSuppliers().getDefaultSkuPrefix();
+    int channelId = order.getOimOrderBatches().getOimChannels().getChannelId();
+    String configuredPrefix = orderSkuPrefixMap.get(channelId);
     Session session = SessionManager.currentSession();
     Reps r = (Reps) session.createCriteria(Reps.class).add(Restrictions.eq("vendorId", vendorId))
         .uniqueResult();
@@ -174,16 +177,22 @@ public class HonestGreen extends Supplier implements HasTracking {
     try {
       Set<OimOrderDetails> phiItems = new HashSet<OimOrderDetails>();
       Set<OimOrderDetails> hvaItems = new HashSet<OimOrderDetails>();
+      FtpDetail hvaFtpDetail = getFtpDetails(ovs, true);
+      FtpDetail phiFtpDetail = getFtpDetails(ovs, false);
+      boolean isSingleWarehouseConfigured = false;
+      boolean isHva = false;
+      if (hvaFtpDetail.getUrl() != null && phiFtpDetail.getUrl() == null) {
+        isSingleWarehouseConfigured = true;
+        isHva = true;
+      } else if (phiFtpDetail.getUrl() != null && hvaFtpDetail.getUrl() == null) {
+        isSingleWarehouseConfigured = true;
+        isHva = false;
+      }
 
       for (OimOrderDetails orderDetail : ((Set<OimOrderDetails>) order.getOimOrderDetailses())) {
-        boolean isHva = isRestricted(orderDetail.getSku(), vendorId);
-        FtpDetail hvaFtpDetail = getFtpDetails(ovs, true);
-        FtpDetail phiFtpDetail = getFtpDetails(ovs, false);
-        
-        if(hvaFtpDetail.getUrl()!=null && phiFtpDetail.getUrl()==null)
-          isHva = true;
-        else if(phiFtpDetail.getUrl()!=null && hvaFtpDetail.getUrl()==null)
-          isHva=false;
+        if (!isSingleWarehouseConfigured)
+          isHva = isRestricted(orderDetail.getSku(), vendorId, supplierDefaultPrefix,
+              configuredPrefix);
         if (isHva) {
           hvaItems.add(orderDetail);
         } else {
@@ -318,13 +327,19 @@ public class HonestGreen extends Supplier implements HasTracking {
     }
   }
 
-  private boolean isRestricted(String sku, int vendorID) {
+  private boolean isRestricted(String sku, int vendorID, String defaultPrefix,
+      String configuredPrefix) {
     // if is restricted value is 0 in product table and 1 in vendor custom
     // product
     // or if is restricted value is 1 in product table
     // Transaction tx = null;
     Session dbSession = SessionManager.currentSession();
     // tx = dbSession.beginTransaction();
+    if (configuredPrefix.equals(""))
+      sku = defaultPrefix + sku;
+    else if (!configuredPrefix.equalsIgnoreCase(defaultPrefix)) {
+      sku.replaceFirst(configuredPrefix, defaultPrefix);
+    }
     Query query = dbSession.createQuery(
         "select p.isRestricted from salesmachine.hibernatedb.Product p where p.sku=:sku");
     query.setString("sku", sku);
@@ -486,9 +501,9 @@ public class HonestGreen extends Supplier implements HasTracking {
         throw new SupplierOrderException(
             "Street Address and Suburb Address length is more than 50 characters, which can't fit the given Honest green validation rules. Please edit the order and resubmit.");
       } else {
-        if(address.length()>24){
-        addressLine1 = address.substring(0, 24);
-        addressLine2 = address.substring(24, address.length() - 1);
+        if (address.length() > 24) {
+          addressLine1 = address.substring(0, 24);
+          addressLine2 = address.substring(24, address.length() - 1);
         }
       }
       fOut.write(addressLine1.getBytes(ASCII));
@@ -596,6 +611,10 @@ public class HonestGreen extends Supplier implements HasTracking {
     log.info("Tracking request for PONUM: {}", trackingMeta);
     OrderStatus orderStatus = new OrderStatus();
     orderStatus.setStatus(oimOrderDetails.getSupplierOrderStatus());
+    String supplierDefaultPrefix = ovs.getOimSuppliers().getDefaultSkuPrefix();
+    int channelId = oimOrderDetails.getOimOrders().getOimOrderBatches().getOimChannels()
+        .getChannelId();
+    String configuredPrefix = orderSkuPrefixMap.get(channelId);
     FtpDetail ftpDetails = null;
     // if (trackingMeta.startsWith("H"))
     // ftpDetails = getFtpDetails(ovs, true);
@@ -608,11 +627,24 @@ public class HonestGreen extends Supplier implements HasTracking {
         && oimOrderDetails.getSupplierWareHouseCode().equals("P"))
       ftpDetails = getFtpDetails(ovs, false);
     else {
-      boolean isHva = isRestricted(oimOrderDetails.getSku(), ovs.getVendors().getVendorId());
+      FtpDetail hvaFtpDetail = getFtpDetails(ovs, true);
+      FtpDetail phiFtpDetail = getFtpDetails(ovs, false);
+      boolean isSingleWarehouseConfigured = false;
+      boolean isHva = false;
+      if (hvaFtpDetail.getUrl() != null && phiFtpDetail.getUrl() == null) {
+        isSingleWarehouseConfigured = true;
+        isHva = true;
+      } else if (phiFtpDetail.getUrl() != null && hvaFtpDetail.getUrl() == null) {
+        isSingleWarehouseConfigured = true;
+        isHva = false;
+      }
+      if (!isSingleWarehouseConfigured)
+        isHva = isRestricted(oimOrderDetails.getSku(), ovs.getVendors().getVendorId(),
+            supplierDefaultPrefix, configuredPrefix);
       if (isHva) {
-        ftpDetails = getFtpDetails(ovs, true);
+        ftpDetails = hvaFtpDetail;
       } else {
-        ftpDetails = getFtpDetails(ovs, false);
+        ftpDetails = phiFtpDetail;
       }
     }
     if (ftpDetails != null) {
@@ -677,7 +709,9 @@ public class HonestGreen extends Supplier implements HasTracking {
     String skuPrefix = null;
     String sku = detail.getSku();
     if (!orderSkuPrefixMap.isEmpty()) {
-      skuPrefix = orderSkuPrefixMap.values().toArray()[0].toString();
+      // skuPrefix = orderSkuPrefixMap.values().toArray()[0].toString();
+      int channelId = detail.getOimOrders().getOimOrderBatches().getOimChannels().getChannelId();
+      skuPrefix = orderSkuPrefixMap.get(channelId);
     }
     skuPrefix = StringHandle.removeNull(skuPrefix);
     if (sku.startsWith(skuPrefix)) {
@@ -831,13 +865,13 @@ public class HonestGreen extends Supplier implements HasTracking {
   }
 
   private FtpDetail getFtpDetails(OimVendorSuppliers ovs, boolean isHVA) {
-    FtpDetail ftpDetails = new FtpDetail();
+    FtpDetail ftpDetail = new FtpDetail();
     for (Iterator<OimSupplierMethods> itr = ovs.getOimSuppliers().getOimSupplierMethodses()
         .iterator(); itr.hasNext();) {
       OimSupplierMethods oimSupplierMethods = itr.next();
       WareHouseType wareHouseType = isHVA ? WareHouseType.HVA : WareHouseType.PHI;
 
-      ftpDetails.setWhareHouseType(wareHouseType);
+      ftpDetail.setWhareHouseType(wareHouseType);
 
       if (oimSupplierMethods.getOimSupplierMethodTypes().getMethodTypeId()
           .intValue() == wareHouseType.getWharehouseType()) {
@@ -850,22 +884,22 @@ public class HonestGreen extends Supplier implements HasTracking {
 
             if (oimSupplierMethodattrValues.getOimSupplierMethodattrNames().getAttrId()
                 .intValue() == OimConstants.SUPPLIER_METHOD_ATTRIBUTES_FTPACCOUNT)
-              ftpDetails.setAccountNumber(oimSupplierMethodattrValues.getAttributeValue());
+              ftpDetail.setAccountNumber(oimSupplierMethodattrValues.getAttributeValue());
             if (oimSupplierMethodattrValues.getOimSupplierMethodattrNames().getAttrId()
                 .intValue() == OimConstants.SUPPLIER_METHOD_ATTRIBUTES_FTPSERVER)
-              ftpDetails.setUrl(oimSupplierMethodattrValues.getAttributeValue());
+              ftpDetail.setUrl(oimSupplierMethodattrValues.getAttributeValue());
             if (oimSupplierMethodattrValues.getOimSupplierMethodattrNames().getAttrId()
                 .intValue() == OimConstants.SUPPLIER_METHOD_ATTRIBUTES_FTPLOGIN)
-              ftpDetails.setUserName(oimSupplierMethodattrValues.getAttributeValue());
+              ftpDetail.setUserName(oimSupplierMethodattrValues.getAttributeValue());
             if (oimSupplierMethodattrValues.getOimSupplierMethodattrNames().getAttrId()
                 .intValue() == OimConstants.SUPPLIER_METHOD_ATTRIBUTES_FTPPASSWORD)
-              ftpDetails.setPassword(oimSupplierMethodattrValues.getAttributeValue());
+              ftpDetail.setPassword(oimSupplierMethodattrValues.getAttributeValue());
           }
           break;
         }
       }
     }
-    return ftpDetails;
+    return ftpDetail;
   }
 
   private static String sellerId = "A2V8R85K60KD3B",
@@ -1497,6 +1531,5 @@ class FtpDetail {
       return false;
     return true;
   }
-  
 
 }
