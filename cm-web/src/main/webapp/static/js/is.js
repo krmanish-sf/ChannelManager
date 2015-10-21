@@ -50,6 +50,29 @@ function fetchBigcommerceAuthData() {
 					});
 }
 
+function fetchShopifyAuthData(){
+	var storeUrl = $("input[name=storeurl]").val();
+	console.log(storeUrl);
+	$(this)
+			.CRUD(
+					{
+						url : "aggregators/channels/shopifyApp",
+						method : "POST",
+						data : storeUrl,
+						success : function(data) {
+							var keySize = Object.keys(data).length;
+							if (keySize == 0) {
+								$.gritter
+										.add({
+											title : "Error",
+											text : "Verify Store Url, or app might not have been installed on your store"
+										});
+							}
+							$('#shopifyAuthId').val(data.authToken);
+						}
+					});
+}
+
 Date.prototype.getWeekRange = function() {
 	var curr_date = this;
 	var day = curr_date.getDay();

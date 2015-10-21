@@ -222,11 +222,18 @@
 														onclick="fetchBigcommerceAuthData();">Get Access Token</a>
 												</div>
 											</div>
+											<!-- 											<div class="form-group store-info shopify-store"> -->
+											<!-- 												<div class="col-sm-5"></div> -->
+											<!-- 												<div class="col-sm-7"> -->
+											<!-- 													<a style="cursor: pointer;" onclick="openUrl()">Get -->
+											<!-- 														Access Token</a> -->
+											<!-- 												</div> -->
+											<!-- 											</div> -->
 											<div class="form-group store-info shopify-store">
 												<div class="col-sm-5"></div>
 												<div class="col-sm-7">
-													<a style="cursor: pointer;" onclick="openUrl()">Get
-														Access Token</a>
+													<a style="cursor: pointer;"
+														onclick="fetchShopifyAuthData();">Get Access Token</a>
 												</div>
 											</div>
 											<div class="form-group center">
@@ -360,9 +367,7 @@
 		var strUrl = document.getElementsByName('storeurl')[0].value;
 		if (strUrl) {
 			var m = window
-					.open(
-							strUrl
-									+ '/admin/oauth/authorize?client_id=<%=ApplicationProperties.getProperty(ApplicationProperties.SHOPIFY_API_KEY)%>&scope=read_content,write_content,read_products,write_products,read_customers,write_customers,read_orders,write_orders,read_shipping,write_shipping,read_fulfillments,write_fulfillments',
+					.open(strUrl+ '/admin/oauth/authorize?client_id=<%=ApplicationProperties.getProperty(ApplicationProperties.SHOPIFY_API_KEY)%>&scope=read_content,write_content,read_products,write_products,read_customers,write_customers,read_orders,write_orders,read_shipping,write_shipping,read_fulfillments,write_fulfillments',
 							'shopify Access Permission',
 							'height=600,width=600,toolbar=no,directories=no,status=no,menubar=no,scrollbars=no,location=no,resizable=yes,modal=yes');
 			// var m = window.open(strUrl+'/admin/oauth/authorize?client_id=bc312f5e1bebb835d7a910516cd5c7b9&scope=read_content,write_content,read_products,write_products,read_customers,write_customers,read_orders,write_orders,read_shipping,write_shipping,read_fulfillments,write_fulfillments', 'shopify Access Permission',

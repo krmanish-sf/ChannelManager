@@ -31,4 +31,6 @@ public interface ChannelRepository {
   List<SupportedChannel> findSupportedChannels();
 
   Map<String, String> findBigcommerceAuthDetailsByUrl(String url);
+
+  Map<String, String> findShopifyAuthDetailsByUrl(String entity);
 }

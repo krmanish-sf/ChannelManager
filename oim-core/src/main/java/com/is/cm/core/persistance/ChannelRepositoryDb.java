@@ -377,10 +377,12 @@ public class ChannelRepositoryDb extends RepositoryBase implements ChannelReposi
   @Override
   public List<ChannelShippingMap> findShippingMapping(Integer channelId) {
     Session dbSession = SessionManager.currentSession();
-    OimChannels channel = (OimChannels)dbSession.get(OimChannels.class, channelId);
+    OimChannels channel = (OimChannels) dbSession.get(OimChannels.class, channelId);
     Criteria findCriteria = dbSession.createCriteria(OimChannelShippingMap.class);
-    findCriteria.add(Restrictions.eq("oimSupportedChannel.supportedChannelId", channel.getOimSupportedChannels().getSupportedChannelId()));
-    findCriteria.add(Restrictions.or(Restrictions.eq("oimChannel", channel),Restrictions.isNull("oimChannel")));
+    findCriteria.add(Restrictions.eq("oimSupportedChannel.supportedChannelId",
+        channel.getOimSupportedChannels().getSupportedChannelId()));
+    findCriteria.add(
+        Restrictions.or(Restrictions.eq("oimChannel", channel), Restrictions.isNull("oimChannel")));
     List<OimChannelShippingMap> list = findCriteria.list();
     List<ChannelShippingMap> retList = new ArrayList<ChannelShippingMap>();
     for (OimChannelShippingMap entity : list) {
@@ -403,9 +405,7 @@ public class ChannelRepositoryDb extends RepositoryBase implements ChannelReposi
 
   @Override
   public Map<String, String> findBigcommerceAuthDetailsByUrl(String url) {
-    url.replaceFirst("https://", "");
-    url.replaceFirst("http://", "");
-    url.replaceFirst("www.", "");
+    url = url.replaceFirst("https://", "").replaceFirst("http://", "").replaceFirst("www.", "");
     Session session = SessionManager.currentSession();
     Map<String, String> details = new HashMap<String, String>();
     Query query = session
@@ -417,6 +417,22 @@ public class ChannelRepositoryDb extends RepositoryBase implements ChannelReposi
       Object[] values = result.get(0);
       details.put("authToken", (String) values[0]);
       details.put("context", (String) values[1]);
+    }
+    return details;
+  }
+
+  @Override
+  public Map<String, String> findShopifyAuthDetailsByUrl(String url) {
+    url = url.replaceFirst("https://", "").replaceFirst("http://", "").replaceFirst("www.", "");
+    Session session = SessionManager.currentSession();
+    Map<String, String> details = new HashMap<String, String>();
+    Query query = session
+        .createSQLQuery("select b.auth_token from SHOPIFY_AUTHENTICATION b where b.shop_url = :url")
+        .setParameter("url", url);
+    List<String> result = query.list();
+    if (result.size() == 1) {
+      String authToken = result.get(0);
+      details.put("authToken", authToken);
     }
     return details;
   }

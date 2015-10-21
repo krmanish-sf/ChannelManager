@@ -95,4 +95,14 @@ public class ChannelQueriesController {
 		return new ResponseEntity<Map<String, String>>(authData.getEntity(),
 				HttpStatus.OK);
 	}
+	
+	@RequestMapping(method = RequestMethod.POST, value = "/shopifyApp")
+	public ResponseEntity<Map<String, String>> getShopifyAppAuth(
+			@RequestBody String storeUrl) {
+		ReadEvent<Map<String, String>> authData = channelService
+				.getShopifyAuthDetailsByUrl(new RequestReadEvent<String>(
+						storeUrl));
+		return new ResponseEntity<Map<String, String>>(authData.getEntity(),
+				HttpStatus.OK);
+	}
 }

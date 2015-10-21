@@ -49,4 +49,6 @@ public interface ChannelService {
 			RequestReadEvent<SupportedChannel> requestReadEvent);
 
 	ReadEvent<Map<String, String>> getBigcommerceAuthDetailsByUrl(RequestReadEvent<String> requestReadEvent);
+
+	ReadEvent<Map<String, String>> getShopifyAuthDetailsByUrl(RequestReadEvent<String> requestReadEvent);
 }
