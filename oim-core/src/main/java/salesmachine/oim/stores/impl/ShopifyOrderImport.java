@@ -257,7 +257,7 @@ public final class ShopifyOrderImport extends ChannelBase implements IOrderImpor
                 .setDeliveryCompany(StringHandle.removeNull((String) deliveryObj.get("company")));
             oimOrders
                 .setDeliveryCountry(StringHandle.removeNull((String) deliveryObj.get("country")));
-            oimOrders.setDeliveryCountry(
+            oimOrders.setDeliveryCountryCode(
                 StringHandle.removeNull((String) deliveryObj.get("country_code")));
             oimOrders
                 .setDeliveryName(StringHandle.removeNull((String) deliveryObj.get("first_name"))
