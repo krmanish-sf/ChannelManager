@@ -28,6 +28,9 @@
         <property name="className" type="string">
             <column name="CLASSNAME" length="100" />
         </property>
+        <property name="defaultSkuPrefix" type="string">
+            <column name="DEFAULT_SKU_PREFIX" length="5" />
+        </property>
         <set name="oimSupplierMethodses" inverse="true" lazy="false" table="OIM_SUPPLIER_METHODS" fetch="select">
             <key>
                 <column name="SUPPLIER_ID" precision="22" scale="0" />

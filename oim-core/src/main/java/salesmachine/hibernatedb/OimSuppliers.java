@@ -21,6 +21,7 @@ public class OimSuppliers implements java.io.Serializable {
 	private Date deleteTm;
 	private String description;
 	private String className;
+	private String defaultSkuPrefix;
 	private Set<OimSupplierMethods> oimSupplierMethodses = new TreeSet<OimSupplierMethods>();
 	private Set oimVendorsuppOrderhistories = new HashSet(0);
 	private Set oimOrderDetailses = new HashSet(0);
@@ -178,6 +179,14 @@ public class OimSuppliers implements java.io.Serializable {
     } else if (!supplierName.equals(other.supplierName))
       return false;
     return true;
+  }
+
+  public String getDefaultSkuPrefix() {
+    return defaultSkuPrefix;
+  }
+
+  public void setDefaultSkuPrefix(String defaultSkuPrefix) {
+    this.defaultSkuPrefix = defaultSkuPrefix;
   }
   
 
