@@ -4,17 +4,16 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
-import java.util.TreeSet;
 
 import org.hibernate.HibernateException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+
 import salesmachine.hibernatedb.OimSupplierMethods;
 import salesmachine.hibernatedb.OimSuppliers;
-
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 public class Supplier extends DomainBase {
 	private static final Logger log = LoggerFactory.getLogger(Supplier.class);
@@ -29,6 +28,7 @@ public class Supplier extends DomainBase {
 	private Date insertionTm;
 	private Date deleteTm;
 	private String description;
+	private String defaultSkuPrefix;
 	@JsonDeserialize(as = HashSet.class)
 	private Set<SupplierMethod> oimSupplierMethodses = new HashSet<SupplierMethod>();
 	@JsonDeserialize(as = HashSet.class)
@@ -165,4 +165,12 @@ public class Supplier extends DomainBase {
 			Set<ChannelSupplierMap> oimChannelSupplierMaps) {
 		this.oimChannelSupplierMaps = oimChannelSupplierMaps;
 	}
+
+  public String getDefaultSkuPrefix() {
+    return defaultSkuPrefix;
+  }
+
+  public void setDefaultSkuPrefix(String defaultSkuPrefix) {
+    this.defaultSkuPrefix = defaultSkuPrefix;
+  }
 }
