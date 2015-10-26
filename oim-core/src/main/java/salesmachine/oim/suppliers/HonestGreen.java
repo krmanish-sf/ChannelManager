@@ -338,7 +338,7 @@ public class HonestGreen extends Supplier implements HasTracking {
     if (configuredPrefix.equals(""))
       sku = defaultPrefix + sku;
     else if (!configuredPrefix.equalsIgnoreCase(defaultPrefix)) {
-      sku.replaceFirst(configuredPrefix, defaultPrefix);
+      sku = sku.replaceFirst(configuredPrefix, defaultPrefix);
     }
     Query query = dbSession.createQuery(
         "select p.isRestricted from salesmachine.hibernatedb.Product p where p.sku=:sku");
@@ -551,7 +551,8 @@ public class HonestGreen extends Supplier implements HasTracking {
           orderStatus.setStatus(
               ((OimOrderProcessingRule) oimChannels.getOimOrderProcessingRules().iterator().next())
                   .getProcessedStatus());
-          iOrderImport.updateStoreOrder(od, orderStatus);
+          if (oimChannels.getTestMode() == 0)
+            iOrderImport.updateStoreOrder(od, orderStatus);
 
         } catch (ChannelConfigurationException e) {
           log.error(e.getMessage(), e);
@@ -788,7 +789,7 @@ public class HonestGreen extends Supplier implements HasTracking {
       Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
       String s = new String(trackingFileData);
       StringReader reader = new StringReader(s);
-      log.info(s);
+      log.info("Tracking file data for {} is --  {}", poNum, s);
       TrackingData orderTrackingResponse = (TrackingData) unmarshaller.unmarshal(reader);
       orderStatus.setStatus(OimConstants.OIM_SUPPLER_ORDER_STATUS_SHIPPED);
       int qtyShipped = detail.getQuantity();

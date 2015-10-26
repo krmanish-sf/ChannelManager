@@ -320,6 +320,7 @@ public class BF extends Supplier implements HasTracking {
                   salesmachine.oim.suppliers.modal.OrderStatus orderStatus = new salesmachine.oim.suppliers.modal.OrderStatus();
                   orderStatus.setStatus(((OimOrderProcessingRule) oimChannels
                       .getOimOrderProcessingRules().iterator().next()).getProcessedStatus());
+                  if (oimChannels.getTestMode() == 0)
                   iOrderImport.updateStoreOrder(detail, orderStatus);
 
                 }

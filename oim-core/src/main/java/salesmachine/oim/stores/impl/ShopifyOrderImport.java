@@ -109,9 +109,9 @@ public final class ShopifyOrderImport extends ChannelBase implements IOrderImpor
     lineItemArray.add(lineItem);
 
     jsonObjVal.put("notify_customer", true);
-    jsonObjVal.put("line_items", lineItemArray);
+  //  jsonObjVal.put("line_items", lineItemArray);
     jsonObject.put("fulfillment", jsonObjVal);
-
+    log.info("request for fullfillment : {}",jsonObject.toJSONString());
     StringRequestEntity requestEntity = null;
     try {
       requestEntity = new StringRequestEntity(jsonObject.toJSONString(), "application/json",
@@ -127,9 +127,9 @@ public final class ShopifyOrderImport extends ChannelBase implements IOrderImpor
       log.info("fullfilment statusCode is - {}", statusCode);
       if (statusCode != 200 && statusCode != 201) {
         log.error("fullfilment rejected by store with status code {}", statusCode);
-        throw new ChannelCommunicationException(
-            "Error in posting request for fullfillment. fullfilment rejected by store with status code - "
-                + statusCode);
+//        throw new ChannelCommunicationException(
+//            "Error in posting request for fullfillment. fullfilment rejected by store with status code - "
+//                + statusCode);
       }
 
     } catch (HttpException e) {
@@ -283,8 +283,8 @@ public final class ShopifyOrderImport extends ChannelBase implements IOrderImpor
           }
           // setting customer information
           JSONObject custInfo = (JSONObject) orderObj.get("customer");
-          oimOrders.setCustomerEmail(StringHandle.removeNull((String) custInfo.get("email")));
           if (custInfo != null) {
+            oimOrders.setCustomerEmail(StringHandle.removeNull((String) custInfo.get("email")));
             JSONObject customerObj = (JSONObject) custInfo.get("default_address");
             if (customerObj != null) {
               oimOrders.setCustomerCity(StringHandle.removeNull((String) customerObj.get("city")));

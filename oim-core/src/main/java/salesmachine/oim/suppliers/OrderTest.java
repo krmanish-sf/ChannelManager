@@ -70,13 +70,17 @@ public class OrderTest {
     log.info("Total {} number of ftp details found", ftpDetailMap.size());
     Map<String, List<PHIHVAData>> vendorDataMap = new HashMap<String, List<PHIHVAData>>();
     List<File> fileList = new ArrayList<File>();
+
     for (Iterator<FtpDetail> itr = ftpDetailMap.keySet().iterator(); itr.hasNext();) {
       FtpDetail ftpDetail = itr.next();
+      if(!ftpDetail.getAccountNumber().equals("78493")){
+        continue;
+      }
       long fileCleanupStartTime = System.currentTimeMillis();
       String fileCleanupStartTimeStr = convertLongToDateString(fileCleanupStartTime);
       log.info("ftp file move process started at {} for {}", fileCleanupStartTimeStr, ftpDetail);
       try {
-        ftpMoveFile(ftpDetail);
+        //ftpMoveFile(ftpDetail);
       } catch (Exception e) {
         log.error("Error occure while moving the files at ftp {}", ftpDetail);
       }
@@ -85,11 +89,12 @@ public class OrderTest {
       log.info("ftp file move process ended at {} for {}", fileCleanupEndTimStr, ftpDetail);
       String vendorId = ftpDetailMap.get(ftpDetail);
       // "/home/staging/cm-orders/report/"
-      String confirmationPath = "/home/staging/cm-orders/report/" + vendorId + "_"
+      //test /home/manish-kumar/staging/cm-orders/report
+      String confirmationPath = "/home/manish-kumar/staging/cm-orders/report/" + vendorId + "_"
           + ftpDetail.getUserName() + "/confirmations/";
-      String shippingPath = "/home/staging/cm-orders/report/" + vendorId + "_"
+      String shippingPath = "/home/manish-kumar/staging/cm-orders/report/" + vendorId + "_"
           + ftpDetail.getUserName() + "/shipping/";
-      String trackingPath = "/home/staging/cm-orders/report/" + vendorId + "_"
+      String trackingPath = "/home/manish-kumar/staging/cm-orders/report/" + vendorId + "_"
           + ftpDetail.getUserName() + "/tracking/";
       File confirmationDir = new File(confirmationPath);
       if (!confirmationDir.exists())
@@ -108,12 +113,11 @@ public class OrderTest {
         log.info("Started downloading files at {} from ftp : {}", fileDownloadStartTimeStr,
             ftpDetail);
         try {
-          downloadFiles(ftpDetail, vendorId, confirmationPath, shippingPath, trackingPath);
+         // downloadFiles(ftpDetail, vendorId, confirmationPath, shippingPath, trackingPath);
         } catch (Exception e) {
           log.error("Error occured while downloading files for ftp {} {}", ftpDetail, e);
           if (e instanceof SocketException) {
-            downloadFiles(ftpDetail, vendorId, confirmationPath, shippingPath, trackingPath);
-
+          //  downloadFiles(ftpDetail, vendorId, confirmationPath, shippingPath, trackingPath);
           }
         }
       } catch (Exception e) {
@@ -125,6 +129,7 @@ public class OrderTest {
           ftpDetail);
       List<PHIHVAData> dataList = getData(ftpDetail, confirmationPath, shippingPath, trackingPath,
           isPHI);
+      log.info("dataList size -- {}",dataList.size());
       if (vendorDataMap.get(vendorId) != null) {
         List<PHIHVAData> vendorDataList = vendorDataMap.get(vendorId);
         vendorDataList.addAll(dataList);
@@ -145,9 +150,9 @@ public class OrderTest {
     long sendEmailCompleteTime = System.currentTimeMillis();
     String sendEmailCompleteTimeStr = convertLongToDateString(sendEmailCompleteTime);
     log.info("report created and sent as an email at {}", sendEmailCompleteTimeStr);
-    long total_time = sendEmailCompleteTime-processStartTime;
-    int minutes = (int) ((total_time / (1000*60)) % 60);
-    log.info("process completed in {} minutes ",minutes);
+    long total_time = sendEmailCompleteTime - processStartTime;
+    int minutes = (int) ((total_time / (1000 * 60)) % 60);
+    log.info("process completed in {} minutes ", minutes);
     log.info("Process complete...");
   }
 
@@ -159,8 +164,7 @@ public class OrderTest {
       List<PHIHVAData> dataList = vendorDataMap.get(vendorId);
       if (dataList == null || dataList.size() == 0)
         continue;
-      // File file = new File("/home/staging/cm-orders/report/" + vendorId + "_" + "Report.csv");
-      File file = new File("/home/staging/cm-orders/report/" + vendorId + "_" + "Report.csv");
+      File file = new File("/home/manish-kumar/staging/cm-orders/report/" + vendorId + "_" + "Report.csv");
       fileList.add(file);
       try {
         FileWriter fw = new FileWriter(file);
@@ -225,7 +229,8 @@ public class OrderTest {
     } else
       emailSubject = "Honest Green order status for last 2 days";
     if (fileList.size() > 0) {
-      final File f = new File("/home/staging/cm-orders/report/HG_Order_Status.zip");
+     // final File f = new File("/home/staging/cm-orders/report/HG_Order_Status.zip");
+      final File f = new File("/home/manish-kumar/staging/cm-orders/report/HG_Order_Status.zip");
       final ZipOutputStream out = new ZipOutputStream(new FileOutputStream(f));
       for (int i = 0; i < fileList.size(); i++) {
 
@@ -244,14 +249,21 @@ public class OrderTest {
       }
       out.close();
 
-      EmailUtil.sendEmailWithAttachment("orders@inventorysource.com", "support@inventorysource.com",
-          "abheeshek@inventorysource.com, kelly@inventorysource.com, andrew@inventorysource.com",
-          emailSubject, emailBody, f.getAbsolutePath());
+      // EmailUtil.sendEmailWithAttachment("orders@inventorysource.com",
+      // "support@inventorysource.com",
+      // "abheeshek@inventorysource.com, kelly@inventorysource.com, andrew@inventorysource.com",
+      // emailSubject, emailBody, f.getAbsolutePath());
+
+      EmailUtil.sendEmailWithAttachment("manish@inventorysource.com", "manish@inventorysource.com",
+          "", emailSubject, emailBody, f.getAbsolutePath());
       log.info("Email with attachment sent successfully.");
     } else {
       emailBody = "There is no order found for last two days.";
-      EmailUtil.sendEmail("orders@inventorysource.com", "support@inventorysource.com",
-          "abheeshek@inventorysource.com, kelly@inventorysource.com, andrew@inventorysource.com",
+      // EmailUtil.sendEmail("orders@inventorysource.com", "support@inventorysource.com",
+      // "abheeshek@inventorysource.com, kelly@inventorysource.com, andrew@inventorysource.com",
+      // emailSubject, emailBody);
+
+      EmailUtil.sendEmail("manish@inventorysource.com", "manish@inventorysource.com", "",
           emailSubject, emailBody);
       log.info("Email without attachment sent successfully.");
     }

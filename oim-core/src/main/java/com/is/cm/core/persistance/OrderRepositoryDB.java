@@ -1244,7 +1244,7 @@ public class OrderRepositoryDB extends RepositoryBase implements OrderRepository
       td.setShippingMethod(orderTracking.getShippingMethod());
       orderStatus.addTrackingData(td);
     }
-    if (orderStatus != null)
+    if (orderStatus != null && oimChannels.getTestMode()==0)
       iOrderImport.updateStoreOrder(detail, orderStatus);
 
   }

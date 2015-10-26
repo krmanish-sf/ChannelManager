@@ -96,10 +96,9 @@ public class SupplierFactory {
     return init(supplierId);
   }
 
+  @Deprecated
   private boolean init(int supplierId) {
-    Transaction tx = null;
     try {
-      tx = m_dbSession.beginTransaction();
 
       // Here is your db code
       Query query = m_dbSession.createQuery(
@@ -114,7 +113,7 @@ public class SupplierFactory {
         query = m_dbSession.createQuery(
             "select m from OimSupplierMethods as m left join m.oimSupplierMethodattrValueses v where m.deleteTm is null and m.oimSuppliers=:supp and m.oimSupplierMethodTypes.methodTypeId=:methodTypeId and v.deleteTm is null");
         query.setEntity("supp", m_supplier);
-        query.setInteger("methodTypeId", OimConstants.SUPPLIER_METHOD_TYPE_ORDERPUSH.intValue());
+        // query.setInteger("methodTypeId", OimConstants.SUPPLIER_METHOD_TYPE_ORDERPUSH.intValue());
         Iterator it = query.iterate();
         if (!it.hasNext()) {
           logStream.println("No method found for pushing orders to this supplier");
@@ -124,8 +123,6 @@ public class SupplierFactory {
       }
     } catch (RuntimeException e) {
       e.printStackTrace();
-    } finally {
-      tx.rollback();
     }
     return true;
   }
@@ -345,20 +342,23 @@ public class SupplierFactory {
       Map<Integer, OrderDetailResponse> successfulOrders, List<Integer> failedOrders)
           throws SupplierConfigurationException, SupplierCommunicationException,
           SupplierOrderException {
+
+    Set<OimSuppliers> supplierSet = new HashSet<OimSuppliers>();
+
     for (OimOrderDetails oimOrderDetails : (Set<OimOrderDetails>) oimOrder.getOimOrderDetailses()) {
-      init(oimOrderDetails.getOimSuppliers().getSupplierId());
+      // init(oimOrderDetails.getOimSuppliers().getSupplierId());
+      supplierSet.add(oimOrderDetails.getOimSuppliers());
+    }
+    for (Iterator<OimSuppliers> itr = supplierSet.iterator(); itr.hasNext();) {
+      OimSuppliers supplier = itr.next();
       OimVendorSuppliers ovs = null;
       boolean ping = false;
       StringBuffer errorMessage = new StringBuffer();
       Query query;
-      Transaction tx = null;
       try {
-        tx = m_dbSession.beginTransaction();
-
-        // Here is your db code
         query = m_dbSession.createQuery(
             "from OimVendorSuppliers s where s.oimSuppliers=:supp and s.vendors.vendorId=:vid and s.deleteTm is null");
-        query.setEntity("supp", m_supplier);
+        query.setEntity("supp", supplier);
         query.setInteger("vid", vendorId);
         Iterator it = query.iterate();
         if (it.hasNext()) {
@@ -367,235 +367,232 @@ public class SupplierFactory {
         } else {
           return false;
         }
-        tx.commit();
       } catch (RuntimeException e) {
-        if (tx != null && tx.isActive())
-          tx.rollback();
         log.error(e.getMessage(), e);
       }
+      //
+      // Integer supplierMethodNameId = m_supplierMethods.getOimSupplierMethodNames()
+      // .getMethodNameId();
+      // log.debug("Supplier Method Id: " + supplierMethodNameId);
+      // if (OimConstants.SUPPLIER_METHOD_NAME_CUSTOM.equals(supplierMethodNameId)) {
+      // log.debug("!!! Custom method called");
+      Supplier s = null;
+      String className = ovs.getOimSuppliers().getClassName();
+      try {
+        Class<?> clazz = Class.forName(className);
+        s = (Supplier) clazz.newInstance();
 
-      Integer supplierMethodNameId = m_supplierMethods.getOimSupplierMethodNames()
-          .getMethodNameId();
-      log.debug("Supplier Method Id: " + supplierMethodNameId);
-      if (OimConstants.SUPPLIER_METHOD_NAME_CUSTOM.equals(supplierMethodNameId)) {
-        log.debug("!!! Custom method called");
-        Supplier s = null;
-        String className = ovs.getOimSuppliers().getClassName();
-        try {
-          Class<?> clazz = Class.forName(className);
-          s = (Supplier) clazz.newInstance();
+        s.setLogStream(logStream);
 
-          s.setLogStream(logStream);
-
-          s.sendOrders(vendorId, ovs, oimOrder);
-          successfulOrders.putAll(s.successfulOrders);
-          failedOrders.addAll(s.failedOrders);
-        } catch (SupplierConfigurationException e) {
-          Supplier.updateVendorSupplierOrderHistory(vendorId, ovs.getOimSuppliers(), e.getMessage(),
-              Supplier.ERROR_UNCONFIGURED_SUPPLIER);
-          log.error(e.getMessage(), e);
-          throw e;
-        } catch (SupplierCommunicationException e) {
-          Supplier.updateVendorSupplierOrderHistory(vendorId, ovs.getOimSuppliers(), e.getMessage(),
-              Supplier.ERROR_PING_FAILURE);
-          log.error(e.getMessage(), e);
-          throw e;
-        } catch (SupplierOrderException e) {
-          Supplier.updateVendorSupplierOrderHistory(vendorId, ovs.getOimSuppliers(), e.getMessage(),
-              Supplier.ERROR_ORDER_PROCESSING);
-          log.error(e.getMessage(), e);
-          throw e;
-        } catch (ChannelConfigurationException e) {
-          log.error(e.getMessage(), e);
-          Supplier.updateVendorSupplierOrderHistory(vendorId, ovs.getOimSuppliers(),
-              "Error occured in updating store order status due to ChannelConfiguration Error. "
-                  + e.getMessage(),
-              Supplier.ERROR_ORDER_PROCESSING);
-        } catch (ChannelCommunicationException e) {
-          log.error(e.getMessage(), e);
-          Supplier.updateVendorSupplierOrderHistory(vendorId, ovs.getOimSuppliers(),
-              "Error occured in updating store order status due to ChannelComunication Error. "
-                  + e.getMessage(),
-              Supplier.ERROR_ORDER_PROCESSING);
-        } catch (ChannelOrderFormatException e) {
-          log.error(e.getMessage(), e);
-          Supplier.updateVendorSupplierOrderHistory(vendorId, ovs.getOimSuppliers(),
-              "Error occured in updating store order status due to ChannelOrderFormat Error. "
-                  + e.getMessage(),
-              Supplier.ERROR_ORDER_PROCESSING);
-        } catch (InstantiationException | IllegalAccessException | ClassNotFoundException e) {
-          Supplier.updateVendorSupplierOrderHistory(vendorId, ovs.getOimSuppliers(), e.getMessage(),
-              Supplier.ERROR_UNCONFIGURED_SUPPLIER);
-          throw new SupplierConfigurationException(e.getMessage(), e);
-        }
-
-      } else if (OimConstants.SUPPLIER_METHOD_NAME_EMAIL.equals(supplierMethodNameId)
-          || OimConstants.SUPPLIER_METHOD_NAME_FTP.equals(supplierMethodNameId)) {
-        String tmp = PojoHelper.getSupplierMethodAttributeValue(m_supplierMethods,
-            OimConstants.SUPPLIER_METHOD_ATTRIBUTES_FILETYPEID);
-
-        // Find if there is an associated file
-        OimFiletypes oimFile = null;
-        if (tmp != null && tmp.length() > 0) {
-          Integer fileid = Integer.valueOf(tmp);
-          log.debug("Using File Id: " + fileid + " for generating supplier order file");
-          query = m_dbSession.createQuery(
-              "select f from OimFiletypes f where f.fileTypeId=:fileId and f.deleteTm is null");
-          Iterator it = query.setInteger("fileId", fileid.intValue()).iterate();
-          if (!it.hasNext()) {
-            logStream.println("No file defined for this supplier file id: " + fileid);
-          } else {
-            oimFile = (OimFiletypes) it.next();
-          }
-        }
-
-        int fileFormat = 1;
-        try {
-          fileFormat = Integer.parseInt(PojoHelper.getSupplierMethodAttributeValue(
-              m_supplierMethods, OimConstants.SUPPLIER_METHOD_ATTRIBUTES_FILEFORMAT));
-        } catch (Exception e) {
-          e.printStackTrace();
-          fileFormat = 1;
-        }
-
-        OrderFile ofile = null;
-        if (fileFormat == OimConstants.FILE_FORMAT_XLS) {
-          ofile = new DefaultXlsFile(m_dbSession);
-        } else {
-          ofile = new DefaultCsvFile(m_dbSession);
-        }
-        if (oimFile != null) {
-          ofile = new DatabaseFile(m_dbSession, oimFile);
-        }
-        ofile.build();
-
-        String name = (String) ofile.getFileFormatParams()
-            .get(OimConstants.FILE_FORMAT_PARAMS_NAME);
-        if (name != null && name.length() > 0) {
-          if (name.indexOf("#SupplierAccountNumber") != -1) {
-            String accountNumber = ovs.getAccountNumber();
-            name = name.replaceAll("#SupplierAccountNumber", accountNumber);
-          }
-        }
-        String fileName = "";
-        if (fileFormat == OimConstants.FILE_FORMAT_XLS) {
-          fileName = "" + vendorId + "-" + m_supplier.getSupplierId() + ".xls";
-          log.debug("Generating file " + fileName);
-          try {
-            // FIXME generateXlsFile(orders, ofile.getFileFieldMaps(), fileName,
-            // ofile.getFileFormatParams(),
-            // ofile.getSpecificsProvider(ovs));
-          } catch (Exception e) {
-            log.error(e.getMessage(), e);
-          }
-        } else if (fileFormat == OimConstants.FILE_FORMAT_CSV) {
-          fileName = "" + vendorId + "-" + m_supplier.getSupplierId() + ".csv";
-          if (name != null && name.length() > 0)
-            fileName = name;
-          log.debug("Generating file " + fileName);
-          try {
-            /*
-             * generateCsvFile(orders, ofile.getFileFieldMaps(), fileName,
-             * ofile.getFileFormatParams(), ofile.getSpecificsProvider(ovs));
-             */
-          } catch (Exception e) {
-            log.debug(e.getMessage(), e);
-          }
-        }
-
-        // Get the reps object to get the email id and name of the
-        // vendor to
-        // whom the order status email will go in case the
-        // emaiNotification
-        // is set for him.
-        Query q = m_dbSession.createQuery(
-            "select r from salesmachine.hibernatedb.Reps r where r.vendorId = " + vendorId);
-        Reps r = new Reps();
-        Iterator repsIt = q.iterate();
-        if (repsIt.hasNext()) {
-          r = (Reps) repsIt.next();
-        }
-
-        if (OimConstants.SUPPLIER_METHOD_NAME_FTP.equals(supplierMethodNameId)) {
-          String ftpServer = PojoHelper.getSupplierMethodAttributeValue(m_supplierMethods,
-              OimConstants.SUPPLIER_METHOD_ATTRIBUTES_FTPSERVER);
-          String ftpLogin = PojoHelper.getSupplierMethodAttributeValue(m_supplierMethods,
-              OimConstants.SUPPLIER_METHOD_ATTRIBUTES_FTPLOGIN);
-          String ftpPassword = PojoHelper.getSupplierMethodAttributeValue(m_supplierMethods,
-              OimConstants.SUPPLIER_METHOD_ATTRIBUTES_FTPPASSWORD);
-
-          if ("#accountspecific".equals(ftpLogin))
-            ftpLogin = ovs.getLogin();
-          if ("#accountspecific".equals(ftpPassword))
-            ftpPassword = ovs.getPassword();
-
-          String ftpFolder = PojoHelper.getSupplierMethodAttributeValue(m_supplierMethods,
-              OimConstants.SUPPLIER_METHOD_ATTRIBUTES_FTPFOLDER);
-
-          FtpFileUploader uploader = new FtpFileUploader(ftpServer, ftpLogin, ftpPassword, 5, 0);
-          try {
-            uploader.Upload(ftpFolder, fileName, fileName);
-          } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            return false;
-          }
-
-        } else if (OimConstants.SUPPLIER_METHOD_NAME_EMAIL.equals(supplierMethodNameId)) {
-          String emailAddress = PojoHelper.getSupplierMethodAttributeValue(m_supplierMethods,
-              OimConstants.SUPPLIER_METHOD_ATTRIBUTES_EMAILADDRESS);
-          if (fileFormat == OimConstants.FILE_FORMAT_SEND_PLAIN_TEXT_IN_EMAIL) {
-            try {
-              String vendor_name = StringHandle.removeNull(r.getFirstName()) + " "
-                  + StringHandle.removeNull(r.getLastName());
-              String emailContent = "Dear " + vendor_name + "<br>";
-              emailContent += "<br>Following is the status of the orders processed for the supplier "
-                  + ovs.getOimSuppliers().getSupplierName() + " : - <br>";
-              emailContent += ""/*
-                                 * //FIXME FgenerateMailBody(orders, ofile.getFileFieldMaps(), new
-                                 * StandardFileSpecificsProvider(m_dbSession, ovs, new
-                                 * Vendors(vendorId)))
-                                 */;
-              EmailUtil.sendEmail(emailAddress, "support@inventorysource.com", r.getLogin(),
-                  "oim@inventorysource.com", m_supplier.getSupplierName() + " Orders", emailContent,
-                  "text/html");
-            } catch (Exception e1) {
-              log.error(e1.getMessage(), e1);
-            }
-          } else {
-            EmailUtil.sendEmailWithAttachment(emailAddress, "support@inventorysource.com",
-                "oim@inventorysource.com," + r.getLogin(), m_supplier.getSupplierName() + " Orders",
-                "Find attached the orders from my store.", fileName, "");
-          }
-        }
-
-        String nameEmail = StringHandle.removeNull(r.getFirstName()) + " "
-            + StringHandle.removeNull(r.getLastName());
-        String emailContent = "Dear " + nameEmail + "<br>";
-        emailContent += "<br>Following is the status of the orders processed for the supplier "
-            + ovs.getOimSuppliers().getSupplierName() + " : - <br>";
-        boolean emailNotification = false;
-
-        // In both these cases i.e. Ftp File Upload and Email, orders
-        // can
-        // not fail at this stage
-        // So all of them need to be marked placed
-        /*
-         * //FIXME for (int i = 0; i < orders.size(); i++) { OimOrders order = (OimOrders)
-         * orders.get(i);
-         * 
-         * // Send Email Notifications if is set to true. if
-         * (order.getOimOrderBatches().getOimChannels().getEmailNotifications() == 1) {
-         * emailNotification = true; String orderStatus = "Successfully Placed"; emailContent +=
-         * "<b>Store Order ID " + order.getStoreOrderId() + "</b> -> " + orderStatus + " ";
-         * emailContent += "<br>"; } }
-         */
-        if (emailNotification) {
-          emailContent += "<br>Thanks, <br>Inventorysource support<br>";
-          logStream.println("!! Sending email to user about order processing");
-          EmailUtil.sendEmail(r.getLogin(), "support@inventorysource.com", "",
-              "Order processing update results", emailContent, "text/html");
-        }
+        s.sendOrders(vendorId, ovs, oimOrder);
+        successfulOrders.putAll(s.successfulOrders);
+        failedOrders.addAll(s.failedOrders);
+      } catch (SupplierConfigurationException e) {
+        Supplier.updateVendorSupplierOrderHistory(vendorId, ovs.getOimSuppliers(), e.getMessage(),
+            Supplier.ERROR_UNCONFIGURED_SUPPLIER);
+        log.error(e.getMessage(), e);
+        throw e;
+      } catch (SupplierCommunicationException e) {
+        Supplier.updateVendorSupplierOrderHistory(vendorId, ovs.getOimSuppliers(), e.getMessage(),
+            Supplier.ERROR_PING_FAILURE);
+        log.error(e.getMessage(), e);
+        throw e;
+      } catch (SupplierOrderException e) {
+        Supplier.updateVendorSupplierOrderHistory(vendorId, ovs.getOimSuppliers(), e.getMessage(),
+            Supplier.ERROR_ORDER_PROCESSING);
+        log.error(e.getMessage(), e);
+        throw e;
+      } catch (ChannelConfigurationException e) {
+        log.error(e.getMessage(), e);
+        Supplier.updateVendorSupplierOrderHistory(vendorId, ovs.getOimSuppliers(),
+            "Error occured in updating store order status due to ChannelConfiguration Error. "
+                + e.getMessage(),
+            Supplier.ERROR_ORDER_PROCESSING);
+      } catch (ChannelCommunicationException e) {
+        log.error(e.getMessage(), e);
+        Supplier.updateVendorSupplierOrderHistory(vendorId, ovs.getOimSuppliers(),
+            "Error occured in updating store order status due to ChannelComunication Error. "
+                + e.getMessage(),
+            Supplier.ERROR_ORDER_PROCESSING);
+      } catch (ChannelOrderFormatException e) {
+        log.error(e.getMessage(), e);
+        Supplier.updateVendorSupplierOrderHistory(vendorId, ovs.getOimSuppliers(),
+            "Error occured in updating store order status due to ChannelOrderFormat Error. "
+                + e.getMessage(),
+            Supplier.ERROR_ORDER_PROCESSING);
+      } catch (InstantiationException | IllegalAccessException | ClassNotFoundException e) {
+        Supplier.updateVendorSupplierOrderHistory(vendorId, ovs.getOimSuppliers(), e.getMessage(),
+            Supplier.ERROR_UNCONFIGURED_SUPPLIER);
+        throw new SupplierConfigurationException(e.getMessage(), e);
       }
+
+      // else if (OimConstants.SUPPLIER_METHOD_NAME_EMAIL.equals(supplierMethodNameId)
+      // || OimConstants.SUPPLIER_METHOD_NAME_FTP.equals(supplierMethodNameId)) {
+      // String tmp = PojoHelper.getSupplierMethodAttributeValue(m_supplierMethods,
+      // OimConstants.SUPPLIER_METHOD_ATTRIBUTES_FILETYPEID);
+      //
+      // // Find if there is an associated file
+      // OimFiletypes oimFile = null;
+      // if (tmp != null && tmp.length() > 0) {
+      // Integer fileid = Integer.valueOf(tmp);
+      // log.debug("Using File Id: " + fileid + " for generating supplier order file");
+      // query = m_dbSession.createQuery(
+      // "select f from OimFiletypes f where f.fileTypeId=:fileId and f.deleteTm is null");
+      // Iterator it = query.setInteger("fileId", fileid.intValue()).iterate();
+      // if (!it.hasNext()) {
+      // logStream.println("No file defined for this supplier file id: " + fileid);
+      // } else {
+      // oimFile = (OimFiletypes) it.next();
+      // }
+      // }
+      //
+      // int fileFormat = 1;
+      // try {
+      // fileFormat = Integer.parseInt(PojoHelper.getSupplierMethodAttributeValue(
+      // m_supplierMethods, OimConstants.SUPPLIER_METHOD_ATTRIBUTES_FILEFORMAT));
+      // } catch (Exception e) {
+      // e.printStackTrace();
+      // fileFormat = 1;
+      // }
+      //
+      // OrderFile ofile = null;
+      // if (fileFormat == OimConstants.FILE_FORMAT_XLS) {
+      // ofile = new DefaultXlsFile(m_dbSession);
+      // } else {
+      // ofile = new DefaultCsvFile(m_dbSession);
+      // }
+      // if (oimFile != null) {
+      // ofile = new DatabaseFile(m_dbSession, oimFile);
+      // }
+      // ofile.build();
+      //
+      // String name = (String) ofile.getFileFormatParams()
+      // .get(OimConstants.FILE_FORMAT_PARAMS_NAME);
+      // if (name != null && name.length() > 0) {
+      // if (name.indexOf("#SupplierAccountNumber") != -1) {
+      // String accountNumber = ovs.getAccountNumber();
+      // name = name.replaceAll("#SupplierAccountNumber", accountNumber);
+      // }
+      // }
+      // String fileName = "";
+      // if (fileFormat == OimConstants.FILE_FORMAT_XLS) {
+      // fileName = "" + vendorId + "-" + m_supplier.getSupplierId() + ".xls";
+      // log.debug("Generating file " + fileName);
+      // try {
+      // // FIXME generateXlsFile(orders, ofile.getFileFieldMaps(), fileName,
+      // // ofile.getFileFormatParams(),
+      // // ofile.getSpecificsProvider(ovs));
+      // } catch (Exception e) {
+      // log.error(e.getMessage(), e);
+      // }
+      // } else if (fileFormat == OimConstants.FILE_FORMAT_CSV) {
+      // fileName = "" + vendorId + "-" + m_supplier.getSupplierId() + ".csv";
+      // if (name != null && name.length() > 0)
+      // fileName = name;
+      // log.debug("Generating file " + fileName);
+      // try {
+      // /*
+      // * generateCsvFile(orders, ofile.getFileFieldMaps(), fileName,
+      // * ofile.getFileFormatParams(), ofile.getSpecificsProvider(ovs));
+      // */
+      // } catch (Exception e) {
+      // log.debug(e.getMessage(), e);
+      // }
+      // }
+      //
+      // // Get the reps object to get the email id and name of the
+      // // vendor to
+      // // whom the order status email will go in case the
+      // // emaiNotification
+      // // is set for him.
+      // Query q = m_dbSession.createQuery(
+      // "select r from salesmachine.hibernatedb.Reps r where r.vendorId = " + vendorId);
+      // Reps r = new Reps();
+      // Iterator repsIt = q.iterate();
+      // if (repsIt.hasNext()) {
+      // r = (Reps) repsIt.next();
+      // }
+      //
+      // if (OimConstants.SUPPLIER_METHOD_NAME_FTP.equals(supplierMethodNameId)) {
+      // String ftpServer = PojoHelper.getSupplierMethodAttributeValue(m_supplierMethods,
+      // OimConstants.SUPPLIER_METHOD_ATTRIBUTES_FTPSERVER);
+      // String ftpLogin = PojoHelper.getSupplierMethodAttributeValue(m_supplierMethods,
+      // OimConstants.SUPPLIER_METHOD_ATTRIBUTES_FTPLOGIN);
+      // String ftpPassword = PojoHelper.getSupplierMethodAttributeValue(m_supplierMethods,
+      // OimConstants.SUPPLIER_METHOD_ATTRIBUTES_FTPPASSWORD);
+      //
+      // if ("#accountspecific".equals(ftpLogin))
+      // ftpLogin = ovs.getLogin();
+      // if ("#accountspecific".equals(ftpPassword))
+      // ftpPassword = ovs.getPassword();
+      //
+      // String ftpFolder = PojoHelper.getSupplierMethodAttributeValue(m_supplierMethods,
+      // OimConstants.SUPPLIER_METHOD_ATTRIBUTES_FTPFOLDER);
+      //
+      // FtpFileUploader uploader = new FtpFileUploader(ftpServer, ftpLogin, ftpPassword, 5, 0);
+      // try {
+      // uploader.Upload(ftpFolder, fileName, fileName);
+      // } catch (Exception e) {
+      // log.error(e.getMessage(), e);
+      // return false;
+      // }
+      //
+      // } else if (OimConstants.SUPPLIER_METHOD_NAME_EMAIL.equals(supplierMethodNameId)) {
+      // String emailAddress = PojoHelper.getSupplierMethodAttributeValue(m_supplierMethods,
+      // OimConstants.SUPPLIER_METHOD_ATTRIBUTES_EMAILADDRESS);
+      // if (fileFormat == OimConstants.FILE_FORMAT_SEND_PLAIN_TEXT_IN_EMAIL) {
+      // try {
+      // String vendor_name = StringHandle.removeNull(r.getFirstName()) + " "
+      // + StringHandle.removeNull(r.getLastName());
+      // String emailContent = "Dear " + vendor_name + "<br>";
+      // emailContent += "<br>Following is the status of the orders processed for the supplier "
+      // + ovs.getOimSuppliers().getSupplierName() + " : - <br>";
+      // emailContent += ""/*
+      // * //FIXME FgenerateMailBody(orders, ofile.getFileFieldMaps(), new
+      // * StandardFileSpecificsProvider(m_dbSession, ovs, new
+      // * Vendors(vendorId)))
+      // */;
+      // EmailUtil.sendEmail(emailAddress, "support@inventorysource.com", r.getLogin(),
+      // "oim@inventorysource.com", m_supplier.getSupplierName() + " Orders", emailContent,
+      // "text/html");
+      // } catch (Exception e1) {
+      // log.error(e1.getMessage(), e1);
+      // }
+      // } else {
+      // EmailUtil.sendEmailWithAttachment(emailAddress, "support@inventorysource.com",
+      // "oim@inventorysource.com," + r.getLogin(), m_supplier.getSupplierName() + " Orders",
+      // "Find attached the orders from my store.", fileName, "");
+      // }
+      // }
+      //
+      // String nameEmail = StringHandle.removeNull(r.getFirstName()) + " "
+      // + StringHandle.removeNull(r.getLastName());
+      // String emailContent = "Dear " + nameEmail + "<br>";
+      // emailContent += "<br>Following is the status of the orders processed for the supplier "
+      // + ovs.getOimSuppliers().getSupplierName() + " : - <br>";
+      // boolean emailNotification = false;
+      //
+      // // In both these cases i.e. Ftp File Upload and Email, orders
+      // // can
+      // // not fail at this stage
+      // // So all of them need to be marked placed
+      // /*
+      // * //FIXME for (int i = 0; i < orders.size(); i++) { OimOrders order = (OimOrders)
+      // * orders.get(i);
+      // *
+      // * // Send Email Notifications if is set to true. if
+      // * (order.getOimOrderBatches().getOimChannels().getEmailNotifications() == 1) {
+      // * emailNotification = true; String orderStatus = "Successfully Placed"; emailContent +=
+      // * "<b>Store Order ID " + order.getStoreOrderId() + "</b> -> " + orderStatus + " ";
+      // * emailContent += "<br>"; } }
+      // */
+      // if (emailNotification) {
+      // emailContent += "<br>Thanks, <br>Inventorysource support<br>";
+      // logStream.println("!! Sending email to user about order processing");
+      // EmailUtil.sendEmail(r.getLogin(), "support@inventorysource.com", "",
+      // "Order processing update results", emailContent, "text/html");
+      // }
+      // }
     }
     return true;
   }
@@ -874,7 +871,7 @@ public class SupplierFactory {
     try {
       IOrderImport iOrderImport = ChannelFactory.getIOrderImport(oimChannels);
 
-      if (orderStatus != null)
+      if (orderStatus != null && oimChannels.getTestMode() == 0)
         iOrderImport.updateStoreOrder(oimOrderDetails, orderStatus);
 
     } catch (ChannelConfigurationException e) {

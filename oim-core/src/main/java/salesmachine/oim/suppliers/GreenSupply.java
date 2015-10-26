@@ -150,6 +150,8 @@ public class GreenSupply extends Supplier {
       for (OimOrderDetails od : ((Set<OimOrderDetails>) order.getOimOrderDetailses())) {
         StringBuilder sb = new StringBuilder();
         // for (OimFileFieldMap map : fileFieldMaps) {
+        if (!od.getOimSuppliers().getSupplierId().equals(ovs.getOimSuppliers().getSupplierId()))
+          continue;
         String poNumber = null;
         for (int i = 0; i < fileFieldMaps.size(); i++) {
           OimFileFieldMap map = fileFieldMaps.get(i);
@@ -185,7 +187,8 @@ public class GreenSupply extends Supplier {
             OrderStatus orderStatus = new OrderStatus();
             orderStatus.setStatus(((OimOrderProcessingRule) oimChannels.getOimOrderProcessingRules()
                 .iterator().next()).getProcessedStatus());
-            iOrderImport.updateStoreOrder(od, orderStatus);
+            if (oimChannels.getTestMode() == 0)
+              iOrderImport.updateStoreOrder(od, orderStatus);
           }
         } catch (ChannelConfigurationException e) {
           stream.println(e.getMessage());

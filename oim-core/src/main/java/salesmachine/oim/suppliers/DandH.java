@@ -282,6 +282,7 @@ public class DandH extends Supplier implements HasTracking {
           orderStatus.setStatus(
               ((OimOrderProcessingRule) oimChannels.getOimOrderProcessingRules().iterator().next())
                   .getProcessedStatus());
+          if (oimChannels.getTestMode() == 0)
           iOrderImport.updateStoreOrder(detail, orderStatus);
 
         } catch (ChannelConfigurationException e) {
