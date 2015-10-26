@@ -170,10 +170,29 @@ public class HonestGreen extends Supplier implements HasTracking {
 
     boolean isOrderFromAmazonStore = isOrderFromAmazonStore(order);
     String poNum;
-    if (isOrderFromAmazonStore)
-      poNum = order.getStoreOrderId();
-    else
-      poNum = ovs.getVendors().getVendorId() + "-" + order.getStoreOrderId();
+    Query query = session.createSQLQuery(
+        "select  distinct SUPPLIER_ORDER_NUMBER from kdyer.OIM_ORDER_DETAILS where ORDER_ID=:orderId and SUPPLIER_ID=:supplierId");
+    query.setInteger("orderId", order.getOrderId());
+    query.setInteger("supplierId", ovs.getOimSuppliers().getSupplierId());
+    Object q = null;
+    try {
+      q = query.uniqueResult();
+    } catch (NonUniqueResultException e) {
+      log.error(
+          "This order has more than one product having different PO number. Please make them unique. store order id is - {}",
+          order.getStoreOrderId());
+      throw new SupplierConfigurationException(
+          "This order has more than one product having different PO number. Please make them unique.");
+    }
+    if (q != null) {
+      poNum = (String) q;
+      log.info("Reprocessing po - {}", poNum);
+    } else {
+      if (isOrderFromAmazonStore)
+        poNum = order.getStoreOrderId();
+      else
+        poNum = ovs.getVendors().getVendorId() + "-" + order.getStoreOrderId();
+    }
     try {
       Set<OimOrderDetails> phiItems = new HashSet<OimOrderDetails>();
       Set<OimOrderDetails> hvaItems = new HashSet<OimOrderDetails>();

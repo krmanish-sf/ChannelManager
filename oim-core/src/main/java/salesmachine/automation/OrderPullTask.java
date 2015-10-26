@@ -58,6 +58,7 @@ public class OrderPullTask extends TimerTask {
         List list2 = channelQuery.list();
         for (Object object : list2) {
           OimChannels channel = (OimChannels) object;
+          session.refresh(channel);
           // FIXME Thread Scoped Session is behaving bad
           // eventBus.post(channel);
 
