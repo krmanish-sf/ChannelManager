@@ -109,9 +109,9 @@ public final class ShopifyOrderImport extends ChannelBase implements IOrderImpor
     lineItemArray.add(lineItem);
 
     jsonObjVal.put("notify_customer", true);
-  //  jsonObjVal.put("line_items", lineItemArray);
+    // jsonObjVal.put("line_items", lineItemArray);
     jsonObject.put("fulfillment", jsonObjVal);
-    log.info("request for fullfillment : {}",jsonObject.toJSONString());
+    log.info("request for fullfillment : {}", jsonObject.toJSONString());
     StringRequestEntity requestEntity = null;
     try {
       requestEntity = new StringRequestEntity(jsonObject.toJSONString(), "application/json",
@@ -127,9 +127,10 @@ public final class ShopifyOrderImport extends ChannelBase implements IOrderImpor
       log.info("fullfilment statusCode is - {}", statusCode);
       if (statusCode != 200 && statusCode != 201) {
         log.error("fullfilment rejected by store with status code {}", statusCode);
-//        throw new ChannelCommunicationException(
-//            "Error in posting request for fullfillment. fullfilment rejected by store with status code - "
-//                + statusCode);
+        // throw new ChannelCommunicationException(
+        // "Error in posting request for fullfillment. fullfilment rejected by store with status
+        // code - "
+        // + statusCode);
       }
 
     } catch (HttpException e) {
@@ -412,6 +413,9 @@ public final class ShopifyOrderImport extends ChannelBase implements IOrderImpor
         tx.commit();
         tx = null;
         log.debug("Finished importing orders...");
+      } catch (NullPointerException e) {
+        log.error(e.getMessage(), e);
+        throw new ChannelOrderFormatException(e.getMessage(), e);
       } finally {
         if (tx != null && tx.isActive()) {
           tx.rollback();

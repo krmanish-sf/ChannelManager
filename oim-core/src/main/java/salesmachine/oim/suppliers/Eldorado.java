@@ -22,6 +22,9 @@ import javax.xml.datatype.DatatypeFactory;
 import javax.xml.datatype.XMLGregorianCalendar;
 
 import org.apache.axis.utils.ByteArrayOutputStream;
+import org.hibernate.NonUniqueResultException;
+import org.hibernate.Query;
+import org.hibernate.Session;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,6 +32,7 @@ import salesmachine.hibernatedb.OimOrderDetails;
 import salesmachine.hibernatedb.OimOrders;
 import salesmachine.hibernatedb.OimSupplierShippingMethod;
 import salesmachine.hibernatedb.OimVendorSuppliers;
+import salesmachine.hibernatehelper.SessionManager;
 import salesmachine.oim.api.OimConstants;
 import salesmachine.oim.stores.exception.ChannelCommunicationException;
 import salesmachine.oim.stores.exception.ChannelConfigurationException;
@@ -143,7 +147,34 @@ public class Eldorado extends Supplier implements HasTracking {
       elOrder.setAddressLine2(order.getDeliverySuburb());
       elOrder.setCity(order.getDeliveryCity());
       elOrder.setCountryCode(order.getDeliveryCountryCode());
-      elOrder.setCustPONumber(order.getOrderId().toString());// EL requires numbers only PO
+      String poNum=null; 
+      Session session = SessionManager.currentSession();
+      Query query = session.createSQLQuery(
+          "select  distinct SUPPLIER_ORDER_NUMBER from kdyer.OIM_ORDER_DETAILS where ORDER_ID=:orderId and SUPPLIER_ID=:supplierId");
+      query.setInteger("orderId", order.getOrderId());
+      query.setInteger("supplierId", ovs.getOimSuppliers().getSupplierId());
+      Object q = null;
+      try {
+        q = query.uniqueResult();
+      } catch (NonUniqueResultException e) {
+        log.error(
+            "This order has more than one product having different PO number. Please make them unique. store order id is - {}",
+            order.getStoreOrderId());
+        throw new SupplierConfigurationException(
+            "This order has more than one product having different PO number. Please make them unique.");
+      }
+      if (q != null) {
+        poNum = (String) q;
+        log.info("Reprocessing PO NUmber - {}", poNum);
+      }
+      else{
+        poNum=StringHandle.removeNull(order.getOrderId()).toString();
+      }
+      if(poNum instanceof String ==false){
+        log.error("This order - {} conatins an alphanumeric PO Number. Eldorado only supports numbers only for PO",order.getStoreOrderId());
+        throw new SupplierOrderException("This order - "+order.getStoreOrderId()+" conatins an alphanumeric PO Number. Eldorado only supports numbers only for PO");
+      }
+      elOrder.setCustPONumber(poNum);// EL requires numbers only PO
       elOrder.setEnteredByCode(ovs.getLogin());
       elOrder.setName(order.getDeliveryName());
       elOrder.setPhoneNumber(order.getDeliveryPhone());

@@ -22,6 +22,8 @@ import javax.xml.bind.Unmarshaller;
 import javax.xml.datatype.XMLGregorianCalendar;
 
 import org.apache.axis.utils.ByteArrayOutputStream;
+import org.hibernate.NonUniqueResultException;
+import org.hibernate.Query;
 import org.hibernate.Session;
 import org.hibernate.criterion.Restrictions;
 import org.slf4j.Logger;
@@ -220,8 +222,31 @@ public class BF extends Supplier implements HasTracking {
             val += "<" + map.getMappedFieldName() + ">\n";
           } else if ("po_num".equals(StringHandle.removeNull(map.getMappedFieldName()))
               && addShippingDetails) {
+            String poNum=null; 
+            Session session = SessionManager.currentSession();
+            Query query = session.createSQLQuery(
+                "select  distinct SUPPLIER_ORDER_NUMBER from kdyer.OIM_ORDER_DETAILS where ORDER_ID=:orderId and SUPPLIER_ID=:supplierId");
+            query.setInteger("orderId", order.getOrderId());
+            query.setInteger("supplierId", ovs.getOimSuppliers().getSupplierId());
+            Object q = null;
+            try {
+              q = query.uniqueResult();
+            } catch (NonUniqueResultException e) {
+              log.error(
+                  "This order has more than one product having different PO number. Please make them unique. store order id is - {}",
+                  order.getStoreOrderId());
+              throw new SupplierConfigurationException(
+                  "This order has more than one product having different PO number. Please make them unique.");
+            }
+            if (q != null) {
+              poNum = (String) q;
+              log.info("Reprocessing PO NUmber - {}", poNum);
+            }
+            else{
+              poNum=StringHandle.removeNull(fieldValue);
+            }
             val += "<" + map.getMappedFieldName() + "><![CDATA["
-                + StringHandle.removeNull(fieldValue) + "]]></" + map.getMappedFieldName() + ">\n";
+                + poNum + "]]></" + map.getMappedFieldName() + ">\n";
           } else if ("exp".equals(StringHandle.removeNull(map.getMappedFieldName()))
               && addShippingDetails) {
             val += "<" + map.getMappedFieldName() + ">STD</" + map.getMappedFieldName() + ">\n";
