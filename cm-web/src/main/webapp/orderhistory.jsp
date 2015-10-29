@@ -455,6 +455,11 @@
                               <tbody>
                               </tbody>
                             </table>
+                            <div class="row po-edit-warning" style="display: none;" >
+                            <div class="col-sm-12" style="background-color:yellow">
+                            <span>Please click on "Update" button for highlighted rows in order to save the new PO number for same supplier items. </span>
+                            </div>
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -1000,10 +1005,12 @@
 								'.supplier-select').val();
 						var newPO = this.value;
 						var rows = $(this).parents('tr').siblings();
+						$('div.po-edit-warning').hide();
 						$.each(rows, function(i, e) {
 							var thisSupplier = $(e).find('.supplier-select')
 									.val();
 							if (thisSupplier == currentSupplier) {
+								$('div.po-edit-warning').show();
 								$(e).find('input.po-number-input').val(newPO)
 										.css('background-color', 'yellow');
 							}

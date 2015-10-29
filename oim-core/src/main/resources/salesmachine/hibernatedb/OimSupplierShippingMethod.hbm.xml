@@ -4,8 +4,10 @@
 <hibernate-mapping>
     <class name="salesmachine.hibernatedb.OimSupplierShippingMethod" table="oim_supplier_shipping_carrier">
         <id name="id" type="int">
-            <column name="ID" />
-            <generator class="assigned" />
+            <column name="ID"  precision="22" scale="0"/>
+            <generator class="sequence">
+                <param name="sequence">OIM_SUP_SHIP_CARRIER_SEQUENCES</param>
+            </generator>
         </id>
         <many-to-one name="oimSupplier" class="salesmachine.hibernatedb.OimSuppliers" fetch="join">
             <column name="SUPPLIER_ID" />

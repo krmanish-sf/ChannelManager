@@ -55,76 +55,71 @@ public class OrderPullTask extends TimerTask {
                 + "left join c.oimChannelAccessDetailses d "
                 + "where c.vendors.vendorId=:vid and c.deleteTm is null");
         channelQuery.setInteger("vid", r.getVendorId());
-        List list2 = channelQuery.list();
-        for (Object object : list2) {
-          OimChannels channel = (OimChannels) object;
+        List<OimChannels> channelList = channelQuery.list();
+        for (OimChannels channel : channelList) {
           // FIXME Thread Scoped Session is behaving bad
           // eventBus.post(channel);
 
           log.info("Channel Type: [{}], Name:[{}]",
               channel.getOimSupportedChannels().getChannelName(), channel.getChannelName());
-          String orderFetchBean = channel.getOimSupportedChannels().getOrderFetchBean();
 
-          if (orderFetchBean != null && orderFetchBean.length() > 0) {
-            OimOrderBatches vendorOrders = new OimOrderBatches();
-            OimOrderBatchesTypes oimOrderBatchesTypes = new OimOrderBatchesTypes(
-                OimConstants.ORDERBATCH_TYPE_ID_AUTOMATED);
-            // try {
-            try {
-              IOrderImport iOrderImport = ChannelFactory.getIOrderImport(channel);
-              log.info("Pulling orders for channel id: {}", channel.getChannelId());
-              iOrderImport.getVendorOrders(oimOrderBatchesTypes, vendorOrders);
-              if (vendorOrders != null && vendorOrders.getOimOrderses().size() > 0) {
-                AutomationManager.orderPullMap.put(channel.getChannelId(),
-                    vendorOrders.getOimOrderses().size());
-                // TODO uncomment the line below if there is need for the Order to be processed
-                // automatically
-                // eventBus.post(vendorOrders);
-              } else {
-                AutomationManager.orderPullMap.put(channel.getChannelId(), 0);
-              }
-            } catch (ChannelConfigurationException | ChannelCommunicationException
-                | ChannelOrderFormatException e) {
-              log.error(e.getMessage(), e);
-              if (e instanceof ChannelConfigurationException) {
-                vendorOrders.setDescription(
-                    "Error occured in pulling order due to ChannelConfiguration Error."
-                        + e.getMessage());
-                vendorOrders.setErrorCode(ChannelConfigurationException.getErrorcode());
-                AutomationManager.orderPullMap.put(channel.getChannelId(), 0);
-              } else if (e instanceof ChannelCommunicationException) {
-                vendorOrders.setDescription(
-                    "Error occured in pulling order due to ChannelCommunication Error."
-                        + e.getMessage());
-                vendorOrders.setErrorCode(ChannelCommunicationException.getErrorcode());
-                AutomationManager.orderPullMap.put(channel.getChannelId(), 0);
-              } else if (e instanceof ChannelOrderFormatException) {
-                vendorOrders.setDescription(
-                    "Error occured in pulling order due to ChannelOrderFormat Error."
-                        + e.getMessage());
-                vendorOrders.setErrorCode(ChannelOrderFormatException.getErrorcode());
-                AutomationManager.orderPullMap.put(channel.getChannelId(), 0);
-              } else {
-                vendorOrders.setDescription(
-                    "Error occured in pulling order due to ChannelConfiguration Error."
-                        + e.getMessage());
-                vendorOrders.setErrorCode(ChannelConfigurationException.getErrorcode());
-                AutomationManager.orderPullMap.put(channel.getChannelId(), 0);
-              }
-
-            } catch (Exception e) {
-              log.error(e.getMessage(), e);
-            } finally {
-              Session m_dbSession = SessionManager.currentSession();
-              Transaction tx = m_dbSession.getTransaction();
-              if (tx != null && tx.isActive())
-                tx.commit();
-              tx = m_dbSession.beginTransaction();
-              m_dbSession.save(vendorOrders);
-              tx.commit();
+          OimOrderBatches vendorOrders = new OimOrderBatches();
+          OimOrderBatchesTypes oimOrderBatchesTypes = new OimOrderBatchesTypes(
+              OimConstants.ORDERBATCH_TYPE_ID_AUTOMATED);
+          // try {
+          try {
+            IOrderImport iOrderImport = ChannelFactory.getIOrderImport(channel);
+            log.info("Pulling orders for channel id: {}", channel.getChannelId());
+            iOrderImport.getVendorOrders(oimOrderBatchesTypes, vendorOrders);
+            if (vendorOrders != null && vendorOrders.getOimOrderses().size() > 0) {
+              AutomationManager.orderPullMap.put(channel.getChannelId(),
+                  vendorOrders.getOimOrderses().size());
+              // TODO uncomment the line below if there is need for the Order to be processed
+              // automatically
+              // eventBus.post(vendorOrders);
+            } else {
+              AutomationManager.orderPullMap.put(channel.getChannelId(), 0);
             }
-          }
+          } catch (ChannelConfigurationException | ChannelCommunicationException
+              | ChannelOrderFormatException e) {
+            log.error(e.getMessage(), e);
+            if (e instanceof ChannelConfigurationException) {
+              vendorOrders.setDescription(
+                  "Error occured in pulling order due to ChannelConfiguration Error."
+                      + e.getMessage());
+              vendorOrders.setErrorCode(ChannelConfigurationException.getErrorcode());
+              AutomationManager.orderPullMap.put(channel.getChannelId(), 0);
+            } else if (e instanceof ChannelCommunicationException) {
+              vendorOrders.setDescription(
+                  "Error occured in pulling order due to ChannelCommunication Error."
+                      + e.getMessage());
+              vendorOrders.setErrorCode(ChannelCommunicationException.getErrorcode());
+              AutomationManager.orderPullMap.put(channel.getChannelId(), 0);
+            } else if (e instanceof ChannelOrderFormatException) {
+              vendorOrders
+                  .setDescription("Error occured in pulling order due to ChannelOrderFormat Error."
+                      + e.getMessage());
+              vendorOrders.setErrorCode(ChannelOrderFormatException.getErrorcode());
+              AutomationManager.orderPullMap.put(channel.getChannelId(), 0);
+            } else {
+              vendorOrders.setDescription(
+                  "Error occured in pulling order due to ChannelConfiguration Error."
+                      + e.getMessage());
+              vendorOrders.setErrorCode(ChannelConfigurationException.getErrorcode());
+              AutomationManager.orderPullMap.put(channel.getChannelId(), 0);
+            }
 
+          } catch (Exception e) {
+            log.error(e.getMessage(), e);
+          } finally {
+            Session m_dbSession = SessionManager.currentSession();
+            Transaction tx = m_dbSession.getTransaction();
+            if (tx != null && tx.isActive())
+              tx.commit();
+            tx = m_dbSession.beginTransaction();
+            m_dbSession.save(vendorOrders);
+            tx.commit();
+          }
         }
       }
       audit.setPullTaskCompleted();

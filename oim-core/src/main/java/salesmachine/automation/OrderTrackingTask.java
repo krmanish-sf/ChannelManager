@@ -47,9 +47,9 @@ public class OrderTrackingTask extends TimerTask {
 								+ "d.deleteTm is null and d.supplierOrderStatus is not null and "
 								+ "d.oimOrderStatuses.statusId = '2' order by d.processingTm desc");
 
-				List<OimOrders> list = query.list();
-				log.info("Found {} orders to track...", list.size());
-				for (OimOrders oimorder : list) {
+				List<OimOrders> trackOrderList = query.list();
+				log.info("Found {} orders to track...", trackOrderList.size());
+				for (OimOrders oimorder : trackOrderList) {
 					Set orderdetails = oimorder.getOimOrderDetailses();
 					Iterator odIter = orderdetails.iterator();
 					log.debug("OrderId: {} Shipping:{} Total:{}",

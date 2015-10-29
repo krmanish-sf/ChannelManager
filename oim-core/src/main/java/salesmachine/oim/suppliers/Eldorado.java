@@ -57,7 +57,7 @@ public class Eldorado extends Supplier implements HasTracking {
 
   private final String orderEndPoint = ApplicationProperties
       .getProperty(ApplicationProperties.EL_API_ORDER_ENDPOINT);
-
+  private static final String TRACKING_ENDPOINT = "https://www.eldoradopartner.com/shipping_updates/index.php";
   private static JAXBContext jaxbContext;
 
   static {
@@ -72,7 +72,6 @@ public class Eldorado extends Supplier implements HasTracking {
   @Override
   public OrderStatus getOrderStatus(OimVendorSuppliers ovs, Object trackingMeta,
       OimOrderDetails oimOrderDetails) throws SupplierOrderTrackingException {
-    String urlString = "https://www.eldoradopartner.com/shipping_updates/index.php";
     OrderStatus status = new OrderStatus();
     status.setStatus(oimOrderDetails.getSupplierOrderStatus());
     try (ByteArrayOutputStream os = new ByteArrayOutputStream()) {
@@ -89,7 +88,7 @@ public class Eldorado extends Supplier implements HasTracking {
       xmlOrder.setOrder(order);
       request.setXMLOrders(xmlOrder);
       marshaller.marshal(request, os);
-      String response = postRequest(urlString,
+      String response = postRequest(TRACKING_ENDPOINT,
           os.toString().replace("<ELTrackRequest>", "").replace("</ELTrackRequest>", ""));
       salesmachine.oim.suppliers.modal.el.tracking.XMLOrders trackingResponse = (salesmachine.oim.suppliers.modal.el.tracking.XMLOrders) unmarshaller
           .unmarshal(new StringReader(response));

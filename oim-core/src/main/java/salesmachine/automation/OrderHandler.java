@@ -36,11 +36,9 @@ public class OrderHandler {
   // @AllowConcurrentEvents
   public void handleOrderPull(OimOrderBatches orderBatches) {
     log.info("Order Recieved with BatchSize:{}", orderBatches.getOimOrderses().size());
-    for (Object object : orderBatches.getOimOrderses()) {
+    for (OimOrders oimOrders : orderBatches.getOimOrderses()) {
       try {
-        OimOrders oimOrders = (OimOrders) object;
-        SupplierFactory osop = new SupplierFactory(
-            SessionManager.currentSession());
+        SupplierFactory osop = new SupplierFactory(SessionManager.currentSession());
         Session session = SessionManager.currentSession();
         session.createCriteria(OimChannelSupplierMap.class)
             .add(Restrictions.eq("oimChannels.channelId",
@@ -65,9 +63,8 @@ public class OrderHandler {
   public void handleOrderTracking(OimOrderDetails orderDetails) {
     try {
       log.info("Order Tracking :{}", orderDetails.getDetailId());
-      SupplierFactory osop = new SupplierFactory(
-          SessionManager.currentSession());
-      String trackOrder = osop.trackOrder(orderDetails.getOimOrders().getOimOrderBatches()
+      SupplierFactory factory = new SupplierFactory(SessionManager.currentSession());
+      String trackOrder = factory.trackOrder(orderDetails.getOimOrders().getOimOrderBatches()
           .getOimChannels().getVendors().getVendorId(), orderDetails.getDetailId());
       log.info("OrderId# {} ItemId# {} Status# {}", orderDetails.getOimOrders().getOrderId(),
           orderDetails.getDetailId(), trackOrder);
@@ -79,61 +76,55 @@ public class OrderHandler {
   @Subscribe
   // @AllowConcurrentEvents
   public void handleOrderPull(OimChannels channel) {
-
     log.info("Channel Type: [{}], Name:[{}]", channel.getOimSupportedChannels().getChannelName(),
         channel.getChannelName());
-    String orderFetchBean = channel.getOimSupportedChannels().getOrderFetchBean();
-
-    if (orderFetchBean != null && orderFetchBean.length() > 0) {
+    try {
+      OimOrderBatches orderBatch = new OimOrderBatches();
+      OimOrderBatchesTypes oimOrderBatchesTypes = new OimOrderBatchesTypes(
+          OimConstants.ORDERBATCH_TYPE_ID_AUTOMATED);
       try {
-
-        OimOrderBatches vendorOrders = new OimOrderBatches();
-        OimOrderBatchesTypes oimOrderBatchesTypes = new OimOrderBatchesTypes(
-            OimConstants.ORDERBATCH_TYPE_ID_AUTOMATED);
-        try {
-          {
-            IOrderImport iOrderImport = ChannelFactory.getIOrderImport(channel);
-            log.info("Pulling orders for channel id: {}", channel.getChannelId());
-            // OimOrderBatches vendorOrders = new OimOrderBatches();
-            iOrderImport.getVendorOrders(oimOrderBatchesTypes, vendorOrders);
-            if (vendorOrders != null)
-              eventBus.post(vendorOrders);
-          }
-        } catch (ChannelConfigurationException | ChannelCommunicationException
-            | ChannelOrderFormatException e) {
-          if (e instanceof ChannelConfigurationException) {
-            log.error(e.getMessage(), e);
-            vendorOrders
-                .setDescription("Error occured in pulling order due to ChannelConfiguration Error."
-                    + e.getMessage());
-            vendorOrders.setErrorCode(ChannelConfigurationException.getErrorcode());
-          }
-          if (e instanceof ChannelCommunicationException) {
-            log.error(e.getMessage(), e);
-            vendorOrders
-                .setDescription("Error occured in pulling order due to ChannelCommunication Error."
-                    + e.getMessage());
-            vendorOrders.setErrorCode(ChannelCommunicationException.getErrorcode());
-          }
-          if (e instanceof ChannelOrderFormatException) {
-            log.error(e.getMessage(), e);
-            vendorOrders.setDescription(
-                "Error occured in pulling order due to ChannelOrderFormat Error." + e.getMessage());
-            vendorOrders.setErrorCode(ChannelOrderFormatException.getErrorcode());
-          }
-        } finally {
-          Session m_dbSession = SessionManager.currentSession();
-          Transaction tx = m_dbSession.getTransaction();
-          if (tx != null && tx.isActive())
-            tx.commit();
-          tx = m_dbSession.beginTransaction();
-
-          m_dbSession.save(vendorOrders);
-          tx.commit();
+        {
+          IOrderImport iOrderImport = ChannelFactory.getIOrderImport(channel);
+          log.info("Pulling orders for channel id: {}", channel.getChannelId());
+          iOrderImport.getVendorOrders(oimOrderBatchesTypes, orderBatch);
+          // TODO uncomment to enable automated order processing using automation
+          /*
+           * if (orderBatch != null) eventBus.post(orderBatch);
+           */
         }
-      } catch (Exception e) {
-        log.error(e.getMessage(), e);
+      } catch (ChannelConfigurationException | ChannelCommunicationException
+          | ChannelOrderFormatException e) {
+        if (e instanceof ChannelConfigurationException) {
+          log.error(e.getMessage(), e);
+          orderBatch.setDescription(
+              "Error occured in pulling order due to ChannelConfiguration Error." + e.getMessage());
+          orderBatch.setErrorCode(ChannelConfigurationException.getErrorcode());
+        }
+        if (e instanceof ChannelCommunicationException) {
+          log.error(e.getMessage(), e);
+          orderBatch.setDescription(
+              "Error occured in pulling order due to ChannelCommunication Error." + e.getMessage());
+          orderBatch.setErrorCode(ChannelCommunicationException.getErrorcode());
+        }
+        if (e instanceof ChannelOrderFormatException) {
+          log.error(e.getMessage(), e);
+          orderBatch.setDescription(
+              "Error occured in pulling order due to ChannelOrderFormat Error." + e.getMessage());
+          orderBatch.setErrorCode(ChannelOrderFormatException.getErrorcode());
+        }
+      } finally {
+        Session m_dbSession = SessionManager.currentSession();
+        Transaction tx = m_dbSession.getTransaction();
+        if (tx != null && tx.isActive())
+          tx.commit();
+        tx = m_dbSession.beginTransaction();
+
+        m_dbSession.save(orderBatch);
+        tx.commit();
       }
+    } catch (Exception e) {
+      log.error(e.getMessage(), e);
     }
+
   }
 }
