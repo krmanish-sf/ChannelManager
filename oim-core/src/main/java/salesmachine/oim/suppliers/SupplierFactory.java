@@ -363,7 +363,7 @@ public class SupplierFactory {
         Iterator it = query.iterate();
         if (it.hasNext()) {
           ovs = (OimVendorSuppliers) it.next();
-          ping = pingSupplier(vendorId, ovs, errorMessage);
+         // ping = pingSupplier(vendorId, ovs, errorMessage);
         } else {
           return false;
         }

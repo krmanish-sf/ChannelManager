@@ -55,8 +55,10 @@ public class OrderPullTask extends TimerTask {
                 + "left join c.oimChannelAccessDetailses d "
                 + "where c.vendors.vendorId=:vid and c.deleteTm is null");
         channelQuery.setInteger("vid", r.getVendorId());
+
         List<OimChannels> channelList = channelQuery.list();
         for (OimChannels channel : channelList) {
+          session.refresh(channel);
           // FIXME Thread Scoped Session is behaving bad
           // eventBus.post(channel);
 

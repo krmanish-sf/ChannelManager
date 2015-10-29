@@ -9,6 +9,8 @@ import java.util.Date;
 import java.util.List;
 import java.util.Set;
 
+import org.hibernate.NonUniqueResultException;
+import org.hibernate.Query;
 import org.hibernate.Session;
 import org.hibernate.criterion.Restrictions;
 import org.slf4j.Logger;
@@ -137,7 +139,8 @@ public class GreenSupply extends Supplier {
 
   private String createOrderFile(OimOrders order, OimVendorSuppliers ovs,
       List<OimFileFieldMap> fileFieldMaps, IFileSpecificsProvider fileSpecifics)
-          throws ChannelCommunicationException, ChannelOrderFormatException {
+          throws SupplierConfigurationException, SupplierCommunicationException,
+          SupplierOrderException, ChannelCommunicationException, ChannelOrderFormatException {
 
     SimpleDateFormat sdf = new SimpleDateFormat("yyMMddHHmm");
     String uploadfilename = "GS_" + ovs.getAccountNumber() + "_" + sdf.format(new Date()) + ".csv";
@@ -166,7 +169,28 @@ public class GreenSupply extends Supplier {
           }
           sb.append(fieldValue.replaceAll(",", " "));
           if (mappedFieldName.equalsIgnoreCase("PO Number")) {
-            poNumber = fieldValue;
+            Query query = session.createSQLQuery(
+                "select  distinct SUPPLIER_ORDER_NUMBER from kdyer.OIM_ORDER_DETAILS where ORDER_ID=:orderId and SUPPLIER_ID=:supplierId");
+            query.setInteger("orderId", order.getOrderId());
+            query.setInteger("supplierId", ovs.getOimSuppliers().getSupplierId());
+            Object q = null;
+            try {
+              q = query.uniqueResult();
+            } catch (NonUniqueResultException e) {
+              log.error(
+                  "This order has more than one product having different PO number. Please make them unique. store order id is - {}",
+                  order.getStoreOrderId());
+              throw new SupplierConfigurationException(
+                  "This order has more than one product having different PO number. Please make them unique.");
+            }
+            if (q != null) {
+              poNumber = (String) q;
+              log.info("Reprocessing PO NUmber - {}", poNumber);
+            }
+            else{
+              poNumber=StringHandle.removeNull(fieldValue);
+            }
+           // poNumber = fieldValue;
           }
           if (i == fileFieldMaps.size() - 1) {
             sb.append(NEWLINE);

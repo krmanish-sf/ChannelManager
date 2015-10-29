@@ -28,6 +28,8 @@ import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
 
+import org.hibernate.NonUniqueResultException;
+import org.hibernate.Query;
 import org.hibernate.Session;
 import org.hibernate.criterion.Restrictions;
 import org.slf4j.Logger;
@@ -203,7 +205,30 @@ public class DandH extends Supplier implements HasTracking {
                   .append("]]></SHIPSERVICE>");
               break;
             case "PONUM":
-              xmlOrder.append("<PONUM><![CDATA[DH-").append(fieldValue).append("]]></PONUM>");
+              String poNum=null; 
+              Session session = SessionManager.currentSession();
+              Query query = session.createSQLQuery(
+                  "select  distinct SUPPLIER_ORDER_NUMBER from kdyer.OIM_ORDER_DETAILS where ORDER_ID=:orderId and SUPPLIER_ID=:supplierId");
+              query.setInteger("orderId", order.getOrderId());
+              query.setInteger("supplierId", ovs.getOimSuppliers().getSupplierId());
+              Object q = null;
+              try {
+                q = query.uniqueResult();
+              } catch (NonUniqueResultException e) {
+                log.error(
+                    "This order has more than one product having different PO number. Please make them unique. store order id is - {}",
+                    order.getStoreOrderId());
+                throw new SupplierConfigurationException(
+                    "This order has more than one product having different PO number. Please make them unique.");
+              }
+              if (q != null) {
+                poNum = (String) q;
+                log.info("Reprocessing PO NUmber - {}", poNum);
+              }
+              else{
+                poNum=StringHandle.removeNull(fieldValue);
+              }
+              xmlOrder.append("<PONUM><![CDATA[DH-").append(poNum).append("]]></PONUM>");
               break;
             case "/ORDERHEADER":
               xmlOrder.append("</ORDERHEADER>");
