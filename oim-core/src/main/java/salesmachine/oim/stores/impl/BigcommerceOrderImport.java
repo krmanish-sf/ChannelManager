@@ -161,7 +161,7 @@ public class BigcommerceOrderImport extends ChannelBase {
         int waitTime = Integer.parseInt(connection.getHeaderField("X-Retry-After"));
         log.info("API rate limit exceeded, waiting for " + waitTime + " seconds");
         Thread.sleep(waitTime * 1000);
-        sendRequest(data, requestUrl, requestMethod);
+        return sendRequest(data, requestUrl, requestMethod);
       } else if (responseCode == 400) {
         throw new ChannelConfigurationException(
             "API returned response code 400 - probably a malformed url - " + requestUrl);
