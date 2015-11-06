@@ -8,6 +8,15 @@ public class OrderStatus {
   private String status;
   private final List<TrackingData> trackingData;
   private boolean isShipped = false;
+  private boolean isPartialShipped = false;
+
+  public boolean isPartialShipped() {
+    return isPartialShipped;
+  }
+
+  public void setPartialShipped(boolean isPartialShipped) {
+    this.isPartialShipped = isPartialShipped;
+  }
 
   public OrderStatus() {
     trackingData = new ArrayList<TrackingData>();

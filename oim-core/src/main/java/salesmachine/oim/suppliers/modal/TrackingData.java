@@ -58,7 +58,7 @@ public class TrackingData {
 	@Override
 	public String toString() {
 		return StringHandle.isNullOrEmpty(carrierCode) ? "" : String.format(
-				"%s %s : %s", carrierCode, shippingMethod, trackingNumber);
+				"%s %s %s : %s", carrierCode, shippingMethod,quantity, trackingNumber);
 	}
 
 	public int getQuantity() {

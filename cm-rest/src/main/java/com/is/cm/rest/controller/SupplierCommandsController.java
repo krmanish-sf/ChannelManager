@@ -25,68 +25,54 @@ import com.is.cm.core.service.SupplierService;
 @Controller
 @RequestMapping("/aggregators/suppliers")
 public class SupplierCommandsController extends BaseController {
-	private static Logger LOG = LoggerFactory
-			.getLogger(SupplierCommandsController.class);
+	private static Logger LOG = LoggerFactory.getLogger(SupplierCommandsController.class);
 
 	@Autowired
 	private SupplierService supplierService;
 
 	@RequestMapping(method = RequestMethod.PUT, value = "/{vendorSupplierId}")
-	public ResponseEntity<VendorSupplier> update(
-			@PathVariable int vendorSupplierId,
+	public ResponseEntity<VendorSupplier> update(@PathVariable int vendorSupplierId,
 			@RequestBody Map<String, String> vendorSupplierData) {
 		LOG.debug("Recieved request to update {}", vendorSupplierId);
 		UpdatedEvent<VendorSupplier> event = supplierService
-				.update(new UpdateEvent<Map<String, String>>(vendorSupplierId,
-						vendorSupplierData));
-		return new ResponseEntity<VendorSupplier>(event.getEntity(),
-				HttpStatus.OK);
-	}
-	
-	@RequestMapping(method = RequestMethod.PUT, value = "/updateHG/{vendorSupplierId}")
-	public ResponseEntity<VendorSupplier> updateHG(
-			@PathVariable int vendorSupplierId,
-			@RequestBody Map<String, String> vendorSupplierData) {
-		LOG.debug("Recieved request to update {}", vendorSupplierId);
-		UpdatedEvent<VendorSupplier> event = supplierService
-				.update(new UpdateEvent<Map<String, String>>(vendorSupplierId,
-						vendorSupplierData));
-		return new ResponseEntity<VendorSupplier>(event.getEntity(),
-				HttpStatus.OK);
+				.update(new UpdateEvent<Map<String, String>>(vendorSupplierId, vendorSupplierData));
+		return new ResponseEntity<VendorSupplier>(event.getEntity(), HttpStatus.OK);
 	}
 
+	@RequestMapping(method = RequestMethod.PUT, value = "/updateHG/{vendorSupplierId}")
+	public ResponseEntity<VendorSupplier> updateHG(@PathVariable int vendorSupplierId,
+			@RequestBody Map<String, String> vendorSupplierData) {
+		LOG.debug("Recieved request to update {}", vendorSupplierId);
+		UpdatedEvent<VendorSupplier> event = supplierService
+				.update(new UpdateEvent<Map<String, String>>(vendorSupplierId, vendorSupplierData));
+		return new ResponseEntity<VendorSupplier>(event.getEntity(), HttpStatus.OK);
+	}
+
+
 	@RequestMapping(method = RequestMethod.DELETE, value = "/subscriptions/{vendorSupplierId}")
-	public ResponseEntity<VendorSupplier> removeSubscription(
-			@PathVariable String vendorSupplierId) {
-		LOG.debug("Recieved request to delete subscription for {}",
-				vendorSupplierId);
+	public ResponseEntity<VendorSupplier> removeSubscription(@PathVariable String vendorSupplierId) {
+		LOG.debug("Recieved request to delete subscription for {}", vendorSupplierId);
 		DeletedEvent<VendorSupplier> deletedEvent = supplierService
-				.removeSubscription(new DeleteEvent<VendorSupplier>(Integer
-						.parseInt(vendorSupplierId)));
+				.removeSubscription(new DeleteEvent<VendorSupplier>(Integer.parseInt(vendorSupplierId)));
 		return createResponseBody(deletedEvent);
 	}
 
 	@RequestMapping(method = RequestMethod.PUT)
-	public ResponseEntity<VendorSupplier> addSubscription(
-			@RequestBody Map<String, String> supplierMap) {
+	public ResponseEntity<VendorSupplier> addSubscription(@RequestBody Map<String, String> supplierMap) {
 		CreatedEvent<VendorSupplier> createdEvent = supplierService
 				.subscribe(new CreateEvent<Map<String, String>>(supplierMap));
 		if (createdEvent.getNewId() > 0) {
-			return new ResponseEntity<VendorSupplier>(createdEvent.getEntity(),
-					HttpStatus.CREATED);
+			return new ResponseEntity<VendorSupplier>(createdEvent.getEntity(), HttpStatus.CREATED);
 		} else
-			return new ResponseEntity<VendorSupplier>(
-					HttpStatus.INTERNAL_SERVER_ERROR);
+			return new ResponseEntity<VendorSupplier>(HttpStatus.INTERNAL_SERVER_ERROR);
 	}
 
 	@RequestMapping(method = RequestMethod.PUT, value = "/{supplierId}/shippingmapping")
-	public ResponseEntity<Map<String, String>> saveShippingMap(
-			@PathVariable int supplierId, @RequestBody Map<String, String> map) {
+	public ResponseEntity<Map<String, String>> saveShippingMap(@PathVariable int supplierId,
+			@RequestBody Map<String, String> map) {
 		map.put("supplierId", String.valueOf(supplierId));
 		UpdatedEvent<Map<String, String>> event = supplierService
-				.updateShippingMapping(new UpdateEvent<Map<String, String>>(
-						supplierId, map));
-		return new ResponseEntity<Map<String, String>>(event.getEntity(),
-				HttpStatus.CREATED);
+				.updateShippingMapping(new UpdateEvent<Map<String, String>>(supplierId, map));
+		return new ResponseEntity<Map<String, String>>(event.getEntity(), HttpStatus.CREATED);
 	}
 }

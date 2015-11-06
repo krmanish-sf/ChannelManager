@@ -151,6 +151,8 @@ public class StandardFileSpecificsProvider implements IFileSpecificsProvider {
 				return "";
 		case 36 :
 			return StringHandle.removeNull(order.getDeliveryStateCode());
+		case 37 :
+		  return StringHandle.removeNull(order.getDeliveryCountryCode());
 		}
 		return null;
 	}

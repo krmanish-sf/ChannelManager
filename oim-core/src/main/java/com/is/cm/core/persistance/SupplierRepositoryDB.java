@@ -187,61 +187,8 @@ public class SupplierRepositoryDB extends RepositoryBase implements SupplierRepo
         .get(OimVendorSuppliers.class, vendorSupplierId);
     OimSuppliers oimSuppliers = oimVendorSuppliers.getOimSuppliers();
     Transaction tx = null;
-    if (oimSuppliers.getSupplierId() != 1822) {
-      String accountno = getParameter("accountno");
-      String login = getParameter("login");
-      String password = getParameter("password");
-      String defShippingMc = getParameter("defshippingmc");
-      Integer testMode = Integer.parseInt(getParameter("testmode"));
+    if(oimSuppliers.getSupplierId() == 1822){
 
-      String supplierName = getParameter("name");
-      boolean emailOrders = true;// "on".equals(getParameter("emailorders"));
-      String supplierEmail = getParameter("supplieremail");
-      String fileFormat = getParameter("customSupplierFileFormat");
-
-      try {
-        tx = dbSession.beginTransaction();
-        // oimVendorSuppliers = (OimVendorSuppliers) dbSession.get(
-        // OimVendorSuppliers.class, vendorSupplierId);
-        oimVendorSuppliers.setAccountNumber(accountno);
-        oimVendorSuppliers.setDefShippingMethodCode(defShippingMc);
-        oimVendorSuppliers.setLogin(login);
-        oimVendorSuppliers.setPassword(password);
-        oimVendorSuppliers.setTestMode(testMode);
-        dbSession.update(oimVendorSuppliers);
-        dbSession.flush();
-
-        if (oimSuppliers.getIsCustom() != null && oimSuppliers.getIsCustom().equals(1)) {
-          Set<OimSupplierMethods> oimSupplierMethodses = oimSuppliers.getOimSupplierMethodses();
-          for (OimSupplierMethods oimSupplierMethods : oimSupplierMethodses) {
-            Set<OimSupplierMethodattrValues> oimSupplierMethodattrValueses = oimSupplierMethods
-                .getOimSupplierMethodattrValueses();
-            for (OimSupplierMethodattrValues oimSupplierMethodattrValues : oimSupplierMethodattrValueses) {
-              // oimSupplierMethodattrValues.setDeleteTm(new Date());
-              if (OimConstants.SUPPLIER_METHOD_ATTRIBUTES_EMAILADDRESS.equals(
-                  oimSupplierMethodattrValues.getOimSupplierMethodattrNames().getAttrId())) {
-                oimSupplierMethodattrValues.setAttributeValue(supplierEmail);
-                dbSession.update(oimSupplierMethodattrValues);
-              } else if (OimConstants.SUPPLIER_METHOD_ATTRIBUTES_FILEFORMAT.equals(
-                  oimSupplierMethodattrValues.getOimSupplierMethodattrNames().getAttrId())) {
-                oimSupplierMethodattrValues.setAttributeValue(fileFormat);
-                dbSession.update(oimSupplierMethodattrValues);
-              }
-            }
-          }
-        }
-        VendorSupplier vs = VendorSupplier.from(oimVendorSuppliers);
-        dbSession.flush();
-        tx.commit();
-        dbSession.evict(oimVendorSuppliers);
-        dbSession.evict(oimSuppliers);
-        return vs;
-      } catch (RuntimeException e) {
-        if (tx != null && tx.isActive())
-          tx.rollback();
-        LOG.error("Error ocured in update", e);
-      }
-    } else {
       boolean isPHI = false;
       boolean isHVA = false;
       tx = dbSession.beginTransaction();
@@ -366,6 +313,129 @@ public class SupplierRepositoryDB extends RepositoryBase implements SupplierRepo
           tx.rollback();
         LOG.error("Error ocured in update", e);
         e.printStackTrace();
+      }
+    
+    }
+    else if(oimSuppliers.getSupplierId()==221){
+      try{
+      tx = dbSession.beginTransaction();
+      String ftpUrl = StringHandle.removeNull(getParameter("ftpUrl")).trim();
+      String login = StringHandle.removeNull(getParameter("login")).trim();
+      String password = StringHandle.removeNull(getParameter("password")).trim();
+      String accountno = StringHandle.removeNull(getParameter("accountno")).trim();
+      Integer testMode = Integer.parseInt(getParameter("testmode"));
+      oimVendorSuppliers.setTestMode(testMode);
+      oimVendorSuppliers.setAccountNumber(accountno);
+      dbSession.update(oimVendorSuppliers);
+      
+      for (Iterator<OimSupplierMethods> itr = oimSuppliers.getOimSupplierMethodses()
+          .iterator(); itr.hasNext();) {
+        OimSupplierMethods oimSupplierMethods = itr.next();
+        if (oimSupplierMethods.getOimSupplierMethodTypes().getMethodTypeId().intValue() == 1
+            && oimSupplierMethods.getVendor()!=null && oimSupplierMethods.getVendor().getVendorId().intValue() == getVendorId()
+                .intValue()) {
+          for (Iterator<OimSupplierMethodattrValues> it = oimSupplierMethods
+              .getOimSupplierMethodattrValueses().iterator(); it.hasNext();) {
+            OimSupplierMethodattrValues oimSupplierMethodattrValues = it.next();
+            if (oimSupplierMethodattrValues.getOimSupplierMethods().getSupplierMethodId()
+                .intValue() == oimSupplierMethods.getSupplierMethodId().intValue()
+                && oimSupplierMethodattrValues.getOimSupplierMethodattrNames()
+                    .getAttrId() == OimConstants.SUPPLIER_METHOD_ATTRIBUTES_FTPSERVER
+                        .intValue()) {
+              oimSupplierMethodattrValues.setAttributeValue(ftpUrl);
+            }
+            if (oimSupplierMethodattrValues.getOimSupplierMethods().getSupplierMethodId()
+                .intValue() == oimSupplierMethods.getSupplierMethodId().intValue()
+                && oimSupplierMethodattrValues.getOimSupplierMethodattrNames()
+                    .getAttrId() == OimConstants.SUPPLIER_METHOD_ATTRIBUTES_FTPLOGIN
+                        .intValue()) {
+              oimSupplierMethodattrValues.setAttributeValue(login);
+            }
+            if (oimSupplierMethodattrValues.getOimSupplierMethods().getSupplierMethodId()
+                .intValue() == oimSupplierMethods.getSupplierMethodId().intValue()
+                && oimSupplierMethodattrValues.getOimSupplierMethodattrNames()
+                    .getAttrId() == OimConstants.SUPPLIER_METHOD_ATTRIBUTES_FTPPASSWORD
+                        .intValue()) {
+              oimSupplierMethodattrValues.setAttributeValue(password);
+            }
+            if (oimSupplierMethodattrValues.getOimSupplierMethods().getSupplierMethodId()
+                .intValue() == oimSupplierMethods.getSupplierMethodId().intValue()
+                && oimSupplierMethodattrValues.getOimSupplierMethodattrNames()
+                    .getAttrId() == OimConstants.SUPPLIER_METHOD_ATTRIBUTES_FTPACCOUNT
+                        .intValue()) {
+              oimSupplierMethodattrValues.setAttributeValue(accountno);
+              
+            }
+            dbSession.update(oimSupplierMethodattrValues);
+          }
+        }
+      }
+      VendorSupplier vs = VendorSupplier.from(oimVendorSuppliers);
+      dbSession.flush();
+      tx.commit();
+      dbSession.evict(oimVendorSuppliers);
+      dbSession.evict(oimSuppliers);
+      return vs;
+    } catch (Exception e) {
+      if (tx != null && tx.isActive())
+        tx.rollback();
+      LOG.error("Error ocured in update", e);
+      e.printStackTrace();
+    }
+    }
+    else{
+      String accountno = getParameter("accountno");
+      String login = getParameter("login");
+      String password = getParameter("password");
+      String defShippingMc = getParameter("defshippingmc");
+      Integer testMode = Integer.parseInt(getParameter("testmode"));
+
+      String supplierName = getParameter("name");
+      boolean emailOrders = true;// "on".equals(getParameter("emailorders"));
+      String supplierEmail = getParameter("supplieremail");
+      String fileFormat = getParameter("customSupplierFileFormat");
+
+      try {
+        tx = dbSession.beginTransaction();
+        // oimVendorSuppliers = (OimVendorSuppliers) dbSession.get(
+        // OimVendorSuppliers.class, vendorSupplierId);
+        oimVendorSuppliers.setAccountNumber(accountno);
+        oimVendorSuppliers.setDefShippingMethodCode(defShippingMc);
+        oimVendorSuppliers.setLogin(login);
+        oimVendorSuppliers.setPassword(password);
+        oimVendorSuppliers.setTestMode(testMode);
+        dbSession.update(oimVendorSuppliers);
+        dbSession.flush();
+
+        if (oimSuppliers.getIsCustom() != null && oimSuppliers.getIsCustom().equals(1)) {
+          Set<OimSupplierMethods> oimSupplierMethodses = oimSuppliers.getOimSupplierMethodses();
+          for (OimSupplierMethods oimSupplierMethods : oimSupplierMethodses) {
+            Set<OimSupplierMethodattrValues> oimSupplierMethodattrValueses = oimSupplierMethods
+                .getOimSupplierMethodattrValueses();
+            for (OimSupplierMethodattrValues oimSupplierMethodattrValues : oimSupplierMethodattrValueses) {
+              // oimSupplierMethodattrValues.setDeleteTm(new Date());
+              if (OimConstants.SUPPLIER_METHOD_ATTRIBUTES_EMAILADDRESS.equals(
+                  oimSupplierMethodattrValues.getOimSupplierMethodattrNames().getAttrId())) {
+                oimSupplierMethodattrValues.setAttributeValue(supplierEmail);
+                dbSession.update(oimSupplierMethodattrValues);
+              } else if (OimConstants.SUPPLIER_METHOD_ATTRIBUTES_FILEFORMAT.equals(
+                  oimSupplierMethodattrValues.getOimSupplierMethodattrNames().getAttrId())) {
+                oimSupplierMethodattrValues.setAttributeValue(fileFormat);
+                dbSession.update(oimSupplierMethodattrValues);
+              }
+            }
+          }
+        }
+        VendorSupplier vs = VendorSupplier.from(oimVendorSuppliers);
+        dbSession.flush();
+        tx.commit();
+        dbSession.evict(oimVendorSuppliers);
+        dbSession.evict(oimSuppliers);
+        return vs;
+      } catch (RuntimeException e) {
+        if (tx != null && tx.isActive())
+          tx.rollback();
+        LOG.error("Error ocured in update", e);
       }
     }
 
@@ -601,6 +671,74 @@ public class SupplierRepositoryDB extends RepositoryBase implements SupplierRepo
     return VendorSupplier.from(ovs);
   }
 
+  @Override
+  public VendorSupplier addSubscriptionWithFtpDetails(Integer supplierId, String ftpUrl,
+      String userName, String password, String accountNo, Integer testMode) {
+    OimSuppliers supplier = new OimSuppliers();
+    supplier.setSupplierId(supplierId);
+    Session dbSession = SessionManager.currentSession();
+    Transaction tx = dbSession.beginTransaction();
+    OimVendorSuppliers ovs = new OimVendorSuppliers();
+    ovs.setVendors(new Vendors(getVendorId()));
+    ovs.setOimSuppliers(supplier);
+    
+    OimSupplierMethods oimSupplierMethods = new OimSupplierMethods();
+    oimSupplierMethods.setInsertionTm(new Date());
+    oimSupplierMethods.setOimSuppliers(supplier);
+    Object vendorObj = dbSession.get(Vendors.class, getVendorId());
+    oimSupplierMethods.setVendor((Vendors) vendorObj);
+    oimSupplierMethods.setOimSupplierMethodNames(
+        new OimSupplierMethodNames(OimConstants.SUPPLIER_METHOD_NAME_FTP));
+    oimSupplierMethods.setOimSupplierMethodTypes(
+        new OimSupplierMethodTypes(OimConstants.SUPPLIER_METHOD_TYPE_ORDERPUSH));
+    Set<OimSupplierMethodattrValues> valuesSet = new HashSet<OimSupplierMethodattrValues>();
+
+    OimSupplierMethodattrValues ftpUrlValue = new OimSupplierMethodattrValues();
+    ftpUrlValue.setAttributeValue(ftpUrl);
+    ftpUrlValue.setOimSupplierMethodattrNames(
+        new OimSupplierMethodattrNames(OimConstants.SUPPLIER_METHOD_ATTRIBUTES_FTPSERVER));
+    ftpUrlValue.setOimSupplierMethods(oimSupplierMethods);
+
+    OimSupplierMethodattrValues ftploginValue = new OimSupplierMethodattrValues();
+    ftploginValue.setAttributeValue(userName);
+    ftploginValue.setOimSupplierMethodattrNames(
+        new OimSupplierMethodattrNames(OimConstants.SUPPLIER_METHOD_ATTRIBUTES_FTPLOGIN));
+    ftploginValue.setOimSupplierMethods(oimSupplierMethods);
+
+    OimSupplierMethodattrValues ftpPasswordValue = new OimSupplierMethodattrValues();
+    ftpPasswordValue.setAttributeValue(password);
+    ftpPasswordValue.setOimSupplierMethodattrNames(
+        new OimSupplierMethodattrNames(OimConstants.SUPPLIER_METHOD_ATTRIBUTES_FTPPASSWORD));
+    ftpPasswordValue.setOimSupplierMethods(oimSupplierMethods);
+
+    OimSupplierMethodattrValues ftpAccountValue = new OimSupplierMethodattrValues();
+    ftpAccountValue.setAttributeValue(accountNo);
+    ftpAccountValue.setOimSupplierMethodattrNames(
+        new OimSupplierMethodattrNames(OimConstants.SUPPLIER_METHOD_ATTRIBUTES_FTPACCOUNT));
+    ftpAccountValue.setOimSupplierMethods(oimSupplierMethods);
+    ovs.setAccountNumber(accountNo);
+
+    valuesSet.add(ftpUrlValue);
+    valuesSet.add(ftploginValue);
+    valuesSet.add(ftpPasswordValue);
+    valuesSet.add(ftpAccountValue);
+
+    oimSupplierMethods.setOimSupplierMethodattrValueses(valuesSet);
+    dbSession.save(oimSupplierMethods);
+    dbSession.save(ftpUrlValue);
+    dbSession.save(ftploginValue);
+    dbSession.save(ftpPasswordValue);
+    dbSession.save(ftpAccountValue);
+    
+    ovs.setInsertionTm(new Date());
+    ovs.setTestMode(testMode);
+
+    dbSession.save(ovs);
+    tx.commit();
+    dbSession.evict(supplier);
+    dbSession.evict(ovs);
+    return VendorSupplier.from(ovs);
+  }
   @Override
   public VendorSupplier addCustomSubscription(Map<String, String> map) {
     this.map = map;

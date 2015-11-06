@@ -53,4 +53,7 @@ public interface SupplierRepository {
 
 	List<ShippingMethod> getShippingMethods();
 
+  VendorSupplier addSubscriptionWithFtpDetails(Integer supplierId, String string, String string2,
+      String string3, String string4, Integer testMode);
+
 }

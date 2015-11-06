@@ -52,6 +52,7 @@ public class Supplier extends DomainBase {
 				.getOimSupplierMethodses();
 		try {
 			for (OimSupplierMethods oimSupplierMethods : iterator) {
+			  if(oimSupplierMethods.getDeleteTm()==null)
 				supplier.oimSupplierMethodses.add(SupplierMethod
 						.from(oimSupplierMethods));
 			}

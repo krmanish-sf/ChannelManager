@@ -84,6 +84,12 @@ public class SupplierEventHandler implements SupplierService {
 						createEvent.getEntity().get("hva-ftp"),
 						testMode);
 			}
+			else if(supplierId == 221){
+				supplier = supplierRepository.addSubscriptionWithFtpDetails(supplierId,createEvent.getEntity().get("moteng-ftp"),
+						createEvent.getEntity().get("login"), createEvent
+						.getEntity().get("password"), createEvent
+						.getEntity().get("accountno"), testMode);
+			}
 			else{
 				supplier = supplierRepository.addSubscription(supplierId,
 						createEvent.getEntity().get("login"), createEvent

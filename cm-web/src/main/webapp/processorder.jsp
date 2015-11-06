@@ -521,7 +521,7 @@
                                   <label>Country Code</label>
                                   <input type="text"
 																		data-bind-order="deliveryCountryCode"
-																		class="pull-right" maxlength="2"
+																		class="pull-right" maxlength="3"
 																		name="deliveryCountryCode">
                                 </div>
                                 

@@ -363,7 +363,7 @@ public class SupplierFactory {
         Iterator it = query.iterate();
         if (it.hasNext()) {
           ovs = (OimVendorSuppliers) it.next();
-         // ping = pingSupplier(vendorId, ovs, errorMessage);
+          // ping = pingSupplier(vendorId, ovs, errorMessage);
         } else {
           return false;
         }
@@ -827,8 +827,12 @@ public class SupplierFactory {
 
         oimOrderDetails.setSupplierOrderStatus(orderStatus.toString());
         if (orderStatus.isShipped()) {
-          oimOrderDetails
-              .setOimOrderStatuses(new OimOrderStatuses(OimConstants.ORDER_STATUS_SHIPPED));
+          if (orderStatus.isPartialShipped())
+            oimOrderDetails.setOimOrderStatuses(
+                new OimOrderStatuses(OimConstants.ORDER_STATUS_PROCESSED_SUCCESS));
+          else
+            oimOrderDetails
+                .setOimOrderStatuses(new OimOrderStatuses(OimConstants.ORDER_STATUS_SHIPPED));
           int trackCount = AutomationManager.orderTrackMap.get(channelId) != null
               ? AutomationManager.orderTrackMap.get(channelId) : 0;
           AutomationManager.orderTrackMap.put(channelId, trackCount++);
@@ -848,19 +852,30 @@ public class SupplierFactory {
       Supplier.updateVendorSupplierOrderHistory(vendorId, oimVendorSuppliers.getOimSuppliers(),
           e.getMessage(), Supplier.ERROR_ORDER_TRACKING);
     }
+    int existingQuantity = 0;
+    query = session.createQuery("from OimOrderTracking t where t.detail=:od");
+    query.setEntity("od", oimOrderDetails);
 
+    List<OimOrderTracking> existingTrackins = query.list();
+    log.info("existingTrackins size for order detail id - {} is {}", oimOrderDetails.getDetailId(),
+        existingTrackins.size());
+    for (OimOrderTracking ot : existingTrackins) {
+      existingQuantity += ot.getShipQuantity();
+    }
     if (orderStatus.isShipped()) {
-      List<TrackingData> trackingDataList = orderStatus.getTrackingData();
-      for (TrackingData td : trackingDataList) {
-        OimOrderTracking oimOrderTracking = new OimOrderTracking();
-        oimOrderTracking.setInsertionTime(new Date());
-        oimOrderTracking.setShipDate(td.getShipDate().toGregorianCalendar().getTime());
-        oimOrderTracking.setShippingCarrier(td.getCarrierName());
-        oimOrderTracking.setShippingMethod(td.getShippingMethod());
-        oimOrderTracking.setShipQuantity(td.getQuantity());
-        oimOrderTracking.setTrackingNumber(td.getShipperTrackingNumber());
-        oimOrderTracking.setDetail(oimOrderDetails);
-        session.persist(oimOrderTracking);
+      if (existingQuantity < oimOrderDetails.getQuantity()) {
+        List<TrackingData> trackingDataList = orderStatus.getTrackingData();
+        for (TrackingData td : trackingDataList) {
+          OimOrderTracking oimOrderTracking = new OimOrderTracking();
+          oimOrderTracking.setInsertionTime(new Date());
+          oimOrderTracking.setShipDate(td.getShipDate().toGregorianCalendar().getTime());
+          oimOrderTracking.setShippingCarrier(td.getCarrierName());
+          oimOrderTracking.setShippingMethod(td.getShippingMethod());
+          oimOrderTracking.setShipQuantity(td.getQuantity());
+          oimOrderTracking.setTrackingNumber(td.getShipperTrackingNumber());
+          oimOrderTracking.setDetail(oimOrderDetails);
+          session.persist(oimOrderTracking);
+        }
       }
     }
     tx.commit();
@@ -871,8 +886,10 @@ public class SupplierFactory {
     try {
       IOrderImport iOrderImport = ChannelFactory.getIOrderImport(oimChannels);
 
-      if (orderStatus != null && oimChannels.getTestMode() == 0)
-        iOrderImport.updateStoreOrder(oimOrderDetails, orderStatus);
+      if (orderStatus != null && oimChannels.getTestMode() == 0) {
+        if (existingQuantity < oimOrderDetails.getQuantity())
+          iOrderImport.updateStoreOrder(oimOrderDetails, orderStatus);
+      }
 
     } catch (ChannelConfigurationException e) {
       stream.println(e.getMessage());
