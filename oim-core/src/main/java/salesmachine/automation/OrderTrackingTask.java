@@ -32,9 +32,9 @@ public class OrderTrackingTask extends TimerTask {
   public void run() {
     try {
       log.info("Order Tracking Task Running...");
-      int trackCount1 = HonestGreen.updateFromConfirmation();
-      int trackCount2 = HonestGreen.updateFromTracking();
-      AutomationManager.orderTrackMap.put(2941, trackCount1 + trackCount2);
+//      int trackCount1 = HonestGreen.updateFromConfirmation();
+//      int trackCount2 = HonestGreen.updateFromTracking();
+//      AutomationManager.orderTrackMap.put(2941, trackCount1 + trackCount2);
       Session session = SessionManager.currentSession();
       try {
         Query query = session

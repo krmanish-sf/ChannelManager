@@ -398,22 +398,35 @@ If you have not yet configured your supplier, click "Add Supplier" to do it now.
                         <form class="form-horizontal" role="form"
 												action="/aggregators/suppliers" method="PUT"
 												id="supplierformFtpBased">
-                         
+                          <div class="form-group">
+                              <label
+														class="col-sm-5 control-label no-padding-right">Ftp Type</label>
+                              <div class="col-sm-7">
+                              <select class="width-70" name="ftpType" data-bind-vendorsupplier="customMapper:oimSuppliers.oimSupplierMethodses[oimSupplierMethodTypes.methodTypeId=1].oimSupplierMethodattrValueses[oimSupplierMethodattrNames.attrId=10].attributeValue">
+                                <option value="FTP" selected>FTP</option>
+                                <option value="SFTP">SFTP</option>
+                              </select>
+                            </div>
+                            </div>
                          <div class="form-group">
                               <label
 														class="col-sm-5 control-label no-padding-right">FTP</label>
                               <div class="col-sm-7">
                               <input class="width-70" name='ftpUrl'
-															type='text' data-bind-vendorsupplier="customMapper:oimSuppliers.oimSupplierMethodses[oimSupplierMethodTypes.methodTypeId=1].oimSupplierMethodattrValueses[oimSupplierMethodattrNames.attrId=2].attributeValue"
+															type='text'
+															data-bind-vendorsupplier="customMapper:oimSuppliers.oimSupplierMethodses[oimSupplierMethodTypes.methodTypeId=1].oimSupplierMethodattrValueses[oimSupplierMethodattrNames.attrId=2].attributeValue"
 															required="required" />
                             </div>
 							</div>
+							
+							
 							<div class="form-group">
                               <label
 														class="col-sm-5 control-label no-padding-right">Account</label>
                               <div class="col-sm-7">
                               <input class="width-70" name='accountno'
-															type='text' data-bind-vendorsupplier="customMapper:oimSuppliers.oimSupplierMethodses[oimSupplierMethodTypes.methodTypeId=1].oimSupplierMethodattrValueses[oimSupplierMethodattrNames.attrId=9].attributeValue"
+															type='text'
+															data-bind-vendorsupplier="customMapper:oimSuppliers.oimSupplierMethodses[oimSupplierMethodTypes.methodTypeId=1].oimSupplierMethodattrValueses[oimSupplierMethodattrNames.attrId=9].attributeValue"
 															required="required" />
                             </div>
 							</div>
@@ -422,7 +435,8 @@ If you have not yet configured your supplier, click "Add Supplier" to do it now.
 														class="col-sm-5 control-label no-padding-right">Username</label>
                               <div class="col-sm-7">
                               <input class="width-70" name='login'
-															type='text' data-bind-vendorsupplier="customMapper:oimSuppliers.oimSupplierMethodses[oimSupplierMethodTypes.methodTypeId=1].oimSupplierMethodattrValueses[oimSupplierMethodattrNames.attrId=3].attributeValue"
+															type='text'
+															data-bind-vendorsupplier="customMapper:oimSuppliers.oimSupplierMethodses[oimSupplierMethodTypes.methodTypeId=1].oimSupplierMethodattrValueses[oimSupplierMethodattrNames.attrId=3].attributeValue"
 															required="required" />
                             </div>
 												</div>
@@ -433,7 +447,8 @@ If you have not yet configured your supplier, click "Add Supplier" to do it now.
 											
                               <div class="col-sm-7">
                               <input class="width-70" name='password'
-															type='password' data-bind-vendorsupplier="customMapper:oimSuppliers.oimSupplierMethodses[oimSupplierMethodTypes.methodTypeId=1].oimSupplierMethodattrValueses[oimSupplierMethodattrNames.attrId=4].attributeValue"
+															type='password'
+															data-bind-vendorsupplier="customMapper:oimSuppliers.oimSupplierMethodses[oimSupplierMethodTypes.methodTypeId=1].oimSupplierMethodattrValueses[oimSupplierMethodattrNames.attrId=4].attributeValue"
 															required="required" />
                             </div>
 												</div>
@@ -451,7 +466,8 @@ If you have not yet configured your supplier, click "Add Supplier" to do it now.
 												</div>
                             <div class="form-group center">
                              <button class="btn btn-info btn-sm"
-														id="updateFtpBasedSupplier" type="button"> <i class="icon-save "></i>Update</button>
+														id="updateFtpBasedSupplier" type="button"> <i
+															class="icon-save "></i>Update</button>
                             </div>
                          
                          
@@ -615,6 +631,16 @@ If you have not yet configured your supplier, click "Add Supplier" to do it now.
 <!-- 															minlength="2" type="text" value="" required /> -->
 <!--                             </div> -->
 <!-- 												</div> -->
+ 								 <div class="form-group supplier-class moteng-ftp">
+                              <label
+														class="col-sm-5 control-label no-padding-right">Ftp Type</label>
+                              <div class="col-sm-7">
+                              <select class="width-70" name="ftpType" required>
+                                <option value="FTP" selected>FTP</option>
+                                <option value="SFTP">SFTP</option>
+                              </select>
+                            </div>
+												</div>
 							 <div class="form-group supplier-class moteng-ftp">
                               <label
 														class="col-sm-5 control-label no-padding-right">FTP</label>
@@ -623,6 +649,8 @@ If you have not yet configured your supplier, click "Add Supplier" to do it now.
 															type="text" value="" required />
                             </div>
 												</div>
+												
+							
 							  <div class="form-group supplier-class">
                               <label
 														class="col-sm-5 control-label no-padding-right">Account</label>
@@ -848,9 +876,9 @@ If you have not yet configured your supplier, click "Add Supplier" to do it now.
 			$('#supplierformHG').submit();
 		});
 	}
-	
+
 	//editFtpBasedSupplier
-		function editFtpBasedSupplier(e) {
+	function editFtpBasedSupplier(e) {
 		var vendorSupplier = table_vendorSuppliers.row(e[0]).data();
 		var vendorSupplierTemp = JSON.parse(JSON.stringify(vendorSupplier));
 		console.log(vendorSupplierTemp);
@@ -974,7 +1002,8 @@ If you have not yet configured your supplier, click "Add Supplier" to do it now.
 										"mData" : function(o) {
 											var ret = '';
 
-											if (o.oimSuppliers.supplierId == 1822 || o.oimSuppliers.supplierId== 221) {
+											if (o.oimSuppliers.supplierId == 1822
+													|| o.oimSuppliers.supplierId == 221) {
 												for (var i = 0; i < o.oimSuppliers.oimSupplierMethodses.length; i++) {
 													var oimSupplierMethod = o.oimSuppliers.oimSupplierMethodses[i];
 													if (oimSupplierMethod.oimSupplierMethodNames
@@ -1036,10 +1065,9 @@ If you have not yet configured your supplier, click "Add Supplier" to do it now.
 										"mData" : function(vendorSupplier) {
 											if (vendorSupplier.oimSuppliers.supplierId == 1822)
 												return '<a class="btn btn-info btn-sm hidden-xs icon-pencil" href="#mySupplierHGedit" data-toggle="modal" onclick="editHG((($(this)).parent()).parent())"></a><a class="btn btn-info btn-xs icon-pencil visible-xs btn-xs" href="#mySupplierHGedit" data-toggle="modal" onclick="editHG((($(this)).parent()).parent())"></a>';
-												else if(vendorSupplier.oimSuppliers.supplierId == 221){
-													return '<a class="btn btn-info btn-sm hidden-xs icon-pencil" href="#mySupplierFtpedit" data-toggle="modal" onclick="editFtpBasedSupplier((($(this)).parent()).parent())"></a><a class="btn btn-info btn-xs icon-pencil visible-xs btn-xs" href="#mySupplierFtpedit" data-toggle="modal" onclick="editFtpBasedSupplier((($(this)).parent()).parent())"></a>';
-												}
-											else {
+											else if (vendorSupplier.oimSuppliers.supplierId == 221) {
+												return '<a class="btn btn-info btn-sm hidden-xs icon-pencil" href="#mySupplierFtpedit" data-toggle="modal" onclick="editFtpBasedSupplier((($(this)).parent()).parent())"></a><a class="btn btn-info btn-xs icon-pencil visible-xs btn-xs" href="#mySupplierFtpedit" data-toggle="modal" onclick="editFtpBasedSupplier((($(this)).parent()).parent())"></a>';
+											} else {
 												return '<a class="btn btn-info btn-sm hidden-xs icon-pencil" href="#mySupplieredit" data-toggle="modal" onclick="edit((($(this)).parent()).parent())"></a><a class="btn btn-info btn-xs icon-pencil visible-xs btn-xs" href="#mySupplieredit" data-toggle="modal" onclick="edit((($(this)).parent()).parent())"></a>';
 											}
 										}
@@ -1075,7 +1103,7 @@ If you have not yet configured your supplier, click "Add Supplier" to do it now.
 					$('.supplier-class').addClass("show");
 					$('.moteng-ftp').removeClass("show");
 					$('.moteng-ftp').addClass("hide");
-					if(a=='221'){
+					if (a == '221') {
 						$('.moteng-ftp').removeClass("hide");
 						$('.moteng-ftp').addClass("show");
 					}
@@ -1224,7 +1252,6 @@ If you have not yet configured your supplier, click "Add Supplier" to do it now.
 								$(e).remove();
 							}
 						});
-		
 
 		$('#supplierformFtpBased')
 				.validate(

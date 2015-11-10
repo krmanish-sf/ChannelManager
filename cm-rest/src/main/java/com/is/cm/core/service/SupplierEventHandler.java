@@ -88,7 +88,8 @@ public class SupplierEventHandler implements SupplierService {
 				supplier = supplierRepository.addSubscriptionWithFtpDetails(supplierId,createEvent.getEntity().get("moteng-ftp"),
 						createEvent.getEntity().get("login"), createEvent
 						.getEntity().get("password"), createEvent
-						.getEntity().get("accountno"), testMode);
+						.getEntity().get("accountno"), testMode,
+						createEvent.getEntity().get("ftpType"));
 			}
 			else{
 				supplier = supplierRepository.addSubscription(supplierId,

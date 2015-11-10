@@ -1,5 +1,6 @@
 package salesmachine.oim.suppliers;
 
+import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -12,12 +13,14 @@ import java.io.UnsupportedEncodingException;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
@@ -32,9 +35,17 @@ import org.hibernate.criterion.Restrictions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.enterprisedt.net.ftp.FTPClient;
-import com.enterprisedt.net.ftp.FTPException;
-import com.enterprisedt.net.ftp.FTPFile;
+import com.enterprisedt.net.ftp.*;
+import com.sshtools.j2ssh.SshClient;
+import com.sshtools.j2ssh.authentication.AuthenticationProtocolState;
+import com.sshtools.j2ssh.authentication.PasswordAuthenticationClient;
+import com.sshtools.j2ssh.session.SessionChannelClient;
+import com.sshtools.j2ssh.sftp.SftpFile;
+import com.sshtools.j2ssh.sftp.SftpFileInputStream;
+import com.sshtools.j2ssh.sftp.SftpSubsystemClient;
+import com.sshtools.j2ssh.transport.HostKeyVerification;
+import com.sshtools.j2ssh.transport.TransportProtocolException;
+import com.sshtools.j2ssh.transport.publickey.SshPublicKey;
 
 import salesmachine.email.EmailUtil;
 import salesmachine.hibernatedb.OimChannels;
@@ -251,27 +262,164 @@ public class Moteng extends Supplier implements HasTracking {
     String poNumber = (String) trackingMeta; // 641958-100
     FtpDetail ftpDetail = getFtpDetails(ovs);
     if (ftpDetail.getUrl() != null) {
-      FTPClient ftp = new FTPClient();
+
+       if (ftpDetail.getFtpType()!=null && ftpDetail.getFtpType().equalsIgnoreCase("SFTP"))
+      orderStatus = getOrderStatusFromSFTP(orderStatus, ftpDetail, oimOrderDetails, poNumber, sku);
+       else
+       orderStatus = getOrderStatusFromFTP(orderStatus, ftpDetail, oimOrderDetails, poNumber,
+       sku);
+    }
+    return orderStatus;
+  }
+
+  private OrderStatus getOrderStatusFromFTP(OrderStatus orderStatus, FtpDetail ftpDetail,
+      OimOrderDetails oimOrderDetails, String poNumber, String sku)
+          throws SupplierOrderTrackingException {
+    FTPClient ftp = new FTPClient();
+    try {
+      ftp.setRemoteHost(ftpDetail.getUrl());
+      ftp.setDetectTransferMode(true);
+      ftp.connect();
+      ftp.login(ftpDetail.getUserName(), ftpDetail.getPassword());
+      ftp.setTimeout(60 * 1000 * 60 * 7);
+      FTPFile[] ftpFiles = ftp.dirDetails("/");
+      Arrays.sort(ftpFiles, new Comparator<FTPFile>() {
+        public int compare(FTPFile f1, FTPFile f2) {
+          return f2.lastModified().compareTo(f1.lastModified());
+        }
+      });
+      for (FTPFile ftpFile : ftpFiles) {
+        String trackingFile = ftpFile.getName();
+        if (trackingFile.equals("..") || trackingFile.equals(".") || ftpFile.isDir())
+          continue;
+        if (oimOrderDetails.getProcessingTm() != null
+            && ftpFile.lastModified().before(oimOrderDetails.getProcessingTm()))
+          break;
+        byte[] trackingFileData = ftp.get("/" + trackingFile);
+        Map<Integer, String> orderDataMap = parseFileData(trackingFileData);
+        for (Iterator itr = orderDataMap.values().iterator(); itr.hasNext();) {
+          String line = (String) itr.next();
+          String[] lineArray = line.split("\t");
+          String shippingMethod;
+          String shipDateString;
+          int qty;
+          String trackingNo;
+          String headerStatus;
+          try {
+            String trackingPO = StringHandle.removeNull(lineArray[6]);
+            String trackingSku = StringHandle.removeNull(lineArray[8]);
+            if (!trackingPO.equals(poNumber) || !trackingSku.equalsIgnoreCase(sku))
+              continue;
+            shippingMethod = StringHandle.removeNull(lineArray[3]);
+            String qtyOrdered = StringHandle.removeNull(lineArray[9]);
+            String qtyShipped = StringHandle.removeNull(lineArray[10]);
+            shipDateString = StringHandle.removeNull(lineArray[11]);
+            qty = 0;
+            try {
+              qty = Integer.parseInt(qtyShipped);
+            } catch (NumberFormatException e) {
+              log.error(e.getMessage(), e);
+            }
+
+            trackingNo = StringHandle.removeNull(lineArray[13]);
+            headerStatus = StringHandle.removeNull(lineArray[15]);
+          } catch (ArrayIndexOutOfBoundsException e1) {
+            log.error("This file is not appropreate as the documantation of Moteng");
+            break;
+          }
+          if (headerStatus.equalsIgnoreCase("O")) {
+            log.info("This is an open order pending shipment from Moteng warehouse.");
+            return orderStatus;
+          }
+          if (headerStatus.equalsIgnoreCase("P")) {
+            orderStatus.setStatus(OimConstants.OIM_SUPPLER_ORDER_STATUS_IN_PROCESS);
+            orderStatus.setPartialShipped(true);
+          } else if (orderStatus.getStatus() == null) {
+            orderStatus.setStatus(OimConstants.OIM_SUPPLER_ORDER_STATUS_SHIPPED);
+          } else if (headerStatus.equalsIgnoreCase("C")) {
+            orderStatus.setStatus(OimConstants.OIM_SUPPLER_ORDER_STATUS_SHIPPED);
+            orderStatus.setPartialShipped(false);
+          }
+          salesmachine.oim.suppliers.modal.TrackingData trackingData = new salesmachine.oim.suppliers.modal.TrackingData();
+          trackingData.setCarrierCode(oimOrderDetails.getOimOrders().getOimShippingMethod()
+              .getOimShippingCarrier().getName());
+          trackingData.setCarrierName(oimOrderDetails.getOimOrders().getOimShippingMethod()
+              .getOimShippingCarrier().getName());
+          trackingData.setQuantity(qty);
+          trackingData.setShipperTrackingNumber(trackingNo);
+          Date shipDate1 = df.parse(shipDateString);
+          GregorianCalendar c = new GregorianCalendar();
+          c.setTime(shipDate1);
+          XMLGregorianCalendar shipDate = null;
+          try {
+            shipDate = DatatypeFactory.newInstance().newXMLGregorianCalendar(c);
+          } catch (DatatypeConfigurationException e) {
+            log.error(e.getMessage(), e);
+          }
+          if (shipDate != null)
+            trackingData.setShipDate(shipDate);
+          trackingData.setShippingMethod(shippingMethod);
+          orderStatus.addTrackingData(trackingData);
+        }
+      }
+
+    } catch (IOException | FTPException | ParseException e) {
+      log.error(e.getMessage(), e);
+      throw new SupplierOrderTrackingException("Unable to connect to supplier ftp", e);
+    }
+
+    return orderStatus;
+  }
+
+  private OrderStatus getOrderStatusFromSFTP(OrderStatus orderStatus, FtpDetail ftpDetail,
+      OimOrderDetails oimOrderDetails, String poNumber, String sku)
+          throws SupplierOrderTrackingException {
+
+    try {
+
+      SshClient con = new SshClient();
+      String SFTPURL = "199.168.174.186";
+      System.out.println("Connecting to " + SFTPURL);
+      int result = 0;
       try {
-        ftp.setRemoteHost(ftpDetail.getUrl());
-        ftp.setDetectTransferMode(true);
-        ftp.connect();
-        ftp.login(ftpDetail.getUserName(), ftpDetail.getPassword());
-        ftp.setTimeout(60 * 1000 * 60 * 7);
-        FTPFile[] ftpFiles = ftp.dirDetails("/");
-        Arrays.sort(ftpFiles, new Comparator<FTPFile>() {
-          public int compare(FTPFile f1, FTPFile f2) {
-            return f2.lastModified().compareTo(f1.lastModified());
+        con.connect(SFTPURL, 22, new HostKeyVerification() {
+          public boolean verifyHost(String host, SshPublicKey pk)
+              throws TransportProtocolException {
+            return true;
           }
         });
-        for (FTPFile ftpFile : ftpFiles) {
-          String trackingFile = ftpFile.getName();
-          if (trackingFile.equals("..") || trackingFile.equals(".") || ftpFile.isDir())
-            continue;
-          if (oimOrderDetails.getProcessingTm() != null
-              && ftpFile.lastModified().before(oimOrderDetails.getProcessingTm()))
-            break;
-          byte[] trackingFileData = ftp.get("/" + trackingFile);
+
+        System.out.println("SFTP connected :");
+        System.out.println("Going to authenticate Password and User Name :");
+        com.sshtools.j2ssh.authentication.SshAuthenticationClient authClient = getAuthenticationClient(
+            "staging", "delhi123");
+        result = con.authenticate(authClient);
+        if (result != AuthenticationProtocolState.COMPLETE) {
+          System.out.println("Login failed.");
+        } else {
+          System.out.println("Login successful.");
+        }
+      } catch (IOException e) {
+        // TODO Auto-generated catch block
+        e.printStackTrace();
+      } catch (Exception e) {
+        // TODO Auto-generated catch block
+        e.printStackTrace();
+      }
+      SessionChannelClient session = con.openSessionChannel();
+      SftpSubsystemClient sftp = new SftpSubsystemClient();
+      session.startSubsystem(sftp);
+      SftpFile roortDir = sftp.openDirectory("/");// ("/", SftpSubsystemClient.OPEN_READ);
+      List l = new ArrayList();
+      sftp.listChildren(roortDir, l);
+      for (Iterator itr1 = l.iterator(); itr1.hasNext();) {
+        SftpFile sftpFile = (SftpFile) itr1.next();
+        String trackingFileName = sftpFile.getFilename();
+        if (trackingFileName.equals("..") || trackingFileName.equals(".") || sftpFile.isDirectory())
+          continue;
+        if (sftpFile.isFile()) {
+          BufferedInputStream in = new BufferedInputStream(new SftpFileInputStream(sftpFile));
+          byte[] trackingFileData = new byte[in.available()];
           Map<Integer, String> orderDataMap = parseFileData(trackingFileData);
           for (Iterator itr = orderDataMap.values().iterator(); itr.hasNext();) {
             String line = (String) itr.next();
@@ -339,12 +487,23 @@ public class Moteng extends Supplier implements HasTracking {
           }
         }
 
-      } catch (IOException | FTPException | ParseException e) {
-        log.error(e.getMessage(), e);
-        throw new SupplierOrderTrackingException("Unable to connect to supplier ftp", e);
       }
+
+    } catch (IOException | ParseException e) {
+      e.printStackTrace();
     }
+
     return orderStatus;
+  }
+
+  private static com.sshtools.j2ssh.authentication.SshAuthenticationClient getAuthenticationClient(
+      String user, String password) throws Exception {
+    com.sshtools.j2ssh.authentication.SshAuthenticationClient authClient = null;
+    PasswordAuthenticationClient pac = new PasswordAuthenticationClient();
+    pac.setUsername(user);
+    pac.setPassword(password);
+    authClient = pac;
+    return authClient;
   }
 
   private FtpDetail getFtpDetails(OimVendorSuppliers ovs) {
@@ -374,6 +533,9 @@ public class Moteng extends Supplier implements HasTracking {
             if (oimSupplierMethodattrValues.getOimSupplierMethodattrNames().getAttrId()
                 .intValue() == OimConstants.SUPPLIER_METHOD_ATTRIBUTES_FTPPASSWORD)
               ftpDetail.setPassword(oimSupplierMethodattrValues.getAttributeValue());
+            if (oimSupplierMethodattrValues.getOimSupplierMethodattrNames().getAttrId()
+                .intValue() == OimConstants.SUPPLIER_METHOD_ATTRIBUTES_FTPTYPE)
+              ftpDetail.setFtpType(oimSupplierMethodattrValues.getAttributeValue());
           }
           break;
         }

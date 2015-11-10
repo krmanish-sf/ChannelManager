@@ -1434,6 +1434,8 @@ class FtpDetail {
   String url;
   String userName;
   String password;
+  String ftpType;
+
   WareHouseType wareHouseType;
 
   public static enum WareHouseType {
@@ -1488,6 +1490,14 @@ class FtpDetail {
     return password;
   }
 
+  public String getFtpType() {
+    return ftpType;
+  }
+
+  public void setFtpType(String ftpType) {
+    this.ftpType = ftpType;
+  }
+
   public void setPassword(String password) {
     this.password = password;
   }
@@ -1499,6 +1509,8 @@ class FtpDetail {
   public void setWhareHouseType(WareHouseType whareHouseType) {
     this.wareHouseType = whareHouseType;
   }
+
+
 
   @Override
   public String toString() {

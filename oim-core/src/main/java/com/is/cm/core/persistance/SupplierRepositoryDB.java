@@ -323,6 +323,7 @@ public class SupplierRepositoryDB extends RepositoryBase implements SupplierRepo
       String login = StringHandle.removeNull(getParameter("login")).trim();
       String password = StringHandle.removeNull(getParameter("password")).trim();
       String accountno = StringHandle.removeNull(getParameter("accountno")).trim();
+      String ftpType = StringHandle.removeNull(getParameter("ftpType")).trim();
       Integer testMode = Integer.parseInt(getParameter("testmode"));
       oimVendorSuppliers.setTestMode(testMode);
       oimVendorSuppliers.setAccountNumber(accountno);
@@ -364,6 +365,14 @@ public class SupplierRepositoryDB extends RepositoryBase implements SupplierRepo
                     .getAttrId() == OimConstants.SUPPLIER_METHOD_ATTRIBUTES_FTPACCOUNT
                         .intValue()) {
               oimSupplierMethodattrValues.setAttributeValue(accountno);
+              
+            }
+            if (oimSupplierMethodattrValues.getOimSupplierMethods().getSupplierMethodId()
+                .intValue() == oimSupplierMethods.getSupplierMethodId().intValue()
+                && oimSupplierMethodattrValues.getOimSupplierMethodattrNames()
+                    .getAttrId() == OimConstants.SUPPLIER_METHOD_ATTRIBUTES_FTPTYPE
+                        .intValue()) {
+              oimSupplierMethodattrValues.setAttributeValue(ftpType);
               
             }
             dbSession.update(oimSupplierMethodattrValues);
@@ -673,7 +682,7 @@ public class SupplierRepositoryDB extends RepositoryBase implements SupplierRepo
 
   @Override
   public VendorSupplier addSubscriptionWithFtpDetails(Integer supplierId, String ftpUrl,
-      String userName, String password, String accountNo, Integer testMode) {
+      String userName, String password, String accountNo, Integer testMode, String ftpType) {
     OimSuppliers supplier = new OimSuppliers();
     supplier.setSupplierId(supplierId);
     Session dbSession = SessionManager.currentSession();
@@ -681,7 +690,6 @@ public class SupplierRepositoryDB extends RepositoryBase implements SupplierRepo
     OimVendorSuppliers ovs = new OimVendorSuppliers();
     ovs.setVendors(new Vendors(getVendorId()));
     ovs.setOimSuppliers(supplier);
-    
     OimSupplierMethods oimSupplierMethods = new OimSupplierMethods();
     oimSupplierMethods.setInsertionTm(new Date());
     oimSupplierMethods.setOimSuppliers(supplier);
@@ -717,11 +725,18 @@ public class SupplierRepositoryDB extends RepositoryBase implements SupplierRepo
         new OimSupplierMethodattrNames(OimConstants.SUPPLIER_METHOD_ATTRIBUTES_FTPACCOUNT));
     ftpAccountValue.setOimSupplierMethods(oimSupplierMethods);
     ovs.setAccountNumber(accountNo);
+    
+    OimSupplierMethodattrValues ftpTypeValue = new OimSupplierMethodattrValues();
+    ftpTypeValue.setAttributeValue(ftpType);
+    ftpTypeValue.setOimSupplierMethodattrNames(
+        new OimSupplierMethodattrNames(OimConstants.SUPPLIER_METHOD_ATTRIBUTES_FTPTYPE));
+    ftpTypeValue.setOimSupplierMethods(oimSupplierMethods);
 
     valuesSet.add(ftpUrlValue);
     valuesSet.add(ftploginValue);
     valuesSet.add(ftpPasswordValue);
     valuesSet.add(ftpAccountValue);
+    valuesSet.add(ftpTypeValue);
 
     oimSupplierMethods.setOimSupplierMethodattrValueses(valuesSet);
     dbSession.save(oimSupplierMethods);
@@ -729,10 +744,11 @@ public class SupplierRepositoryDB extends RepositoryBase implements SupplierRepo
     dbSession.save(ftploginValue);
     dbSession.save(ftpPasswordValue);
     dbSession.save(ftpAccountValue);
+    dbSession.save(ftpTypeValue);
     
     ovs.setInsertionTm(new Date());
     ovs.setTestMode(testMode);
-
+    ovs.setAccountNumber(accountNo);
     dbSession.save(ovs);
     tx.commit();
     dbSession.evict(supplier);
