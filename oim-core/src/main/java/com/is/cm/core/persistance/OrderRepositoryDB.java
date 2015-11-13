@@ -1,6 +1,5 @@
 package com.is.cm.core.persistance;
 
-import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -32,7 +31,6 @@ import com.is.cm.core.domain.DataTableCriterias.SearchCriterias;
 import com.is.cm.core.domain.Order;
 import com.is.cm.core.domain.OrderDetail;
 import com.is.cm.core.domain.OrderDetailMod;
-import com.is.cm.core.domain.OrderTracking;
 import com.is.cm.core.domain.PagedDataResult;
 
 import salesmachine.hibernatedb.OimChannelAccessDetails;
@@ -47,7 +45,9 @@ import salesmachine.hibernatedb.OimOrderStatuses;
 import salesmachine.hibernatedb.OimOrderTracking;
 import salesmachine.hibernatedb.OimOrders;
 import salesmachine.hibernatedb.OimSuppliers;
+import salesmachine.hibernatedb.OimVendorSuppliers;
 import salesmachine.hibernatedb.OimVendorsuppOrderhistory;
+import salesmachine.hibernatedb.Vendors;
 import salesmachine.hibernatehelper.SessionManager;
 import salesmachine.oim.api.OimConstants;
 import salesmachine.oim.stores.api.IOrderImport;
@@ -59,7 +59,6 @@ import salesmachine.oim.stores.modal.shop.order.CCORDER;
 import salesmachine.oim.stores.modal.shop.order.CCTRANSMISSION;
 import salesmachine.oim.stores.modal.shop.order.ITEMS;
 import salesmachine.oim.suppliers.SupplierFactory;
-import salesmachine.oim.suppliers.Supplier;
 import salesmachine.oim.suppliers.exception.SupplierCommunicationException;
 import salesmachine.oim.suppliers.exception.SupplierConfigurationException;
 import salesmachine.oim.suppliers.exception.SupplierOrderException;
@@ -1244,7 +1243,7 @@ public class OrderRepositoryDB extends RepositoryBase implements OrderRepository
       td.setShippingMethod(orderTracking.getShippingMethod());
       orderStatus.addTrackingData(td);
     }
-    if (orderStatus != null && oimChannels.getTestMode()==0)
+    if (orderStatus != null && oimChannels.getTestMode() == 0)
       iOrderImport.updateStoreOrder(detail, orderStatus);
 
   }
@@ -1265,5 +1264,32 @@ public class OrderRepositoryDB extends RepositoryBase implements OrderRepository
         tx.rollback();
       LOG.error("Error occurred while deleting Tracking", e);
     }
+  }
+
+  @Override
+  public String geSuppliertTestModeStatus(Integer orderId) {
+    Session session = SessionManager.currentSession();
+    OimOrders oimOrder = (OimOrders) session.get(OimOrders.class, orderId);
+    Vendors vender = oimOrder.getOimOrderBatches().getOimChannels().getVendors();
+    for (OimOrderDetails detail : oimOrder.getOimOrderDetailses()) {
+      OimSuppliers supplier = detail.getOimSuppliers();
+      OimVendorSuppliers ovs = null;
+      Query query;
+      try {
+        query = session.createQuery(
+            "from OimVendorSuppliers s where s.oimSuppliers=:supp and s.vendors.vendorId=:vid and s.deleteTm is null");
+        query.setEntity("supp", supplier);
+        query.setInteger("vid", vender.getVendorId());
+        Iterator it = query.iterate();
+        if (it.hasNext()) {
+          ovs = (OimVendorSuppliers) it.next();
+          if (ovs != null && ovs.getTestMode().intValue() == 1)
+            return "Test mode is enable for supplier - " + supplier.getSupplierName()
+                + ". Please make it disable and try again";
+        }
+      } catch (Exception e) {
+      }
+    }
+    return "";
   }
 }

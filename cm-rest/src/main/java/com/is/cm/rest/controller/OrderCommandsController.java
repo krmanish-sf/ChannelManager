@@ -16,14 +16,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import salesmachine.oim.suppliers.exception.SupplierCommunicationException;
-import salesmachine.oim.suppliers.exception.SupplierConfigurationException;
-import salesmachine.oim.suppliers.exception.SupplierOrderException;
-
 import com.is.cm.core.domain.Order;
 import com.is.cm.core.domain.OrderDetail;
 import com.is.cm.core.domain.OrderTracking;
-import com.is.cm.core.domain.VendorSupplier;
 import com.is.cm.core.event.DeleteEvent;
 import com.is.cm.core.event.DeletedEvent;
 import com.is.cm.core.event.UpdateEvent;
@@ -35,6 +30,10 @@ import com.is.cm.core.event.orders.OrderDeletedEvent;
 import com.is.cm.core.event.orders.OrderDetailUpdatedEvent;
 import com.is.cm.core.event.orders.UpdateOrderDetailEvent;
 import com.is.cm.core.service.OrderService;
+
+import salesmachine.oim.suppliers.exception.SupplierCommunicationException;
+import salesmachine.oim.suppliers.exception.SupplierConfigurationException;
+import salesmachine.oim.suppliers.exception.SupplierOrderException;
 
 @Controller
 @RequestMapping("/aggregators/orders")
@@ -160,5 +159,15 @@ public class OrderCommandsController {
 		.getEntity().getClass(), deletedEvent.getEntity());
 	return new ResponseEntity<OrderTracking>(deletedEvent.getEntity(),
 		HttpStatus.FORBIDDEN);
+    }
+    
+    @RequestMapping(method = { RequestMethod.GET }, value = "/testMode/{orderId}")
+    public ResponseEntity<String> getTestModeStatus(@PathVariable int orderId ){
+    	LOG.info("Checking test mode status for orderId - {}",orderId);
+    	UpdatedEvent<String> event = orderService
+    			.geSuppliertTestModeStatus(new UpdateEvent<Integer>(orderId,
+    					orderId));
+    		return new ResponseEntity<String>(event.getEntity(), HttpStatus.OK);
+    	
     }
 }

@@ -3,11 +3,6 @@ package com.is.cm.core.service;
 import java.util.List;
 import java.util.Map;
 
-import salesmachine.oim.stores.modal.shop.order.CCTRANSMISSION;
-import salesmachine.oim.suppliers.exception.SupplierCommunicationException;
-import salesmachine.oim.suppliers.exception.SupplierConfigurationException;
-import salesmachine.oim.suppliers.exception.SupplierOrderException;
-
 import com.is.cm.core.domain.DataTableCriterias;
 import com.is.cm.core.domain.Order;
 import com.is.cm.core.domain.OrderDetail;
@@ -32,46 +27,45 @@ import com.is.cm.core.event.orders.OrderDetailUpdatedEvent;
 import com.is.cm.core.event.orders.RequestAllOrdersEvent;
 import com.is.cm.core.event.orders.UpdateOrderDetailEvent;
 
+import salesmachine.oim.stores.modal.shop.order.CCTRANSMISSION;
+import salesmachine.oim.suppliers.exception.SupplierCommunicationException;
+import salesmachine.oim.suppliers.exception.SupplierConfigurationException;
+import salesmachine.oim.suppliers.exception.SupplierOrderException;
+
 public interface OrderService {
 
-    AllOrdersEvent getOrders(RequestAllOrdersEvent requestAllOrdersEvent);
+	AllOrdersEvent getOrders(RequestAllOrdersEvent requestAllOrdersEvent);
 
-    OrderDeletedEvent delete(DeleteOrderEvent deleteOrderEvent);
+	OrderDeletedEvent delete(DeleteOrderEvent deleteOrderEvent);
 
-    OrderCreatedEvent createOrder(CreateOrderEvent createOrderEvent);
+	OrderCreatedEvent createOrder(CreateOrderEvent createOrderEvent);
 
-    OrderDetailUpdatedEvent update(UpdateOrderDetailEvent updateOrderDetailEvent);
+	OrderDetailUpdatedEvent update(UpdateOrderDetailEvent updateOrderDetailEvent);
 
-    PagedDataResultEvent<Order> findOrderByStatus(String status,
-	    RequestReadEvent<DataTableCriterias> requestReadEvent);
+	PagedDataResultEvent<Order> findOrderByStatus(String status, RequestReadEvent<DataTableCriterias> requestReadEvent);
 
-    UpdatedEvent<Order> processOrder(UpdateEvent<Order> event)
-	    throws SupplierConfigurationException,
-	    SupplierCommunicationException, SupplierOrderException;
+	UpdatedEvent<Order> processOrder(UpdateEvent<Order> event) throws SupplierConfigurationException,
+			SupplierCommunicationException, SupplierOrderException;
 
-    PagedDataResultEvent<Order> find(
-	    RequestReadEvent<DataTableCriterias> requestReadEvent);
+	PagedDataResultEvent<Order> find(RequestReadEvent<DataTableCriterias> requestReadEvent);
 
-    UpdatedEvent<List<Order>> bulkProcessOrder(UpdateEvent<List<Order>> event)
-	    throws SupplierConfigurationException,
-	    SupplierCommunicationException, SupplierOrderException;
+	UpdatedEvent<List<Order>> bulkProcessOrder(UpdateEvent<List<Order>> event) throws SupplierConfigurationException,
+			SupplierCommunicationException, SupplierOrderException;
 
-    UpdatedEvent<List<Order>> bulkProcessOrder1(String status,
-	    UpdateEvent<List<Integer>> event);
+	UpdatedEvent<List<Order>> bulkProcessOrder1(String status, UpdateEvent<List<Integer>> event);
 
-    UpdatedEvent<String> trackOrderStatus(UpdateEvent<Integer> updateEvent);
+	UpdatedEvent<String> trackOrderStatus(UpdateEvent<Integer> updateEvent);
 
-    CreatedEvent<List<Order>> saveOrder(CreateEvent<CCTRANSMISSION> event);
+	CreatedEvent<List<Order>> saveOrder(CreateEvent<CCTRANSMISSION> event);
 
-    ReadCollectionEvent<OrderDetailMod> getOrderDetailModifications(
-	    ReadEvent<OrderDetailMod> readEvent);
+	ReadCollectionEvent<OrderDetailMod> getOrderDetailModifications(ReadEvent<OrderDetailMod> readEvent);
 
-    ReadCollectionEvent<OrderDetail> getOrderDetailByOrderId(
-	    ReadEvent<String> requestReadEvent);
+	ReadCollectionEvent<OrderDetail> getOrderDetailByOrderId(ReadEvent<String> requestReadEvent);
 
-    UpdatedEvent<String> updateTracking(
-	    UpdateEvent<Map<String, String>> updateEvent);
+	UpdatedEvent<String> updateTracking(UpdateEvent<Map<String, String>> updateEvent);
 
-    DeletedEvent<OrderTracking> deleteTracking(DeleteEvent<OrderTracking> deleteEvent);
+	DeletedEvent<OrderTracking> deleteTracking(DeleteEvent<OrderTracking> deleteEvent);
+
+	UpdatedEvent<String> geSuppliertTestModeStatus(UpdateEvent<Integer> updateEvent);
 
 }

@@ -3,18 +3,18 @@ package com.is.cm.core.persistance;
 import java.util.List;
 import java.util.Map;
 
+import com.is.cm.core.domain.DataTableCriterias;
+import com.is.cm.core.domain.Order;
+import com.is.cm.core.domain.OrderDetail;
+import com.is.cm.core.domain.OrderDetailMod;
+import com.is.cm.core.domain.PagedDataResult;
+
 import salesmachine.hibernatedb.OimOrderDetails;
 import salesmachine.hibernatedb.OimOrders;
 import salesmachine.oim.stores.modal.shop.order.CCTRANSMISSION;
 import salesmachine.oim.suppliers.exception.SupplierCommunicationException;
 import salesmachine.oim.suppliers.exception.SupplierConfigurationException;
 import salesmachine.oim.suppliers.exception.SupplierOrderException;
-
-import com.is.cm.core.domain.DataTableCriterias;
-import com.is.cm.core.domain.Order;
-import com.is.cm.core.domain.OrderDetail;
-import com.is.cm.core.domain.OrderDetailMod;
-import com.is.cm.core.domain.PagedDataResult;
 
 public interface OrderRepository {
 
@@ -56,4 +56,6 @@ public interface OrderRepository {
   String updateTracking(int detailId, Map<String, String> entity);
 
   void deleteTracking(int trackingId);
+
+  String geSuppliertTestModeStatus(Integer entity);
 }

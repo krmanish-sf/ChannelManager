@@ -65,7 +65,7 @@ public class OrderTrackingTask extends TimerTask {
       } catch (HibernateException ex) {
         log.error(ex.getMessage(), ex);
       } finally {
-        session.close();
+        //session.close();
       }
       log.info("Order Tracking Task Queued up...");
     } catch (Throwable e) {

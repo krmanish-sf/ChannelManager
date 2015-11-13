@@ -50,7 +50,7 @@ function fetchBigcommerceAuthData() {
 					});
 }
 
-function fetchShopifyAuthData(){
+function fetchShopifyAuthData() {
 	var storeUrl = $("input[name=storeurl]").val();
 	console.log(storeUrl);
 	$(this)
@@ -566,27 +566,39 @@ function drawSalesReportTable(data) {
 	});
 	if ($.CM == null || typeof $.CM == 'undefined')
 		$.CM = {};
+
 	$.CM.pullorder = function(e) {
 		var url = "/aggregators/channels/pull";
+		var channel = null;
 		if (e != null) {
-			var channel = tableimportchannel.row(e[0]).data();
+			channel = tableimportchannel.row(e[0]).data();
+			console.log(channel);
 			url = "/aggregators/channels/" + channel.channelId + "/pull";
 		}
-		$(this).CRUD({
-			method : "GET",
-			url : url,
-			success : function(data) {
-				$.gritter.add({
-					title : 'Pull Order',
-					text : data
-				});
-				$.CM.updateOrderSummary();
-			},
-			error : function(data, jqXhr, msg) {
+		if (channel != null && !channel.testMode) {
+			$(this).CRUD({
+				method : "GET",
+				url : url,
+				success : function(data) {
+					$.gritter.add({
+						title : 'Pull Order',
+						text : data
+					});
+					$.CM.updateOrderSummary();
+				},
+				error : function(data, jqXhr, msg) {
 
-			},
-			message : true
-		});
+				},
+				message : true
+			});
+		}
+		else{
+			$.gritter.add({
+				title : 'Pull Order',
+				text : "Test mode is enabled for this channel. Please make it disable and try again",
+				class_name : 'gritter-error'
+			});
+		}
 	};
 	$.CM.getOrderModification = function(detailId) {
 		$('#tableordermods')
@@ -1153,28 +1165,44 @@ function drawSalesReportTable(data) {
 	};
 	$.CM.processOrder = function(order) {
 		$(this).CRUD({
-			url : "aggregators/orders/processed/" + order.orderId,
-			method : "POST",
-			data : JSON.stringify(order),
-			success : function(order) {
-				$.gritter.add({
-					title : 'Order Processing',
-					text : 'Order Processed successfully.',
-					class_name : 'gritter-success'
-				});
-				table_xy.ajax.reload();
-				getAlerts();
-			},
-			error : function(a, b, c) {
-				$.gritter.add({
-					title : 'Order Processing',
-					text : 'Order Processing Failed.',
-					class_name : 'gritter-error'
-				});
-				table_xy.ajax.reload();
-				getAlerts();
+			url : "aggregators/orders/testMode/" + order.orderId,
+			method : "GET",
+			success : function(status) {
+				console.log('--' + status);
+				if (status != '') {
+					$.gritter.add({
+						title : 'Order Processing',
+						text : status,
+						class_name : 'gritter-error'
+					});
+				} else {
+					$(this).CRUD({
+						url : "aggregators/orders/processed/" + order.orderId,
+						method : "POST",
+						data : JSON.stringify(order),
+						success : function(order) {
+							$.gritter.add({
+								title : 'Order Processing',
+								text : 'Order Processed successfully.',
+								class_name : 'gritter-success'
+							});
+							table_xy.ajax.reload();
+							getAlerts();
+						},
+						error : function(a, b, c) {
+							$.gritter.add({
+								title : 'Order Processing',
+								text : 'Order Processing Failed.',
+								class_name : 'gritter-error'
+							});
+							table_xy.ajax.reload();
+							getAlerts();
+						}
+					});
+				}
 			}
 		});
+
 	};
 	$.CM.trackOrder = function(orderDetailId) {
 		$(this).CRUD({

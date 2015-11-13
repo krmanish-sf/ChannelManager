@@ -249,22 +249,22 @@ public class OrderTest {
       }
       out.close();
 
-      // EmailUtil.sendEmailWithAttachment("orders@inventorysource.com",
-      // "support@inventorysource.com",
-      // "abheeshek@inventorysource.com, kelly@inventorysource.com, andrew@inventorysource.com",
-      // emailSubject, emailBody, f.getAbsolutePath());
+       EmailUtil.sendEmailWithAttachment("orders@inventorysource.com",
+       "support@inventorysource.com",
+       "abheeshek@inventorysource.com, kelly@inventorysource.com, andrew@inventorysource.com",
+       emailSubject, emailBody, f.getAbsolutePath());
 
-      EmailUtil.sendEmailWithAttachment("manish@inventorysource.com", "manish@inventorysource.com",
-          "", emailSubject, emailBody, f.getAbsolutePath());
+//      EmailUtil.sendEmailWithAttachment("manish@inventorysource.com", "manish@inventorysource.com",
+//          "", emailSubject, emailBody, f.getAbsolutePath());
       log.info("Email with attachment sent successfully.");
     } else {
       emailBody = "There is no order found for last two days.";
-      // EmailUtil.sendEmail("orders@inventorysource.com", "support@inventorysource.com",
-      // "abheeshek@inventorysource.com, kelly@inventorysource.com, andrew@inventorysource.com",
-      // emailSubject, emailBody);
+       EmailUtil.sendEmail("orders@inventorysource.com", "support@inventorysource.com",
+       "abheeshek@inventorysource.com, kelly@inventorysource.com, andrew@inventorysource.com",
+       emailSubject, emailBody);
 
-      EmailUtil.sendEmail("manish@inventorysource.com", "manish@inventorysource.com", "",
-          emailSubject, emailBody);
+//      EmailUtil.sendEmail("manish@inventorysource.com", "manish@inventorysource.com", "",
+//          emailSubject, emailBody);
       log.info("Email without attachment sent successfully.");
     }
   }

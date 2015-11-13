@@ -35,8 +35,6 @@ import com.is.cm.core.event.orders.OrderDeletedEvent;
 import com.is.cm.core.event.orders.OrderDetailUpdatedEvent;
 import com.is.cm.core.event.orders.RequestAllOrdersEvent;
 import com.is.cm.core.event.orders.UpdateOrderDetailEvent;
-import com.is.cm.core.persistance.GenericHibernateDao;
-import com.is.cm.core.persistance.IGenericDao;
 import com.is.cm.core.persistance.OrderRepository;
 
 import salesmachine.hibernatedb.OimOrderDetails;
@@ -331,6 +329,13 @@ public class OrderEventHandler implements OrderService {
 	    DeleteEvent<OrderTracking> deleteEvent) {
 	orderRepository.deleteTracking(deleteEvent.getId());
 	return new DeletedEvent(deleteEvent.getId(), null);
+    }
+    
+    @Override
+    public UpdatedEvent<String> geSuppliertTestModeStatus(UpdateEvent<Integer> updateEvent) {
+    	String testModeStatus = orderRepository
+    			.geSuppliertTestModeStatus(updateEvent.getEntity());
+    		return new UpdatedEvent<String>(updateEvent.getId(), testModeStatus);
     }
 
 }

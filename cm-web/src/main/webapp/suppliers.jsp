@@ -398,16 +398,16 @@ If you have not yet configured your supplier, click "Add Supplier" to do it now.
                         <form class="form-horizontal" role="form"
 												action="/aggregators/suppliers" method="PUT"
 												id="supplierformFtpBased">
-                          <div class="form-group">
-                              <label
-														class="col-sm-5 control-label no-padding-right">Ftp Type</label>
-                              <div class="col-sm-7">
-                              <select class="width-70" name="ftpType" data-bind-vendorsupplier="customMapper:oimSuppliers.oimSupplierMethodses[oimSupplierMethodTypes.methodTypeId=1].oimSupplierMethodattrValueses[oimSupplierMethodattrNames.attrId=10].attributeValue">
-                                <option value="FTP" selected>FTP</option>
-                                <option value="SFTP">SFTP</option>
-                              </select>
-                            </div>
-                            </div>
+<!--                           <div class="form-group"> -->
+<!--                               <label -->
+<!-- 														class="col-sm-5 control-label no-padding-right">Ftp Type</label> -->
+<!--                               <div class="col-sm-7"> -->
+<!--                               <select class="width-70" name="ftpType" data-bind-vendorsupplier="customMapper:oimSuppliers.oimSupplierMethodses[oimSupplierMethodTypes.methodTypeId=1].oimSupplierMethodattrValueses[oimSupplierMethodattrNames.attrId=10].attributeValue"> -->
+<!--                                 <option value="FTP" selected>FTP</option> -->
+<!--                                 <option value="SFTP">SFTP</option> -->
+<!--                               </select> -->
+<!--                             </div> -->
+<!--                             </div> -->
                          <div class="form-group">
                               <label
 														class="col-sm-5 control-label no-padding-right">FTP</label>
@@ -631,16 +631,16 @@ If you have not yet configured your supplier, click "Add Supplier" to do it now.
 <!-- 															minlength="2" type="text" value="" required /> -->
 <!--                             </div> -->
 <!-- 												</div> -->
- 								 <div class="form-group supplier-class moteng-ftp">
-                              <label
-														class="col-sm-5 control-label no-padding-right">Ftp Type</label>
-                              <div class="col-sm-7">
-                              <select class="width-70" name="ftpType" required>
-                                <option value="FTP" selected>FTP</option>
-                                <option value="SFTP">SFTP</option>
-                              </select>
-                            </div>
-												</div>
+<!--  								 <div class="form-group supplier-class moteng-ftp"> -->
+<!--                               <label -->
+<!-- 														class="col-sm-5 control-label no-padding-right">Ftp Type</label> -->
+<!--                               <div class="col-sm-7"> -->
+<!--                               <select class="width-70" name="ftpType" required> -->
+<!--                                 <option value="FTP" selected>FTP</option> -->
+<!--                                 <option value="SFTP">SFTP</option> -->
+<!--                               </select> -->
+<!--                             </div> -->
+<!-- 												</div> -->
 							 <div class="form-group supplier-class moteng-ftp">
                               <label
 														class="col-sm-5 control-label no-padding-right">FTP</label>

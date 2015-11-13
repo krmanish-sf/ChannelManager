@@ -36,16 +36,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.enterprisedt.net.ftp.*;
-import com.sshtools.j2ssh.SshClient;
-import com.sshtools.j2ssh.authentication.AuthenticationProtocolState;
-import com.sshtools.j2ssh.authentication.PasswordAuthenticationClient;
-import com.sshtools.j2ssh.session.SessionChannelClient;
-import com.sshtools.j2ssh.sftp.SftpFile;
-import com.sshtools.j2ssh.sftp.SftpFileInputStream;
-import com.sshtools.j2ssh.sftp.SftpSubsystemClient;
-import com.sshtools.j2ssh.transport.HostKeyVerification;
-import com.sshtools.j2ssh.transport.TransportProtocolException;
-import com.sshtools.j2ssh.transport.publickey.SshPublicKey;
 
 import salesmachine.email.EmailUtil;
 import salesmachine.hibernatedb.OimChannels;
@@ -178,24 +168,24 @@ public class Moteng extends Supplier implements HasTracking {
           continue;
         fOut.write(shippingCode.getBytes(ASCII));
         fOut.write(TAB);
-        fOut.write(replaceWithTabIfNullOrBlank(poNum).getBytes(ASCII));
+        fOut.write(StringHandle.removeNull(poNum).getBytes(ASCII));
         fOut.write(TAB);
-        fOut.write(replaceWithTabIfNullOrBlank(order.getDeliveryCompany()).getBytes(ASCII));
+        fOut.write(StringHandle.removeNull(order.getDeliveryCompany()).getBytes(ASCII));
         fOut.write(TAB);
-        fOut.write(replaceWithTabIfNullOrBlank(order.getDeliveryName()).getBytes(ASCII));
+        fOut.write(StringHandle.removeNull(order.getDeliveryName()).getBytes(ASCII));
         fOut.write(TAB);
-        fOut.write(replaceWithTabIfNullOrBlank(order.getDeliveryStreetAddress()).getBytes(ASCII));
+        fOut.write(StringHandle.removeNull(order.getDeliveryStreetAddress()).getBytes(ASCII));
         fOut.write(TAB);
-        fOut.write(replaceWithTabIfNullOrBlank(order.getDeliverySuburb()).getBytes(ASCII));
+        fOut.write(StringHandle.removeNull(order.getDeliverySuburb()).getBytes(ASCII));
         fOut.write(TAB);
-        fOut.write(replaceWithTabIfNullOrBlank(order.getDeliveryCity()).getBytes(ASCII));
+        fOut.write(StringHandle.removeNull(order.getDeliveryCity()).getBytes(ASCII));
         fOut.write(TAB);
 
-        fOut.write(replaceWithTabIfNullOrBlank(order.getDeliveryStateCode()).getBytes(ASCII));
+        fOut.write(StringHandle.removeNull(order.getDeliveryStateCode()).getBytes(ASCII));
         fOut.write(TAB);
-        fOut.write(replaceWithTabIfNullOrBlank(order.getDeliveryZip()).getBytes(ASCII));
+        fOut.write(StringHandle.removeNull(order.getDeliveryZip()).getBytes(ASCII));
         fOut.write(TAB);
-        fOut.write(replaceWithTabIfNullOrBlank(order.getDeliveryCountryCode()).getBytes(ASCII));
+        fOut.write(StringHandle.removeNull(order.getDeliveryCountryCode()).getBytes(ASCII));
         fOut.write(TAB);
         String skuPrefix = null, sku = od.getSku();
         if (!orderSkuPrefixMap.isEmpty()) {
@@ -207,7 +197,7 @@ public class Moteng extends Supplier implements HasTracking {
         }
         fOut.write(sku.getBytes(ASCII));
         fOut.write(TAB);
-        fOut.write(replaceWithTabIfNullOrBlank(od.getQuantity().toString()).getBytes(ASCII));
+        fOut.write(StringHandle.removeNull(od.getQuantity().toString()).getBytes(ASCII));
         fOut.write(NEW_LINE);
         OimChannels oimChannels = order.getOimOrderBatches().getOimChannels();
         OimLogStream stream = new OimLogStream();
@@ -263,11 +253,11 @@ public class Moteng extends Supplier implements HasTracking {
     FtpDetail ftpDetail = getFtpDetails(ovs);
     if (ftpDetail.getUrl() != null) {
 
-       if (ftpDetail.getFtpType()!=null && ftpDetail.getFtpType().equalsIgnoreCase("SFTP"))
-      orderStatus = getOrderStatusFromSFTP(orderStatus, ftpDetail, oimOrderDetails, poNumber, sku);
-       else
-       orderStatus = getOrderStatusFromFTP(orderStatus, ftpDetail, oimOrderDetails, poNumber,
-       sku);
+      if (ftpDetail.getFtpType() != null && ftpDetail.getFtpType().equalsIgnoreCase("SFTP"))
+        orderStatus = getOrderStatusFromSFTP(orderStatus, ftpDetail, oimOrderDetails, poNumber,
+            sku);
+      else
+        orderStatus = getOrderStatusFromFTP(orderStatus, ftpDetail, oimOrderDetails, poNumber, sku);
     }
     return orderStatus;
   }
@@ -374,137 +364,140 @@ public class Moteng extends Supplier implements HasTracking {
   private OrderStatus getOrderStatusFromSFTP(OrderStatus orderStatus, FtpDetail ftpDetail,
       OimOrderDetails oimOrderDetails, String poNumber, String sku)
           throws SupplierOrderTrackingException {
-
-    try {
-
-      SshClient con = new SshClient();
-      String SFTPURL = "199.168.174.186";
-      System.out.println("Connecting to " + SFTPURL);
-      int result = 0;
-      try {
-        con.connect(SFTPURL, 22, new HostKeyVerification() {
-          public boolean verifyHost(String host, SshPublicKey pk)
-              throws TransportProtocolException {
-            return true;
-          }
-        });
-
-        System.out.println("SFTP connected :");
-        System.out.println("Going to authenticate Password and User Name :");
-        com.sshtools.j2ssh.authentication.SshAuthenticationClient authClient = getAuthenticationClient(
-            "staging", "delhi123");
-        result = con.authenticate(authClient);
-        if (result != AuthenticationProtocolState.COMPLETE) {
-          System.out.println("Login failed.");
-        } else {
-          System.out.println("Login successful.");
-        }
-      } catch (IOException e) {
-        // TODO Auto-generated catch block
-        e.printStackTrace();
-      } catch (Exception e) {
-        // TODO Auto-generated catch block
-        e.printStackTrace();
-      }
-      SessionChannelClient session = con.openSessionChannel();
-      SftpSubsystemClient sftp = new SftpSubsystemClient();
-      session.startSubsystem(sftp);
-      SftpFile roortDir = sftp.openDirectory("/");// ("/", SftpSubsystemClient.OPEN_READ);
-      List l = new ArrayList();
-      sftp.listChildren(roortDir, l);
-      for (Iterator itr1 = l.iterator(); itr1.hasNext();) {
-        SftpFile sftpFile = (SftpFile) itr1.next();
-        String trackingFileName = sftpFile.getFilename();
-        if (trackingFileName.equals("..") || trackingFileName.equals(".") || sftpFile.isDirectory())
-          continue;
-        if (sftpFile.isFile()) {
-          BufferedInputStream in = new BufferedInputStream(new SftpFileInputStream(sftpFile));
-          byte[] trackingFileData = new byte[in.available()];
-          Map<Integer, String> orderDataMap = parseFileData(trackingFileData);
-          for (Iterator itr = orderDataMap.values().iterator(); itr.hasNext();) {
-            String line = (String) itr.next();
-            String[] lineArray = line.split("\t");
-            String shippingMethod;
-            String shipDateString;
-            int qty;
-            String trackingNo;
-            String headerStatus;
-            try {
-              String trackingPO = StringHandle.removeNull(lineArray[6]);
-              String trackingSku = StringHandle.removeNull(lineArray[8]);
-              if (!trackingPO.equals(poNumber) || !trackingSku.equalsIgnoreCase(sku))
-                continue;
-              shippingMethod = StringHandle.removeNull(lineArray[3]);
-              String qtyOrdered = StringHandle.removeNull(lineArray[9]);
-              String qtyShipped = StringHandle.removeNull(lineArray[10]);
-              shipDateString = StringHandle.removeNull(lineArray[11]);
-              qty = 0;
-              try {
-                qty = Integer.parseInt(qtyShipped);
-              } catch (NumberFormatException e) {
-                log.error(e.getMessage(), e);
-              }
-
-              trackingNo = StringHandle.removeNull(lineArray[13]);
-              headerStatus = StringHandle.removeNull(lineArray[15]);
-            } catch (ArrayIndexOutOfBoundsException e1) {
-              log.error("This file is not appropreate as the documantation of Moteng");
-              break;
-            }
-            if (headerStatus.equalsIgnoreCase("O")) {
-              log.info("This is an open order pending shipment from Moteng warehouse.");
-              return orderStatus;
-            }
-            if (headerStatus.equalsIgnoreCase("P")) {
-              orderStatus.setStatus(OimConstants.OIM_SUPPLER_ORDER_STATUS_IN_PROCESS);
-              orderStatus.setPartialShipped(true);
-            } else if (orderStatus.getStatus() == null) {
-              orderStatus.setStatus(OimConstants.OIM_SUPPLER_ORDER_STATUS_SHIPPED);
-            } else if (headerStatus.equalsIgnoreCase("C")) {
-              orderStatus.setStatus(OimConstants.OIM_SUPPLER_ORDER_STATUS_SHIPPED);
-              orderStatus.setPartialShipped(false);
-            }
-            salesmachine.oim.suppliers.modal.TrackingData trackingData = new salesmachine.oim.suppliers.modal.TrackingData();
-            trackingData.setCarrierCode(oimOrderDetails.getOimOrders().getOimShippingMethod()
-                .getOimShippingCarrier().getName());
-            trackingData.setCarrierName(oimOrderDetails.getOimOrders().getOimShippingMethod()
-                .getOimShippingCarrier().getName());
-            trackingData.setQuantity(qty);
-            trackingData.setShipperTrackingNumber(trackingNo);
-            Date shipDate1 = df.parse(shipDateString);
-            GregorianCalendar c = new GregorianCalendar();
-            c.setTime(shipDate1);
-            XMLGregorianCalendar shipDate = null;
-            try {
-              shipDate = DatatypeFactory.newInstance().newXMLGregorianCalendar(c);
-            } catch (DatatypeConfigurationException e) {
-              log.error(e.getMessage(), e);
-            }
-            if (shipDate != null)
-              trackingData.setShipDate(shipDate);
-            trackingData.setShippingMethod(shippingMethod);
-            orderStatus.addTrackingData(trackingData);
-          }
-        }
-
-      }
-
-    } catch (IOException | ParseException e) {
-      e.printStackTrace();
-    }
+    //
+    // try {
+    //
+    // SshClient con = new SshClient();
+    // String SFTPURL = "199.168.174.186";
+    // System.out.println("Connecting to " + SFTPURL);
+    // int result = 0;
+    // try {
+    // con.connect(SFTPURL, 22, new HostKeyVerification() {
+    // public boolean verifyHost(String host, SshPublicKey pk)
+    // throws TransportProtocolException {
+    // return true;
+    // }
+    // });
+    //
+    // System.out.println("SFTP connected :");
+    // System.out.println("Going to authenticate Password and User Name :");
+    // com.sshtools.j2ssh.authentication.SshAuthenticationClient authClient =
+    // getAuthenticationClient(
+    // "staging", "delhi123");
+    // result = con.authenticate(authClient);
+    // if (result != AuthenticationProtocolState.COMPLETE) {
+    // System.out.println("Login failed.");
+    // } else {
+    // System.out.println("Login successful.");
+    // }
+    // } catch (IOException e) {
+    // // TODO Auto-generated catch block
+    // e.printStackTrace();
+    // } catch (Exception e) {
+    // // TODO Auto-generated catch block
+    // e.printStackTrace();
+    // }
+    // SessionChannelClient session = con.openSessionChannel();
+    // SftpSubsystemClient sftp = new SftpSubsystemClient();
+    // session.startSubsystem(sftp);
+    // SftpFile roortDir = sftp.openDirectory("/");// ("/", SftpSubsystemClient.OPEN_READ);
+    // List l = new ArrayList();
+    // sftp.listChildren(roortDir, l);
+    // for (Iterator itr1 = l.iterator(); itr1.hasNext();) {
+    // SftpFile sftpFile = (SftpFile) itr1.next();
+    // String trackingFileName = sftpFile.getFilename();
+    // if (trackingFileName.equals("..") || trackingFileName.equals(".") || sftpFile.isDirectory())
+    // continue;
+    // if (sftpFile.isFile()) {
+    // BufferedInputStream in = new BufferedInputStream(new SftpFileInputStream(sftpFile));
+    // byte[] trackingFileData = new byte[in.available()];
+    // Map<Integer, String> orderDataMap = parseFileData(trackingFileData);
+    // for (Iterator itr = orderDataMap.values().iterator(); itr.hasNext();) {
+    // String line = (String) itr.next();
+    // String[] lineArray = line.split("\t");
+    // String shippingMethod;
+    // String shipDateString;
+    // int qty;
+    // String trackingNo;
+    // String headerStatus;
+    // try {
+    // String trackingPO = StringHandle.removeNull(lineArray[6]);
+    // String trackingSku = StringHandle.removeNull(lineArray[8]);
+    // if (!trackingPO.equals(poNumber) || !trackingSku.equalsIgnoreCase(sku))
+    // continue;
+    // shippingMethod = StringHandle.removeNull(lineArray[3]);
+    // String qtyOrdered = StringHandle.removeNull(lineArray[9]);
+    // String qtyShipped = StringHandle.removeNull(lineArray[10]);
+    // shipDateString = StringHandle.removeNull(lineArray[11]);
+    // qty = 0;
+    // try {
+    // qty = Integer.parseInt(qtyShipped);
+    // } catch (NumberFormatException e) {
+    // log.error(e.getMessage(), e);
+    // }
+    //
+    // trackingNo = StringHandle.removeNull(lineArray[13]);
+    // headerStatus = StringHandle.removeNull(lineArray[15]);
+    // } catch (ArrayIndexOutOfBoundsException e1) {
+    // log.error("This file is not appropreate as the documantation of Moteng");
+    // break;
+    // }
+    // if (headerStatus.equalsIgnoreCase("O")) {
+    // log.info("This is an open order pending shipment from Moteng warehouse.");
+    // return orderStatus;
+    // }
+    // if (headerStatus.equalsIgnoreCase("P")) {
+    // orderStatus.setStatus(OimConstants.OIM_SUPPLER_ORDER_STATUS_IN_PROCESS);
+    // orderStatus.setPartialShipped(true);
+    // } else if (orderStatus.getStatus() == null) {
+    // orderStatus.setStatus(OimConstants.OIM_SUPPLER_ORDER_STATUS_SHIPPED);
+    // } else if (headerStatus.equalsIgnoreCase("C")) {
+    // orderStatus.setStatus(OimConstants.OIM_SUPPLER_ORDER_STATUS_SHIPPED);
+    // orderStatus.setPartialShipped(false);
+    // }
+    // salesmachine.oim.suppliers.modal.TrackingData trackingData = new
+    // salesmachine.oim.suppliers.modal.TrackingData();
+    // trackingData.setCarrierCode(oimOrderDetails.getOimOrders().getOimShippingMethod()
+    // .getOimShippingCarrier().getName());
+    // trackingData.setCarrierName(oimOrderDetails.getOimOrders().getOimShippingMethod()
+    // .getOimShippingCarrier().getName());
+    // trackingData.setQuantity(qty);
+    // trackingData.setShipperTrackingNumber(trackingNo);
+    // Date shipDate1 = df.parse(shipDateString);
+    // GregorianCalendar c = new GregorianCalendar();
+    // c.setTime(shipDate1);
+    // XMLGregorianCalendar shipDate = null;
+    // try {
+    // shipDate = DatatypeFactory.newInstance().newXMLGregorianCalendar(c);
+    // } catch (DatatypeConfigurationException e) {
+    // log.error(e.getMessage(), e);
+    // }
+    // if (shipDate != null)
+    // trackingData.setShipDate(shipDate);
+    // trackingData.setShippingMethod(shippingMethod);
+    // orderStatus.addTrackingData(trackingData);
+    // }
+    // }
+    //
+    // }
+    //
+    // } catch (IOException | ParseException e) {
+    // e.printStackTrace();
+    // }
 
     return orderStatus;
   }
 
-  private static com.sshtools.j2ssh.authentication.SshAuthenticationClient getAuthenticationClient(
-      String user, String password) throws Exception {
-    com.sshtools.j2ssh.authentication.SshAuthenticationClient authClient = null;
-    PasswordAuthenticationClient pac = new PasswordAuthenticationClient();
-    pac.setUsername(user);
-    pac.setPassword(password);
-    authClient = pac;
-    return authClient;
-  }
+  // private static com.sshtools.j2ssh.authentication.SshAuthenticationClient
+  // getAuthenticationClient(
+  // String user, String password) throws Exception {
+  // com.sshtools.j2ssh.authentication.SshAuthenticationClient authClient = null;
+  // PasswordAuthenticationClient pac = new PasswordAuthenticationClient();
+  // pac.setUsername(user);
+  // pac.setPassword(password);
+  // authClient = pac;
+  // return authClient;
+  // }
 
   private FtpDetail getFtpDetails(OimVendorSuppliers ovs) {
     FtpDetail ftpDetail = new FtpDetail();
@@ -574,20 +567,20 @@ public class Moteng extends Supplier implements HasTracking {
     return fileData;
   }
 
-  private String replaceWithTabIfNullOrBlank(String str) {
-    str = StringHandle.removeNull(str);
-    if ("".equals(str))
-      return new String(TAB);
-    return str;
-  }
+//  private String replaceWithTabIfNullOrBlank(String str) {
+//    str = StringHandle.removeNull(str);
+//    if ("".equals(str))
+//      return new String(TAB);
+//    return str;
+//  }
 
-  private void sendEmailToSupplier(String accountNumber, String fileName) {
-    String emailBody = accountNumber;
-    String emailSubject = accountNumber;
-    EmailUtil.sendEmailWithAttachment("zapship2lineorders@moteng.com",
-        "support@inventorysource.com", "gsmith@moteng.com", emailSubject, emailBody, fileName);
-
-  }
+    private void sendEmailToSupplier(String accountNumber, String fileName) {
+      String emailBody = accountNumber;
+      String emailSubject = accountNumber;
+      EmailUtil.sendEmailWithAttachment("zapship2lineorders@moteng.com",
+          "support@inventorysource.com", "gsmith@moteng.com", emailSubject, emailBody, fileName);
+  
+    }
 
   // sendEmailToSupport
   private void sendEmailToSupport(String accountNumber, String fileName) {

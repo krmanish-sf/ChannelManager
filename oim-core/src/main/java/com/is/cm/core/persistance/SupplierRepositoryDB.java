@@ -371,7 +371,7 @@ public class SupplierRepositoryDB extends RepositoryBase implements SupplierRepo
                 .intValue() == oimSupplierMethods.getSupplierMethodId().intValue()
                 && oimSupplierMethodattrValues.getOimSupplierMethodattrNames()
                     .getAttrId() == OimConstants.SUPPLIER_METHOD_ATTRIBUTES_FTPTYPE
-                        .intValue()) {
+                        .intValue() && !ftpType.equals("")) {
               oimSupplierMethodattrValues.setAttributeValue(ftpType);
               
             }
@@ -725,18 +725,21 @@ public class SupplierRepositoryDB extends RepositoryBase implements SupplierRepo
         new OimSupplierMethodattrNames(OimConstants.SUPPLIER_METHOD_ATTRIBUTES_FTPACCOUNT));
     ftpAccountValue.setOimSupplierMethods(oimSupplierMethods);
     ovs.setAccountNumber(accountNo);
-    
+    if(ftpType!=null && !ftpType.equals("")){
     OimSupplierMethodattrValues ftpTypeValue = new OimSupplierMethodattrValues();
     ftpTypeValue.setAttributeValue(ftpType);
     ftpTypeValue.setOimSupplierMethodattrNames(
         new OimSupplierMethodattrNames(OimConstants.SUPPLIER_METHOD_ATTRIBUTES_FTPTYPE));
     ftpTypeValue.setOimSupplierMethods(oimSupplierMethods);
+    valuesSet.add(ftpTypeValue);
+    dbSession.save(ftpTypeValue);
+    }
 
     valuesSet.add(ftpUrlValue);
     valuesSet.add(ftploginValue);
     valuesSet.add(ftpPasswordValue);
     valuesSet.add(ftpAccountValue);
-    valuesSet.add(ftpTypeValue);
+   
 
     oimSupplierMethods.setOimSupplierMethodattrValueses(valuesSet);
     dbSession.save(oimSupplierMethods);
@@ -744,7 +747,7 @@ public class SupplierRepositoryDB extends RepositoryBase implements SupplierRepo
     dbSession.save(ftploginValue);
     dbSession.save(ftpPasswordValue);
     dbSession.save(ftpAccountValue);
-    dbSession.save(ftpTypeValue);
+   
     
     ovs.setInsertionTm(new Date());
     ovs.setTestMode(testMode);
