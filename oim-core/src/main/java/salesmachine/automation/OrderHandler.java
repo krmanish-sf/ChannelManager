@@ -62,7 +62,8 @@ public class OrderHandler {
   // @AllowConcurrentEvents
   public void handleOrderTracking(OimOrderDetails orderDetails) {
     try {
-      log.info("Order Tracking :{}", orderDetails.getDetailId());
+      log.info("Order Tracking for detailId :{} and channel is :{}", orderDetails.getDetailId(),
+          orderDetails.getOimOrders().getOimOrderBatches().getOimChannels().getChannelName());
       SupplierFactory factory = new SupplierFactory(SessionManager.currentSession());
       String trackOrder = factory.trackOrder(orderDetails.getOimOrders().getOimOrderBatches()
           .getOimChannels().getVendors().getVendorId(), orderDetails.getDetailId());

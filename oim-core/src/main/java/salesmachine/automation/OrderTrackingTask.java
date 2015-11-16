@@ -46,6 +46,7 @@ public class OrderTrackingTask extends TimerTask {
         List<OimOrders> trackOrderList = query.list();
         log.info("Found {} orders to track...", trackOrderList.size());
         for (OimOrders oimorder : trackOrderList) {
+          session.refresh(oimorder);
           Set orderdetails = oimorder.getOimOrderDetailses();
           Iterator odIter = orderdetails.iterator();
           log.debug("OrderId: {} Shipping:{} Total:{}", oimorder.getOrderId(),
