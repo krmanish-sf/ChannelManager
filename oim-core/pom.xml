@@ -330,12 +330,12 @@
 			<artifactId>json-simple</artifactId>
 			<version>1.1</version>
 		</dependency>
-<!-- 		<dependency> -->
-<!--     		<groupId>sshtools-j2ssh</groupId> -->
-<!--     		<artifactId>sshtools-j2ssh</artifactId> -->
-<!--     		<version>0.1.5-beta</version> -->
-<!--    			 <classifier>2003-04-30</classifier> -->
-<!-- 		</dependency> -->
+		<dependency>
+    		<groupId>sshtools-j2ssh</groupId>
+    		<artifactId>sshtools-j2ssh</artifactId>
+    		<version>0.1.5-beta</version>
+    		<classifier>2003-04-30</classifier>
+		</dependency>
 		<!-- <dependency> <groupId>com.sun.xml.bind</groupId> <artifactId>jaxb-impl</artifactId> 
 			<version>2.2.11</version> </dependency> -->
 	</dependencies>
@@ -353,11 +353,11 @@
 			<name>backup-server-releases</name>
 			<url>http://192.168.1.28:8081/artifactory/libs-release</url>
 		</repository>
-		<repository>
-			<id>bonecp-repo</id>
-			<name>BoneCP Repository</name>
-			<url>http://jolbox.com/bonecp/downloads/maven</url>
-		</repository>
+<!-- 		<repository> -->
+<!-- 			<id>bonecp-repo</id> -->
+<!-- 			<name>BoneCP Repository</name> -->
+<!-- 			<url>http://jolbox.com/bonecp/downloads/maven</url> -->
+<!-- 		</repository> -->
 		<repository>
 			<id>my-test</id>
 			<name> test name</name>

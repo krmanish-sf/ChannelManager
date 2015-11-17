@@ -278,7 +278,7 @@ public class BigcommerceOrderImport extends ChannelBase {
         String requestURL = storeBaseURL + "/orders.json?status_id=" + pullStatusID
             + "&limit=250&page=" + page++;
         String responseOrders = sendRequest(null, requestURL, GET_METHOD_TYPE);
-        if (responseOrders.equalsIgnoreCase("null")) {
+        if (responseOrders==null || responseOrders.equalsIgnoreCase("null")) {
           log.info("No orders found to be pulled " + m_channel.getChannelId());
           return;
         }
