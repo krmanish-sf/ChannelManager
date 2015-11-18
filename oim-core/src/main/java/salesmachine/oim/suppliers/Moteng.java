@@ -73,6 +73,7 @@ import salesmachine.oim.suppliers.exception.SupplierOrderException;
 import salesmachine.oim.suppliers.exception.SupplierOrderTrackingException;
 import salesmachine.oim.suppliers.modal.OrderDetailResponse;
 import salesmachine.oim.suppliers.modal.OrderStatus;
+import salesmachine.util.FtpDetail;
 import salesmachine.util.MotengContryCode;
 import salesmachine.util.OimLogStream;
 import salesmachine.util.StringHandle;

@@ -3,7 +3,6 @@ package salesmachine.oim.suppliers;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -24,14 +23,12 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
 import org.hibernate.Query;
@@ -39,16 +36,16 @@ import org.hibernate.Session;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import salesmachine.email.EmailUtil;
-import salesmachine.hibernatehelper.SessionManager;
-import salesmachine.oim.api.OimConstants;
-import salesmachine.oim.stores.impl.ShopifyOrderImport;
-import salesmachine.oim.suppliers.FtpDetail.WareHouseType;
-import salesmachine.util.StringHandle;
-
 import com.enterprisedt.net.ftp.FTPClient;
 import com.enterprisedt.net.ftp.FTPException;
 import com.enterprisedt.net.ftp.FTPFile;
+
+import salesmachine.email.EmailUtil;
+import salesmachine.hibernatehelper.SessionManager;
+import salesmachine.oim.api.OimConstants;
+import salesmachine.util.FtpDetail;
+import salesmachine.util.FtpDetail.WareHouseType;
+import salesmachine.util.StringHandle;
 
 public class OrderTest {
   private static final Logger log = LoggerFactory.getLogger(OrderTest.class);
@@ -73,14 +70,13 @@ public class OrderTest {
 
     for (Iterator<FtpDetail> itr = ftpDetailMap.keySet().iterator(); itr.hasNext();) {
       FtpDetail ftpDetail = itr.next();
-      if(!ftpDetail.getAccountNumber().equals("78493")){
+      if (ftpDetail.getSupplierId() != 1822)
         continue;
-      }
       long fileCleanupStartTime = System.currentTimeMillis();
       String fileCleanupStartTimeStr = convertLongToDateString(fileCleanupStartTime);
       log.info("ftp file move process started at {} for {}", fileCleanupStartTimeStr, ftpDetail);
       try {
-        //ftpMoveFile(ftpDetail);
+        ftpMoveFile(ftpDetail);
       } catch (Exception e) {
         log.error("Error occure while moving the files at ftp {}", ftpDetail);
       }
@@ -89,12 +85,12 @@ public class OrderTest {
       log.info("ftp file move process ended at {} for {}", fileCleanupEndTimStr, ftpDetail);
       String vendorId = ftpDetailMap.get(ftpDetail);
       // "/home/staging/cm-orders/report/"
-      //test /home/manish-kumar/staging/cm-orders/report
-      String confirmationPath = "/home/manish-kumar/staging/cm-orders/report/" + vendorId + "_"
+      // test /home/manish-kumar/staging/cm-orders/report
+      String confirmationPath = "/home/staging/cm-orders/report/" + vendorId + "_"
           + ftpDetail.getUserName() + "/confirmations/";
-      String shippingPath = "/home/manish-kumar/staging/cm-orders/report/" + vendorId + "_"
+      String shippingPath = "/home/staging/cm-orders/report/" + vendorId + "_"
           + ftpDetail.getUserName() + "/shipping/";
-      String trackingPath = "/home/manish-kumar/staging/cm-orders/report/" + vendorId + "_"
+      String trackingPath = "/home/staging/cm-orders/report/" + vendorId + "_"
           + ftpDetail.getUserName() + "/tracking/";
       File confirmationDir = new File(confirmationPath);
       if (!confirmationDir.exists())
@@ -113,11 +109,11 @@ public class OrderTest {
         log.info("Started downloading files at {} from ftp : {}", fileDownloadStartTimeStr,
             ftpDetail);
         try {
-         // downloadFiles(ftpDetail, vendorId, confirmationPath, shippingPath, trackingPath);
+          // downloadFiles(ftpDetail, vendorId, confirmationPath, shippingPath, trackingPath);
         } catch (Exception e) {
           log.error("Error occured while downloading files for ftp {} {}", ftpDetail, e);
           if (e instanceof SocketException) {
-          //  downloadFiles(ftpDetail, vendorId, confirmationPath, shippingPath, trackingPath);
+            // downloadFiles(ftpDetail, vendorId, confirmationPath, shippingPath, trackingPath);
           }
         }
       } catch (Exception e) {
@@ -129,7 +125,7 @@ public class OrderTest {
           ftpDetail);
       List<PHIHVAData> dataList = getData(ftpDetail, confirmationPath, shippingPath, trackingPath,
           isPHI);
-      log.info("dataList size -- {}",dataList.size());
+      log.info("dataList size -- {}", dataList.size());
       if (vendorDataMap.get(vendorId) != null) {
         List<PHIHVAData> vendorDataList = vendorDataMap.get(vendorId);
         vendorDataList.addAll(dataList);
@@ -164,7 +160,8 @@ public class OrderTest {
       List<PHIHVAData> dataList = vendorDataMap.get(vendorId);
       if (dataList == null || dataList.size() == 0)
         continue;
-      File file = new File("/home/manish-kumar/staging/cm-orders/report/" + vendorId + "_" + "Report.csv");
+      File file = new File(
+          "/home/staging/cm-orders/report/" + vendorId + "_" + "Report.csv");
       fileList.add(file);
       try {
         FileWriter fw = new FileWriter(file);
@@ -184,7 +181,7 @@ public class OrderTest {
     Session session = SessionManager.currentSession();// TO_CHAR(subQuery.FOLLOW_UP_COMPLETE_TM,'DD-MON-YYYY')
     Query query = null;
     query = session.createSQLQuery(
-        "select supplier_method_id,METHOD_TYPE_ID,VENDOR_ID from KDYER.OIM_SUPPLIER_METHODS where VENDOR_ID is not null and METHOD_NAME_ID=2");
+        "select supplier_method_id,METHOD_TYPE_ID,VENDOR_ID,supplier_id from KDYER.OIM_SUPPLIER_METHODS where VENDOR_ID is not null and METHOD_NAME_ID=2");
     List<Object[]> result = query.list();
     Map<FtpDetail, String> ftpDetailMap = new HashMap<FtpDetail, String>();
     for (int j = 0; j < result.size(); j++) {
@@ -192,11 +189,13 @@ public class OrderTest {
       int supplierMethodId = ((BigDecimal) obj[0]).intValue();
       int methodTypeId = ((BigDecimal) obj[1]).intValue();
       int vendorId = ((BigDecimal) obj[2]).intValue();
+      int supplierId = ((BigDecimal) obj[3]).intValue();
       query = session.createSQLQuery(
           "select ATTRIBUTE_VALUE,ATTRIBUTE_ID from KDYER.OIM_SUPPLIER_METHODATTR_VALUES where SUPPLIER_METHOD_ID ="
               + supplierMethodId);
       List<Object[]> res = query.list();
       FtpDetail detail = new FtpDetail();
+      detail.setSupplierId(supplierId);
       if (methodTypeId == OimConstants.SUPPLIER_METHOD_TYPE_HG_PHI.intValue())
         detail.setWhareHouseType(WareHouseType.PHI);
       else if (methodTypeId == OimConstants.SUPPLIER_METHOD_TYPE_HG_HVA.intValue())
@@ -229,8 +228,8 @@ public class OrderTest {
     } else
       emailSubject = "Honest Green order status for last 2 days";
     if (fileList.size() > 0) {
-     // final File f = new File("/home/staging/cm-orders/report/HG_Order_Status.zip");
-      final File f = new File("/home/manish-kumar/staging/cm-orders/report/HG_Order_Status.zip");
+      // final File f = new File("/home/staging/cm-orders/report/HG_Order_Status.zip");
+      final File f = new File("/home/staging/cm-orders/report/HG_Order_Status.zip");
       final ZipOutputStream out = new ZipOutputStream(new FileOutputStream(f));
       for (int i = 0; i < fileList.size(); i++) {
 
@@ -249,22 +248,22 @@ public class OrderTest {
       }
       out.close();
 
-       EmailUtil.sendEmailWithAttachment("orders@inventorysource.com",
-       "support@inventorysource.com",
-       "abheeshek@inventorysource.com, kelly@inventorysource.com, andrew@inventorysource.com",
-       emailSubject, emailBody, f.getAbsolutePath());
+      EmailUtil.sendEmailWithAttachment("orders@inventorysource.com", "support@inventorysource.com",
+          "abheeshek@inventorysource.com, kelly@inventorysource.com, andrew@inventorysource.com",
+          emailSubject, emailBody, f.getAbsolutePath());
 
-//      EmailUtil.sendEmailWithAttachment("manish@inventorysource.com", "manish@inventorysource.com",
-//          "", emailSubject, emailBody, f.getAbsolutePath());
+      // EmailUtil.sendEmailWithAttachment("manish@inventorysource.com",
+      // "manish@inventorysource.com",
+      // "", emailSubject, emailBody, f.getAbsolutePath());
       log.info("Email with attachment sent successfully.");
     } else {
       emailBody = "There is no order found for last two days.";
-       EmailUtil.sendEmail("orders@inventorysource.com", "support@inventorysource.com",
-       "abheeshek@inventorysource.com, kelly@inventorysource.com, andrew@inventorysource.com",
-       emailSubject, emailBody);
+      EmailUtil.sendEmail("orders@inventorysource.com", "support@inventorysource.com",
+          "abheeshek@inventorysource.com, kelly@inventorysource.com, andrew@inventorysource.com",
+          emailSubject, emailBody);
 
-//      EmailUtil.sendEmail("manish@inventorysource.com", "manish@inventorysource.com", "",
-//          emailSubject, emailBody);
+      // EmailUtil.sendEmail("manish@inventorysource.com", "manish@inventorysource.com", "",
+      // emailSubject, emailBody);
       log.info("Email without attachment sent successfully.");
     }
   }
