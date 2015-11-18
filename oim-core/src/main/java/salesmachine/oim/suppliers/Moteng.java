@@ -84,7 +84,7 @@ public class Moteng extends Supplier implements HasTracking {
   private static final byte[] NEW_LINE = new byte[] { '\n' };
   private static final byte[] TAB = new byte[] { '\t' };
   private static final String ASCII = "ASCII";
-  DateFormat df = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss"); // 2015/11/03 12:10:55
+  DateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss"); // 2015/11/03 12:10:55
 
   @Override
   public void sendOrders(Integer vendorId, OimVendorSuppliers ovs, OimOrders order)
@@ -291,16 +291,13 @@ public class Moteng extends Supplier implements HasTracking {
       });
       for (FTPFile ftpFile : ftpFiles) {
         String trackingFile = ftpFile.getName();
-        if (trackingFile.equals("..") || trackingFile.equals(".") || ftpFile.isDir())
+        if (!trackingFile.equals("ord.txt"))
           continue;
-        if (oimOrderDetails.getProcessingTm() != null
-            && ftpFile.lastModified().before(oimOrderDetails.getProcessingTm()))
-          break;
         byte[] trackingFileData = ftp.get("/" + trackingFile);
         Map<Integer, String> orderDataMap = parseFileData(trackingFileData);
         for (Iterator itr = orderDataMap.values().iterator(); itr.hasNext();) {
           String line = (String) itr.next();
-          String[] lineArray = line.split("\t");
+          String[] lineArray = line.split(",");
           String shippingMethod;
           String shipDateString;
           int qty;
