@@ -84,7 +84,7 @@ public class Moteng extends Supplier implements HasTracking {
   private static final byte[] NEW_LINE = new byte[] { '\n' };
   private static final byte[] TAB = new byte[] { '\t' };
   private static final String ASCII = "ASCII";
-  DateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss"); // 2015/11/03 12:10:55
+  DateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss"); // 2015-11-03 12:10:55
 
   @Override
   public void sendOrders(Integer vendorId, OimVendorSuppliers ovs, OimOrders order)
