@@ -327,6 +327,7 @@ public class Moteng extends Supplier implements HasTracking {
           }
           if (headerStatus.equalsIgnoreCase("O")) {
             log.info("This is an open order pending shipment from Moteng warehouse.");
+            orderStatus.setStatus(OimConstants.OIM_SUPPLER_ORDER_STATUS_IN_PROCESS);
             return orderStatus;
           }
           if (headerStatus.equalsIgnoreCase("P")) {
@@ -414,12 +415,8 @@ public class Moteng extends Supplier implements HasTracking {
         SftpFile sftpFile = (SftpFile) itr1.next();
         String trackingFileName = sftpFile.getFilename();
         System.out.println(trackingFileName);
-        System.out.println("is directory - " + sftpFile.isDirectory());
-        System.out.println("is file - " + sftpFile.isFile());
-
-        if (trackingFileName.equals("..") || trackingFileName.equals(".") || sftpFile.isDirectory())
+        if (!trackingFileName.equals("ord.txt"))
           continue;
-        if (sftpFile.isFile()) {
           BufferedInputStream in = new BufferedInputStream(new SftpFileInputStream(sftpFile));
           byte[] trackingFileData = new byte[in.available()];
           Map<Integer, String> orderDataMap = parseFileData(trackingFileData);
@@ -487,7 +484,6 @@ public class Moteng extends Supplier implements HasTracking {
             trackingData.setShippingMethod(shippingMethod);
             orderStatus.addTrackingData(trackingData);
           }
-        }
 
       }
 

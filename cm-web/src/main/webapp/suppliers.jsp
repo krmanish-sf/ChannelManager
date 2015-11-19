@@ -1075,7 +1075,7 @@ If you have not yet configured your supplier, click "Add Supplier" to do it now.
 									{
 										"bSortable" : false,
 										"mData" : function(vendorSupplier) {
-											return '<a class="btn btn-danger btn-sm hidden-xs" onclick="del((($(this)).parent()).parent())"><i class="icon-trash"></i>Delete</a><a class="btn btn-danger visible-xs btn-xs icon-trash" onclick="delete((($(this)).parent()).parent())"></a>';
+											return '<a class="btn btn-danger btn-sm hidden-xs" onclick="del((($(this)).parent()).parent())"><i class="icon-trash"></i>Delete</a><a class="btn btn-danger visible-xs btn-xs icon-trash" onclick="del((($(this)).parent()).parent())"></a>';
 										}
 									} ]
 						});
