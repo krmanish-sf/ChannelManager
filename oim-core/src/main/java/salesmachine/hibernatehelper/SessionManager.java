@@ -14,14 +14,15 @@ import org.slf4j.LoggerFactory;
  * @author amit-yadav
  *
  */
-@Deprecated
+
 public class SessionManager {
   private SessionManager() {
     // Making private to
   }
-
+  
   private static Logger log = LoggerFactory.getLogger(SessionManager.class);
   private static final SessionFactory sessionFactory;
+  private static Session sessionObj;
 
   static {
     try {
@@ -40,6 +41,8 @@ public class SessionManager {
   public static final ThreadLocal<Session> session = new ThreadLocal<Session>();
 
   public static Session currentSession() {
+    if(sessionObj!=null && sessionObj.isOpen())
+      return sessionObj;
     // log.info("Fetching Current Session");
     Session s = session.get();
     // Open a new Session, if this Thread has none yet
@@ -52,6 +55,11 @@ public class SessionManager {
     // s.getTenantIdentifier());
     return s;
   }
+  
+  public static void setSession(Session sessionObj){
+    session.set(sessionObj);
+    sessionObj=sessionObj;
+  }
 
   public static void closeSession() {
     Session s = (Session) session.get();
@@ -59,5 +67,9 @@ public class SessionManager {
     if (s != null)
       s.close();
     session.set(null);
+  }
+  
+  public static Session openSession(){
+    return sessionFactory.openSession();
   }
 }

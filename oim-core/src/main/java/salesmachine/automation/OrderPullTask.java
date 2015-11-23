@@ -40,10 +40,14 @@ public class OrderPullTask extends TimerTask {
 
   @Override
   public void run() {
+    Session session=null;
     try {
       audit.setStartTime(new Date());
       log.info("Order Pull Task Running...");
-      Session session = SessionManager.currentSession();
+     // Session session = SessionManager.currentSession();
+      session = SessionManager.openSession();
+      SessionManager.setSession(session);
+      log.info("New session created for order pull task at- {}",new Date());
       Criteria vendorQuery = session.createCriteria(Reps.class)
           .add(Restrictions.eq("cmAllowed", 1));
       List<Reps> list = vendorQuery.list();
@@ -116,12 +120,15 @@ public class OrderPullTask extends TimerTask {
           } finally {
             Session m_dbSession = SessionManager.currentSession();
             Transaction tx = m_dbSession.getTransaction();
-            if (tx != null && tx.isActive())
+            try {
+              if (tx != null && tx.isActive())
+                tx.commit();
+              tx = m_dbSession.beginTransaction();
+              m_dbSession.save(vendorOrders);
               tx.commit();
-            tx = m_dbSession.beginTransaction();
-            m_dbSession.save(vendorOrders);
-            tx.commit();
-            //m_dbSession.close();
+            } catch (Exception e) {
+             tx.rollback();
+            }
           }
         }
       }
@@ -135,6 +142,10 @@ public class OrderPullTask extends TimerTask {
       }
       AutomationManager.sendNotification("ORDER PULL ERROR: " + e.getMessage(), sb.toString());
 
+    }
+    finally {
+      session.close();
+      log.info("Session closed for order pull task at- {}",new Date());
     }
   }
 }
