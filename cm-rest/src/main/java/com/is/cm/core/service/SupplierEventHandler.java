@@ -29,87 +29,67 @@ public class SupplierEventHandler implements SupplierService {
 	}
 
 	@Override
-	public AllSuppliersEvent getAll(
-			RequestAllSuppliersEvent requestAllSuppliersEvent) {
+	public AllSuppliersEvent getAll(RequestAllSuppliersEvent requestAllSuppliersEvent) {
 		List<VendorSupplier> vendorSuppliers = supplierRepository.findAll();
 		return new AllSuppliersEvent(vendorSuppliers);
 	}
 
 	@Override
-	public UpdatedEvent<VendorSupplier> update(
-			UpdateEvent<Map<String, String>> updateEvent) {
-		VendorSupplier entity = supplierRepository.update(updateEvent.getId(),
-				updateEvent.getEntity());
-		return new UpdatedEvent<VendorSupplier>(entity.getVendorSupplierId(),
-				entity);
+	public UpdatedEvent<VendorSupplier> update(UpdateEvent<Map<String, String>> updateEvent) {
+		VendorSupplier entity = supplierRepository.update(updateEvent.getId(), updateEvent.getEntity());
+		return new UpdatedEvent<VendorSupplier>(entity.getVendorSupplierId(), entity);
 	}
 
 	@Override
-	public DeletedEvent<VendorSupplier> removeSubscription(
-			DeleteEvent<VendorSupplier> deleteEvent) {
-		VendorSupplier vendorSupplier = supplierRepository
-				.removeSubscription(deleteEvent.getId());
+	public DeletedEvent<VendorSupplier> removeSubscription(DeleteEvent<VendorSupplier> deleteEvent) {
+		VendorSupplier vendorSupplier = supplierRepository.removeSubscription(deleteEvent.getId());
 		if (null != vendorSupplier)
-			return new DeletedEvent<VendorSupplier>(deleteEvent.getId(),
-					vendorSupplier);
+			return new DeletedEvent<VendorSupplier>(deleteEvent.getId(), vendorSupplier);
 		else
 			return new DeletedEvent<VendorSupplier>(deleteEvent.getId());
 	}
 
 	@Override
-	public ReadCollectionEvent<Supplier> getUnsubscribed(
-			RequestReadEvent<Supplier> requestReadEvent) {
+	public ReadCollectionEvent<Supplier> getUnsubscribed(RequestReadEvent<Supplier> requestReadEvent) {
 		List<Supplier> suppliers = supplierRepository.findUnsubscribed();
 		return new ReadCollectionEvent<Supplier>(suppliers);
 	}
 
 	@Override
-	public CreatedEvent<VendorSupplier> subscribe(
-			CreateEvent<Map<String, String>> createEvent) {
+	public CreatedEvent<VendorSupplier> subscribe(CreateEvent<Map<String, String>> createEvent) {
 		VendorSupplier supplier;
-		Integer supplierId = Integer.parseInt(createEvent.getEntity().get(
-				"suppliername"));
-		Integer testMode = Integer.parseInt(createEvent.getEntity().get(
-				"testmode"));
+		Integer supplierId = Integer.parseInt(createEvent.getEntity().get("suppliername"));
+		Integer testMode = Integer.parseInt(createEvent.getEntity().get("testmode"));
 		if (supplierId > 0) {
 			if (supplierId == 1822) {
-				supplier = supplierRepository.addSubscriptionHG(supplierId,
-						createEvent.getEntity().get("phi-login"), createEvent
-						.getEntity().get("phi-password"), createEvent
-						.getEntity().get("phi-accountno"), createEvent
-						.getEntity().get("phi-ftp"),
-						createEvent.getEntity().get("hva-login"),
-						createEvent.getEntity().get("hva-password"),
-						createEvent.getEntity().get("hva-accountno"),
-						createEvent.getEntity().get("hva-ftp"),
-						testMode);
-			}
-			else if(supplierId == 221){
-				supplier = supplierRepository.addSubscriptionWithFtpDetails(supplierId,createEvent.getEntity().get("moteng-ftp"),
-						createEvent.getEntity().get("login"), createEvent
-						.getEntity().get("password"), createEvent
-						.getEntity().get("accountno"), testMode,
+				supplier = supplierRepository.addSubscriptionHG(supplierId, createEvent.getEntity().get("phi-login"),
+						createEvent.getEntity().get("phi-password"), createEvent.getEntity().get("phi-accountno"),
+						createEvent.getEntity().get("phi-ftp"), createEvent.getEntity().get("hva-login"),
+						createEvent.getEntity().get("hva-password"), createEvent.getEntity().get("hva-accountno"),
+						createEvent.getEntity().get("hva-ftp"), testMode);
+			} else if (supplierId == 221) {
+				supplier = supplierRepository.addSubscriptionWithFtpDetails(supplierId,
+						createEvent.getEntity().get("moteng-ftp"), createEvent.getEntity().get("login"),
+						createEvent.getEntity().get("password"), createEvent.getEntity().get("accountno"), testMode,
 						createEvent.getEntity().get("ftpType"));
-			}
-			else{
-				supplier = supplierRepository.addSubscription(supplierId,
-						createEvent.getEntity().get("login"), createEvent
-						.getEntity().get("password"), createEvent
-						.getEntity().get("accountno"), createEvent
-						.getEntity().get("defshippingmc"), testMode);
+			} else if (supplierId == 2002) {
+				supplier = supplierRepository.addSubscriptionEuropa(supplierId,
+						createEvent.getEntity().get("europa-business-name"),
+						createEvent.getEntity().get("europa-customer-num"), testMode);
+			} else {
+				supplier = supplierRepository.addSubscription(supplierId, createEvent.getEntity().get("login"),
+						createEvent.getEntity().get("password"), createEvent.getEntity().get("accountno"),
+						createEvent.getEntity().get("defshippingmc"), testMode);
 			}
 		} else {
-			supplier = supplierRepository.addCustomSubscription(createEvent
-					.getEntity());
+			supplier = supplierRepository.addCustomSubscription(createEvent.getEntity());
 
 		}
-		return new CreatedEvent<VendorSupplier>(supplier.getVendorSupplierId(),
-				supplier);
+		return new CreatedEvent<VendorSupplier>(supplier.getVendorSupplierId(), supplier);
 	}
 
 	@Override
-	public UpdatedEvent<Map<String, String>> updateShippingMapping(
-			UpdateEvent<Map<String, String>> updateEvent) {
+	public UpdatedEvent<Map<String, String>> updateShippingMapping(UpdateEvent<Map<String, String>> updateEvent) {
 		supplierRepository.editShippingMethodMapping(updateEvent.getEntity());
 		return new UpdatedEvent<Map<String, String>>(0, updateEvent.getEntity());
 	}
@@ -119,8 +99,7 @@ public class SupplierEventHandler implements SupplierService {
 			RequestReadEvent<Integer> requestReadEvent) {
 		List<SupplierShippingMethod> findSupplierShippingMapping = supplierRepository
 				.findSupplierShippingMapping(requestReadEvent.getEntity());
-		return new ReadCollectionEvent<SupplierShippingMethod>(
-				findSupplierShippingMapping);
+		return new ReadCollectionEvent<SupplierShippingMethod>(findSupplierShippingMapping);
 	}
 
 	@Override
@@ -128,8 +107,7 @@ public class SupplierEventHandler implements SupplierService {
 			RequestReadEvent<Integer> requestReadEvent) {
 		List<VendorShippingMap> findVendorShippingMethods = supplierRepository
 				.findVendorShippingMapping(requestReadEvent.getEntity());
-		return new ReadCollectionEvent<VendorShippingMap>(
-				findVendorShippingMethods);
+		return new ReadCollectionEvent<VendorShippingMap>(findVendorShippingMethods);
 	}
 
 	@Override
@@ -137,43 +115,35 @@ public class SupplierEventHandler implements SupplierService {
 			RequestReadEvent<Integer> requestReadEvent) {
 		List<ShippingCarrier> findVendorShippingMethods = supplierRepository
 				.findVendorShippingCarrier(requestReadEvent.getEntity());
-		return new ReadCollectionEvent<ShippingCarrier>(
-				findVendorShippingMethods);
+		return new ReadCollectionEvent<ShippingCarrier>(findVendorShippingMethods);
 	}
 
 	@Override
 	public ReadCollectionEvent<SupplierShippingMethod> findChannelShippingForSupplierCarrier(
 			RequestReadEvent<Integer[]> requestReadEvent) {
 		List<SupplierShippingMethod> findSupplierShippingMethod = supplierRepository
-				.findChannelShippingForSupplierCarrier(
-						requestReadEvent.getEntity()[0],
+				.findChannelShippingForSupplierCarrier(requestReadEvent.getEntity()[0],
 						requestReadEvent.getEntity()[1]);
-		return new ReadCollectionEvent<SupplierShippingMethod>(
-				findSupplierShippingMethod);
+		return new ReadCollectionEvent<SupplierShippingMethod>(findSupplierShippingMethod);
 	}
 
 	@Override
 	public ReadCollectionEvent<SupplierShippingMethod> saveShippingOverrideForSupplierMethod(
 			RequestReadEvent<Object[]> requestReadEvent) {
 		List<SupplierShippingMethod> findSupplierShippingMethod = supplierRepository
-				.saveShippingOverrideForSupplierMethod(
-						(Integer) requestReadEvent.getEntity()[0],
+				.saveShippingOverrideForSupplierMethod((Integer) requestReadEvent.getEntity()[0],
 						(String) requestReadEvent.getEntity()[1]);
-		return new ReadCollectionEvent<SupplierShippingMethod>(
-				findSupplierShippingMethod);
+		return new ReadCollectionEvent<SupplierShippingMethod>(findSupplierShippingMethod);
 	}
 
 	@Override
-	public DeletedEvent<Integer> deleteShippingOverrideForSupplierMethod(
-			DeleteEvent deleteEvent) {
-		supplierRepository.deleteShippingOverrideForSupplierMethod(deleteEvent
-				.getId());
+	public DeletedEvent<Integer> deleteShippingOverrideForSupplierMethod(DeleteEvent deleteEvent) {
+		supplierRepository.deleteShippingOverrideForSupplierMethod(deleteEvent.getId());
 		return new DeletedEvent<Integer>(deleteEvent.getId());
 	}
 
 	@Override
-	public ReadCollectionEvent<ShippingMethod> getShippingMethods(
-			RequestReadEvent<ShippingMethod> requestReadEvent) {
+	public ReadCollectionEvent<ShippingMethod> getShippingMethods(RequestReadEvent<ShippingMethod> requestReadEvent) {
 		List<ShippingMethod> entities = supplierRepository.getShippingMethods();
 
 		return new ReadCollectionEvent<ShippingMethod>(entities);

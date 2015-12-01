@@ -54,4 +54,6 @@ public interface SupplierRepository {
   VendorSupplier addSubscriptionWithFtpDetails(Integer supplierId, String string, String string2,
       String string3, String string4, Integer testMode, String isSftp);
 
+  VendorSupplier addSubscriptionEuropa(Integer supplierId, String businessName, String customerNum,Integer testMode);
+
 }

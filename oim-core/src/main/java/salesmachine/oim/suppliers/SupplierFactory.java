@@ -152,8 +152,9 @@ public class SupplierFactory {
     if (StringHandle.isNullOrEmpty(oimOrders.getDeliveryCountryCode())) {
       String countryCode = ChannelBase.validateAndGetCountryCode(oimOrders);
       if (StringHandle.isNullOrEmpty(countryCode)) {
-        throw new SupplierOrderException(
-            "Country Code is missing; please update the order with Country Code.");
+//        throw new SupplierOrderException(
+//            "Country Code is missing; please update the order with Country Code.");
+        log.error("Country Code is missing; please update the order with Country Code.");
       }
       oimOrders.setDeliveryCountryCode(countryCode);
     }

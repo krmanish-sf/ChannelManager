@@ -402,7 +402,9 @@ If you have not yet configured your supplier, click "Add Supplier" to do it now.
                               <label
 														class="col-sm-5 control-label no-padding-right">Ftp Type</label>
                               <div class="col-sm-7">
-                              <select class="width-70" name="ftpType" data-bind-vendorsupplier="customMapper:oimSuppliers.oimSupplierMethodses[oimSupplierMethodTypes.methodTypeId=1].oimSupplierMethodattrValueses[oimSupplierMethodattrNames.attrId=10].attributeValue" required="required">
+                              <select class="width-70" name="ftpType"
+															data-bind-vendorsupplier="customMapper:oimSuppliers.oimSupplierMethodses[oimSupplierMethodTypes.methodTypeId=1].oimSupplierMethodattrValueses[oimSupplierMethodattrNames.attrId=10].attributeValue"
+															required="required">
                                 <option value="FTP" selected>FTP</option>
                                 <option value="SFTP">SFTP</option>
                               </select>
@@ -483,6 +485,77 @@ If you have not yet configured your supplier, click "Add Supplier" to do it now.
               </div>
               <!-- /.col --> 
             </div>
+            
+            <!-- Europa edit start -->
+            
+             <div class="modal fade" id="mySupplierEuropaEdit"
+						tabindex="-1" role="dialog" aria-hidden="true">
+              <div id="mysuppliereditdailog" class="modal-dialog">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <button type="button" class="close"
+										data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <h4 class="modal-title">Edit</h4>
+                  </div>
+                  <div class="modal-body ">
+                    <div class="row">
+                      <div class="container">
+                        <form class="form-horizontal" role="form"
+												action="/aggregators/suppliers" method="PUT"
+												id="supplierEuropaform">
+                         
+							<div class="form-group">
+                              <label
+														class="col-sm-5 control-label no-padding-right">Customer Number</label>
+                              <div class="col-sm-7">
+                              <input class="width-70" name='customerNum'
+															type='text' data-bind-vendorsupplier="accountNumber"
+															required="required" />
+                            </div>
+							</div>
+							  <div class="form-group">
+                              <label
+														class="col-sm-5 control-label no-padding-right">Business Name</label>
+                              <div class="col-sm-7">
+                              <input class="width-70"
+															name='businessName' type='text'
+															data-bind-vendorsupplier="login" required="required" />
+                            </div>
+												</div>
+                          
+                          
+                            <div class="form-group">
+                              <label
+														class="col-sm-5 control-label no-padding-right">Test Mode</label>
+                              <div class="col-sm-7">
+                              <select class="width-70" name="testmode"
+															data-bind-vendorsupplier="testMode">
+                                <option value="1" selected>Enabled</option>
+                                <option value="0">Disabled</option>
+                              </select>
+                            </div>
+												</div>
+                         
+                            <div class="form-group center">
+                             <button class="btn btn-info btn-sm"
+														id="updateEuropa" type="button"> <i
+															class="icon-save "></i>Update</button>
+                            </div>
+                         
+                         
+                        </form>
+                        <!-- PAGE CONTENT BEGINS --> 
+                        
+                      </div>
+                      
+                    </div>
+                  </div>
+                </div>
+                <!-- PAGE CONTENT ENDS --> 
+              </div>
+              <!-- /.col --> 
+            </div>
+            <!-- Europa edir end -->
     
     
 	 <div class="modal fade" id="mySupplieradd" tabindex="-1" role="dialog"
@@ -622,20 +695,12 @@ If you have not yet configured your supplier, click "Add Supplier" to do it now.
 					</div>
 						
 					</div>	
-						
-<!-- 					<div class="form-group supplier-class" id="customname"> -->
-<!--                               <label for="name" -->
-<!-- 														class="col-sm-5 control-label no-padding-right">Name</label> -->
-<!--                               <div class="col-sm-7"> -->
-<!--                                  <input class="width-70" name="name" -->
-<!-- 															minlength="2" type="text" value="" required /> -->
-<!--                             </div> -->
-<!-- 												</div> -->
  								 <div class="form-group supplier-class moteng-ftp">
                               <label
 														class="col-sm-5 control-label no-padding-right">Ftp Type</label>
                               <div class="col-sm-7">
-                              <select class="width-70" name="ftpType" required>
+                              <select class="width-70" name="ftpType"
+															required>
                                 <option value="FTP" selected>FTP</option>
                                 <option value="SFTP">SFTP</option>
                               </select>
@@ -686,6 +751,23 @@ If you have not yet configured your supplier, click "Add Supplier" to do it now.
 <!-- 															name="defshippingmc" type="text" value="" required /> -->
 <!--                             </div> -->
 <!-- 												</div> -->
+							
+							 <div class="form-group europa">
+                              <label
+														class="col-sm-5 control-label no-padding-right">Business Name</label>
+                              <div class="col-sm-7">
+                              <input class="width-70"
+															name="europa-business-name" type="text" value="" required />
+                            </div>
+												</div>
+							 <div class="form-group europa">
+                              <label
+														class="col-sm-5 control-label no-padding-right">Customer Number</label>
+                              <div class="col-sm-7">
+                              <input class="width-70"
+															name="europa-customer-num" type="text" value="" required />
+                            </div>
+												</div>
 							<br>
                             <div class="form-group">
                               <label
@@ -791,7 +873,6 @@ If you have not yet configured your supplier, click "Add Supplier" to do it now.
 	function edit(e) {
 		var vendorSupplier = table_vendorSuppliers.row(e[0]).data();
 		var vendorSupplierTemp = JSON.parse(JSON.stringify(vendorSupplier));
-		console.log(vendorSupplierTemp);
 		//var rowIndex = table_vendorSuppliers.fnGetPosition(e[0]);
 		GenericBinder('vendorsupplier', vendorSupplierTemp);
 		if (vendorSupplier.oimSuppliers.isCustom) {
@@ -918,6 +999,47 @@ If you have not yet configured your supplier, click "Add Supplier" to do it now.
 			$('#supplierformFtpBased').submit();
 		});
 	}
+	//editEuropaSupplier
+	function editEuropaSupplier(e) {
+		var vendorSupplier = table_vendorSuppliers.row(e[0]).data();
+		var vendorSupplierTemp = JSON.parse(JSON.stringify(vendorSupplier));
+		console.log(vendorSupplierTemp);
+		//var rowIndex = table_vendorSuppliers.fnGetPosition(e[0]);
+		GenericBinder('vendorsupplier', vendorSupplierTemp);
+		if (vendorSupplier.oimSuppliers.isCustom) {
+			$('#customSupplierFileFormatDiv').show();
+			$('.supplieremailDiv').show();
+		} else {
+			$('#customSupplierFileFormatDiv').hide();
+			$('.supplieremailDiv').hide();
+		}
+
+		$('#saveshippingmapping').off('click').on(
+				'click',
+				vendorSupplier,
+				function(e) {
+					var data = {};
+					$('#shippingmethodsForm :input').each(function() {
+						if (this.name) {
+							data[this.name] = this.value;
+						}
+					});
+					$(this).CRUD(
+							{
+								url : "aggregators/suppliers/"
+										+ e.data.oimSuppliers.supplierId
+										+ '/shippingmapping',
+								method : "PUT",
+								data : JSON.stringify(data)
+							});
+				});
+		$('#supplierEuropaform').validate();
+		$('#supplierEuropaform').prop('action',
+				'aggregators/suppliers/' + vendorSupplier.vendorSupplierId);
+		$('#updateEuropa').off("click").on("click", function(e) {
+			$('#supplierEuropaform').submit();
+		});
+	}
 
 	function del(e) {
 		bootbox
@@ -1042,12 +1164,19 @@ If you have not yet configured your supplier, click "Add Supplier" to do it now.
 													}
 												}
 											} else {
-												ret += "<strong>Account</strong>: "
-														+ o.accountNumber;
-												ret += "<br> <strong>Login</strong>: "
-														+ o.login;
-												ret += "<br> <strong>Password</strong>: "
-														+ o.password;
+												if (o.oimSuppliers.supplierId == 2002) {
+													ret += "<strong>Business Name</strong>: "
+															+ o.accountNumber;
+													ret += "<br> <strong>Customer Number</strong>: "
+															+ o.login;
+												} else {
+													ret += "<strong>Account</strong>: "
+															+ o.accountNumber;
+													ret += "<br> <strong>Login</strong>: "
+															+ o.login;
+													ret += "<br> <strong>Password</strong>: "
+															+ o.password;
+												}
 											}
 											return ret;
 										}
@@ -1067,6 +1196,9 @@ If you have not yet configured your supplier, click "Add Supplier" to do it now.
 												return '<a class="btn btn-info btn-sm hidden-xs icon-pencil" href="#mySupplierHGedit" data-toggle="modal" onclick="editHG((($(this)).parent()).parent())"></a><a class="btn btn-info btn-xs icon-pencil visible-xs btn-xs" href="#mySupplierHGedit" data-toggle="modal" onclick="editHG((($(this)).parent()).parent())"></a>';
 											else if (vendorSupplier.oimSuppliers.supplierId == 221) {
 												return '<a class="btn btn-info btn-sm hidden-xs icon-pencil" href="#mySupplierFtpedit" data-toggle="modal" onclick="editFtpBasedSupplier((($(this)).parent()).parent())"></a><a class="btn btn-info btn-xs icon-pencil visible-xs btn-xs" href="#mySupplierFtpedit" data-toggle="modal" onclick="editFtpBasedSupplier((($(this)).parent()).parent())"></a>';
+											} else if (vendorSupplier.oimSuppliers.supplierId == 2002) {
+												//mySupplierHGedit
+												return '<a class="btn btn-info btn-sm hidden-xs icon-pencil" href="#mySupplierEuropaEdit" data-toggle="modal" onclick="editEuropaSupplier((($(this)).parent()).parent())"></a><a class="btn btn-info btn-xs icon-pencil visible-xs btn-xs" href="#mySupplierEuropaEdit" data-toggle="modal" onclick="editEuropaSupplier((($(this)).parent()).parent())"></a>';
 											} else {
 												return '<a class="btn btn-info btn-sm hidden-xs icon-pencil" href="#mySupplieredit" data-toggle="modal" onclick="edit((($(this)).parent()).parent())"></a><a class="btn btn-info btn-xs icon-pencil visible-xs btn-xs" href="#mySupplieredit" data-toggle="modal" onclick="edit((($(this)).parent()).parent())"></a>';
 											}
@@ -1103,9 +1235,16 @@ If you have not yet configured your supplier, click "Add Supplier" to do it now.
 					$('.supplier-class').addClass("show");
 					$('.moteng-ftp').removeClass("show");
 					$('.moteng-ftp').addClass("hide");
+					$('.europa').removeClass("show");
+					$('.europa').addClass('hide');
 					if (a == '221') {
 						$('.moteng-ftp').removeClass("hide");
 						$('.moteng-ftp').addClass("show");
+					} else if (a == '2002') {
+						$('.europa').removeClass("hide");
+						$('.europa').addClass("show");
+						$('.supplier-class').removeClass("show");
+						$('.supplier-class').addClass("hide");
 					}
 				}
 				$('#customname').hide();
@@ -1254,6 +1393,63 @@ If you have not yet configured your supplier, click "Add Supplier" to do it now.
 						});
 
 		$('#supplierformFtpBased')
+				.validate(
+						{
+							invalidHandler : function(event, validator) {
+								// 'this' refers to the form
+								var errors = validator.numberOfInvalids();
+								if (errors) {
+									var message = errors == 1 ? 'You missed 1 field. It has been highlighted'
+											: 'You missed '
+													+ errors
+													+ ' fields. They have been highlighted';
+									$.gritter.add({
+										title : "Supplier information",
+										text : message
+									});
+								}
+							},
+							submitHandler : function(form) {
+								var formArray = $(form).serializeArray();
+								var formObject = {};
+								$.each(formArray, function(i, v) {
+									formObject[v.name] = v.value;
+								});
+								$(this)
+										.CRUD(
+												{
+													url : $(form)
+															.attr('action'),
+													method : "PUT",
+													data : JSON
+															.stringify(formObject),
+													success : function(a, b, c) {
+														$('.modal').modal(
+																'hide');
+
+														$.gritter
+																.add({
+																	title : 'Update Supplier',
+																	text : 'Supplier updated successfully.'
+																});
+														table_vendorSuppliers.ajax
+																.reload();
+													}
+												});
+							},
+							highlight : function(e) {
+								$(e).closest('.form-group').removeClass(
+										'has-info').addClass('has-error');
+							},
+							success : function(e) {
+								$(e).closest('.form-group').removeClass(
+										'has-error').addClass('has-info');
+								$(e).remove();
+							}
+						});
+
+		//supplierEuropaform
+		$('#supplierEuropaform')
 				.validate(
 						{
 							invalidHandler : function(event, validator) {
