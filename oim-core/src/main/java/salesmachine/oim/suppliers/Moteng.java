@@ -417,73 +417,73 @@ public class Moteng extends Supplier implements HasTracking {
         System.out.println(trackingFileName);
         if (!trackingFileName.equals("ord.txt"))
           continue;
-          BufferedInputStream in = new BufferedInputStream(new SftpFileInputStream(sftpFile));
-          byte[] trackingFileData = new byte[in.available()];
-          Map<Integer, String> orderDataMap = parseFileData(trackingFileData);
-          for (Iterator itr = orderDataMap.values().iterator(); itr.hasNext();) {
-            String line = (String) itr.next();
-            String[] lineArray = line.split("\t");
-            String shippingMethod;
-            String shipDateString;
-            int qty;
-            String trackingNo;
-            String headerStatus;
+        BufferedInputStream in = new BufferedInputStream(new SftpFileInputStream(sftpFile));
+        byte[] trackingFileData = new byte[in.available()];
+        Map<Integer, String> orderDataMap = parseFileData(trackingFileData);
+        for (Iterator itr = orderDataMap.values().iterator(); itr.hasNext();) {
+          String line = (String) itr.next();
+          String[] lineArray = line.split("\t");
+          String shippingMethod;
+          String shipDateString;
+          int qty;
+          String trackingNo;
+          String headerStatus;
+          try {
+            String trackingPO = StringHandle.removeNull(lineArray[6]);
+            String trackingSku = StringHandle.removeNull(lineArray[8]);
+            if (!trackingPO.equals(poNumber) || !trackingSku.equalsIgnoreCase(sku))
+              continue;
+            shippingMethod = StringHandle.removeNull(lineArray[3]);
+            String qtyOrdered = StringHandle.removeNull(lineArray[9]);
+            String qtyShipped = StringHandle.removeNull(lineArray[10]);
+            shipDateString = StringHandle.removeNull(lineArray[11]);
+            qty = 0;
             try {
-              String trackingPO = StringHandle.removeNull(lineArray[6]);
-              String trackingSku = StringHandle.removeNull(lineArray[8]);
-              if (!trackingPO.equals(poNumber) || !trackingSku.equalsIgnoreCase(sku))
-                continue;
-              shippingMethod = StringHandle.removeNull(lineArray[3]);
-              String qtyOrdered = StringHandle.removeNull(lineArray[9]);
-              String qtyShipped = StringHandle.removeNull(lineArray[10]);
-              shipDateString = StringHandle.removeNull(lineArray[11]);
-              qty = 0;
-              try {
-                qty = Integer.parseInt(qtyShipped);
-              } catch (NumberFormatException e) {
-                log.error(e.getMessage(), e);
-              }
-
-              trackingNo = StringHandle.removeNull(lineArray[13]);
-              headerStatus = StringHandle.removeNull(lineArray[15]);
-            } catch (ArrayIndexOutOfBoundsException e1) {
-              log.error("This file is not appropreate as the documantation of Moteng");
-              break;
-            }
-            if (headerStatus.equalsIgnoreCase("O")) {
-              log.info("This is an open order pending shipment from Moteng warehouse.");
-              return orderStatus;
-            }
-            if (headerStatus.equalsIgnoreCase("P")) {
-              orderStatus.setStatus(OimConstants.OIM_SUPPLER_ORDER_STATUS_IN_PROCESS);
-              orderStatus.setPartialShipped(true);
-            } else if (orderStatus.getStatus() == null) {
-              orderStatus.setStatus(OimConstants.OIM_SUPPLER_ORDER_STATUS_SHIPPED);
-            } else if (headerStatus.equalsIgnoreCase("C")) {
-              orderStatus.setStatus(OimConstants.OIM_SUPPLER_ORDER_STATUS_SHIPPED);
-              orderStatus.setPartialShipped(false);
-            }
-            salesmachine.oim.suppliers.modal.TrackingData trackingData = new salesmachine.oim.suppliers.modal.TrackingData();
-            trackingData.setCarrierCode(oimOrderDetails.getOimOrders().getOimShippingMethod()
-                .getOimShippingCarrier().getName());
-            trackingData.setCarrierName(oimOrderDetails.getOimOrders().getOimShippingMethod()
-                .getOimShippingCarrier().getName());
-            trackingData.setQuantity(qty);
-            trackingData.setShipperTrackingNumber(trackingNo);
-            Date shipDate1 = df.parse(shipDateString);
-            GregorianCalendar c = new GregorianCalendar();
-            c.setTime(shipDate1);
-            XMLGregorianCalendar shipDate = null;
-            try {
-              shipDate = DatatypeFactory.newInstance().newXMLGregorianCalendar(c);
-            } catch (DatatypeConfigurationException e) {
+              qty = Integer.parseInt(qtyShipped);
+            } catch (NumberFormatException e) {
               log.error(e.getMessage(), e);
             }
-            if (shipDate != null)
-              trackingData.setShipDate(shipDate);
-            trackingData.setShippingMethod(shippingMethod);
-            orderStatus.addTrackingData(trackingData);
+
+            trackingNo = StringHandle.removeNull(lineArray[13]);
+            headerStatus = StringHandle.removeNull(lineArray[15]);
+          } catch (ArrayIndexOutOfBoundsException e1) {
+            log.error("This file is not appropreate as the documantation of Moteng");
+            break;
           }
+          if (headerStatus.equalsIgnoreCase("O")) {
+            log.info("This is an open order pending shipment from Moteng warehouse.");
+            return orderStatus;
+          }
+          if (headerStatus.equalsIgnoreCase("P")) {
+            orderStatus.setStatus(OimConstants.OIM_SUPPLER_ORDER_STATUS_IN_PROCESS);
+            orderStatus.setPartialShipped(true);
+          } else if (orderStatus.getStatus() == null) {
+            orderStatus.setStatus(OimConstants.OIM_SUPPLER_ORDER_STATUS_SHIPPED);
+          } else if (headerStatus.equalsIgnoreCase("C")) {
+            orderStatus.setStatus(OimConstants.OIM_SUPPLER_ORDER_STATUS_SHIPPED);
+            orderStatus.setPartialShipped(false);
+          }
+          salesmachine.oim.suppliers.modal.TrackingData trackingData = new salesmachine.oim.suppliers.modal.TrackingData();
+          trackingData.setCarrierCode(oimOrderDetails.getOimOrders().getOimShippingMethod()
+              .getOimShippingCarrier().getName());
+          trackingData.setCarrierName(oimOrderDetails.getOimOrders().getOimShippingMethod()
+              .getOimShippingCarrier().getName());
+          trackingData.setQuantity(qty);
+          trackingData.setShipperTrackingNumber(trackingNo);
+          Date shipDate1 = df.parse(shipDateString);
+          GregorianCalendar c = new GregorianCalendar();
+          c.setTime(shipDate1);
+          XMLGregorianCalendar shipDate = null;
+          try {
+            shipDate = DatatypeFactory.newInstance().newXMLGregorianCalendar(c);
+          } catch (DatatypeConfigurationException e) {
+            log.error(e.getMessage(), e);
+          }
+          if (shipDate != null)
+            trackingData.setShipDate(shipDate);
+          trackingData.setShippingMethod(shippingMethod);
+          orderStatus.addTrackingData(trackingData);
+        }
 
       }
 
