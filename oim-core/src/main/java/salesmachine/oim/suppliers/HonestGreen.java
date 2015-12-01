@@ -208,11 +208,45 @@ public class HonestGreen extends Supplier implements HasTracking {
         isSingleWarehouseConfigured = true;
         isHva = false;
       }
-
+      if (!isSingleWarehouseConfigured) {
+        query = session.createSQLQuery(
+            "SELECT WAREHOUSE_LOCATION from OIM_CHANNEL_SUPPLIER_MAP where channel_id=:channelId and SUPPLIER_ID=:supplierId");
+        query.setInteger("channelId", channelId);
+        query.setInteger("supplierId", ovs.getOimSuppliers().getSupplierId());
+        String warehouseLocations = null;
+        try {
+          warehouseLocations = (String) query.uniqueResult();
+        } catch (Exception e) {
+          // TODO Auto-generated catch block
+          e.printStackTrace();
+        }
+        String phi = null;
+        String hva = null;
+        if (warehouseLocations != null) {
+          if (warehouseLocations.contains("~")) {
+            String[] warehouseArray = warehouseLocations.split("~");
+            for (int i = 0; i < warehouseArray.length; i++) {
+              if (warehouseArray[i].equalsIgnoreCase("PHI"))
+                phi = warehouseArray[i];
+              if (warehouseArray[i].equalsIgnoreCase("HVA"))
+                hva = warehouseArray[i];
+            }
+          }
+          else{
+            isHva=warehouseLocations.equalsIgnoreCase("HVA");
+            isSingleWarehouseConfigured=true;
+          }
+        }
+        if (phi != null && hva == null)
+          isHva = false;
+        if (hva != null && phi == null)
+          isHva = true;
+      }
       for (OimOrderDetails orderDetail : ((Set<OimOrderDetails>) order.getOimOrderDetailses())) {
-        if (!isSingleWarehouseConfigured)
+        if (!isSingleWarehouseConfigured) {
           isHva = isRestricted(orderDetail.getSku(), vendorId, supplierDefaultPrefix,
               configuredPrefix);
+        }
         if (isHva) {
           hvaItems.add(orderDetail);
         } else {
@@ -1429,4 +1463,3 @@ public class HonestGreen extends Supplier implements HasTracking {
     return orderTrackCount;
   }
 }
-
