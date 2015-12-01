@@ -1,6 +1,8 @@
 package salesmachine.automation;
 
+import java.util.Calendar;
 import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -41,6 +43,9 @@ public class OrderTrackingTask extends TimerTask {
       // Session session = SessionManager.currentSession();
       session = SessionManager.openSession();
       SessionManager.setSession(session);
+      Calendar cal = new GregorianCalendar();
+      cal.add(Calendar.DAY_OF_MONTH, -60);
+      Date cutoffTime = cal.getTime();
       log.info("New session created for order tracking task at- {}",new Date());
       try {
         Query query = session
@@ -52,6 +57,10 @@ public class OrderTrackingTask extends TimerTask {
         List<OimOrders> trackOrderList = query.list();
         log.info("Found {} orders to track...", trackOrderList.size());
         for (OimOrders oimorder : trackOrderList) {
+          if(oimorder.getInsertionTm().before(cutoffTime)){
+           // log.info("Store order id - {} is older than 60 days. so skipping it.",oimorder.getStoreOrderId());
+            continue;
+          }
           session.refresh(oimorder);
           Set orderdetails = oimorder.getOimOrderDetailses();
           Iterator odIter = orderdetails.iterator();

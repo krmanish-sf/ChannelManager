@@ -460,7 +460,7 @@ public final class ShopifyOrderImport extends ChannelBase implements IOrderImpor
       statusCode = httpclient.executeMethod(postMethod);
       log.info("acknowledgement/tracking statusCode is - {}", statusCode);
       String responseString = postMethod.getResponseBodyAsString();
-      log.info("acknowledgement/tracking response string - {}", responseString);
+      //log.info("acknowledgement/tracking response string - {}", responseString);
       log.info("acknowledgement/tracking sent to store.");
 
     } catch (HttpException e) {
