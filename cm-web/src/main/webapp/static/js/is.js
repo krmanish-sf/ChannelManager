@@ -572,7 +572,6 @@ function drawSalesReportTable(data) {
 		var channel = null;
 		if (e != null) {
 			channel = tableimportchannel.row(e[0]).data();
-			console.log(channel);
 			url = "/aggregators/channels/" + channel.channelId + "/pull";
 		}
 		if (channel != null && !channel.testMode) {

@@ -50,7 +50,6 @@ public class ChannelRepositoryDb extends RepositoryBase implements ChannelReposi
     List vendorSuppliers = null;
     Transaction tx = null;
     try {
-      @SuppressWarnings("deprecation")
       Session dbSession = SessionManager.currentSession();
       tx = dbSession.beginTransaction();
       Vendors v = new Vendors(getVendorId());
@@ -182,6 +181,20 @@ public class ChannelRepositoryDb extends RepositoryBase implements ChannelReposi
         boolean enableOrderAuto = (Integer
             .parseInt(request.get("ss_" + os.getSupplierId() + "_enableorderauto")) > 0);
         OimChannelSupplierMap m = new OimChannelSupplierMap();
+        // for multiple support warehouse for Honest green . task id - https://sourcefuse.atlassian.net/browse/ISD-309
+        String warehouseLocation1 = StringHandle.removeNull(request.get("ss_" + os.getSupplierId() + "_warehouseLocation1"));
+        String warehouseLocation2 = StringHandle.removeNull(request.get("ss_" + os.getSupplierId() + "_warehouseLocation"));
+        
+        if(!warehouseLocation1.equals("") && warehouseLocation2.equals("")){
+          m.setWarehouseLocation(warehouseLocation1);
+        }
+        if(!warehouseLocation2.equals("") && warehouseLocation1.equals("")){
+          m.setWarehouseLocation(warehouseLocation2);
+        }
+        if(!warehouseLocation2.equals("") && !warehouseLocation1.equals("")){
+          m.setWarehouseLocation(warehouseLocation1+"~"+warehouseLocation2);
+        }
+       
         m.setOimChannels(c);
         m.setOimSuppliers(os);
         m.setSupplierPrefix(skuPrefix);

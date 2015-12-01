@@ -273,6 +273,8 @@
 															prefix</th>
 														<th class="sorting_disabled"><i class="blue"></i>
 															Order automation</th>
+														<th class="sorting_disabled"><i class="blue"></i>
+															Warehouse Location</th>
 													</tr>
 												</thead>
 												<tbody>

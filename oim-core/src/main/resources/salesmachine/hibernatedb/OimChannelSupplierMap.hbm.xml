@@ -28,5 +28,8 @@
         <property name="deleteTm" type="java.util.Date">
             <column name="DELETE_TM" length="7" />
         </property>
+         <property name="warehouseLocation" type="string">
+            <column name="WAREHOUSE_LOCATION" length="20" />
+        </property>
     </class>
 </hibernate-mapping>

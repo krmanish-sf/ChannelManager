@@ -271,7 +271,17 @@
 										"mData" : function(s) {
 											return '<select id="ss_' +s.oimSuppliers.supplierId	+'_enableorderauto" class="pp" style="display:none;" name="ss_'+ s.oimSuppliers.supplierId	+'_enableorderauto" data-bind-channel="customMapper:oimChannelSupplierMaps[oimSuppliers.supplierId='+ s.oimSuppliers.supplierId	+ '].enableOrderAutomation" required="required"><option selected="" value="1">Yes</option><option value="0">No</option></select>';
 										}
-									} ]
+									},
+									{
+										"mData" : function(s) {
+											if(s.oimSuppliers.supplierId == 1822){
+												return '<select multiple id="warehouseLocation" class="pp" style="display:none;" name="ss_'+ s.oimSuppliers.supplierId	+'_warehouseLocation" required="required" ><option value="PHI">PHI</option><option value="HVA">HVA</option></select>';
+											}
+											else{
+												return '<span></span>';
+											}
+										}
+									}]
 						});
 		$('#channelselect').off('change').on('change', function() {
 			var val = $(this).val();
@@ -348,7 +358,12 @@
 										var formArray = $(form)
 												.serializeArray();
 										var formObject = {};
+										var count=0;
 										$.each(formArray, function(i, v) {
+											if(v.name=='ss_1822_warehouseLocation' && count==0){
+												v.name='ss_1822_warehouseLocation1';
+												count++;
+											}
 											formObject[v.name] = v.value;
 										});
 										$(this)

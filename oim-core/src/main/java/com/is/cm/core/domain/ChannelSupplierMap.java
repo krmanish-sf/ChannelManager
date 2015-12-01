@@ -16,8 +16,9 @@ public class ChannelSupplierMap extends DomainBase implements
 	private Integer enableOrderAutomation;
 	private Date insertionTm;
 	private Date deleteTm;
+	private String warehouseLocation;
 
-	public ChannelSupplierMap() {
+  public ChannelSupplierMap() {
 	}
 
 	public ChannelSupplierMap(Channel channel, Supplier oimSuppliers,
@@ -86,6 +87,14 @@ public class ChannelSupplierMap extends DomainBase implements
 	public void setDeleteTm(Date deleteTm) {
 		this.deleteTm = deleteTm;
 	}
+	
+  public String getWarehouseLocation() {
+    return warehouseLocation;
+  }
+
+  public void setWarehouseLocation(String warehouseLocation) {
+    this.warehouseLocation = warehouseLocation;
+  }
 
 	public static ChannelSupplierMap from(OimChannelSupplierMap map) {
 		ChannelSupplierMap target = new ChannelSupplierMap();

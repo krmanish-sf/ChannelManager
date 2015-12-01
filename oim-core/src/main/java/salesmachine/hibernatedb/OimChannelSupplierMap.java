@@ -16,8 +16,10 @@ public class OimChannelSupplierMap implements java.io.Serializable {
 	private Integer enableOrderAutomation;
 	private Date insertionTm;
 	private Date deleteTm;
+	private String warehouseLocation;
+	
 
-	public OimChannelSupplierMap() {
+  public OimChannelSupplierMap() {
 	}
 
 	public OimChannelSupplierMap(OimChannels oimChannels,
@@ -86,6 +88,13 @@ public class OimChannelSupplierMap implements java.io.Serializable {
 	public void setDeleteTm(Date deleteTm) {
 		this.deleteTm = deleteTm;
 	}
+	public String getWarehouseLocation() {
+    return warehouseLocation;
+  }
+
+  public void setWarehouseLocation(String warehouseLocation) {
+    this.warehouseLocation = warehouseLocation;
+  }
 
 	@Override
 	public String toString() {
