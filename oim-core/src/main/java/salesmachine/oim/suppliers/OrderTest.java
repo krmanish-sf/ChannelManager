@@ -160,8 +160,7 @@ public class OrderTest {
       List<PHIHVAData> dataList = vendorDataMap.get(vendorId);
       if (dataList == null || dataList.size() == 0)
         continue;
-      File file = new File(
-          "/home/staging/cm-orders/report/" + vendorId + "_" + "Report.csv");
+      File file = new File("/home/staging/cm-orders/report/" + vendorId + "_" + "Report.csv");
       fileList.add(file);
       try {
         FileWriter fw = new FileWriter(file);
@@ -365,24 +364,30 @@ public class OrderTest {
     Map<String, String> orderData = new HashMap<String, String>();
     File folder = new File(shippingPath);
     File[] files = folder.listFiles();
-    for (File file : files) {
-      shippingNames.add(file.getName());
+    if (files != null) {
+      for (File file : files) {
+        shippingNames.add(file.getName());
+      }
     }
     folder = new File(trackingPath);
     files = folder.listFiles();
-    for (File file : files) {
-      trackingNames.add(file.getName());
+    if (files != null) {
+      for (File file : files) {
+        trackingNames.add(file.getName());
+      }
     }
     folder = new File(confirmationPath);
     files = folder.listFiles();
-    for (File file : files) {
-      String confirmationFile = file.getName();
-      if (confirmationFile.equals("..") || confirmationFile.equals("."))
-        continue;
-      Path path = Paths.get(confirmationPath + confirmationFile);
-      byte[] confirmationFileData = Files.readAllBytes(path);
-      Map<Integer, String> orderDataMap = parseFileData(confirmationFileData);
-      parseOrderConfirmation(orderDataMap, orderData);
+    if (files != null) {
+      for (File file : files) {
+        String confirmationFile = file.getName();
+        if (confirmationFile.equals("..") || confirmationFile.equals("."))
+          continue;
+        Path path = Paths.get(confirmationPath + confirmationFile);
+        byte[] confirmationFileData = Files.readAllBytes(path);
+        Map<Integer, String> orderDataMap = parseFileData(confirmationFileData);
+        parseOrderConfirmation(orderDataMap, orderData);
+      }
     }
     Session session = SessionManager.currentSession();// TO_CHAR(subQuery.FOLLOW_UP_COMPLETE_TM,'DD-MON-YYYY')
     Query query = null;
