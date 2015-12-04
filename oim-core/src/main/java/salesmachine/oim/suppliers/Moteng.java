@@ -353,7 +353,7 @@ public class Moteng extends Supplier implements HasTracking {
             c.setTime(shipDate1);
 
             shipDate = DatatypeFactory.newInstance().newXMLGregorianCalendar(c);
-          } catch (DatatypeConfigurationException e) {
+          } catch (Exception e) {
             log.error(e.getMessage(), e);
           }
           if (shipDate != null)
