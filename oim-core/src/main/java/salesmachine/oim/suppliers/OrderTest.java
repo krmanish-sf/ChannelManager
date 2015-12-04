@@ -109,7 +109,7 @@ public class OrderTest {
         log.info("Started downloading files at {} from ftp : {}", fileDownloadStartTimeStr,
             ftpDetail);
         try {
-          // downloadFiles(ftpDetail, vendorId, confirmationPath, shippingPath, trackingPath);
+           downloadFiles(ftpDetail, vendorId, confirmationPath, shippingPath, trackingPath);
         } catch (Exception e) {
           log.error("Error occured while downloading files for ftp {} {}", ftpDetail, e);
           if (e instanceof SocketException) {
