@@ -346,11 +346,12 @@ public class Moteng extends Supplier implements HasTracking {
               .getOimShippingCarrier().getName());
           trackingData.setQuantity(qty);
           trackingData.setShipperTrackingNumber(trackingNo);
-          Date shipDate1 = df.parse(shipDateString);
-          GregorianCalendar c = new GregorianCalendar();
-          c.setTime(shipDate1);
           XMLGregorianCalendar shipDate = null;
           try {
+            Date shipDate1 = df.parse(shipDateString);
+            GregorianCalendar c = new GregorianCalendar();
+            c.setTime(shipDate1);
+
             shipDate = DatatypeFactory.newInstance().newXMLGregorianCalendar(c);
           } catch (DatatypeConfigurationException e) {
             log.error(e.getMessage(), e);
