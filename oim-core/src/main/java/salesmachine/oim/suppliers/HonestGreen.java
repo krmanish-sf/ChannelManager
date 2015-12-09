@@ -322,7 +322,7 @@ public class HonestGreen extends Supplier implements HasTracking {
         "Failed to put this order file " + fileName + " to " + ftpDetails.getUrl(), "text/html");
   }
 
-  private int getPhiQuantity(String sku, Integer vendorId, int hvaQuantity) {
+  private int getHvaQuantity(String sku, Integer vendorId, int phiQuantity) {
     Session dbSession = SessionManager.currentSession();
     Query query = dbSession.createSQLQuery(
         "select QUANTITY from VENDOR_CUSTOM_FEEDS_PRODUCTS where sku=:sku and VENDOR_CUSTOM_FEED_ID=(select VENDOR_CUSTOM_FEED_ID from VENDOR_CUSTOM_FEEDS where vendor_id=:vendorID AND IS_RESTRICTED=1)");
@@ -342,10 +342,10 @@ public class HonestGreen extends Supplier implements HasTracking {
     if (q != null)
       tempQuantity = Integer.parseInt(q.toString());
 
-    return tempQuantity - hvaQuantity;
+    return tempQuantity - phiQuantity;
   }
 
-  private int getHvaQuantity(String sku) {
+  private int getPhiQuantity(String sku) {
     Session dbSession = SessionManager.currentSession();
     Query query = dbSession
         .createQuery("select p from salesmachine.hibernatedb.Product p where p.sku=:sku");
@@ -420,8 +420,8 @@ public class HonestGreen extends Supplier implements HasTracking {
       if (restrictedVal != null && ((BigDecimal) restrictedVal).intValue() == 1) {
         log.debug("{} is restricted in VENDOR_CUSTOM_FEEDS_PRODUCTS table", sku);
         // HVAPhiMap.put(sku, orderDetail);
-        int hvaQuantity = getHvaQuantity(sku);
-        int phiQuantity = getPhiQuantity(sku, vendorID, hvaQuantity);
+        int phiQuantity = getPhiQuantity(sku);
+        int hvaQuantity = getHvaQuantity(sku, vendorID, phiQuantity);
         if (hvaQuantity > phiQuantity) {
           return true;
         } else
