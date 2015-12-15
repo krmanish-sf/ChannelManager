@@ -299,7 +299,7 @@
 		<repository>
 			<id>backup-server</id>
 			<name>backup-server-releases</name>
-			<url>http://192.168.1.28:8081/artifactory/libs-release</url>
+			<url>http://192.168.1.51:8081/artifactory/libs-release</url>
 		</repository>
 		<repository>
 			<id>repository.springframework.maven.release</id>
