@@ -1,7 +1,13 @@
 package salesmachine.oim.stores.impl;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.net.URLEncoder;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -11,11 +17,12 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
+import javax.net.ssl.HttpsURLConnection;
+
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpException;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.methods.PostMethod;
-import org.apache.commons.httpclient.methods.PutMethod;
 import org.apache.commons.httpclient.methods.StringRequestEntity;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
@@ -50,6 +57,10 @@ public final class ShopifyOrderImport extends ChannelBase implements IOrderImpor
 	private static final Logger log = LoggerFactory.getLogger(ShopifyOrderImport.class);
 	private String shopifyToken;
 	private String storeUrl;
+	private static final String GET_REQUEST_METHOD = "GET";
+	private static final String POST_REQUEST_METHOD = "POST";
+	private static final String PUT_REQUEST_METHOD = "PUT";
+	private int noOfApiRequests = 0;
 
 	@Override
 	public boolean init(OimChannels oimChannel, Session dbSession) throws ChannelConfigurationException {
@@ -67,7 +78,7 @@ public final class ShopifyOrderImport extends ChannelBase implements IOrderImpor
 
 	@Override
 	public void updateStoreOrder(OimOrderDetails oimOrderDetails, OrderStatus orderStatus) throws ChannelCommunicationException,
-			ChannelOrderFormatException {
+			ChannelOrderFormatException, ChannelConfigurationException {
 		// this method is implemented for tracking purpose
 		log.info("order id is - {}", oimOrderDetails.getOimOrders().getOrderId());
 		log.info("order status is - {}", orderStatus);
@@ -84,9 +95,6 @@ public final class ShopifyOrderImport extends ChannelBase implements IOrderImpor
 		// }
 		// post fullfillment
 
-		HttpClient client = new HttpClient();
-		PostMethod postMethod = new PostMethod(requestUrl);
-		postMethod.addRequestHeader("X-Shopify-Access-Token", shopifyToken);
 		JSONObject jsonObject = new JSONObject();
 		JSONObject jsonObjVal = new JSONObject();
 		JSONArray trackingNos = new JSONArray();
@@ -115,31 +123,8 @@ public final class ShopifyOrderImport extends ChannelBase implements IOrderImpor
 			log.error("Error in parsing tracking request json {}", e);
 			throw new ChannelOrderFormatException("Error in parsing tracking request json", e);
 		}
-		postMethod.setRequestEntity(requestEntity);
-		int statusCode = 0;
-		try {
-			statusCode = client.executeMethod(postMethod);
-			log.info("fullfilment statusCode is - {}", statusCode);
-			if (statusCode != 200 && statusCode != 201) {
-				log.error("fullfilment rejected by store with status code {}", statusCode);
-				// throw new ChannelCommunicationException(
-				// "Error in posting request for fullfillment. fullfilment
-				// rejected by store with status
-				// code - "
-				// + statusCode);
-			}
-
-		} catch (HttpException e) {
-			log.error("error in posting request for fullfillment {}", e);
-			throw new ChannelCommunicationException("Error in posting request for fullfillment", e);
-		} catch (IOException e) {
-			log.error("error in parsing json response payload {}", e);
-			throw new ChannelCommunicationException("Error in parsing json response payload", e);
-		}
-		// closing the order
-		// if (statusCode == 200 || statusCode == 201) {
-		// closeOrder(oimOrderDetails);
-		// }
+		this.noOfApiRequests = 0;
+		sendRequestOAuth(jsonObject.toString(), requestUrl, POST_REQUEST_METHOD);
 	}
 
 	@Override
@@ -403,10 +388,7 @@ public final class ShopifyOrderImport extends ChannelBase implements IOrderImpor
 	}
 
 	private boolean sendAcknowledgementToStore(String requestUrl, String storeOrderId, String tags) throws ChannelCommunicationException,
-			ChannelOrderFormatException {
-		HttpClient httpclient = new HttpClient();
-		PutMethod postMethod = new PutMethod(requestUrl);
-		postMethod.addRequestHeader("X-Shopify-Access-Token", shopifyToken);
+			ChannelOrderFormatException, ChannelConfigurationException {
 		JSONObject jObject = new JSONObject();
 		JSONObject jsonObjVal = new JSONObject();
 		jsonObjVal.put("id", storeOrderId);
@@ -424,24 +406,8 @@ public final class ShopifyOrderImport extends ChannelBase implements IOrderImpor
 					e);
 			// return false;
 		}
-		postMethod.setRequestEntity(requestEntity);
-		int statusCode = 0;
-		try {
-			statusCode = httpclient.executeMethod(postMethod);
-			log.info("acknowledgement/tracking statusCode is - {}", statusCode);
-			String responseString = postMethod.getResponseBodyAsString();
-			// log.info("acknowledgement/tracking response string - {}",
-			// responseString);
-			log.info("acknowledgement/tracking sent to store.");
-
-		} catch (HttpException e) {
-			log.error("error in posting acknowledgement/tracking {}", e);
-			throw new ChannelCommunicationException("Error in posting acknowledgement/tracking ", e);
-		} catch (IOException e) {
-			log.error("error in parsing json response payload {}", e);
-			throw new ChannelCommunicationException("Error in posting acknowledgement/tracking ", e);
-			// return false;
-		}
+		this.noOfApiRequests = 0;
+		sendRequestOAuth(jObject.toString(), requestUrl, PUT_REQUEST_METHOD);
 		return true;
 	}
 
@@ -481,13 +447,9 @@ public final class ShopifyOrderImport extends ChannelBase implements IOrderImpor
 	}
 
 	@Override
-	public void cancelOrder(OimOrders oimOrder) throws ChannelCommunicationException {
-
+	public void cancelOrder(OimOrders oimOrder) throws ChannelCommunicationException, ChannelOrderFormatException, ChannelConfigurationException {
 		// POST /admin/orders/#{id}/close.json
 		String requestCloseUrl = storeUrl + "/admin/orders/" + oimOrder.getStoreOrderId() + "/cancel.json";
-		HttpClient client = new HttpClient();
-		PostMethod postMethod = new PostMethod(requestCloseUrl);
-		postMethod.addRequestHeader("X-Shopify-Access-Token", shopifyToken);
 		JSONObject orderCancelObject = new JSONObject();
 		orderCancelObject.put("reason", "inventory");
 		orderCancelObject.put("email", true);
@@ -498,21 +460,100 @@ public final class ShopifyOrderImport extends ChannelBase implements IOrderImpor
 		} catch (UnsupportedEncodingException e) {
 			log.error("Error in parsing json request for order cancellation {}", e);
 		}
-		postMethod.setRequestEntity(requestEntity);
-		int statusCode = 0;
-		try {
-			statusCode = client.executeMethod(postMethod);
-			log.info("Fullfilment statusCode is - {}", statusCode);
-		} catch (IOException e) {
-			log.error("error in posting request for fullfillment {}", e);
-			throw new ChannelCommunicationException("Error in posting request for fullfillment for store order id " + oimOrder.getStoreOrderId(), e);
-			// return false;
-		}
+		this.noOfApiRequests = 0;
+		sendRequestOAuth(orderCancelObject.toString(), requestCloseUrl, POST_REQUEST_METHOD);
 	}
 
 	@Override
 	public void cancelOrder(OimOrderDetails oimOrder) throws ChannelOrderFormatException {
 		throw new ChannelOrderFormatException("Store does not allow partial cancellatoins.");
+	}
+
+	private String sendRequestOAuth(String data, String requestUrl, String requestMethod) throws ChannelConfigurationException,
+			ChannelCommunicationException, ChannelOrderFormatException {
+		String response = null;
+		HttpsURLConnection connection = null;
+		URL url;
+		int responseCode = 0;
+		try {
+			url = new URL(requestUrl);
+			connection = (HttpsURLConnection) url.openConnection();
+			connection.setRequestMethod(requestMethod);
+			connection.setDoOutput(true);
+			connection.setRequestProperty("X-Shopify-Access-Token", this.shopifyToken);
+			connection.setRequestProperty("Content-type", "application/json");
+
+			if (data != null && (requestMethod.equalsIgnoreCase(POST_REQUEST_METHOD) || requestMethod.equalsIgnoreCase(PUT_REQUEST_METHOD))) {
+				byte[] req = data.getBytes();
+				OutputStream out = connection.getOutputStream();
+				out.write(req);
+				out.close();
+			}
+			connection.connect();
+			String limit = connection.getHeaderField("HTTP_X_SHOPIFY_SHOP_API_CALL_LIMIT");
+			if (limit != null && !limit.equalsIgnoreCase("")) {
+				String[] limitArr = limit.split("/");
+				int currentValue = Integer.parseInt(limitArr[0]);
+				if (currentValue > 36) {
+					log.info(" About to reach API call limit - " + limit);
+					log.info(" Pausing for 10 seconds.. ");
+					Thread.sleep(10 * 1000);
+				}
+			}
+			responseCode = connection.getResponseCode();
+			if (responseCode == 200) {
+				response = getStringFromStream(connection.getInputStream());
+			} else if (responseCode == 201 && requestMethod.equalsIgnoreCase(POST_REQUEST_METHOD)) {
+				response = getStringFromStream(connection.getInputStream());
+			} else if (responseCode == 429) {
+				noOfApiRequests++;
+				connection.disconnect();
+				if (noOfApiRequests < 5) {
+					Thread.sleep(1000);
+					return sendRequestOAuth(data, requestUrl, requestMethod);
+				} else {
+					throw new ChannelCommunicationException("Response Code : 429 - API Call Limit/Bucket Overflow");
+				}
+			} else if (responseCode == 404) {
+				throw new ChannelConfigurationException("404 - The resource does not exist" + " URL - " + requestUrl);
+			} else if (responseCode == 406) {
+				throw new ChannelCommunicationException("406 Not acceptable - Possibly a put/post to the requested URL is not acceptable - "
+						+ requestUrl);
+			} else if (responseCode == 401) {
+				throw new ChannelConfigurationException(
+						"401- API Request is not valid for this shop. You are either not using the right Access Token or the permission for that token has been revoked");
+			} else if (responseCode == 422) {
+				throw new ChannelCommunicationException(
+						"422 - There was a problem with the body of your Request. Inspect the response body for the errors");
+			} else if (responseCode == 403) {
+				throw new ChannelConfigurationException("response code 403 - Forbidden access - verify app OAuth scopes");
+			} else if (String.valueOf(responseCode).startsWith("5")) {
+				throw new ChannelCommunicationException(
+						"500 series - Either Shopify is down or you sent something that caused our code to error out.");
+			} else
+				throw new ChannelCommunicationException("response code - " + responseCode);
+		} catch (InterruptedException e) {
+			throw new ChannelCommunicationException("Interrupted waiting for API bandwidth");
+		} catch (MalformedURLException e) {
+			throw new ChannelConfigurationException("MalformedURLException - " + requestUrl);
+		} catch (IOException e) {
+			throw new ChannelCommunicationException(e.getMessage());
+		} finally {
+			if (connection != null)
+				connection.disconnect();
+		}
+		return response;
+	}
+
+	private String getStringFromStream(InputStream is) throws IOException {
+		StringBuffer streamBuffer = new StringBuffer();
+		BufferedReader reader = new BufferedReader(new InputStreamReader(is, "UTF-8"));
+		String inputLine;
+		while ((inputLine = reader.readLine()) != null) {
+			streamBuffer.append(inputLine + '\n');
+		}
+		reader.close();
+		return streamBuffer.toString();
 	}
 
 }
