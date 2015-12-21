@@ -237,13 +237,33 @@ public class HonestGreen extends Supplier implements HasTracking {
 					isHva = true;
 			}
 			for (OimOrderDetails orderDetail : ((Set<OimOrderDetails>) order.getOimOrderDetailses())) {
+				String sku = orderDetail.getSku();
+				if (configuredPrefix.equals(""))
+					sku = supplierDefaultPrefix + sku;
+				else if (!configuredPrefix.equalsIgnoreCase(supplierDefaultPrefix)) {
+					sku = sku.replaceFirst(configuredPrefix, supplierDefaultPrefix);
+				}
+				int phiQty = getPhiQuantity(orderDetail.getSku());
+				int hvaQty = getHvaQuantity(orderDetail.getSku(), vendorId, phiQty);
 				if (!isSingleWarehouseConfigured) {
-					isHva = isRestricted(orderDetail.getSku(), vendorId, supplierDefaultPrefix, configuredPrefix);
+//					 isHva = isRestricted(orderDetail.getSku(), vendorId,
+//					 supplierDefaultPrefix, configuredPrefix);
+					isHva = hvaQty > phiQty;
 				}
 				if (isHva) {
-					hvaItems.add(orderDetail);
+					if (hvaQty > 0) {
+						hvaItems.add(orderDetail);
+					} else {
+						failedOrders.put(orderDetail.getDetailId(),orderDetail.getSku()+" is out of stock");
+					}
+
 				} else {
-					phiItems.add(orderDetail);
+					if (phiQty > 0) {
+						phiItems.add(orderDetail);
+					} else {
+					  failedOrders.put(orderDetail.getDetailId(),orderDetail.getSku()+" is out of stock");
+					}
+
 				}
 			}
 			// ***************************************************
@@ -274,7 +294,6 @@ public class HonestGreen extends Supplier implements HasTracking {
 			}
 			if (phiItems.size() > 0) {
 				// create order file and send order to PHI configured
-				// ftp
 				FtpDetail ftpDetails = getFtpDetails(ovs, false);
 				String fileName = createOrderFile(order, ovs, phiItems, ftpDetails, poNum);
 				sendToFTP(fileName, ftpDetails);
@@ -313,7 +332,7 @@ public class HonestGreen extends Supplier implements HasTracking {
 	private int getHvaQuantity(String sku, Integer vendorId, int phiQuantity) {
 		Session dbSession = SessionManager.currentSession();
 		Query query = dbSession
-				.createSQLQuery("select QUANTITY from VENDOR_CUSTOM_FEEDS_PRODUCTS where sku=:sku and VENDOR_CUSTOM_FEED_ID=(select VENDOR_CUSTOM_FEED_ID from VENDOR_CUSTOM_FEEDS where vendor_id=:vendorID AND IS_RESTRICTED=1)");
+				.createSQLQuery("select QUANTITY from VENDOR_CUSTOM_FEEDS_PRODUCTS where sku=:sku and is_restricted=1 and VENDOR_CUSTOM_FEED_ID=(select VENDOR_CUSTOM_FEED_ID from VENDOR_CUSTOM_FEEDS where vendor_id=:vendorID AND IS_RESTRICTED=1)");
 		query.setString("sku", sku);
 		query.setInteger("vendorID", vendorId);
 		Object q = null;
@@ -325,10 +344,11 @@ public class HonestGreen extends Supplier implements HasTracking {
 			List restrictedList = query.list();
 			q = restrictedList.get(0);
 		}
-		log.debug("PHI Quantity {} for Sku {}", q.toString(), sku);
 		int tempQuantity = 0;
-		if (q != null)
+		if (q != null){
+		  log.debug("HVA Quantity {} for Sku {}", q.toString(), sku); 
 			tempQuantity = Integer.parseInt(q.toString());
+		}
 
 		return tempQuantity - phiQuantity;
 	}

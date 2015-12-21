@@ -104,7 +104,7 @@ public class PCS extends Supplier {
 							.iterator(); detailIt.hasNext();) {
 						OimOrderDetails detail = (OimOrderDetails) detailIt
 								.next();
-						failedOrders.add(detail.getDetailId());
+						failedOrders.put(detail.getDetailId(),"Fialed order processing for sku - "+detail.getSku());
 					}
 
 					if (order.getOimOrderBatches().getOimChannels()
@@ -253,7 +253,7 @@ public class PCS extends Supplier {
 				for (Iterator detailIt = order.getOimOrderDetailses()
 						.iterator(); detailIt.hasNext();) {
 					OimOrderDetails detail = (OimOrderDetails) detailIt.next();
-					failedOrders.add(detail.getDetailId());
+					failedOrders.put(detail.getDetailId(),"Fialed order processing for sku - "+detail.getSku());
 				}
 			}
 

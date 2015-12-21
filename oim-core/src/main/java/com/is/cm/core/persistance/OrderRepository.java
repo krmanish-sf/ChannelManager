@@ -38,7 +38,7 @@ public interface OrderRepository {
 
   OimOrders getById(int id);
 
-  boolean processOrders(Order order) throws SupplierConfigurationException,
+  String processOrders(Order order) throws SupplierConfigurationException,
       SupplierCommunicationException, SupplierOrderException;
 
   List<Order> save(CCTRANSMISSION entity);

@@ -275,7 +275,7 @@ public class Mobileline extends Supplier {
 							.iterator(); detailIt.hasNext();) {
 						OimOrderDetails detail = (OimOrderDetails) detailIt
 								.next();
-						failedOrders.add(detail.getDetailId());
+						failedOrders.put(detail.getDetailId(),"Fialed order processing for sku - "+detail.getSku());
 					}
 					updateVendorSupplierOrderHistory(vendorId,
 							ovs.getOimSuppliers(), answer.toString(),
@@ -287,7 +287,7 @@ public class Mobileline extends Supplier {
 				for (Iterator detailIt = order.getOimOrderDetailses()
 						.iterator(); detailIt.hasNext();) {
 					OimOrderDetails detail = (OimOrderDetails) detailIt.next();
-					failedOrders.add(detail.getDetailId());
+					failedOrders.put(detail.getDetailId(),"Fialed order processing for sku - "+detail.getSku());
 				}
 				logStream.println(ex.getMessage());
 				ex.printStackTrace();
@@ -296,7 +296,7 @@ public class Mobileline extends Supplier {
 				for (Iterator detailIt = order.getOimOrderDetailses()
 						.iterator(); detailIt.hasNext();) {
 					OimOrderDetails detail = (OimOrderDetails) detailIt.next();
-					failedOrders.add(detail.getDetailId());
+					failedOrders.put(detail.getDetailId(),"Fialed order processing for sku - "+detail.getSku());
 				}
 				logStream.println(ex.getMessage());
 				ex.printStackTrace();
@@ -305,7 +305,7 @@ public class Mobileline extends Supplier {
 				for (Iterator detailIt = order.getOimOrderDetailses()
 						.iterator(); detailIt.hasNext();) {
 					OimOrderDetails detail = (OimOrderDetails) detailIt.next();
-					failedOrders.add(detail.getDetailId());
+					failedOrders.put(detail.getDetailId(),"Fialed order processing for sku - "+detail.getSku());
 				}
 				logStream.println(e.getMessage());
 				e.printStackTrace();

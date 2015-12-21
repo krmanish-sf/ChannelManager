@@ -134,19 +134,15 @@ public class OrderEventHandler implements OrderService {
     }
 
     @Override
-    public UpdatedEvent<Order> processOrder(UpdateEvent<Order> event)
+    public UpdatedEvent<String> processOrder(UpdateEvent<Order> event)
 	    throws SupplierConfigurationException,
 	    SupplierCommunicationException, SupplierOrderException {
 	Order order = event.getEntity();
-	if (processOrderInternal(order)) {
-	    return new UpdatedEvent<Order>(event.getEntity().getOrderId(),
-		    event.getEntity());
-	} else {
-	    return UpdatedEvent.updateForbidden(event.getId(), order);
-	}
+	String orderProcessStatus = processOrderInternal(order);
+	    return new UpdatedEvent<String>(0, orderProcessStatus);
     }
 
-    private boolean processOrderInternal(Order order)
+    private String processOrderInternal(Order order)
 	    throws SupplierConfigurationException,
 	    SupplierCommunicationException, SupplierOrderException {
 	Session dbSession = SessionManager.currentSession();

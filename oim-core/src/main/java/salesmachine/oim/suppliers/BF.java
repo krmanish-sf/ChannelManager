@@ -328,7 +328,7 @@ public class BF extends Supplier implements HasTracking {
                   // .getProcessing()
                   // .getInvNum()));
                   if (failedStatus.contains(status)) {
-                    failedOrders.add(detail.getDetailId());
+                    failedOrders.put(detail.getDetailId(),detail.getSku()+"is failed to process. Cause : "+status);
                   } else {
                     String poNum = String.valueOf(orderXMLresp.getOrder().getProcessing()
                         .getInvNum());
@@ -357,7 +357,7 @@ public class BF extends Supplier implements HasTracking {
             for (Iterator detailIt = order.getOimOrderDetailses().iterator(); detailIt.hasNext();) {
               OimOrderDetails detail = (OimOrderDetails) detailIt.next();
               detail.setSupplierOrderStatus(orderXMLresp.getErrorResponse().getMSG().get(0));
-              failedOrders.add(detail.getDetailId());
+              failedOrders.put(detail.getDetailId(),detail.getSku()+"is failed to process.");
             }
             updateVendorSupplierOrderHistory(vendorId, ovs.getOimSuppliers(), orderXMLresp
                 .getErrorResponse().getMSG().get(0), ERROR_ORDER_PROCESSING);
@@ -365,7 +365,7 @@ public class BF extends Supplier implements HasTracking {
         } else {
           for (Iterator detailIt = order.getOimOrderDetailses().iterator(); detailIt.hasNext();) {
             OimOrderDetails detail = (OimOrderDetails) detailIt.next();
-            failedOrders.add(detail.getDetailId());
+            failedOrders.put(detail.getDetailId(),detail.getSku()+"is failed to process.");
           }
           updateVendorSupplierOrderHistory(vendorId, ovs.getOimSuppliers(), xmlResponse.toString(),
               ERROR_PING_FAILURE);

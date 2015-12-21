@@ -1179,11 +1179,11 @@ function drawSalesReportTable(data) {
 						url : "aggregators/orders/processed/" + order.orderId,
 						method : "POST",
 						data : JSON.stringify(order),
-						success : function(order) {
+						success : function(orderFetchStatus) {
 							$.gritter.add({
 								title : 'Order Processing',
-								text : 'Order Processed successfully.',
-								class_name : 'gritter-success'
+								text : orderFetchStatus,
+								//class_name : 'gritter-success'
 							});
 							table_xy.ajax.reload();
 							getAlerts();
@@ -1192,7 +1192,7 @@ function drawSalesReportTable(data) {
 							$.gritter.add({
 								title : 'Order Processing',
 								text : 'Order Processing Failed.',
-								class_name : 'gritter-error'
+								//class_name : 'gritter-error'
 							});
 							table_xy.ajax.reload();
 							getAlerts();

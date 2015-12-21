@@ -222,7 +222,7 @@ public class Eldorado extends Supplier implements HasTracking {
           }
         } else {
           for (OimOrderDetails oimOrderDetails : order.getOimOrderDetailses()) {
-            failedOrders.add(oimOrderDetails.getDetailId());
+            failedOrders.put(oimOrderDetails.getDetailId(),"Failed order processing for sku - "+oimOrderDetails.getSku());
           }
         }
       }

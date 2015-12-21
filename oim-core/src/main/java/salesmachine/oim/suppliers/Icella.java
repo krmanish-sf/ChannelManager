@@ -102,7 +102,7 @@ public class Icella extends Supplier {
 				if (fileUploaded)
 					successfulOrders.put(detail.getDetailId(),new OrderDetailResponse());
 				else
-					failedOrders.add(detail.getDetailId());
+					failedOrders.put(detail.getDetailId(),"Fialed order processing for sku - "+detail.getSku());
 			}
 			
 			//Send Email Notifications if is set to true.

@@ -656,7 +656,7 @@ public class OrderRepositoryDB extends RepositoryBase implements OrderRepository
   }
 
   @Override
-  public boolean processOrders(Order order) throws SupplierConfigurationException,
+  public String processOrders(Order order) throws SupplierConfigurationException,
       SupplierCommunicationException, SupplierOrderException {
     Session dbSession = SessionManager.currentSession();
     SupplierFactory osop = new SupplierFactory(dbSession);

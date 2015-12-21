@@ -260,7 +260,7 @@ public class DandH extends Supplier implements HasTracking {
         String message = "Error in posting order";
         updateVendorSupplierOrderHistory(vendorId, ovs.getOimSuppliers(),
             message + ": " + e.getMessage(), ERROR_ORDER_PROCESSING);
-        failedOrders.add(detail.getDetailId());
+        failedOrders.put(detail.getDetailId(),message +" for sku - "+detail.getSku());
         detail.setSupplierOrderStatus(message);
         Session session = SessionManager.currentSession();
         session.update(detail);
@@ -327,7 +327,7 @@ public class DandH extends Supplier implements HasTracking {
         detail.setSupplierOrderStatus(orderMessage);
         Session session = SessionManager.currentSession();
         session.update(detail);
-        failedOrders.add(detail.getDetailId());
+        failedOrders.put(detail.getDetailId(),"failed order processing for sku - "+detail.getSku());
 
         OimChannels oimChannels = order.getOimOrderBatches().getOimChannels();
 

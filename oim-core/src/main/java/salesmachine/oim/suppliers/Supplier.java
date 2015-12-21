@@ -43,7 +43,7 @@ import salesmachine.util.StringHandle;
 public abstract class Supplier {
   private static final Logger log = LoggerFactory.getLogger(Supplier.class);
   protected final Map<Integer, OrderDetailResponse> successfulOrders = new HashMap<Integer, OrderDetailResponse>();
-  protected final Set<Integer> failedOrders = new HashSet<Integer>();
+  protected final Map<Integer,String> failedOrders = new HashMap<Integer,String>();
   protected Map stateCodeMapping = new HashMap();
   protected Map countryCodeMapping = new HashMap();
   protected Map<Integer, String> orderSkuPrefixMap;
@@ -269,7 +269,7 @@ public abstract class Supplier {
     return successfulOrders;
   }
 
-  public Set<Integer> getFailedOrders() {
+  public Map<Integer,String> getFailedOrders() {
     return failedOrders;
   }
 

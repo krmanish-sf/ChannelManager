@@ -81,18 +81,19 @@ public class OrderCommandsController {
     }
 
     @RequestMapping(method = { RequestMethod.POST }, value = "/processed/{orderId}")
-    public ResponseEntity<Order> processOrder(@RequestBody Order order,
+    public ResponseEntity<String> processOrder(@RequestBody Order order,
 	    UriComponentsBuilder builder, @PathVariable int orderId)
 	    throws SupplierConfigurationException,
 	    SupplierCommunicationException, SupplierOrderException {
-	UpdatedEvent<Order> event = orderService
+	UpdatedEvent<String> event = orderService
 		.processOrder(new UpdateEvent<Order>(orderId, order));
-	if (event.isUpdateCompleted()) {
-	    return new ResponseEntity<Order>(event.getEntity(), HttpStatus.OK);
-	} else {
-	    return new ResponseEntity<Order>(event.getEntity(),
-		    HttpStatus.FORBIDDEN);
-	}
+//	if (event.isUpdateCompleted()) {
+//	    return new ResponseEntity<Order>(event.getEntity(), HttpStatus.OK);
+//	} else {
+//	    return new ResponseEntity<Order>(event.getEntity(),
+//		    HttpStatus.FORBIDDEN);
+//	}
+	return new ResponseEntity<String>(event.getEntity(), HttpStatus.OK);
     }
 
     @RequestMapping(method = { RequestMethod.GET }, value = "/processed/ifs/{orderId}")

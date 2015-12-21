@@ -44,14 +44,15 @@ public class OrderHandler {
             .add(Restrictions.eq("oimChannels.channelId",
                 orderBatches.getOimChannels().getChannelId()))
             .add(Restrictions.eq("oimSuppliers.supplierId", oimOrders));
-        boolean processVendorOrder = osop.processVendorOrder(
+        String processVendorOrder = osop.processVendorOrder(
             orderBatches.getOimChannels().getVendors().getVendorId(), oimOrders,
             orderBatches.getOimOrderBatchesTypes());
-        if (processVendorOrder) {
-          log.info("Order {} Processed Successfully", oimOrders.getOrderId());
-        } else {
-          log.error("Error in processing order {}", oimOrders.getOrderId());
-        }
+//        if (processVendorOrder) {
+//          log.info("Order {} Processed Successfully", oimOrders.getOrderId());
+//        } else {
+//          log.error("Error in processing order {}", oimOrders.getOrderId());
+//        }
+        log.info(processVendorOrder);
       } catch (Exception e) {
         log.error(e.getMessage(), e);
       }

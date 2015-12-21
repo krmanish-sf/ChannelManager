@@ -44,7 +44,7 @@ public interface OrderService {
 
 	PagedDataResultEvent<Order> findOrderByStatus(String status, RequestReadEvent<DataTableCriterias> requestReadEvent);
 
-	UpdatedEvent<Order> processOrder(UpdateEvent<Order> event) throws SupplierConfigurationException,
+	UpdatedEvent<String> processOrder(UpdateEvent<Order> event) throws SupplierConfigurationException,
 			SupplierCommunicationException, SupplierOrderException;
 
 	PagedDataResultEvent<Order> find(RequestReadEvent<DataTableCriterias> requestReadEvent);

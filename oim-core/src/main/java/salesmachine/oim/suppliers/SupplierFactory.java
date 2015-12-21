@@ -5,6 +5,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Hashtable;
@@ -120,7 +121,7 @@ public class SupplierFactory {
     return true;
   }
 
-  public boolean reprocessVendorOrder(Integer vendorId, OimOrders oimOrders)
+  public String reprocessVendorOrder(Integer vendorId, OimOrders oimOrders)
       throws SupplierConfigurationException, SupplierCommunicationException,
       SupplierOrderException {
     for (Iterator detailIt = oimOrders.getOimOrderDetailses().iterator(); detailIt.hasNext();) {
@@ -133,14 +134,14 @@ public class SupplierFactory {
         new OimOrderBatchesTypes(OimConstants.ORDERBATCH_TYPE_ID_MANUAL));
   }
 
-  public boolean processVendorOrder(Integer vendorId, OimOrders oimOrders)
+  public String processVendorOrder(Integer vendorId, OimOrders oimOrders)
       throws SupplierConfigurationException, SupplierCommunicationException,
       SupplierOrderException {
     return processVendorOrder(vendorId, oimOrders,
         new OimOrderBatchesTypes(OimConstants.ORDERBATCH_TYPE_ID_MANUAL));
   }
 
-  public boolean processVendorOrder(Integer vendorId, OimOrders oimOrders,
+  public String processVendorOrder(Integer vendorId, OimOrders oimOrders,
       OimOrderBatchesTypes processingType) throws SupplierConfigurationException,
           SupplierCommunicationException, SupplierOrderException {
     log.debug("Processing orders for VendorId: {}", vendorId);
@@ -159,11 +160,12 @@ public class SupplierFactory {
       oimOrders.setDeliveryCountryCode(countryCode);
     }
     boolean ordersSent = false;
+    String status="";
     try {
 
       List orders = new ArrayList();
       Map<Integer, OrderDetailResponse> successfulOrders = new HashMap<Integer, OrderDetailResponse>();
-      List<Integer> failedOrders = new ArrayList<Integer>();
+      Map<Integer,String> failedOrders = new HashMap<Integer,String>();
       int countToProcess = 0;
       try {
         // tx = m_dbSession.beginTransaction();
@@ -194,7 +196,8 @@ public class SupplierFactory {
                   "Order processing rule not found for Channel: " + oimChannels.getChannelName()
                       + " Supplier: " + detail.getOimSuppliers().getSupplierName(),
                   Supplier.ERROR_UNCONFIGURED_SUPPLIER, detail);
-              return false;
+             // return false;
+              return "Supplier not configured for sku"+detail.getSku()+" for channel : "+oimChannels.getChannelName();
             } else {
               log.info("Channel Supplier Mapping : {}", list);
               for (OimChannelSupplierMap oimChannelSupplierMap : list) {
@@ -216,16 +219,14 @@ public class SupplierFactory {
       } catch (RuntimeException e) {
         log.error(e.getMessage(), e);
       }
-      if (countToProcess == 0) {
-        return true;
-      }
+//      if (countToProcess == 0) {
+//        return true;
+//      }
       log.debug("Number of order details to process: " + countToProcess);
 
       try {
-        // tx = m_dbSession.beginTransaction();
         log.debug("Sending orders to the supplier");
         sendOrderToSupplier(vendorId, oimOrders, successfulOrders, failedOrders);
-        // tx.commit();
       } catch (RuntimeException e) {
         log.error(e.getMessage(), e);
       }
@@ -235,26 +236,39 @@ public class SupplierFactory {
       if (failedOrders.size() == 0) {
         // updateVendorSupplierOrderHistory(vendorId, ERROR_NONE, "");
         ordersSent = true;
-      } else
+        status="Order Processed successfully.";
+      } else{
         ordersSent = false;
+        String failedResion = "";
+        for (Iterator<Integer> itr = failedOrders.keySet().iterator();itr.hasNext();) {
+          int detailId = itr.next();
+          if (failedResion.length() > 0)
+            failedResion += "<br>";
+          
+          OimOrderDetails failedDetail = (OimOrderDetails) m_dbSession.get(OimOrderDetails.class, detailId);
+          //failedSkus += failedDetail.getSku();
+          failedResion +=failedOrders.get(detailId);
+        }
+        status = "Order processing failed for <br> "+failedResion;
+      }
     } catch (RuntimeException e) {
       log.error(e.getMessage(), e);
-      return false;
+      return "Order Processing failed.";
     }
-    return ordersSent;
+    return status;
   }
 
-  private boolean updateFailedOrderStatus(List<Integer> orders, Integer status) {
+  private boolean updateFailedOrderStatus(Map<Integer,String> orders, Integer status) {
 
     if (orders == null || orders.size() == 0) {
       log.debug("No orders to update with status: " + status);
       return true;
     }
     String orderDetails = "";
-    for (int i = 0; i < orders.size(); i++) {
+    for(Iterator<Integer> itr = orders.keySet().iterator(); itr.hasNext();){
       if (orderDetails.length() > 0)
         orderDetails += ",";
-      orderDetails += (Integer) orders.get(i);
+      orderDetails += (Integer) itr.next();
     }
 
     String processTime = "";
@@ -333,7 +347,7 @@ public class SupplierFactory {
   }
 
   private boolean sendOrderToSupplier(Integer vendorId, OimOrders oimOrder,
-      Map<Integer, OrderDetailResponse> successfulOrders, List<Integer> failedOrders)
+      Map<Integer, OrderDetailResponse> successfulOrders, Map<Integer,String> failedOrders)
           throws SupplierConfigurationException, SupplierCommunicationException,
           SupplierOrderException {
 
@@ -380,7 +394,7 @@ public class SupplierFactory {
 
         s.sendOrders(vendorId, ovs, oimOrder);
         successfulOrders.putAll(s.successfulOrders);
-        failedOrders.addAll(s.failedOrders);
+        failedOrders.putAll(s.failedOrders);
       } catch (SupplierConfigurationException e) {
         Supplier.updateVendorSupplierOrderHistory(vendorId, ovs.getOimSuppliers(), e.getMessage(),
             Supplier.ERROR_UNCONFIGURED_SUPPLIER);
@@ -881,7 +895,7 @@ public class SupplierFactory {
       IOrderImport iOrderImport = ChannelFactory.getIOrderImport(oimChannels);
 
       if (orderStatus != null && oimChannels.getTestMode() == 0) {
-        if (existingQuantity < oimOrderDetails.getQuantity())
+       // if (existingQuantity < oimOrderDetails.getQuantity())
           iOrderImport.updateStoreOrder(oimOrderDetails, orderStatus);
       }
 
