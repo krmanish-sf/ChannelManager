@@ -153,19 +153,19 @@ public class SupplierFactory {
     if (StringHandle.isNullOrEmpty(oimOrders.getDeliveryCountryCode())) {
       String countryCode = ChannelBase.validateAndGetCountryCode(oimOrders);
       if (StringHandle.isNullOrEmpty(countryCode)) {
-//        throw new SupplierOrderException(
-//            "Country Code is missing; please update the order with Country Code.");
+        // throw new SupplierOrderException(
+        // "Country Code is missing; please update the order with Country Code.");
         log.error("Country Code is missing; please update the order with Country Code.");
       }
       oimOrders.setDeliveryCountryCode(countryCode);
     }
     boolean ordersSent = false;
-    String status="";
+    String status = "";
     try {
 
       List orders = new ArrayList();
       Map<Integer, OrderDetailResponse> successfulOrders = new HashMap<Integer, OrderDetailResponse>();
-      Map<Integer,String> failedOrders = new HashMap<Integer,String>();
+      Map<Integer, String> failedOrders = new HashMap<Integer, String>();
       int countToProcess = 0;
       try {
         // tx = m_dbSession.beginTransaction();
@@ -196,8 +196,9 @@ public class SupplierFactory {
                   "Order processing rule not found for Channel: " + oimChannels.getChannelName()
                       + " Supplier: " + detail.getOimSuppliers().getSupplierName(),
                   Supplier.ERROR_UNCONFIGURED_SUPPLIER, detail);
-             // return false;
-              return "Supplier not configured for sku"+detail.getSku()+" for channel : "+oimChannels.getChannelName();
+              // return false;
+              return "Supplier not configured for sku" + detail.getSku() + " for channel : "
+                  + oimChannels.getChannelName();
             } else {
               log.info("Channel Supplier Mapping : {}", list);
               for (OimChannelSupplierMap oimChannelSupplierMap : list) {
@@ -219,9 +220,9 @@ public class SupplierFactory {
       } catch (RuntimeException e) {
         log.error(e.getMessage(), e);
       }
-//      if (countToProcess == 0) {
-//        return true;
-//      }
+      if (countToProcess == 0) {
+        return "Order Processed successfully.";
+      }
       log.debug("Number of order details to process: " + countToProcess);
 
       try {
@@ -236,20 +237,21 @@ public class SupplierFactory {
       if (failedOrders.size() == 0) {
         // updateVendorSupplierOrderHistory(vendorId, ERROR_NONE, "");
         ordersSent = true;
-        status="Order Processed successfully.";
-      } else{
+        status = "Order Processed successfully.";
+      } else {
         ordersSent = false;
         String failedResion = "";
-        for (Iterator<Integer> itr = failedOrders.keySet().iterator();itr.hasNext();) {
+        for (Iterator<Integer> itr = failedOrders.keySet().iterator(); itr.hasNext();) {
           int detailId = itr.next();
           if (failedResion.length() > 0)
             failedResion += "<br>";
-          
-          OimOrderDetails failedDetail = (OimOrderDetails) m_dbSession.get(OimOrderDetails.class, detailId);
-          //failedSkus += failedDetail.getSku();
-          failedResion +=failedOrders.get(detailId);
+
+          OimOrderDetails failedDetail = (OimOrderDetails) m_dbSession.get(OimOrderDetails.class,
+              detailId);
+          // failedSkus += failedDetail.getSku();
+          failedResion += failedOrders.get(detailId);
         }
-        status = "Order processing failed for <br> "+failedResion;
+        status = "Order processing failed for <br> " + failedResion;
       }
     } catch (RuntimeException e) {
       log.error(e.getMessage(), e);
@@ -258,17 +260,35 @@ public class SupplierFactory {
     return status;
   }
 
-  private boolean updateFailedOrderStatus(Map<Integer,String> orders, Integer status) {
+  private boolean updateFailedOrderStatus(Map<Integer, String> orders, Integer status) {
 
     if (orders == null || orders.size() == 0) {
       log.debug("No orders to update with status: " + status);
       return true;
     }
+    Transaction tx = null;
+
     String orderDetails = "";
-    for(Iterator<Integer> itr = orders.keySet().iterator(); itr.hasNext();){
+    for (Iterator<Integer> itr = orders.keySet().iterator(); itr.hasNext();) {
+      int detailId = itr.next();
       if (orderDetails.length() > 0)
         orderDetails += ",";
-      orderDetails += (Integer) itr.next();
+      orderDetails += detailId;
+      try {
+        tx = m_dbSession.beginTransaction();
+        String errorMsg = orders.get(detailId);
+        Query q = m_dbSession.createQuery(
+            "update salesmachine.hibernatedb.OimOrderDetails o set o.supplierOrderStatus='"
+                + errorMsg + "' where o.detailId=" + detailId);
+        log.info(q.getQueryString());
+        int rows = q.executeUpdate();
+        log.debug("Updated order details. Rows changed: " + rows);
+
+        tx.commit();
+      } catch (RuntimeException e) {
+        tx.rollback();
+        e.printStackTrace();
+      }
     }
 
     String processTime = "";
@@ -279,7 +299,6 @@ public class SupplierFactory {
         "update salesmachine.hibernatedb.OimOrderDetails o set o.oimOrderStatuses.statusId="
             + status + " where o.detailId in (" + orderDetails + ")");
 
-    Transaction tx = null;
     try {
       tx = m_dbSession.beginTransaction();
 
@@ -347,7 +366,7 @@ public class SupplierFactory {
   }
 
   private boolean sendOrderToSupplier(Integer vendorId, OimOrders oimOrder,
-      Map<Integer, OrderDetailResponse> successfulOrders, Map<Integer,String> failedOrders)
+      Map<Integer, OrderDetailResponse> successfulOrders, Map<Integer, String> failedOrders)
           throws SupplierConfigurationException, SupplierCommunicationException,
           SupplierOrderException {
 
@@ -769,11 +788,6 @@ public class SupplierFactory {
       log.debug("No orders to update with status: " + status);
       return true;
     }
-    // for (int i = 0; i < orders.size(); i++) {
-    // if (orderDetails.length() > 0)
-    // orderDetails += ",";
-    // orderDetails += (Integer) orders.get(i);
-    // }
     Transaction tx = null;
     try {
 
@@ -895,8 +909,8 @@ public class SupplierFactory {
       IOrderImport iOrderImport = ChannelFactory.getIOrderImport(oimChannels);
 
       if (orderStatus != null && oimChannels.getTestMode() == 0) {
-       // if (existingQuantity < oimOrderDetails.getQuantity())
-          iOrderImport.updateStoreOrder(oimOrderDetails, orderStatus);
+        // if (existingQuantity < oimOrderDetails.getQuantity())
+        iOrderImport.updateStoreOrder(oimOrderDetails, orderStatus);
       }
 
     } catch (ChannelConfigurationException e) {
