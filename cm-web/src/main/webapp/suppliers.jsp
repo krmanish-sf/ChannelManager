@@ -716,7 +716,7 @@ If you have not yet configured your supplier, click "Add Supplier" to do it now.
 												</div>
 												
 							
-							  <div class="form-group supplier-class">
+							  <div class="form-group supplier-class account-class">
                               <label
 														class="col-sm-5 control-label no-padding-right">Account</label>
                               <div class="col-sm-7">
@@ -767,21 +767,19 @@ If you have not yet configured your supplier, click "Add Supplier" to do it now.
                               <input class="width-70"
 															name="europa-customer-num" type="text" value="" required />
                             </div>
-												</div>
-							<br>
-                            <div class="form-group">
+							</div>
+							<!-- Custom Supplier code start -->
+							 <div class="form-group customSupplierNameDiv">
                               <label
-														class="col-sm-5 control-label no-padding-right">Test Mode</label>
+														class="col-sm-5 control-label no-padding-right">Supplier Name</label>
                               <div class="col-sm-7">
-                              <select class="width-70" name="testmode">
-                                <option value="1" selected>Enabled</option>
-                                <option value="0">Disabled</option>
-                              </select>
+                              <input class="width-70"
+															name="name" type=text value="" required />
                             </div>
 												</div>
                             <div class="form-group supplieremailDiv">
                               <label
-														class="col-sm-5 control-label no-padding-right">Order Recipient Email</label>
+														class="col-sm-5 control-label no-padding-right">Email</label>
                               <div class="col-sm-7">
                               <input class="width-70"
 															name="supplieremail" type="email" value="" required />
@@ -794,8 +792,26 @@ If you have not yet configured your supplier, click "Add Supplier" to do it now.
                               <select class="width-70"
 															name="customSupplierFileFormat" required>
                                 <option value="1" SELECTED>CSV</option>
-                                <option value="2">XML</option>
-                                <option value="3">Plain Text</option>
+                                <option value="2">TSV</option>
+                              </select>
+                            </div>
+							</div>
+							<div class="form-group supplierDefaultShippingCodeDiv">
+                              <label
+														class="col-sm-5 control-label no-padding-right">Default Shipping Code</label>
+                              <div class="col-sm-7">
+                              <input class="width-70"
+															name="defshippingmc" type="text" value="" required />
+                            </div>
+												</div>
+							<!-- Custom Supplier code end -->
+                            <div class="form-group">
+                              <label
+														class="col-sm-5 control-label no-padding-right">Test Mode</label>
+                              <div class="col-sm-7">
+                              <select class="width-70" name="testmode">
+                                <option value="1" selected>Enabled</option>
+                                <option value="0">Disabled</option>
                               </select>
                             </div>
 												</div>
@@ -1215,19 +1231,28 @@ If you have not yet configured your supplier, click "Add Supplier" to do it now.
 		$('#Supplieradd').on('change', function() {
 			var a = $(this).val();
 			if (a == '0') {
-				$('#customname').show();
 				$('.customfileformatDiv').show();
 				$('.supplieremailDiv').show();
 				$('.honestGreen-settings').removeClass("show");
 				$('.honestGreen-settings').addClass("hide");
-				$('.supplier-class').removeClass("hide");
-				$('.supplier-class').addClass("show");
+				$('.supplier-class').removeClass("show");
+				$('.supplier-class').addClass("hide");
+				$('.europa').removeClass("show");
+				$('.europa').addClass("hide");
+				$('.customSupplierNameDiv').removeClass("hide");
+				$('.customSupplierNameDiv').addClass("show");
+				$('.account-class').removeClass("hide");
+				$('.account-class').addClass("show");
+				$('.supplierDefaultShippingCodeDiv').removeClass("hide");
+				$('.supplierDefaultShippingCodeDiv').addClass("show");
 			} else {
 				if (a == '1822') {
 					$('.honestGreen-settings').removeClass("hide");
 					$('.honestGreen-settings').addClass("show");
 					$('.supplier-class').removeClass("show");
 					$('.supplier-class').addClass("hide");
+					$('.customSupplierNameDiv').removeClass("show");
+					$('.customSupplierNameDiv').addClass("hide");
 				} else {
 					$('.honestGreen-settings').removeClass("show");
 					$('.honestGreen-settings').addClass("hide");
@@ -1237,6 +1262,8 @@ If you have not yet configured your supplier, click "Add Supplier" to do it now.
 					$('.moteng-ftp').addClass("hide");
 					$('.europa').removeClass("show");
 					$('.europa').addClass('hide');
+					$('.customSupplierNameDiv').removeClass("show");
+					$('.customSupplierNameDiv').addClass("hide");
 					if (a == '221') {
 						$('.moteng-ftp').removeClass("hide");
 						$('.moteng-ftp').addClass("show");
@@ -1247,9 +1274,10 @@ If you have not yet configured your supplier, click "Add Supplier" to do it now.
 						$('.supplier-class').addClass("hide");
 					}
 				}
-				$('#customname').hide();
 				$('.customfileformatDiv').hide();
 				$('.supplieremailDiv').hide();
+				$('.supplierDefaultShippingCodeDiv').removeClass("show");
+				$('.supplierDefaultShippingCodeDiv').addClass("hide");
 			}
 		});
 

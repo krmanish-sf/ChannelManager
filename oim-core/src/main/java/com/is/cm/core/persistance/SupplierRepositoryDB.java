@@ -966,10 +966,11 @@ public class SupplierRepositoryDB extends RepositoryBase implements SupplierRepo
     os.setIsCustom(1);
     os.setSupplierName(supplierName);
     os.setDescription("Custom Supplier for Vendor Id: " + vendorId);
+    os.setClassName("salesmachine.oim.suppliers.CustomSupplier");
     dbSession.save(os);
     dbSession.flush();
     // if (true || emailOrders) { // Always configure email push
-    addCustomSupplierMethods(dbSession, os, supplierEmail, fileFormat);
+    addCustomSupplierMethods(dbSession, os, supplierEmail, fileFormat,vendorId);
     // }
     return os;
   }
@@ -979,7 +980,7 @@ public class SupplierRepositoryDB extends RepositoryBase implements SupplierRepo
   }
 
   private void addCustomSupplierMethods(Session dbSession, OimSuppliers os, String supplierEmail,
-      String newFileFormat) {
+      String newFileFormat,Integer vendorId) {
     OimSupplierMethods osm = new OimSupplierMethods();
     OimSupplierMethodNames osmn = (OimSupplierMethodNames) dbSession
         .get(OimSupplierMethodNames.class, OimConstants.SUPPLIER_METHOD_NAME_EMAIL);
@@ -989,6 +990,9 @@ public class SupplierRepositoryDB extends RepositoryBase implements SupplierRepo
         .get(OimSupplierMethodTypes.class, OimConstants.SUPPLIER_METHOD_TYPE_ORDERPUSH);
     osm.setOimSupplierMethodTypes(osmt);
     osm.setOimSuppliers(os);
+    Vendors vendor = new Vendors();
+    vendor.setVendorId(vendorId);
+    osm.setVendor(vendor);
     dbSession.save(osm);
 
     supplierEmail = StringHandle.removeNull(supplierEmail);
