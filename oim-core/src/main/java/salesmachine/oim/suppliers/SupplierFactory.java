@@ -453,33 +453,32 @@ public class SupplierFactory {
               Supplier.ERROR_UNCONFIGURED_SUPPLIER);
           throw new SupplierConfigurationException(e.getMessage(), e);
         }
-      }
-      else{
+      } else {
         String className = ovs.getOimSuppliers().getClassName();
-      
-          try {
-            Class<?> clazz = Class.forName(className);
-            CustomSupplier cs = (CustomSupplier) clazz.newInstance();
 
-            cs.sendOrders(vendorId, ovs, oimOrder);
-            successfulOrders.putAll(cs.successfulOrders);
-            failedOrders.putAll(cs.failedOrders);
-          } catch (ClassNotFoundException | InstantiationException | IllegalAccessException e) {
-            Supplier.updateVendorSupplierOrderHistory(vendorId, ovs.getOimSuppliers(), e.getMessage(),
-                Supplier.ERROR_UNCONFIGURED_SUPPLIER);
-          } catch (ChannelCommunicationException e) {
-            log.error(e.getMessage(), e);
-            Supplier.updateVendorSupplierOrderHistory(vendorId, ovs.getOimSuppliers(),
-                "Error occured in updating store order status due to ChannelComunication Error. "
-                    + e.getMessage(),
-                Supplier.ERROR_ORDER_PROCESSING);
-          } catch (ChannelOrderFormatException e) {
-            log.error(e.getMessage(), e);
-            Supplier.updateVendorSupplierOrderHistory(vendorId, ovs.getOimSuppliers(),
-                "Error occured in updating store order status due to ChannelOrderFormat Error. "
-                    + e.getMessage(),
-                Supplier.ERROR_ORDER_PROCESSING);
-          }
+        try {
+          Class<?> clazz = Class.forName(className);
+          CustomSupplier cs = (CustomSupplier) clazz.newInstance();
+
+          cs.sendOrders(vendorId, ovs, oimOrder);
+          successfulOrders.putAll(cs.successfulOrders);
+          failedOrders.putAll(cs.failedOrders);
+        } catch (ClassNotFoundException | InstantiationException | IllegalAccessException e) {
+          Supplier.updateVendorSupplierOrderHistory(vendorId, ovs.getOimSuppliers(), e.getMessage(),
+              Supplier.ERROR_UNCONFIGURED_SUPPLIER);
+        } catch (ChannelCommunicationException e) {
+          log.error(e.getMessage(), e);
+          Supplier.updateVendorSupplierOrderHistory(vendorId, ovs.getOimSuppliers(),
+              "Error occured in updating store order status due to ChannelComunication Error. "
+                  + e.getMessage(),
+              Supplier.ERROR_ORDER_PROCESSING);
+        } catch (ChannelOrderFormatException e) {
+          log.error(e.getMessage(), e);
+          Supplier.updateVendorSupplierOrderHistory(vendorId, ovs.getOimSuppliers(),
+              "Error occured in updating store order status due to ChannelOrderFormat Error. "
+                  + e.getMessage(),
+              Supplier.ERROR_ORDER_PROCESSING);
+        }
       }
       // else if (OimConstants.SUPPLIER_METHOD_NAME_EMAIL.equals(supplierMethodNameId)
       // || OimConstants.SUPPLIER_METHOD_NAME_FTP.equals(supplierMethodNameId)) {

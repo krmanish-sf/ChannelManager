@@ -99,6 +99,16 @@ If you have not yet configured your supplier, click "Add Supplier" to do it now.
 												action="/aggregators/suppliers" method="PUT"
 												id="supplierform">
                          
+                          <div class="form-group customSupplierNameDiv">
+                              <label
+														class="col-sm-5 control-label no-padding-right">Supplier Name</label>
+                              <div class="col-sm-7">
+                              <input class="width-70"
+															name="name" type=text data-bind-vendorsupplier="oimSuppliers.supplierName" required />
+                            </div>
+												</div>
+                         
+                         
 							<div class="form-group">
                               <label
 														class="col-sm-5 control-label no-padding-right">Account</label>
@@ -108,7 +118,7 @@ If you have not yet configured your supplier, click "Add Supplier" to do it now.
 															required="required" />
                             </div>
 							</div>
-							  <div class="form-group">
+							  <div class="form-group non-custom">
                               <label
 														class="col-sm-5 control-label no-padding-right">Username</label>
                               <div class="col-sm-7">
@@ -117,7 +127,7 @@ If you have not yet configured your supplier, click "Add Supplier" to do it now.
 															required="required" />
                             </div>
 												</div>
-                            <div class="form-group">
+                            <div class="form-group non-custom">
                             
                               <label
 														class="col-sm-5 control-label no-padding-right">Password</label>
@@ -129,31 +139,21 @@ If you have not yet configured your supplier, click "Add Supplier" to do it now.
                             </div>
 												</div>
                             
-<!--                             <div class="form-group" -->
-<!-- 													style="display: none;"> -->
-<!--                               <label -->
-<!-- 														class="col-sm-5 control-label no-padding-right">Default Shipping Method Code</label> -->
-<!--                               <div class="col-sm-5"> -->
-<!--                               <input class="width-100" -->
-<!-- 															name='defshippingmc' type='text' -->
-<!-- 															data-bind-vendorsupplier="defShippingMethodCode" -->
-<!-- 															required="required" /> -->
-<!--                             </div> -->
-<!-- 												</div> -->
-                            <div class="form-group">
+                            <div class="form-group defShipCode"
+													style="display: none;">
                               <label
-														class="col-sm-5 control-label no-padding-right">Test Mode</label>
-                              <div class="col-sm-7">
-                              <select class="width-70" name="testmode"
-															data-bind-vendorsupplier="testMode">
-                                <option value="1" selected>Enabled</option>
-                                <option value="0">Disabled</option>
-                              </select>
+														class="col-sm-5 control-label no-padding-right">Default Shipping Method Code</label>
+                              <div class="col-sm-5">
+                              <input class="width-100"
+															name='defshippingmc' type='text'
+															data-bind-vendorsupplier="defShippingMethodCode"
+															required="required" />
                             </div>
 												</div>
+                        
                             <div class="form-group supplieremailDiv">
                               <label
-														class="col-sm-5 control-label no-padding-right">Order Recipient Email</label>
+														class="col-sm-5 control-label no-padding-right">Email</label>
                               <div class="col-sm-7">
                               <input class="width-70"
 															required="required" name='supplieremail' type='email'
@@ -169,9 +169,20 @@ If you have not yet configured your supplier, click "Add Supplier" to do it now.
 															name="customSupplierFileFormat"
 															data-bind-vendorsupplier="customMapper:oimSuppliers.oimSupplierMethodses[oimSupplierMethodNames.methodNameId=1].oimSupplierMethodattrValueses[oimSupplierMethodattrNames.attrId=8].attributeValue">
                                 <option value="1">CSV</option>
-                                <option value="2">XML</option>
-                                <option value="3">Plain Text</option>
+                                <option value="2">TSV</option>
                               </select>                  
+                            </div>
+												</div>
+												
+							 <div class="form-group">
+                              <label
+														class="col-sm-5 control-label no-padding-right">Test Mode</label>
+                              <div class="col-sm-7">
+                              <select class="width-70" name="testmode"
+															data-bind-vendorsupplier="testMode">
+                                <option value="1" selected>Enabled</option>
+                                <option value="0">Disabled</option>
+                              </select>
                             </div>
 												</div>
                             <div class="form-group" id="orderaction">
@@ -894,9 +905,15 @@ If you have not yet configured your supplier, click "Add Supplier" to do it now.
 		if (vendorSupplier.oimSuppliers.isCustom) {
 			$('#customSupplierFileFormatDiv').show();
 			$('.supplieremailDiv').show();
+			$('.non-custom').hide();
+			$('.customSupplierNameDiv').show();
+			$('.defShipCode').show();
 		} else {
 			$('#customSupplierFileFormatDiv').hide();
 			$('.supplieremailDiv').hide();
+			$('.customSupplierNameDiv').hide();
+			$('.defShipCode').hide();
+			$('.non-custom').show();
 		}
 
 		$('#saveshippingmapping').off('click').on(
