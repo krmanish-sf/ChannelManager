@@ -1,5 +1,7 @@
 <?php
-
+//php display error 
+ini_set("display_errors", 1);
+error_reporting(E_ALL);
 //*********************** CONFIGURATION VARIABLES	*******************
 $PassKey="02446";//This variable is used for authentication of xml file
 
@@ -13,13 +15,14 @@ $host = $xml->global[0]->resources->default_setup->connection->host;
 $user = $xml->global[0]->resources->default_setup->connection->username;
 $pass = $xml->global[0]->resources->default_setup->connection->password;
 $dbname = $xml->global[0]->resources->default_setup->connection->dbname;
+$table_prefix = $xml->global[0]->resources->db->table_prefix;
 
 define('DB_SERVER', $host);
 define('DB_PASS', $pass);
 define('DB_USER', $user);
 define('DB_NAME', $dbname);
 
-$table_prefix = "";
+//$table_prefix = "mage";
 
 global $selfupdate, $pullstatus;
 
@@ -34,8 +37,19 @@ define('SALES_FLAT_QUOTE_ITEM',$table_prefix."sales_flat_quote_item");
 define('SALES_FLAT_QUOTE_SHIPPING_RATE',$table_prefix."sales_flat_quote_shipping_rate");
 define('SALES_ORDER_VARCHAR',$table_prefix."sales_order_varchar");
 
-$selfupdate = 0;
+define('SALES_FLAT_ORDER',$table_prefix."sales_flat_order");
+define('SALES_FLAT_ORDER_GRID',$table_prefix."sales_flat_order_grid");
+define('SALES_ORDER_STATUS_STATE',$table_prefix."sales_order_status_state");
+define('SALES_FLAT_ORDER_ITEM',$table_prefix."sales_flat_order_item");
+define('SALES_FLAT_ORDER_STATUS_HISTORY',$table_prefix."sales_flat_order_status_history");
+define('SALES_FLAT_SHIPMENT',$table_prefix."sales_flat_shipment");
+define('SALES_FLAT_SHIPMENT_COMMENT',$table_prefix."sales_flat_shipment_comment");
+define('SALES_FLAT_SHIPMENT_GRID',$table_prefix."sales_flat_shipment_grid");
+define('SALES_FLAT_SHIPMENT_ITEM',$table_prefix."sales_flat_shipment_item");
 
+
+$selfupdate = 0;
+//vr_dump ($_POST);
 if(isset($_POST['XML_INPUT_VALUE']))
 {
 	$pullstatus="pending";
@@ -58,7 +72,7 @@ function ping()
 	$xml_str = "<?xml version=\"1.0\" encoding=\"iso-8859-1\"?>\n";
 	$xml_str.="<xmlPopulateResponse>\n";
 	
-	if(! mysql_connect(DB_SERVER, DB_USER, DB_PASS))
+	if(! @mysql_connect(DB_SERVER, DB_USER, DB_PASS))
 		$xml_str.="<heartbeat>Database Connection Error</heartbeat>\n";
 	else
 		$xml_str.="<heartbeat>Alive</heartbeat>\n";
@@ -105,6 +119,11 @@ function requestType($array_haystack,$PassKey)
 				$type="update Product Orders";
 				$cat=strtolower($xml_value["value"]);
 			}
+			if(strtolower($xml_value["tag"])=="orderstatus")
+			{
+				$type="Get Product Orders";
+				$order_status_name=$xml_value["value"];
+			}
 			if(strtolower($xml_value["tag"])=="passkey")
 			{
 				$entered_key=strtolower($xml_value["value"]);
@@ -129,19 +148,19 @@ function requestType($array_haystack,$PassKey)
 			}
 		case "getorders":
 			{
-				getOrders();
+				getOrders($order_status_name);
 				break;
 			}
 		case "updateorders":
 			{
-				updateorders($array_haystack);
+				updateorders($array_haystack, $order_status_name);
 				break;
 			}
 	}
 
 }
 
-function getOrders(){
+function getOrders($order_status_name){
 	
 	global $pullstatus;
 	global $selfupdate;
@@ -153,46 +172,21 @@ function getOrders(){
 
 	connect_db();
 	
-	//Getting attribute ids of shipping_method, status and customer_email
-	$sqlattrids = "select * from ".EAV_ATTRIBUTE." where attribute_code in ('shipping_method', 'status', 'customer_email') and entity_type_id in (select entity_type_id from ".EAV_ENTITY_TYPE." where entity_type_code = 'order')";
-	$resultattrids = mysql_query($sqlattrids);
-	while($rows = mysql_fetch_array($resultattrids)){
-		$attr_code = $rows['attribute_code'];
-		
-		if(strtolower($attr_code) == "shipping_method"){
-			$attr_shipping_method = $rows['attribute_id'];
-		}else if(strtolower($attr_code) == "status"){
-			$attr_status = $rows['attribute_id'];
-		}else if(strtolower($attr_code) == "customer_email"){
-			$attr_customer_email = $rows['attribute_id'];
-		}
-	}
-	
-	$sql = "select * from ".SALES_FLAT_QUOTE;
-	
+	$sql = "select entity_id, date_format(created_at,'%m-%d-%Y %T') created_at, grand_total, order_currency_code, customer_email, status, shipping_method, shipping_description, increment_id, quote_id from ".SALES_FLAT_ORDER." where status = '".$order_status_name."' ";
+	//$xml_str .="<echo2>".$sql."</echo2>";
 	$result = mysql_query($sql);
 	while($rows = mysql_fetch_array($result)){
 		
 		$entity_id = $rows['entity_id'];
 		$order_date = $rows['created_at'];
 		$grand_total = $rows['grand_total'];
-		$currency_code = $rows['quote_currency_code'];
-		
-		//attribute id 214 = shipping_method, 215 = status and 548 = customer email
-		$sql1 = "select * from ".SALES_ORDER_VARCHAR." where attribute_id in (".$attr_shipping_method.", ".$attr_status." ,".$attr_customer_email.") and entity_id =".$entity_id;
-		$result1 = mysql_query($sql1);
-		while($row1 = mysql_fetch_array($result1)){
-			$attr_id = $row1['attribute_id'];
-			$value = $row1['value'];
-			
-			if($attr_id == $attr_shipping_method){
-				$shippingmethodcode = $value;
-			}else if($attr_id == $attr_status){
-				$orderstatus = $value;
-			}else if($attr_id == $attr_customer_email){
-				$email = $value;
-			}
-		}
+		$currency_code = $rows['order_currency_code'];
+		$email = $rows['customer_email'];
+		$orderstatus = $rows['status'];
+		$shippingmethodcode = $rows['shipping_method'];
+		$shippingmethoddescription = $rows['shipping_description'];
+		$orderid = $rows['increment_id']; 
+		$quote_id = $rows['quote_id']; 
 		
 		//Get only the orders that are in pending state
 		if(strtolower($orderstatus) != $pullstatus){
@@ -200,35 +194,28 @@ function getOrders(){
 		}
 		
 		$xml_str .= "<Order>\n";
-		
-		$sqlOrderId = "select increment_id from ".SALES_ORDER." where entity_id = ".$entity_id;
-		$resultOrderId = mysql_query($sqlOrderId);
-		while($roworderid = mysql_fetch_array($resultOrderId)){
-			$orderid = $roworderid['increment_id'];   // increment_id is order id
-		}
-		
-		$xml_str .= "<o_id>".$orderid."</o_id>";
+		$xml_str .= "<o_id><![CDATA[".$orderid."]]></o_id>";
 		//$xml_str .= "<status>".$orderstatus."</status>";  Not in cre thats why comment
 
-
 		//Creating the xml for update the status from pending to processing.
-		$xml_update .= "<order>";
+		/*$xml_update .= "<order>";
 		$xml_update .= "<order_id>".$orderid."</order_id>";
-		$xml_update .= "<order_status>processing</order_status>";
-		$xml_update .= "</order>";
+		$xml_update .= "<order_status>".$orderstatus."</order_status>";
+		$xml_update .= "</order>";*/
 		//******************//
 		
-		$sqlPaymentMethod = "select method from ".SALES_FLAT_QUOTE_PAYMENT." where quote_id = ".$entity_id;
-		
+		$sqlPaymentMethod = "select method from ".SALES_FLAT_QUOTE_PAYMENT." where quote_id = ".$quote_id;
 		$resultPaymentMethod = mysql_query($sqlPaymentMethod);
+		$paymentmethod = "";
 		while($rowPaymentMethod = mysql_fetch_array($resultPaymentMethod)){
 			$paymentmethod = $rowPaymentMethod['method'];
 		}
-		$xml_str .= "<o_pay_method>".$paymentmethod."</o_pay_method>";
+		$xml_str .= "<o_pay_method><![CDATA[".$paymentmethod."]]></o_pay_method>";
 		
 		
 		//Shipping Details
-		$shipDetailsSql = "select * from ".SALES_FLAT_QUOTE_ADDRESS." where quote_id = ".$entity_id." and address_type = 'shipping'";
+		$shipDetailsSql = "select * from ".SALES_FLAT_QUOTE_ADDRESS." where quote_id = ".$quote_id." and address_type = 'shipping'";
+		//$xml_str .="<echo6>".$shipDetailsSql."</echo6>";
 		$resultShipDetails = mysql_query($shipDetailsSql);
 		$xml_str .= "<deliverydetails>";
 		while($shipDetails = mysql_fetch_array($resultShipDetails)){
@@ -238,7 +225,7 @@ function getOrders(){
 			$street = $shipDetails['street'];
 			$city = $shipDetails['city'];
 			$region = $shipDetails['region'];
-			$regionid = $shipDetails['regionid'];
+			$regionid = $shipDetails['region_id'];
 			$postcode = $shipDetails['postcode'];
 			$countryid = $shipDetails['country_id'];
 			$telephone = $shipDetails['telephone'];
@@ -250,17 +237,18 @@ function getOrders(){
 			$xml_str .= "<suburb></suburb>";
 			$xml_str .= "<city><![CDATA[".$city."]]></city>";
 			$xml_str .= "<state><![CDATA[".$region."]]></state>";
-			$xml_str .= "<country>".$countryid."</country>";
-			$xml_str .= "<zip>".$postcode."</zip>";
+			$xml_str .= "<country><![CDATA[".$countryid."]]></country>";
+			$xml_str .= "<zip><![CDATA[".$postcode."]]></zip>";
 			$xml_str .= "<company><![CDATA[".$company."]]></company>";
-			$xml_str .= "<phone>".$telephone."</phone>";
-			$xml_str .= "<email>".$email."</email>";
+			$xml_str .= "<phone><![CDATA[".$telephone."]]></phone>";
+			$xml_str .= "<email><![CDATA[".$email."]]></email>";
 			
 		}
 		$xml_str .= "</deliverydetails>";
 		
 		//Billing Details
-		$billDetailsSql = "select * from ".SALES_FLAT_QUOTE_ADDRESS." where quote_id = ".$entity_id." and address_type = 'billing'";
+		$billDetailsSql = "select * from ".SALES_FLAT_QUOTE_ADDRESS." where quote_id = ".$quote_id." and address_type = 'billing'";
+		//$xml_str .="<echo7>".$billDetailsSql."</echo7>";
 		$resultBillDetails = mysql_query($billDetailsSql);
 		
 		$xml_str .="<billingdetails>";
@@ -271,7 +259,7 @@ function getOrders(){
 			$street = $billDetails['street'];
 			$city = $billDetails['city'];
 			$region = $billDetails['region'];
-			$regionid = $billDetails['regionid'];
+			$regionid = $billDetails['region_id'];
 			$postcode = $billDetails['postcode'];
 			$countryid = $billDetails['country_id'];
 			$telephone = $billDetails['telephone'];
@@ -283,10 +271,10 @@ function getOrders(){
 			$xml_str .= "<suburb></suburb>";
 			$xml_str .= "<city><![CDATA[".$city."]]></city>";
 			$xml_str .= "<state><![CDATA[".$region."]]></state>";
-			$xml_str .= "<country>".$countryid."</country>";
-			$xml_str .= "<zip>".$postcode."</zip>";
+			$xml_str .= "<country><![CDATA[".$countryid."]]></country>";
+			$xml_str .= "<zip><![CDATA[".$postcode."]]></zip>";
 			$xml_str .= "<company><![CDATA[".$company."]]></company>";
-			$xml_str .= "<phone>".$telephone."</phone>";
+			$xml_str .= "<phone><![CDATA[".$telephone."]]></phone>";
 			$xml_str .= "<email><![CDATA[".$email."]]></email>";
 			
 		}
@@ -309,7 +297,8 @@ function getOrders(){
 		
 		//Getting ordered products
 		$xml_str .= "<products>";
-		$sqlProductDetails = "select * from ".SALES_FLAT_QUOTE_ITEM." where quote_id = ".$entity_id." order by item_id";
+		$sqlProductDetails = "select * from ".SALES_FLAT_QUOTE_ITEM." where quote_id = ".$quote_id." order by item_id";
+		//$xml_str .="<echo8>".$sqlProductDetails."</echo8>";
 		$resultProductDetails = mysql_query($sqlProductDetails);
 		
 		$configurable = 0;
@@ -343,18 +332,19 @@ function getOrders(){
 			}
 			
 			$xml_str .= "<product>";
-			$xml_str .= "<p_model>".$productmodel."</p_model>";
-			$xml_str .= "<p_quantity>".intval($productqty)."</p_quantity>";
-			$xml_str .= "<p_price_each>".$productprice."</p_price_each>";
+			$xml_str .= "<p_model><![CDATA[".$productmodel."]]></p_model>";
+			$xml_str .= "<p_quantity><![CDATA[".intval($productqty)."]]></p_quantity>";
+			$xml_str .= "<p_price_each><![CDATA[".$productprice."]]></p_price_each>";
+			$xml_str .= "<p_name><![CDATA[".$productname."]]></p_name>";
 			$xml_str .= "</product>";
 		}
 		
 		
 		$xml_str .= "</products>";
-		$xml_str .= "<p_bill_amount>".$grand_total."</p_bill_amount>";
+		$xml_str .= "<p_bill_amount><![CDATA[".$grand_total."]]></p_bill_amount>";
 		$xml_str .= "<o_shipping><![CDATA[".$shippingmethodcode."]]></o_shipping>";
 		$xml_str .= "<o_note></o_note>";
-		$xml_str .= "<o_time>".$order_date."</o_time>";
+		$xml_str .= "<o_time><![CDATA[".$order_date."]]></o_time>";
 		
 		$xml_str .= "</Order>\n";
 	}
@@ -391,30 +381,19 @@ function output_xml($content)
 }
 
 function connect_db(){
-	$dbhandle = mysql_connect(DB_SERVER, DB_USER, DB_PASS) or die("Unable to connect to MySQL");
+	$dbhandle = @mysql_connect(DB_SERVER, DB_USER, DB_PASS) or die("Unable to connect to MySQL");
 	$db_selected = mysql_select_db(DB_NAME,$dbhandle);
 }
 
-function updateorders($array_haystack){
+function updateorders($array_haystack, $order_status_name){
 	global $selfupdate;
 	connect_db();
 	$oID="";
 	$status="";
-	
-	//Getting attribute ids of order_status and state
-	$sqlattrids = "select * from ".EAV_ATTRIBUTE." where attribute_code in ('status', 'state') and entity_type_id in (select entity_type_id from ".EAV_ENTITY_TYPE." where entity_type_code = 'order')";
-	$resultattrids = mysql_query($sqlattrids);
-	while($rows = mysql_fetch_array($resultattrids)){
-		$attr_code = $rows['attribute_code'];
-		
-		if(strtolower($attr_code) == "status"){
-			$attr_status = $rows['attribute_id'];
-		}else if(strtolower($attr_code) == "state"){
-			$attr_state = $rows['attribute_id'];
-		}
-	}
-	
-		
+	$state="";
+	//var_dump($order_status_name);
+	//var_dump($array_haystack);
+
 	$xml_str = "<?xml version=\"1.0\" encoding=\"iso-8859-1\"?>\n";
 	$xml_str .="<OrderUpdateXML>";
 		
@@ -422,42 +401,204 @@ function updateorders($array_haystack){
 	{
 		foreach ($array_haystack as $xml_key => $xml_value)
 		{
-			
+			//echo "\n".strtolower($xml_value["tag"]);
 			if(strtolower($xml_value["tag"])=="order_id")
 			{
 				$type="Checking for test database connection";
 				$oID=strtolower($xml_value["value"]);
+				//echo "\n".strtolower($xml_value["value"]);
 			}
 			if(strtolower($xml_value["tag"])=="order_status")
 			{
 				$type="Checking for test database connection";
-				$tempstatus=strtolower($xml_value["value"]);
-				if($tempstatus == 1){
-					$status = "processing";
-				}
+				$status=strtolower($xml_value["value"]);
+				//echo "\n".strtolower($xml_value["value"]);
 			}
 			
-			if($oID!="" && $status!="") {
+			if($oID!="" && $status!="" && $status == "processing") {
 				
-				$entityIdSql = "select entity_id from ".SALES_ORDER." where increment_id = '".$oID."'";
+				$stateSql = "SELECT state FROM ".SALES_ORDER_STATUS_STATE." where status = '".$status."'";
+				//echo "\n01".$stateSql;
+				$resultState = mysql_query($stateSql);
+				while($rowState = mysql_fetch_array($resultState)){
+					$state = $rowState['state'];
+				}
 				
-				$resultEntityId = mysql_query($entityIdSql);
+				$orderDetailsSql = "select entity_id, store_id, total_qty_ordered, customer_firstname, customer_lastname, quote_id from ".SALES_FLAT_ORDER." where increment_id = '".$oID."' ";
+				//echo "\n02".$orderDetailsSql;
+				$resultorderDetails = mysql_query($orderDetailsSql);
 				
-				while($rowEntityId = mysql_fetch_array($resultEntityId)){
-					$entityid = $rowEntityId['entity_id'];
-					$updateordersql = "update ".SALES_ORDER_VARCHAR." set value = '" . $status . "' where entity_id = ".$entityid." and attribute_id in (".$attr_status." ,".$attr_state.")";
-					$resupdateorder = mysql_query($updateordersql); 
+				while($roworderDetails = mysql_fetch_array($resultorderDetails)){
+					$entityid = $roworderDetails['entity_id'];
+					$storeID = $roworderDetails['store_id'];
+					$totalQtyOrdered = $roworderDetails['total_qty_ordered'];
+					$customer_firstname = $roworderDetails['customer_firstname'];
+					$customer_lastname = $roworderDetails['customer_lastname'];
+					$quote_id = $roworderDetails['quote_id']; 
+					
+					$addressTypeSql = "SELECT address_id, address_type, date_format(created_at,'%m-%d-%Y %T') created_at FROM ".SALES_FLAT_QUOTE_ADDRESS." where quote_id = '".$quote_id."'";
+					$resultAddressType = mysql_query($addressTypeSql);
+					$shippingAddressID = "";
+					$billingAddressID = "";
+					$createdAt = "";
+					while($rowAddressType = mysql_fetch_array($resultAddressType)){
+						$createdAt = $rowAddressType['created_at'];
+						$addressType = $rowAddressType['address_type'];
+						if(strtolower($addressType) == "shipping"){
+							$shippingAddressID = $rowAddressType['address_id'];
+						}else if(strtolower($addressType) == "billing"){
+							$billingAddressID = $rowAddressType['address_id'];
+						}
+					}
+
+					$updateordersql = "update ".SALES_FLAT_ORDER." set `state` = '".$state."', `status` = '".$status."', customer_note_notify='0', `updated_at` = CURRENT_TIMESTAMP where `increment_id` = '".$oID."' ";
+					//echo "\n1".$updateordersql;
+					$resupdateorder = mysql_query($updateordersql);
+					
+					$updateordersql = "update ".SALES_FLAT_ORDER_GRID." set `status` = '".$status."', `updated_at` = CURRENT_TIMESTAMP where `increment_id` = '".$oID."' ";
+					//echo "\n2".$updateordersql;
+					$resupdateorder = mysql_query($updateordersql);
+					
+					$updateordersql = "update ".SALES_FLAT_ORDER_ITEM." set `qty_shipped` = '1', `updated_at` = CURRENT_TIMESTAMP where `order_id` = '".$entityid."' ";
+					//echo "\n3".$updateordersql;
+					$resupdateorder = mysql_query($updateordersql);
+					
+					//sales_flat_quote_item
+					$updateordersql = "INSERT INTO ".SALES_FLAT_ORDER_STATUS_HISTORY." (`parent_id`, `is_customer_notified`, `is_visible_on_front`, `comment`, `status`, `created_at`, `entity_name`) VALUES
+					(".$entityid.", 0, 0, NULL, '".$status."', CURRENT_TIMESTAMP, 'shipment') ";
+					//echo "\n4".$updateordersql;
+					$resupdateorder = mysql_query($updateordersql);
+					
+					$updateordersql = "INSERT INTO ".SALES_FLAT_SHIPMENT." ( `store_id`, `total_weight`, `total_qty`, `email_sent`, `order_id`, `customer_id`, `shipping_address_id`, `billing_address_id`, `shipment_status`, `increment_id`, `created_at`, `updated_at`, `packages`, `shipping_label`) VALUES 
+					('".$storeID."', NULL, '".$totalQtyOrdered."', NULL, '".$entityid."', NULL, '".$shippingAddressID."', '".$billingAddressID."', NULL, '".$oID."', '".$createdAt."', CURRENT_TIMESTAMP, NULL, NULL)";
+					//echo "\n5".$updateordersql;
+					$resupdateorder = mysql_query($updateordersql);
+					$shippingEntityID = mysql_insert_id();
+					
+					$updateordersql = "INSERT INTO ".SALES_FLAT_SHIPMENT_COMMENT." (`parent_id`, `is_customer_notified`, `is_visible_on_front`, `comment`, `created_at`) VALUES 
+					('".$entityid."', 0, 0, 'Imported to InventorySource Channel Manager', CURRENT_TIMESTAMP)";
+					//echo "\n6".$updateordersql;
+					$resupdateorder = mysql_query($updateordersql);
+					
+					$updateordersql = "INSERT INTO ".SALES_FLAT_SHIPMENT_GRID." (`entity_id`, `store_id`, `total_qty`, `order_id`, `shipment_status`, `increment_id`, `order_increment_id`, `created_at`, `order_created_at`, `shipping_name`) VALUES 
+					('".$shippingEntityID."', '".$storeID."', '".$totalQtyOrdered."', '".$entityid."', NULL, '".$oID."', '".$oID."', CURRENT_TIMESTAMP, '".$createdAt."', '".$customer_firstname." ".$customer_lastname."')";
+					//echo "\n7".$updateordersql;
+					$resupdateorder = mysql_query($updateordersql);
+					
+					/*$updateordersql = "INSERT INTO ".SALES_FLAT_SHIPMENT_ITEM." (`entity_id`, `parent_id`, `row_total`, `price`, `weight`, `qty`, `product_id`, `order_item_id`, `additional_data`, `description`, `name`, `sku`) VALUES 
+					('".$shippingEntityID."', 1, NULL, 6.9500, 0.1100, 1.0000, 1, 1, NULL, NULL, 'Tenga Egg - Spider', 'ELTEST4')";
+					echo "\n8".$updateordersql;
+					$resupdateorder = mysql_query($updateordersql);
+					*/
 					$xml_str .="<UpdatedOrder>" . $oID . "</UpdatedOrder>";
 					
 				}
 				$oID="";
 				$status="";
-			} 
+			} else if($oID!="" && $status!="" && $status == "complete") {
+				
+				$stateSql = "SELECT state FROM ".SALES_ORDER_STATUS_STATE." where status = '".$status."'";
+				//echo "\n01".$stateSql;
+				$resultState = mysql_query($stateSql);
+				while($rowState = mysql_fetch_array($resultState)){
+					$state = $rowState['state'];
+				}
+				
+				$orderDetailsSql = "select entity_id, store_id, total_qty_ordered, customer_firstname, customer_lastname, quote_id from ".SALES_FLAT_ORDER." where increment_id = '".$oID."' ";
+				//echo "\n02".$orderDetailsSql;
+				$resultorderDetails = mysql_query($orderDetailsSql);
+				
+				while($roworderDetails = mysql_fetch_array($resultorderDetails)){
+					$entityid = $roworderDetails['entity_id'];
+					$storeID = $roworderDetails['store_id'];
+					$totalQtyOrdered = $roworderDetails['total_qty_ordered'];
+					$customer_firstname = $roworderDetails['customer_firstname'];
+					$customer_lastname = $roworderDetails['customer_lastname'];
+					$quote_id = $roworderDetails['quote_id'];
+					
+					$addressTypeSql = "SELECT address_id, address_type, date_format(created_at,'%m-%d-%Y %T') created_at FROM ".SALES_FLAT_QUOTE_ADDRESS." where quote_id = '".$quote_id."'";
+					$resultAddressType = mysql_query($addressTypeSql);
+					$shippingAddressID = "";
+					$billingAddressID = "";
+					$createdAt = "";
+					while($rowAddressType = mysql_fetch_array($resultAddressType)){
+						$createdAt = $rowAddressType['created_at'];
+						$addressType = $rowAddressType['address_type'];
+						if(strtolower($addressType) == "shipping"){
+							$shippingAddressID = $rowAddressType['address_id'];
+						}else if(strtolower($addressType) == "billing"){
+							$billingAddressID = $rowAddressType['address_id'];
+						}
+					}
+
+					$updateordersql = "update ".SALES_FLAT_ORDER." set `state` = '".$state."', `status` = '".$status."', customer_note_notify='0', `updated_at` = CURRENT_TIMESTAMP where `increment_id` = '".$oID."' ";
+					//echo "\n1".$updateordersql;
+					//base_discount_invoiced='0.0000'
+					//base_shipping_invoiced='5.0000'
+					//base_subtotal_invoiced='6.9500'
+					//base_tax_invoiced='0.0000'
+					//base_total_invoiced='11.9500'
+					//base_total_invoiced_cost='3.7500'
+					//base_total_paid='11.9500'
+					//discount_invoiced='0.0000'
+					//shipping_invoiced='5.0000'
+					//subtotal_invoiced='6.9500'
+					//tax_invoiced='0.0000'
+					//total_invoiced='11.9500'
+					//total_paid='11.9500'
+					//base_total_due='0.0000'
+					//total_due='0.0000'
+					//hidden_tax_invoiced='0.0000'
+					//base_hidden_tax_invoiced='0.0000'
+					$resupdateorder = mysql_query($updateordersql);
+					
+					$updateordersql = "update ".SALES_FLAT_ORDER_GRID." set `status` = '".$status."', `updated_at` = CURRENT_TIMESTAMP where `increment_id` = '".$oID."' ";
+					//echo "\n2".$updateordersql;
+					$resupdateorder = mysql_query($updateordersql);
+					
+					$updateordersql = "update ".SALES_FLAT_ORDER_ITEM." set `qty_shipped` = '1', `updated_at` = CURRENT_TIMESTAMP where `order_id` = '".$entityid."' ";
+					//echo "\n3".$updateordersql;
+					$resupdateorder = mysql_query($updateordersql);
+					
+					//sales_flat_quote_item
+					$updateordersql = "INSERT INTO ".SALES_FLAT_ORDER_STATUS_HISTORY." (`parent_id`, `is_customer_notified`, `is_visible_on_front`, `comment`, `status`, `created_at`, `entity_name`) VALUES
+					(".$entityid.", 0, 0, NULL, '".$status."', CURRENT_TIMESTAMP, 'shipment') ";
+					//echo "\n4".$updateordersql;
+					$resupdateorder = mysql_query($updateordersql);
+					
+					$updateordersql = "INSERT INTO ".SALES_FLAT_SHIPMENT." ( `store_id`, `total_weight`, `total_qty`, `email_sent`, `order_id`, `customer_id`, `shipping_address_id`, `billing_address_id`, `shipment_status`, `increment_id`, `created_at`, `updated_at`, `packages`, `shipping_label`) VALUES 
+					('".$storeID."', NULL, '".$totalQtyOrdered."', NULL, '".$entityid."', NULL, '".$shippingAddressID."', '".$billingAddressID."', NULL, '".$oID."', '".$createdAt."', CURRENT_TIMESTAMP, NULL, NULL)";
+					//echo "\n5".$updateordersql;
+					$resupdateorder = mysql_query($updateordersql);
+					$shippingEntityID = mysql_insert_id();
+					
+					$updateordersql = "INSERT INTO ".SALES_FLAT_SHIPMENT_COMMENT." (`parent_id`, `is_customer_notified`, `is_visible_on_front`, `comment`, `created_at`) VALUES 
+					('".$entityid."', 0, 0, 'Imported to InventorySource Channel Manager', CURRENT_TIMESTAMP)";
+					//echo "\n6".$updateordersql;
+					$resupdateorder = mysql_query($updateordersql);
+					
+					$updateordersql = "INSERT INTO ".SALES_FLAT_SHIPMENT_GRID." (`entity_id`, `store_id`, `total_qty`, `order_id`, `shipment_status`, `increment_id`, `order_increment_id`, `created_at`, `order_created_at`, `shipping_name`) VALUES 
+					('".$shippingEntityID."', '".$storeID."', '".$totalQtyOrdered."', '".$entityid."', NULL, '".$oID."', '".$oID."', CURRENT_TIMESTAMP, '".$createdAt."', '".$customer_firstname." ".$customer_lastname."')";
+					//echo "\n7".$updateordersql;
+					$resupdateorder = mysql_query($updateordersql);
+					
+					/*$updateordersql = "INSERT INTO ".SALES_FLAT_SHIPMENT_ITEM." (`entity_id`, `parent_id`, `row_total`, `price`, `weight`, `qty`, `product_id`, `order_item_id`, `additional_data`, `description`, `name`, `sku`) VALUES 
+					('".$shippingEntityID."', 1, NULL, 6.9500, 0.1100, 1.0000, 1, 1, NULL, NULL, 'Tenga Egg - Spider', 'ELTEST4')";
+					echo "\n8".$updateordersql;
+					$resupdateorder = mysql_query($updateordersql);
+					*/
+					$xml_str .="<UpdatedOrder><![CDATA[" . $oID . "]]></UpdatedOrder>";
+					
+				}
+				$oID="";
+				$status="";
+			}  
 			
 		}
 	}  
-	
+	//base_total_due, total_due
 	$xml_str .="</OrderUpdateXML>";
+	//die("");
 	if($selfupdate == 0){
 		output_xml($xml_str);
 	}

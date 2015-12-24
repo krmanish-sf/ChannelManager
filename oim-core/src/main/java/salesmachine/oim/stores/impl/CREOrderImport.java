@@ -306,7 +306,7 @@ public class CREOrderImport extends ChannelBase implements IOrderImport {
 
           order.setShippingDetails(getTagValue("o_shipping", element));
 
-          SimpleDateFormat sdf = new SimpleDateFormat("MM-dd-yyyy");
+          SimpleDateFormat sdf = new SimpleDateFormat("MM-dd-yyyy HH:mm:ss"); // "2015-05-27 04:38:58
           Date d1 = new Date();
           try {
             d1 = sdf.parse(getTagValue("o_time", element));
