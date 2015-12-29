@@ -27,8 +27,7 @@ import com.inventorysource.cm.web.config.ApplicationProperties;
 @WebServlet
 public class LoginHandlerServlet extends HttpServlet {
 	private static final long serialVersionUID = 1L;
-	private static final Logger LOG = LoggerFactory
-			.getLogger(LoginHandlerServlet.class);
+	private static final Logger LOG = LoggerFactory.getLogger(LoginHandlerServlet.class);
 
 	@Override
 	public void init() throws ServletException {
@@ -39,14 +38,11 @@ public class LoginHandlerServlet extends HttpServlet {
 	@Override
 	public void init(ServletConfig config) throws ServletException {
 		super.init(config);
-		LOG.debug(
-				"Webapp [{}] LoginHandlerServlet initialised on context path: {}",
-				config.getServletContext().getServletContextName(), config
-						.getServletContext().getContextPath());
+		LOG.debug("Webapp [{}] LoginHandlerServlet initialised on context path: {}", config.getServletContext().getServletContextName(),
+				config.getServletContext().getContextPath());
 	}
 
-	protected void doPost(HttpServletRequest req, HttpServletResponse resp)
-			throws ServletException, IOException {
+	protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		HttpSession session = req.getSession(false);
 		if (session == null || session.getAttribute("reps") == null) {
 			String username = req.getParameter("username");
@@ -56,23 +52,18 @@ public class LoginHandlerServlet extends HttpServlet {
 			loginDetails.put("username", username);
 			loginDetails.put("password", password);
 			RestTemplate template = new RestTemplate();
-			ResponseEntity<Reps> entity = template.postForEntity(
-					ApplicationProperties.getRestServiceUrl() + "login",
-					loginDetails,Reps.class);
+			ResponseEntity<Reps> entity = template.postForEntity(ApplicationProperties.getRestServiceUrl() + "login", loginDetails, Reps.class);
 			Reps r = entity.getBody();
 			if (r == null) {
-				req.setAttribute("error",
-						"Invalid user name or password! Please try again!");
-				RequestDispatcher rd = req.getServletContext()
-						.getRequestDispatcher("/login.jsp");
+				req.setAttribute("error", "Invalid user name or password! Please try again!");
+				RequestDispatcher rd = req.getServletContext().getRequestDispatcher("/login.jsp");
 				rd.include(req, resp);
 				return;
 			}
 
 			session = req.getSession(true);
 			session.setAttribute("reps", r);
-			session.setAttribute("REST_URL",
-					ApplicationProperties.getRestServiceUrl());
+			session.setAttribute("REST_URL", ApplicationProperties.getRestServiceUrl());
 			Cookie cookie = new Cookie("SESSIONID", session.getId());
 			cookie.setPath("/");
 			resp.addCookie(cookie);
@@ -82,10 +73,12 @@ public class LoginHandlerServlet extends HttpServlet {
 					done = "index.jsp";
 				resp.sendRedirect(done);
 			} else {
-				req.setAttribute(
-						"error",
-						"Channel Manager Service is not activated for this account. Use the Sign Up link to activate the service.");
+				req.setAttribute("error", "Channel Manager Service is not activated for this account. Use the Sign Up link to activate the service.");
 				LOG.debug("Channel Manager Service is not activated for this account. Use the Sign Up link to activate the service.");
+				// cookie.setValue(null);
+				// cookie.setMaxAge(0);
+				// cookie.setPath("/");
+				// resp.addCookie(cookie);
 				resp.sendRedirect("payment.jsp");
 			}
 
@@ -94,25 +87,21 @@ public class LoginHandlerServlet extends HttpServlet {
 		}
 	}
 
-	protected void doGet(HttpServletRequest req, HttpServletResponse resp)
-			throws ServletException, IOException {
+	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		String sessionid = req.getParameter("sessionid");
 		if (sessionid != null) {
 			Reps rep = SessionListener.getRep(sessionid);
-			resp.addHeader("vid",
-					String.valueOf((rep == null ? 0 : rep.getVendorId())));
+			resp.addHeader("vid", String.valueOf((rep == null ? 0 : rep.getVendorId())));
 			resp.getOutputStream().write("Success".getBytes());
 			return;
 		}
 		HttpSession session = req.getSession(false);
 		if (session == null) {
-			RequestDispatcher rd = req.getServletContext()
-					.getRequestDispatcher("/login.jsp");
+			RequestDispatcher rd = req.getServletContext().getRequestDispatcher("/login.jsp");
 			rd.include(req, resp);
 		} else if (session.getAttribute("reps") == null) {
 
-			RequestDispatcher rd = req.getServletContext()
-					.getRequestDispatcher("/login.jsp");
+			RequestDispatcher rd = req.getServletContext().getRequestDispatcher("/login.jsp");
 			rd.include(req, resp);
 
 		} else {

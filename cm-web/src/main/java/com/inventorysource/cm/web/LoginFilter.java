@@ -56,10 +56,12 @@ public class LoginFilter implements javax.servlet.Filter {
 			Reps reps = (Reps) session.getAttribute("reps");
 			if (reps.getCmAllowed().intValue() != 1) {
 				URI = request.getContextPath() + "/payment.jsp";
+				session.setAttribute("reps", null);
 			}
 			RequestDispatcher rd = request.getServletContext()
 					.getRequestDispatcher(
 							URI.replace(request.getContextPath(), ""));
+			
 			rd.include(request, response);
 		}
 	}

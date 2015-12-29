@@ -14,8 +14,7 @@ import org.slf4j.LoggerFactory;
 import salesmachine.hibernatedb.Reps;
 
 public class SessionListener implements HttpSessionListener {
-	private static final Logger log = LoggerFactory
-			.getLogger(SessionListener.class);
+	private static final Logger log = LoggerFactory.getLogger(SessionListener.class);
 	private int sessionCount = 0;
 	private static final Map<String, HttpSession> sessionMap = new ConcurrentHashMap<String, HttpSession>();;
 
@@ -45,9 +44,7 @@ public class SessionListener implements HttpSessionListener {
 		}
 
 		Date now = new Date();
-		String message = new StringBuffer("Session ").append(id)
-				.append(" created at ").append(now.toString())
-				.append(". Total ").append(sessionCount)
+		String message = new StringBuffer("Session ").append(id).append(" created at ").append(now.toString()).append(". Total ").append(sessionCount)
 				.append(" live sessions.").toString();
 		log.debug(message);
 	}
@@ -61,8 +58,7 @@ public class SessionListener implements HttpSessionListener {
 			sessionMap.remove(id);
 			--sessionCount;
 		}
-		StringBuffer message = new StringBuffer("Session: {").append("" + id)
-				.append("} destroyed.").append(" There are now ")
+		StringBuffer message = new StringBuffer("Session: {").append("" + id).append("} destroyed.").append(" There are now ")
 				.append("" + sessionCount).append(" live sessions.");
 		log.info(message.toString());
 	}
