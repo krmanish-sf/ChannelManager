@@ -35,6 +35,7 @@ public class OimConstants {
 	public static final Integer ORDER_STATUS_PROCESSED_PENDING = new Integer(4);
 	public static final Integer ORDER_STATUS_MANUALLY_PROCESSED = new Integer(5);
 	public static final Integer ORDER_STATUS_CANCELED = new Integer(6);
+	public static final Integer ORDER_STATUS_COMPLETE = new Integer(8);
 	//public static final Integer ORDER_STATUS_UNCONFIRMED = new Integer(100);
 	
 	public static final Integer SUPPLIER_METHOD_TYPE_ORDERPUSH = new Integer(1);

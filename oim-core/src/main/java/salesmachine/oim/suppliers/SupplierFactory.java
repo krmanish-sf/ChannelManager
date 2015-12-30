@@ -938,6 +938,22 @@ public class SupplierFactory {
       if (orderStatus != null && oimChannels.getTestMode() == 0) {
         // if (existingQuantity < oimOrderDetails.getQuantity())
         iOrderImport.updateStoreOrder(oimOrderDetails, orderStatus);
+        try {
+          tx = session.getTransaction();
+          if (tx != null && tx.isActive())
+            tx.commit();
+          tx = session.beginTransaction();
+          oimOrderDetails
+              .setOimOrderStatuses(new OimOrderStatuses(OimConstants.ORDER_STATUS_COMPLETE));
+          session.update(oimOrderDetails);
+          tx.commit();
+        } catch (Exception e) {
+          if (tx != null && tx.isActive()) {
+            tx.rollback();
+          }
+          log.error(e.getMessage(), e);
+        }
+
       }
 
     } catch (ChannelConfigurationException e) {

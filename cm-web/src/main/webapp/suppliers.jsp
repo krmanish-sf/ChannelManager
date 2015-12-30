@@ -1202,7 +1202,12 @@ If you have not yet configured your supplier, click "Add Supplier" to do it now.
 															+ o.accountNumber;
 													ret += "<br> <strong>Customer Number</strong>: "
 															+ o.login;
-												} else {
+												}
+												else if(o.oimSuppliers.isCustom){
+													ret += "<strong>Account</strong>: "
+														+ o.accountNumber;
+												}
+												else {
 													ret += "<strong>Account</strong>: "
 															+ o.accountNumber;
 													ret += "<br> <strong>Login</strong>: "
