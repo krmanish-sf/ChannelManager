@@ -16,6 +16,9 @@ var STATUS = [ {
 }, {
 	"statusId" : 0,
 	"statusValue" : "Unprocessed"
+}, {
+	"statusId" : 8,
+	"statusValue" : "Completed"
 } ];
 
 var $tooltip = $(
