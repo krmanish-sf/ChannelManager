@@ -107,7 +107,7 @@ public class OrderTrackingTask extends TimerTask {
         // has shipped status but not completed status)
         query = session.createSQLQuery(
             "select * from kdyer.oim_order_tracking t where t.detail_id in (select d.detail_id from KDYER.OIM_ORDER_DETAILS d where"
-                + " d.status_id=7 and d.PROCESSING_TM>to_date('29-DEC-15','DD-Mon-YY'))");
+                + " d.status_id=7 and d.PROCESSING_TM>to_date('31-DEC-15','DD-Mon-YY'))");
 
         List<OimOrderTracking> trackingList = query.list();
 

@@ -943,8 +943,9 @@ public class SupplierFactory {
           if (tx != null && tx.isActive())
             tx.commit();
           tx = session.beginTransaction();
-          oimOrderDetails
-              .setOimOrderStatuses(new OimOrderStatuses(OimConstants.ORDER_STATUS_COMPLETE));
+          if (orderStatus.isShipped())
+            oimOrderDetails
+                .setOimOrderStatuses(new OimOrderStatuses(OimConstants.ORDER_STATUS_COMPLETE));
           session.update(oimOrderDetails);
           tx.commit();
         } catch (Exception e) {
