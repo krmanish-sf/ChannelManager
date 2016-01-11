@@ -144,7 +144,7 @@ public class ChannelEventHandler implements ChannelService {
 			LOG.error("Error in pulling orders for channel id: {}", channelId, e);
 			stream.println(e.getMessage());
 			oimOrderBatches
-					.setDescription("Error occured in pulling order due to ChannelOrderFormat Error." + e.getMessage());
+					.setDescription(e.getMessage());
 			oimOrderBatches.setErrorCode(ChannelOrderFormatException.getErrorcode());
 		} finally {
 			Session m_dbSession = SessionManager.currentSession();
@@ -153,7 +153,7 @@ public class ChannelEventHandler implements ChannelService {
 				tx.commit();
 			tx = m_dbSession.beginTransaction();
 
-			m_dbSession.save(oimOrderBatches);
+			m_dbSession.saveOrUpdate(oimOrderBatches);
 			tx.commit();
 		}
 

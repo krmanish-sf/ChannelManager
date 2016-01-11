@@ -11,6 +11,7 @@ import java.util.TimerTask;
 
 import org.hibernate.HibernateException;
 import org.hibernate.Query;
+import org.hibernate.SQLQuery;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
 import org.slf4j.Logger;
@@ -105,11 +106,11 @@ public class OrderTrackingTask extends TimerTask {
         audit.persistAutomationAudit();
         // update the tracking to the store if not sent when got updated in CM (those details which
         // has shipped status but not completed status)
-        query = session.createSQLQuery(
+        SQLQuery sqlQuery = session.createSQLQuery(
             "select * from kdyer.oim_order_tracking t where t.detail_id in (select d.detail_id from KDYER.OIM_ORDER_DETAILS d where"
                 + " d.status_id=7 and d.PROCESSING_TM>to_date('31-DEC-15','DD-Mon-YY'))");
-
-        List<OimOrderTracking> trackingList = query.list();
+        sqlQuery.addEntity(OimOrderTracking.class);
+        List<OimOrderTracking> trackingList = sqlQuery.list();
 
         for (OimOrderTracking tracking : trackingList) {
           OrderStatus orderStatus = OrderStatus.getOrderStatusFromOimOrderTracking(tracking);

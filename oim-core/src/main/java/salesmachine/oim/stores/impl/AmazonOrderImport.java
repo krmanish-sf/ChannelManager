@@ -21,6 +21,7 @@ import javax.xml.datatype.XMLGregorianCalendar;
 
 import org.apache.axis.encoding.Base64;
 import org.apache.axis.utils.ByteArrayOutputStream;
+import org.hibernate.HibernateException;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
 import org.slf4j.Logger;
@@ -128,6 +129,7 @@ class AmazonOrderImport extends ChannelBase implements IOrderImport {
       throws ChannelCommunicationException, ChannelOrderFormatException,
       ChannelConfigurationException {
     Transaction tx = m_dbSession.getTransaction();
+    String amazonOrderId=null;
     try {
       batch.setOimChannels(m_channel);
       batch.setOimOrderBatchesTypes(batchesTypes);
@@ -158,14 +160,15 @@ class AmazonOrderImport extends ChannelBase implements IOrderImport {
       }
       List<Message> msgList = new ArrayList<Message>();
       Calendar c = Calendar.getInstance();
-      if (m_channel.getLastFetchTm() != null) {
-        c.setTime(m_channel.getLastFetchTm());
-        c.add(Calendar.HOUR, -2);
-      } else {
-        c.setTime(new Date());
-        c.add(Calendar.DATE, -5);
-      }
-
+//      if (m_channel.getLastFetchTm() != null) {
+//        c.setTime(m_channel.getLastFetchTm());
+//        c.add(Calendar.HOUR, -2);
+//      } else {
+//        c.setTime(new Date());
+//        c.add(Calendar.DATE, -5);
+//      }
+      c.setTime(new Date());
+      c.add(Calendar.HOUR, -24);
       log.info("Set to fetch Orders after {}", c.getTime());
       XMLGregorianCalendar createdAfter = MwsUtl.getDTF().newXMLGregorianCalendar();
       createdAfter.setYear(c.get(Calendar.YEAR));
@@ -189,9 +192,8 @@ class AmazonOrderImport extends ChannelBase implements IOrderImport {
         log.info("Response: {}", rhmd.toString());
 
         log.info("Total order(s) fetched: {}", orderList.size());
-
         for (Order order : orderList) {
-          String amazonOrderId = order.getAmazonOrderId();
+          amazonOrderId = order.getAmazonOrderId();
           if (orderAlreadyImported(amazonOrderId)) {
             log.warn("Order#{} is already imported in the system, skipping it.", amazonOrderId);
             continue;
@@ -403,7 +405,20 @@ class AmazonOrderImport extends ChannelBase implements IOrderImport {
             msgList);
       }
       log.debug("Finished importing orders...");
-    } catch (RuntimeException e) {
+    } 
+    catch(HibernateException e){
+      log.error("Error occured during saving the pulled order. store order id - " + amazonOrderId, e);
+      try {
+        m_dbSession.clear();
+        tx.rollback();
+      } catch (RuntimeException e1) {
+        log.error("Couldn’t roll back transaction", e1);
+        e1.printStackTrace();
+      }
+      throw new ChannelOrderFormatException(
+          "Error occured during pull of store order id - " + amazonOrderId , e);
+    }
+    catch (RuntimeException e) {
       if (tx != null && tx.isActive())
         tx.rollback();
       log.error(e.getMessage(), e);
@@ -411,6 +426,11 @@ class AmazonOrderImport extends ChannelBase implements IOrderImport {
 
     } catch (InterruptedException e1) {
       log.error(e1.getMessage());
+      throw new ChannelOrderFormatException(e1.getMessage(), e1);
+    }
+    catch (Exception e1) {
+      log.error(e1.getMessage());
+      throw new ChannelOrderFormatException(e1.getMessage(), e1);
     }
     log.info("Returning Order batch with size: {}", batch.getOimOrderses().size());
   }

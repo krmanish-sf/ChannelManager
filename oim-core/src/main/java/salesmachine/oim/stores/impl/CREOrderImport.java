@@ -19,6 +19,7 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.hibernate.HibernateException;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
 import org.slf4j.Logger;
@@ -178,7 +179,23 @@ public class CREOrderImport extends ChannelBase implements IOrderImport {
       m_channel.setLastFetchTm(new Date());
       m_dbSession.persist(m_channel);
       tx.commit();
-    } catch (RuntimeException e) {
+    } 
+    catch(HibernateException e){
+
+      LOG.error("Error occured during pulling order", e);
+      try {
+        m_dbSession.clear();
+        tx.rollback();
+      } catch (RuntimeException e1) {
+        LOG.error("Couldn’t roll back transaction", e1);
+        e1.printStackTrace();
+      }
+      throw new ChannelOrderFormatException(
+          "Error occured during pulling order", e);
+    
+    }
+    
+    catch (RuntimeException e) {
       if (tx != null && tx.isActive())
         tx.rollback();
       LOG.error(e.getMessage(), e);

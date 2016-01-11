@@ -41,7 +41,7 @@
             <column name="DELIVERY_CITY" length="50" />
         </property>
         <property name="deliveryState" type="string">
-            <column name="DELIVERY_STATE" length="20" />
+            <column name="DELIVERY_STATE" length="50" />
         </property>
          <property name="deliveryStateCode" type="string">
             <column name="DELIVERY_STATE_CODE" length="5" />
@@ -77,7 +77,7 @@
             <column name="BILLING_CITY" length="50" />
         </property>
         <property name="billingState" type="string">
-            <column name="BILLING_STATE" length="20" />
+            <column name="BILLING_STATE" length="50" />
         </property>
         <property name="billingCountry" type="string">
             <column name="BILLING_COUNTRY" length="20" />
@@ -107,7 +107,7 @@
             <column name="CUSTOMER_CITY" length="50" />
         </property>
         <property name="customerState" type="string">
-            <column name="CUSTOMER_STATE" length="20" />
+            <column name="CUSTOMER_STATE" length="50" />
         </property>
         <property name="customerCountry" type="string">
             <column name="CUSTOMER_COUNTRY" length="20" />

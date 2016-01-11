@@ -20,6 +20,7 @@ import java.util.Set;
 
 import javax.net.ssl.HttpsURLConnection;
 
+import org.hibernate.HibernateException;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
 import org.json.simple.JSONArray;
@@ -151,12 +152,10 @@ public class BigcommerceOrderImport extends ChannelBase {
       responseCode = connection.getResponseCode();
       if (responseCode == 200 || responseCode == 201) {
         response = getStringFromStream(connection.getInputStream());
-      } 
-      else if (responseCode == 204) {
-    	  log.info("Request Successful, but no response, cause there may be no data");
-    	  return response;
-      }
-      else if (responseCode == 429) {
+      } else if (responseCode == 204) {
+        log.info("Request Successful, but no response, cause there may be no data");
+        return response;
+      } else if (responseCode == 429) {
         connection.disconnect();
         int waitTime = Integer.parseInt(connection.getHeaderField("X-Retry-After"));
         log.info("API rate limit exceeded, waiting for " + waitTime + " seconds");
@@ -278,163 +277,183 @@ public class BigcommerceOrderImport extends ChannelBase {
         String requestURL = storeBaseURL + "/orders.json?status_id=" + pullStatusID
             + "&limit=250&page=" + page++;
         String responseOrders = sendRequest(null, requestURL, GET_METHOD_TYPE);
-        if (responseOrders==null || responseOrders.equalsIgnoreCase("null")) {
+        if (responseOrders == null || responseOrders.equalsIgnoreCase("null")) {
           log.info("No orders found to be pulled " + m_channel.getChannelId());
           return;
         }
         JSONArray orderJsonArray = (JSONArray) parser.parse(responseOrders);
         batchPullCount = orderJsonArray.size();
         totalOrders += batchPullCount;
-        tx = m_dbSession.beginTransaction();
+        String storeOrderId = null;
         for (int i = 0; i < orderJsonArray.size(); i++) {
-          JSONObject orderJsonObj = (JSONObject) orderJsonArray.get(i);
-          String storeOrderId = orderJsonObj.get("id").toString();
-          if (orderAlreadyImported(storeOrderId)) {
-            log.info("Order#{} is already imported in the system, updating Order.", storeOrderId);
-            continue;
-          }
-          OimOrders oimOrders = new OimOrders();
-          oimOrders.setStoreOrderId(storeOrderId);
-          String customer_id = removeNull(orderJsonObj.get("customer_id"));
-          String customerDataUrl = storeBaseURL + "/customers.json?min_id=" + customer_id
-              + "&max_id=" + customer_id;
-          JSONArray customers = (JSONArray) parser
-              .parse(sendRequest(null, customerDataUrl, GET_METHOD_TYPE));
-          JSONObject customer = (JSONObject) customers.get(0);
-          oimOrders.setCustomerName(
-              removeNull(customer.get("first_name") + " " + removeNull(customer.get("last_name"))));
-          oimOrders.setCustomerEmail(removeNull(customer.get("email")));
-          oimOrders.setCustomerPhone(removeNull(customer.get("phone")));
-          JSONObject billingObj = (JSONObject) orderJsonObj.get("billing_address");
-          if (billingObj != null) {
-            oimOrders.setBillingName(removeNull(billingObj.get("first_name")) + " "
-                + removeNull(billingObj.get("last_name")));
-            oimOrders.setBillingCompany(removeNull(billingObj.get("company")));
-            oimOrders.setBillingStreetAddress(removeNull(billingObj.get("street_1")));
-            oimOrders.setBillingSuburb(removeNull(billingObj.get("street_2")));
-            oimOrders.setBillingCity(removeNull(billingObj.get("city")));
-            oimOrders.setBillingState(removeNull(billingObj.get("state")));
-            oimOrders.setBillingZip(removeNull(billingObj.get("zip")));
-            oimOrders.setBillingCountry(removeNull(billingObj.get("country")));
-            oimOrders.setBillingPhone(removeNull(billingObj.get("phone")));
-            oimOrders.setBillingEmail(removeNull(billingObj.get("email")));
-
-            // set customer address same as billing address
-            oimOrders.setCustomerCompany(removeNull(billingObj.get("company")));
-            oimOrders.setCustomerStreetAddress(removeNull(billingObj.get("street_1")));
-            oimOrders.setCustomerSuburb(removeNull(billingObj.get("street_2")));
-            oimOrders.setCustomerCity(removeNull(billingObj.get("city")));
-            oimOrders.setCustomerState(removeNull(billingObj.get("state")));
-            oimOrders.setCustomerZip(removeNull(billingObj.get("zip")));
-            oimOrders.setCustomerCountry(removeNull(billingObj.get("country")));
-          }
-          String shippingAddressesUrl = (String) ((JSONObject) orderJsonObj
-              .get("shipping_addresses")).get("resource");
-          shippingAddressesUrl = storeBaseURL + shippingAddressesUrl + ".json";
-          JSONArray shippingAddresses = (JSONArray) parser
-              .parse(sendRequest(null, shippingAddressesUrl, GET_METHOD_TYPE));
-          String shipMethod = null;
-          if (shippingAddresses.size() == 1) {
-            JSONObject shippingAddObj = (JSONObject) shippingAddresses.get(0);
-            oimOrders.setDeliveryName(removeNull(shippingAddObj.get("first_name") + " "
-                + removeNull(shippingAddObj.get("last_name"))));
-            oimOrders.setDeliveryCompany(removeNull(shippingAddObj.get("company")));
-            oimOrders.setDeliveryStreetAddress(removeNull(shippingAddObj.get("street_1")));
-            oimOrders.setDeliverySuburb(removeNull(shippingAddObj.get("street_2")));
-            oimOrders.setDeliveryCity(removeNull(shippingAddObj.get("city")));
-            oimOrders.setDeliveryZip(removeNull(shippingAddObj.get("zip")));
-            oimOrders.setDeliveryCountry(removeNull(shippingAddObj.get("country")));
-            oimOrders.setDeliveryState(removeNull(shippingAddObj.get("state")));
-            oimOrders.setDeliveryStateCode(validateAndGetStateCode(oimOrders));
-            oimOrders.setDeliveryEmail(removeNull(shippingAddObj.get("email")));
-            oimOrders.setDeliveryPhone(removeNull(shippingAddObj.get("phone")));
-            shipMethod = removeNull(shippingAddObj.get("shipping_method"));
-            oimOrders.setShippingDetails(shipMethod);
-          }
-          oimOrders.setInsertionTm(new Date());
-          oimOrders.setOimOrderBatches(batch);
-          batch.getOimOrderses().add(oimOrders);
-          oimOrders.setOrderFetchTm(new Date());
-          String orderCreatedTm = removeNull(orderJsonObj.get("date_created"));
-          Date order_tm = null;
           try {
-            order_tm = sdf.parse(orderCreatedTm);
-          } catch (java.text.ParseException e) {
-            throw new ChannelOrderFormatException(
-                "Verify Bigcommerce API date format" + e.getMessage());
-          }
-          oimOrders.setOrderTm(order_tm);
-          oimOrders.setOrderTotalAmount(
-              Double.parseDouble(removeNull(orderJsonObj.get("total_inc_tax"))));
-          oimOrders.setPayMethod(removeNull(orderJsonObj.get("payment_method")));
-          for (OimChannelShippingMap entity : oimChannelShippingMapList) {
-            String shippingRegEx = entity.getShippingRegEx();
-            if (shipMethod.equalsIgnoreCase(shippingRegEx)) {
-              oimOrders.setOimShippingMethod(entity.getOimShippingMethod());
-              log.info("Shipping set to " + entity.getOimShippingMethod());
-              break;
+           
+            JSONObject orderJsonObj = (JSONObject) orderJsonArray.get(i);
+            storeOrderId = orderJsonObj.get("id").toString();
+            if (orderAlreadyImported(storeOrderId)) {
+              log.info("Order#{} is already imported in the system, updating Order.", storeOrderId);
+              continue;
             }
-          }
-          if (oimOrders.getOimShippingMethod() == null)
-            log.warn("Shipping can't be mapped for order " + oimOrders.getStoreOrderId());
+            if (tx != null && tx.isActive())
+              tx = m_dbSession.getTransaction();
+            else
+              tx = m_dbSession.beginTransaction();
+            OimOrders oimOrders = new OimOrders();
+            oimOrders.setStoreOrderId(storeOrderId);
+            String customer_id = removeNull(orderJsonObj.get("customer_id"));
+            String customerDataUrl = storeBaseURL + "/customers.json?min_id=" + customer_id
+                + "&max_id=" + customer_id;
+            JSONArray customers = (JSONArray) parser
+                .parse(sendRequest(null, customerDataUrl, GET_METHOD_TYPE));
+            JSONObject customer = (JSONObject) customers.get(0);
+            oimOrders.setCustomerName(removeNull(
+                customer.get("first_name") + " " + removeNull(customer.get("last_name"))));
+            oimOrders.setCustomerEmail(removeNull(customer.get("email")));
+            oimOrders.setCustomerPhone(removeNull(customer.get("phone")));
+            JSONObject billingObj = (JSONObject) orderJsonObj.get("billing_address");
+            if (billingObj != null) {
+              oimOrders.setBillingName(removeNull(billingObj.get("first_name")) + " "
+                  + removeNull(billingObj.get("last_name")));
+              oimOrders.setBillingCompany(removeNull(billingObj.get("company")));
+              oimOrders.setBillingStreetAddress(removeNull(billingObj.get("street_1")));
+              oimOrders.setBillingSuburb(removeNull(billingObj.get("street_2")));
+              oimOrders.setBillingCity(removeNull(billingObj.get("city")));
+              oimOrders.setBillingState(removeNull(billingObj.get("state")));
+              oimOrders.setBillingZip(removeNull(billingObj.get("zip")));
+              oimOrders.setBillingCountry(removeNull(billingObj.get("country")));
+              oimOrders.setBillingPhone(removeNull(billingObj.get("phone")));
+              oimOrders.setBillingEmail(removeNull(billingObj.get("email")));
 
-          m_dbSession.saveOrUpdate(oimOrders);
-
-          String product_resource = removeNull(
-              ((JSONObject) orderJsonObj.get("products")).get("resource"));
-          String product_resource_url = storeBaseURL + product_resource + ".json";
-          Set<OimOrderDetails> detailSet = new HashSet<OimOrderDetails>();
-          JSONArray orderItems = (JSONArray) parser
-              .parse(sendRequest(null, product_resource_url, GET_METHOD_TYPE));
-          for (int x = 0; x < orderItems.size(); x++) {
-            JSONObject orderItem = (JSONObject) orderItems.get(x);
-            OimOrderDetails details = new OimOrderDetails();
-            details.setCostPrice(Double.parseDouble(removeNull(orderItem.get("base_cost_price"))));
-            details.setInsertionTm(new Date());
-            details
-                .setOimOrderStatuses(new OimOrderStatuses(OimConstants.ORDER_STATUS_UNPROCESSED));
-            String sku = removeNull(orderItem.get("sku")).toUpperCase();
-            OimSuppliers oimSuppliers = null;
-            String prefix = null;
-            List<OimSuppliers> blankPrefixSupplierList = new ArrayList<OimSuppliers>();
-            for (Iterator<OimSuppliers> itr = supplierMap.keySet().iterator();itr.hasNext();) {
-              OimSuppliers supplier = itr.next();
-              prefix = supplierMap.get(supplier);
-              if (prefix==null) {
-                blankPrefixSupplierList.add(supplier);
-                continue;
-              }
-              if (sku.toUpperCase().startsWith(prefix)) {
-                oimSuppliers = supplier;
+              // set customer address same as billing address
+              oimOrders.setCustomerCompany(removeNull(billingObj.get("company")));
+              oimOrders.setCustomerStreetAddress(removeNull(billingObj.get("street_1")));
+              oimOrders.setCustomerSuburb(removeNull(billingObj.get("street_2")));
+              oimOrders.setCustomerCity(removeNull(billingObj.get("city")));
+              oimOrders.setCustomerState(removeNull(billingObj.get("state")));
+              oimOrders.setCustomerZip(removeNull(billingObj.get("zip")));
+              oimOrders.setCustomerCountry(removeNull(billingObj.get("country")));
+            }
+            String shippingAddressesUrl = (String) ((JSONObject) orderJsonObj
+                .get("shipping_addresses")).get("resource");
+            shippingAddressesUrl = storeBaseURL + shippingAddressesUrl + ".json";
+            JSONArray shippingAddresses = (JSONArray) parser
+                .parse(sendRequest(null, shippingAddressesUrl, GET_METHOD_TYPE));
+            String shipMethod = null;
+            if (shippingAddresses.size() == 1) {
+              JSONObject shippingAddObj = (JSONObject) shippingAddresses.get(0);
+              oimOrders.setDeliveryName(removeNull(shippingAddObj.get("first_name") + " "
+                  + removeNull(shippingAddObj.get("last_name"))));
+              oimOrders.setDeliveryCompany(removeNull(shippingAddObj.get("company")));
+              oimOrders.setDeliveryStreetAddress(removeNull(shippingAddObj.get("street_1")));
+              oimOrders.setDeliverySuburb(removeNull(shippingAddObj.get("street_2")));
+              oimOrders.setDeliveryCity(removeNull(shippingAddObj.get("city")));
+              oimOrders.setDeliveryZip(removeNull(shippingAddObj.get("zip")));
+              oimOrders.setDeliveryCountry(removeNull(shippingAddObj.get("country")));
+              oimOrders.setDeliveryState(removeNull(shippingAddObj.get("state")));
+              oimOrders.setDeliveryStateCode(validateAndGetStateCode(oimOrders));
+              oimOrders.setDeliveryEmail(removeNull(shippingAddObj.get("email")));
+              oimOrders.setDeliveryPhone(removeNull(shippingAddObj.get("phone")));
+              shipMethod = removeNull(shippingAddObj.get("shipping_method"));
+              oimOrders.setShippingDetails(shipMethod);
+            }
+            oimOrders.setInsertionTm(new Date());
+            oimOrders.setOimOrderBatches(batch);
+            batch.getOimOrderses().add(oimOrders);
+            oimOrders.setOrderFetchTm(new Date());
+            String orderCreatedTm = removeNull(orderJsonObj.get("date_created"));
+            Date order_tm = null;
+            try {
+              order_tm = sdf.parse(orderCreatedTm);
+            } catch (java.text.ParseException e) {
+              throw new ChannelOrderFormatException(
+                  "Verify Bigcommerce API date format" + e.getMessage());
+            }
+            oimOrders.setOrderTm(order_tm);
+            oimOrders.setOrderTotalAmount(
+                Double.parseDouble(removeNull(orderJsonObj.get("total_inc_tax"))));
+            oimOrders.setPayMethod(removeNull(orderJsonObj.get("payment_method")));
+            for (OimChannelShippingMap entity : oimChannelShippingMapList) {
+              String shippingRegEx = entity.getShippingRegEx();
+              if (shipMethod.equalsIgnoreCase(shippingRegEx)) {
+                oimOrders.setOimShippingMethod(entity.getOimShippingMethod());
+                log.info("Shipping set to " + entity.getOimShippingMethod());
                 break;
               }
             }
-            if (oimSuppliers == null && blankPrefixSupplierList.size() == 1) {
-              oimSuppliers = blankPrefixSupplierList.get(0);
+            if (oimOrders.getOimShippingMethod() == null)
+              log.warn("Shipping can't be mapped for order " + oimOrders.getStoreOrderId());
 
+            m_dbSession.saveOrUpdate(oimOrders);
+
+            String product_resource = removeNull(
+                ((JSONObject) orderJsonObj.get("products")).get("resource"));
+            String product_resource_url = storeBaseURL + product_resource + ".json";
+            Set<OimOrderDetails> detailSet = new HashSet<OimOrderDetails>();
+            JSONArray orderItems = (JSONArray) parser
+                .parse(sendRequest(null, product_resource_url, GET_METHOD_TYPE));
+            for (int x = 0; x < orderItems.size(); x++) {
+              JSONObject orderItem = (JSONObject) orderItems.get(x);
+              OimOrderDetails details = new OimOrderDetails();
+              details
+                  .setCostPrice(Double.parseDouble(removeNull(orderItem.get("base_cost_price"))));
+              details.setInsertionTm(new Date());
+              details
+                  .setOimOrderStatuses(new OimOrderStatuses(OimConstants.ORDER_STATUS_UNPROCESSED));
+              String sku = removeNull(orderItem.get("sku")).toUpperCase();
+              OimSuppliers oimSuppliers = null;
+              String prefix = null;
+              List<OimSuppliers> blankPrefixSupplierList = new ArrayList<OimSuppliers>();
+              for (Iterator<OimSuppliers> itr = supplierMap.keySet().iterator(); itr.hasNext();) {
+                OimSuppliers supplier = itr.next();
+                prefix = supplierMap.get(supplier);
+                if (prefix == null) {
+                  blankPrefixSupplierList.add(supplier);
+                  continue;
+                }
+                if (sku.toUpperCase().startsWith(prefix)) {
+                  oimSuppliers = supplier;
+                  break;
+                }
+              }
+              if (oimSuppliers == null && blankPrefixSupplierList.size() == 1) {
+                oimSuppliers = blankPrefixSupplierList.get(0);
+
+              }
+              if (oimSuppliers != null) {
+                details.setOimSuppliers(oimSuppliers);
+              }
+              // setting order_address_id in product description to be
+              // used later while updating order.
+              details.setProductDesc(removeNull(orderItem.get("order_address_id")));
+              details.setProductName(removeNull(orderItem.get("name")));
+              details.setQuantity(Integer.parseInt(removeNull(orderItem.get("quantity"))));
+              details.setSalePrice(Double.parseDouble(removeNull(orderItem.get("base_price"))));
+              details.setSku(sku);
+              details.setStoreOrderItemId(removeNull(orderItem.get("id")));
+              details.setOimOrders(oimOrders);
+              m_dbSession.save(details);
+              detailSet.add(details);
             }
-            if (oimSuppliers != null) {
-              details.setOimSuppliers(oimSuppliers);
+            // Check if store is not in test mode.
+            if (m_channel.getTestMode() == 0) {
+              // update order status on store to acknowledge order has been received by CM
+              String orderStatusUpdateUrl = storeBaseURL + "/orders/" + storeOrderId;
+              sendRequest(confirmedOrderStatusJSON, orderStatusUpdateUrl, PUT_METHOD_TYPE);
+            } else {
+              log.warn("Acknowledgement to channel was not sent as Channel is set to test mode.");
             }
-            // setting order_address_id in product description to be
-            // used later while updating order.
-            details.setProductDesc(removeNull(orderItem.get("order_address_id")));
-            details.setProductName(removeNull(orderItem.get("name")));
-            details.setQuantity(Integer.parseInt(removeNull(orderItem.get("quantity"))));
-            details.setSalePrice(Double.parseDouble(removeNull(orderItem.get("base_price"))));
-            details.setSku(sku);
-            details.setStoreOrderItemId(removeNull(orderItem.get("id")));
-            details.setOimOrders(oimOrders);
-            m_dbSession.save(details);
-            detailSet.add(details);
-          }
-          // Check if store is not in test mode.
-          if (m_channel.getTestMode() == 0) {
-            // update order status on store to acknowledge order has been received by CM
-            String orderStatusUpdateUrl = storeBaseURL + "/orders/" + storeOrderId;
-            sendRequest(confirmedOrderStatusJSON, orderStatusUpdateUrl, PUT_METHOD_TYPE);
-          } else {
-            log.warn("Acknowledgement to channel was not sent as Channel is set to test mode.");
+            tx.commit();
+          } catch (HibernateException e) {
+            log.error("Error occured during pull of store order id - " + storeOrderId, e);
+            try {
+              m_dbSession.clear();
+              tx.rollback();
+            } catch (RuntimeException e1) {
+              log.error("Couldn’t roll back transaction", e1);
+              e1.printStackTrace();
+            }
+            throw new ChannelOrderFormatException(
+                "Error occured during pull of store order id - " + storeOrderId, e);
           }
         }
       } while (batchPullCount == 250);
@@ -443,8 +462,13 @@ public class BigcommerceOrderImport extends ChannelBase {
       throw new ChannelOrderFormatException(e.getMessage());
     }
     log.info("Fetched {} order(s)", totalOrders);
-    m_channel.setLastFetchTm(new Date());
-    tx.commit();
+    try {
+      tx = m_dbSession.beginTransaction();
+      m_channel.setLastFetchTm(new Date());
+      tx.commit();
+    } catch (HibernateException e) {
+      tx.rollback();
+    }
     log.debug("Finished importing orders...");
     log.info("Returning Order batch with size: {}", batch.getOimOrderses().size());
   }

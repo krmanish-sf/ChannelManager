@@ -367,7 +367,9 @@ public class HonestGreen extends Supplier implements HasTracking {
         .createQuery("select p from salesmachine.hibernatedb.Product p where p.sku=:sku");
     query.setString("sku", sku);
     Product p = (Product) query.uniqueResult();
+    if(p!=null)
     return p.getQuantity();
+    return 0;
   }
 
   private void sendToFTP(String fileName, FtpDetail ftpDetails)
