@@ -248,7 +248,7 @@ public final class ShopifyOrderImport extends ChannelBase implements IOrderImpor
             // .removeNull((String)
             // deliveryObj.get("province_code")));
 
-            if (((String) deliveryObj.get("province")).length() == 2) {
+            if (deliveryObj.get("province")!=null && ((String) deliveryObj.get("province")).length() == 2) {
               oimOrders.setDeliveryStateCode((String) deliveryObj.get("province"));
             } else {
               String stateCode = validateAndGetStateCode(oimOrders);
@@ -385,7 +385,7 @@ public final class ShopifyOrderImport extends ChannelBase implements IOrderImpor
           log.error("Error occured during pull of store order id - " + storeOrderId, e);
           tx.rollback();
           throw new ChannelOrderFormatException("Error occured during pull of store order id - "
-              + storeOrderId + "cause - " + e.getMessage(), e);
+              + storeOrderId + " cause - " + e.getMessage(), e);
         }
         totalOrders++;
       }

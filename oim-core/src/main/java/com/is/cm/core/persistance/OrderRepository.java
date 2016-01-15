@@ -58,4 +58,6 @@ public interface OrderRepository {
   void deleteTracking(int trackingId);
 
   String geSuppliertTestModeStatus(Integer entity);
+
+  List<OrderDetail> checkHGItemAvailability(Map<Integer, String> hgItemMap);
 }

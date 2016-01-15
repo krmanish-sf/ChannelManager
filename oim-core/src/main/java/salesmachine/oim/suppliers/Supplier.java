@@ -13,6 +13,7 @@ import java.util.StringTokenizer;
 import org.hibernate.HibernateException;
 import org.hibernate.Query;
 import org.hibernate.Session;
+import org.hibernate.Transaction;
 import org.hibernate.criterion.Restrictions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -84,6 +85,9 @@ public abstract class Supplier {
     org.hibernate.Transaction tx = null;
     try {
       Session session = SessionManager.currentSession();
+      tx = session.getTransaction();
+      if (tx != null && tx.isActive())
+        tx.commit();
       tx = session.beginTransaction();
       OimVendorsuppOrderhistory history = new OimVendorsuppOrderhistory();
       Vendors vendor = new Vendors();

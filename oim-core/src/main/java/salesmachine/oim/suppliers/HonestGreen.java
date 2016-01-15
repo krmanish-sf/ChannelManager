@@ -248,6 +248,10 @@ public class HonestGreen extends Supplier implements HasTracking {
         }
         int phiQty = getPhiQuantity(sku);
         int hvaQty = getHvaQuantity(sku, vendorId, phiQty);
+        if(phiQty==0 && hvaQty==0){
+          failedOrders.put(orderDetail.getDetailId(), orderDetail.getSku() + " is not processed because it is not in our system.");
+          continue;
+        }
         if (!isSingleWarehouseConfigured) {
           // isHva = isRestricted(orderDetail.getSku(), vendorId,
           // supplierDefaultPrefix, configuredPrefix);
@@ -337,11 +341,21 @@ public class HonestGreen extends Supplier implements HasTracking {
         "Failed to put this order file " + fileName + " to " + ftpDetails.getUrl(), "text/html");
   }
 
-  private int getHvaQuantity(String sku, Integer vendorId, int phiQuantity) {
+  public static int getHvaQuantity(String sku, Integer vendorId, int phiQuantity) {
+    List<String> findSkuList = new ArrayList<String>();
+    String prefix = sku.substring(0,2);
+    String tempSku = sku.substring(2, sku.length());
+    findSkuList.add(sku);
+    if(tempSku.startsWith("0")){
+      String tempSku2 = tempSku.substring(1, tempSku.length());
+      findSkuList.add(prefix+tempSku2);
+    }
+    else
+      findSkuList.add(prefix+"0"+tempSku);
     Session dbSession = SessionManager.currentSession();
     Query query = dbSession.createSQLQuery(
-        "select QUANTITY from VENDOR_CUSTOM_FEEDS_PRODUCTS where sku=:sku and is_restricted=1 and VENDOR_CUSTOM_FEED_ID=(select VENDOR_CUSTOM_FEED_ID from VENDOR_CUSTOM_FEEDS where vendor_id=:vendorID AND IS_RESTRICTED=1)");
-    query.setString("sku", sku);
+        "select QUANTITY from VENDOR_CUSTOM_FEEDS_PRODUCTS where sku IN (:skuList) and is_restricted=1 and VENDOR_CUSTOM_FEED_ID=(select VENDOR_CUSTOM_FEED_ID from VENDOR_CUSTOM_FEEDS where vendor_id=:vendorID AND IS_RESTRICTED=1)");
+    query.setParameterList("skuList", findSkuList);
     query.setInteger("vendorID", vendorId);
     Object q = null;
     try {
@@ -361,15 +375,36 @@ public class HonestGreen extends Supplier implements HasTracking {
     return tempQuantity - phiQuantity;
   }
 
-  private int getPhiQuantity(String sku) {
+  public static int getPhiQuantity(String sku) {
+    List<String> findSkuList = new ArrayList<String>();
+    String prefix = sku.substring(0,2);
+    String tempSku = sku.substring(2, sku.length());
+    findSkuList.add(sku);
+    if(tempSku.startsWith("0")){
+      String tempSku2 = tempSku.substring(1, tempSku.length());
+      findSkuList.add(prefix+tempSku2);
+    }
+    else
+      findSkuList.add(prefix+"0"+tempSku);
     Session dbSession = SessionManager.currentSession();
     Query query = dbSession
-        .createQuery("select p from salesmachine.hibernatedb.Product p where p.sku=:sku");
-    query.setString("sku", sku);
-    Product p = (Product) query.uniqueResult();
-    if(p!=null)
-    return p.getQuantity();
-    return 0;
+        .createSQLQuery("select QUANTITY from PRODUCT where SKU IN (:skuList)");
+    query.setParameterList("skuList", findSkuList);
+    Object q = null;
+    try {
+      q = query.uniqueResult();
+    } catch (NonUniqueResultException e) {
+      log.warn("PRODUCT table contains more than one entries for SKU {}", sku);
+
+      List list = query.list();
+      q = list.get(0);
+    }
+    int phiQuantity = 0;
+    if (q != null) {
+      log.debug("PHI Quantity {} for Sku {}", q.toString(), sku);
+      phiQuantity = Integer.parseInt(q.toString());
+    }
+    return phiQuantity;
   }
 
   private void sendToFTP(String fileName, FtpDetail ftpDetails)
@@ -571,7 +606,7 @@ public class HonestGreen extends Supplier implements HasTracking {
       address = addressLine1 + " " + addressLine2;
       if (address.length() > 50) {
         throw new SupplierOrderException(
-            "Street Address and Suburb Address length is more than 50 characters, which can't fit the given Honest green validation rules. Please edit the order and resubmit.");
+            "Street Address and Suburb Address length is more than 50 characters, which can't fit the given Honest green validation rules. Please edit the order and resubmit. Store Order id is - "+order.getStoreOrderId());
       } else {
         if (address.length() > 24) {
           addressLine1 = address.substring(0, 24);

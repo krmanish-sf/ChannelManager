@@ -1,6 +1,7 @@
 package com.is.cm.core.service;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -8,6 +9,8 @@ import java.util.Map;
 import org.hibernate.Session;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 
 import com.is.cm.core.domain.DataTableCriterias;
 import com.is.cm.core.domain.DataTableCriterias.SearchCriterias;
@@ -332,6 +335,13 @@ public class OrderEventHandler implements OrderService {
     	String testModeStatus = orderRepository
     			.geSuppliertTestModeStatus(updateEvent.getEntity());
     		return new UpdatedEvent<String>(updateEvent.getId(), testModeStatus);
+    }
+    
+    @Override
+    public ReadCollectionEvent<OrderDetail> checkHGItemAvailability(ReadEvent<Map<Integer, String>> readEvent) {
+    	Map<Integer, String> hgItemMap = readEvent.getEntity();
+    	List<OrderDetail> list = orderRepository.checkHGItemAvailability(hgItemMap);
+    	return new ReadCollectionEvent<OrderDetail>(list);
     }
 
 }

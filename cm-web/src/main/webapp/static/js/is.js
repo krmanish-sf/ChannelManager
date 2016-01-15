@@ -577,7 +577,7 @@ function drawSalesReportTable(data) {
 			channel = tableimportchannel.row(e[0]).data();
 			url = "/aggregators/channels/" + channel.channelId + "/pull";
 		}
-		if (channel != null && !channel.testMode) {
+		if (channel == null || !channel.testMode) {
 			$(this).CRUD({
 				method : "GET",
 				url : url,
@@ -593,13 +593,13 @@ function drawSalesReportTable(data) {
 				},
 				message : true
 			});
-		}
-		else{
-			$.gritter.add({
-				title : 'Pull Order',
-				text : "Test mode is enabled for this channel. Please make it disable and try again",
-				class_name : 'gritter-error'
-			});
+		} else {
+			$.gritter
+					.add({
+						title : 'Pull Order',
+						text : "Test mode is enabled for this channel. Please make it disable and try again",
+						class_name : 'gritter-error'
+					});
 		}
 	};
 	$.CM.getOrderModification = function(detailId) {
@@ -1165,47 +1165,132 @@ function drawSalesReportTable(data) {
 							}
 						});
 	};
+
 	$.CM.processOrder = function(order) {
-		$(this).CRUD({
-			url : "aggregators/orders/testMode/" + order.orderId,
-			method : "GET",
-			success : function(status) {
-				console.log('--' + status);
-				if (status != '') {
-					$.gritter.add({
-						title : 'Order Processing',
-						text : status,
-						class_name : 'gritter-error'
-					});
-				} else {
-					$(this).CRUD({
-						url : "aggregators/orders/processed/" + order.orderId,
-						method : "POST",
-						data : JSON.stringify(order),
-						success : function(orderFetchStatus) {
-							$.gritter.add({
-								title : 'Order Processing',
-								text : orderFetchStatus,
-								//class_name : 'gritter-success'
-							});
-							table_xy.ajax.reload();
-							getAlerts();
-						},
-						error : function(a, b, c) {
-							$.gritter.add({
-								title : 'Order Processing',
-								text : 'Order Processing Failed.',
-								//class_name : 'gritter-error'
-							});
-							table_xy.ajax.reload();
-							getAlerts();
-						}
-					});
-				}
-			}
-		});
+		$(this)
+				.CRUD(
+						{
+							url : "aggregators/orders/testMode/"
+									+ order.orderId,
+							method : "GET",
+							success : function(status) {
+								if (status != '') {
+									$.gritter.add({
+										title : 'Order Processing',
+										text : status,
+										class_name : 'gritter-error'
+									});
+								} else {
+									var map = {};
+									var hgItemCount = 0;
+									for (var i = 0; i < order.oimOrderDetailses.length; i++) {
+										var orderDetail = order.oimOrderDetailses[i];
+										if (orderDetail.oimSuppliers.supplierId == 1822) {
+											hgItemCount++;
+											map[orderDetail.detailId] = orderDetail.sku;
+										}
+									}
+									if (hgItemCount == 0)
+										$.CM
+												.processOrderAfterConfirmation(order);
+									if (hgItemCount > 0) {
+										$(this)
+												.CRUD(
+														{
+															url : "aggregators/orders/checkHGItemAvailability",
+															method : "POST",
+															data : JSON
+																	.stringify(map),
+															success : function(
+																	hgUnavailableItems) {
+																if (hgUnavailableItems
+																		&& hgUnavailableItems.length > 0) {
+																	$.CM.openProcessConfirmationPopup(order,hgUnavailableItems);
+																} else {
+															$.CM.processOrderAfterConfirmation(order);
+																}
+
+															}
+														});
+									}
+								}
+							}
+						});
 
 	};
+	$.CM.openProcessConfirmationPopup = function(order,hgUnavailableItems){
+		$('#processConfirmationModal').modal('show');
+		$('#tableUnavailableHGItems').DataTable({
+			"data": hgUnavailableItems,
+			"dom" : 't',
+			"sort" : false,
+			 "bDestroy": true,
+			  "deferRender": true,
+			  "bPaginate": false,
+			  "columns": [
+				              { "data": "sku", 
+								 "sWidth" : "20%",
+				              },
+				              { "data": "productName", 
+									 "sWidth" : "20%",
+					          },
+					          { "data": "costPrice", 
+									 "sWidth" : "20%",
+					          },
+					          { "data": "quantity", 
+									 "sWidth" : "20%",
+					          }
+			             ]
+		});
+		$('#processAvailItem')
+		.click(
+				function() {
+					$('#processConfirmationModal').modal('hide');
+					$.CM
+					.processOrderAfterConfirmation(order);
+					
+				});
+		$('#dontProcess')
+		.click(
+				function() {
+					$.gritter
+					.add({
+						title : 'Order Processing',
+						text : 'Order Processing Cancelled.',
+						class_name : 'gritter-error'
+					});
+					$('#processConfirmationModal').modal('hide');
+				});
+	}
+	$.CM.processOrderAfterConfirmation = function(order) {
+		$(this).CRUD({
+			url : "aggregators/orders/processed/" + order.orderId,
+			method : "POST",
+			data : JSON.stringify(order),
+			success : function(orderFetchStatus) {
+				$.gritter.add({
+					title : 'Order Processing',
+					text : orderFetchStatus,
+				// class_name
+				// :
+				// 'gritter-success'
+				});
+				table_xy.ajax.reload();
+				getAlerts();
+			},
+			error : function(a, b, c) {
+				$.gritter.add({
+					title : 'Order Processing',
+					text : 'Order Processing Failed.',
+				// class_name
+				// :
+				// 'gritter-error'
+				});
+				table_xy.ajax.reload();
+				getAlerts();
+			}
+		});
+	}
 	$.CM.trackOrder = function(orderDetailId) {
 		$(this).CRUD({
 			url : "aggregators/orders/track/" + orderDetailId,

@@ -68,4 +68,8 @@ public interface OrderService {
 
 	UpdatedEvent<String> geSuppliertTestModeStatus(UpdateEvent<Integer> updateEvent);
 
+	ReadCollectionEvent<OrderDetail> checkHGItemAvailability(ReadEvent<Map<Integer, String>> readEvent);
+	
+	
+
 }

@@ -608,6 +608,54 @@
             </div>
           </div>
           <!-- /.modal-content --> 
+          <!-- process confirmation start -->
+          
+              <div class="modal fade" id="processConfirmationModal"
+						tabindex="-1" role="dialog" aria-hidden="true">
+              <div id="processConfirmationdailog" class="modal-dialog">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <button type="button" class="close"
+										data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <h4 class="modal-title">The following items cannot be found:</h4>
+                  </div>
+                  <div class="modal-body ">
+                    <div class="row">
+                      <div class="container">
+                      <div class="col-sm-12">
+							<table id="tableUnavailableHGItems"
+													class="table table-bordered table-striped table-responsive">
+								<thead class="thin-border-bottom">
+									<tr>
+										<th><i class="icon-barcode icon-2x blue visible-xs"></i><span
+																class="hidden-xs visible-sm">SKU</span></th>
+										<th><i class="icon-plane icon-2x blue visible-xs"></i><span
+																class="hidden-xs">Name</span></th>
+										<th><i class="icon-user icon-2x blue visible-xs"></i> <span
+																class="hidden-xs">Price</span></th>
+										<th><i class="icon-user icon-2x blue visible-xs"></i> <span
+																class="hidden-xs">Quantity</span></th>
+									</tr>
+								</thead>
+								<tbody>
+								</tbody>
+							</table>
+						</div>
+                      </div>
+                    </div>
+                  </div>
+                   <div class="modal-footer no-margin-top">
+                       <button type="button" id="processAvailItem"
+												class="btn btn-info btn-xs pull-right"> <i
+													class="icon-ok "></i>Process Available Items Anyway</button>
+						<button type="button" id="dontProcess"
+												class="btn btn-info btn-xs pull-left"> <i
+													class="icon-stop"></i>Don't Process Any Right Now</button>
+                      </div>
+                </div>
+			</div>
+            </div>
+          <!-- process confirmation end -->
         </div>
       </div>
     </div>
@@ -1084,6 +1132,8 @@
 												}
 											});
 						});
+		
+	
 
 	});
 </script>

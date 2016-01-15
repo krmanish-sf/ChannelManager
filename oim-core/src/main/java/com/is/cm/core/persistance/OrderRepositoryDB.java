@@ -58,6 +58,7 @@ import salesmachine.oim.stores.impl.ChannelFactory;
 import salesmachine.oim.stores.modal.shop.order.CCORDER;
 import salesmachine.oim.stores.modal.shop.order.CCTRANSMISSION;
 import salesmachine.oim.stores.modal.shop.order.ITEMS;
+import salesmachine.oim.suppliers.HonestGreen;
 import salesmachine.oim.suppliers.SupplierFactory;
 import salesmachine.oim.suppliers.exception.SupplierCommunicationException;
 import salesmachine.oim.suppliers.exception.SupplierConfigurationException;
@@ -1291,5 +1292,26 @@ public class OrderRepositoryDB extends RepositoryBase implements OrderRepository
       }
     }
     return "";
+  }
+
+  @Override
+  public List<OrderDetail> checkHGItemAvailability(Map<Integer, String> hgItemMap) {
+    List<OrderDetail> list = new ArrayList<OrderDetail>();
+    for (Iterator<Integer> itr = hgItemMap.keySet().iterator(); itr.hasNext();) {
+      int detailId = itr.next();
+      String sku = hgItemMap.get(detailId);
+      int phiQty = HonestGreen.getPhiQuantity(sku);
+      if (phiQty > 0)
+        continue;
+      int hvaQty = HonestGreen.getHvaQuantity(sku, getVendorId(), phiQty);
+      if(hvaQty == 0){
+       Session dbSession = SessionManager.currentSession();
+       OimOrderDetails oimOrderDetail = (OimOrderDetails) dbSession.get(OimOrderDetails.class, detailId);
+       OrderDetail detail = OrderDetail.from(oimOrderDetail);
+       list.add(detail);
+      }
+        
+    }
+    return list;
   }
 }
