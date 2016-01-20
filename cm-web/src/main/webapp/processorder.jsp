@@ -143,6 +143,12 @@
 																aria-label="Order Id: activate to sort column ascending"><i
 																class="icon-sort-by-order-alt icon-2x blue visible-xs"></i><span
 																class="hidden-xs visible-sm">Order Id</span></th>
+															<th class="sorting" role="columnheader" tabindex="0"
+																aria-controls="tableprocesschannel" rowspan="1"
+																colspan="1" style="width: 45px;"
+																aria-label="Order Number: activate to sort column ascending"><i
+																class="icon-sort-by-order-alt icon-2x blue visible-xs"></i><span
+																class="hidden-xs visible-sm">Order Number</span></th>
 															<th class="hidden-xs sorting" role="columnheader"
 																tabindex="0" aria-controls="tableprocesschannel"
 																rowspan="1" colspan="1" style="width: 37px;"
@@ -975,6 +981,9 @@
 									},
 									{
 										"mData" : "storeOrderId"
+									},
+									{
+										"mData" : "orderNumber"
 									},
 									{
 										"mData" : "orderTmString"

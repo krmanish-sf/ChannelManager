@@ -55,6 +55,7 @@ public class OimOrders implements java.io.Serializable {
   private String shippingDetails;
   private String payMethod;
   private String orderComment;
+  private String orderNumber;
   private Set<OimOrderDetails> oimOrderDetailses = new HashSet<>(0);
   private OimShippingMethod oimShippingMethod;
 
@@ -419,6 +420,13 @@ public class OimOrders implements java.io.Serializable {
 
   public void setDeliveryCountryCode(String deliveryCountryCode) {
     this.deliveryCountryCode = deliveryCountryCode;
+  }
+  public String getOrderNumber() {
+    return orderNumber;
+  }
+
+  public void setOrderNumber(String orderNumber) {
+    this.orderNumber = orderNumber;
   }
 
 }

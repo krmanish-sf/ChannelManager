@@ -185,6 +185,10 @@
 													<th><i
 											class="icon-sort-by-order-alt icon-2x visible-xs"></i><span
 											class="hidden-xs visible-sm">Order Id</span></th>
+											<th>
+												<i class="icon-sort-by-order-alt icon-2x visible-xs"></i>
+												<span class="hidden-xs visible-sm">Order Number</span>
+											</th>
 												<th>Order Status</th>
 													<th class="hidden-xs" role="columnheader">Order Date</th>
 													<th class="sorting" role="columnheader"><i
@@ -1098,6 +1102,9 @@
 										},
 										{
 											"mData" : "storeOrderId"
+										},
+										{
+											"mData" : "orderNumber"
 										},
 										{
 											"mData" : function(order) {

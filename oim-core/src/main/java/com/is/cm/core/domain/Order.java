@@ -65,6 +65,8 @@ public class Order extends DomainBase implements Serializable {
   private String shippingDetails;
   private String payMethod;
   private String orderComment;
+  private String orderNumber;
+  
   @JsonDeserialize(as = HashSet.class)
   private Set<OrderDetail> oimOrderDetailses = new HashSet<OrderDetail>(0);
   private ShippingMethod shippingMethod;
@@ -413,6 +415,13 @@ public class Order extends DomainBase implements Serializable {
 
   public void setOimOrderDetailses(Set<OrderDetail> oimOrderDetailses) {
     this.oimOrderDetailses = oimOrderDetailses;
+  }
+  public String getOrderNumber() {
+    return orderNumber;
+  }
+
+  public void setOrderNumber(String orderNumber) {
+    this.orderNumber = orderNumber;
   }
 
   public static Order from(OimOrders oimorder) {

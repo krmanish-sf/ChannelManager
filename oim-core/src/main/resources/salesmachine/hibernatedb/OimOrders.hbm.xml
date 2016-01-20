@@ -136,6 +136,9 @@
         <property name="orderComment" type="string">
             <column name="ORDER_COMMENT" length="1000" />
         </property>
+        <property name="orderNumber" type="string">
+            <column name="ORDER_NUMBER" length="30" />
+        </property>
         <set name="oimOrderDetailses" inverse="true" lazy="true" table="OIM_ORDER_DETAILS" fetch="select">
             <key>
                 <column name="ORDER_ID" precision="22" scale="0" />

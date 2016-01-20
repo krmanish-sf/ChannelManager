@@ -203,6 +203,11 @@ public final class ShopifyOrderImport extends ChannelBase implements IOrderImpor
           }
           tx = m_dbSession.beginTransaction();
           oimOrders = new OimOrders();
+          if(orderObj.get("order_number")!=null){
+            String orderNumber = Long.toString((long)orderObj.get("order_number"));
+            oimOrders.setOrderNumber(orderNumber);
+          }
+          
           oimOrders.setStoreOrderId(storeOrderId);
           // setting billing information
           JSONObject billingObj = (JSONObject) orderObj.get("billing_address");
