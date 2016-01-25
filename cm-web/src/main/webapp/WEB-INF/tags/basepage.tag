@@ -189,12 +189,7 @@
 						href="index.jsp"> <i class="icon-dashboard"></i> <span
 							class="menu-text">Dashboard</span>
 					</a></li>
-					<li
-						<c:if test="${fn:containsIgnoreCase(pageContext.request.requestURI, \"importchannel.jsp\")}"> class="active" </c:if>>
-						<a href="importchannel.jsp"> <i class="icon-random"></i> <span
-							class="menu-text">Channels</span>
-					</a>
-					</li>
+					
 					<li
 						<c:if test="${fn:containsIgnoreCase(pageContext.request.requestURI, \"suppliers.jsp\")}"> class="active" </c:if>>
 						<a href="suppliers.jsp"> <i class="icon-truck"></i> <span
@@ -202,11 +197,17 @@
 					</a>
 					</li>
 					<li
+						<c:if test="${fn:containsIgnoreCase(pageContext.request.requestURI, \"importchannel.jsp\")}"> class="active" </c:if>>
+						<a href="importchannel.jsp"> <i class="icon-random"></i> <span
+							class="menu-text">Channels</span>
+					</a>
+					</li>
+					<%-- <li
 						<c:if test="${fn:containsIgnoreCase(pageContext.request.requestURI, \"shipping-mappings.jsp\")}"> class="active" </c:if>>
 						<a href="shipping-mappings.jsp"> <i class="icon-exchange"></i>
 							<span class="menu-text">Shipping Mappings</span>
 					</a>
-					</li>
+					</li> --%>
 					<li
 						<c:if test="${fn:containsIgnoreCase(pageContext.request.requestURI, \"processorder.jsp\") || fn:containsIgnoreCase(pageContext.request.requestURI, \"orderhistory.jsp\")}"> class="open" </c:if>>
 						<a class="dropdown-toggle" href="#"> <i
