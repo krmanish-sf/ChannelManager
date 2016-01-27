@@ -846,7 +846,7 @@ public class SupplierFactory {
     Session session = m_dbSession;
     Transaction tx = session.getTransaction();
     OimLogStream stream = new OimLogStream();
-    OrderStatus orderStatus = null;
+    OrderStatus orderStatus =  orderStatus = new OrderStatus();
     if (tx != null && tx.isActive())
       tx.commit();
     tx = session.beginTransaction();
@@ -887,7 +887,7 @@ public class SupplierFactory {
           AutomationManager.orderTrackMap.put(channelId, trackCount++);
         }
       } else {
-        orderStatus = new OrderStatus();
+       
         orderStatus.setStatus("Tracking orders for "
             + oimOrderDetails.getOimSuppliers().getSupplierName() + " is not suported.");
       }

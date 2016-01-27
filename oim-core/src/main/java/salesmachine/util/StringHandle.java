@@ -131,4 +131,9 @@ public class StringHandle {
 		str = str.replaceAll(",", "");
 		return str;
 	}
+	 public static String removeSemiColon(String str){
+	    str = removeNull(str);
+	    str = str.replaceAll(";", "");
+	    return str;
+	  }
 }

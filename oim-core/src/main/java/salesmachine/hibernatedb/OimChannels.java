@@ -21,6 +21,7 @@ public class OimChannels implements java.io.Serializable {
   private Date deleteTm;
   private Date lastFetchTm;
   private Integer testMode = 0;
+  private String sequenceNumber;
   private Set<OimChannelAccessDetails> oimChannelAccessDetailses = new HashSet<>(0);
   private Set oimOrderBatcheses = new HashSet(0);
   private Set<OimOrderProcessingRule> oimOrderProcessingRules = new HashSet<>(0);
@@ -28,7 +29,7 @@ public class OimChannels implements java.io.Serializable {
   private Set<OimChannelSupplierMap> oimChannelSupplierMaps = new HashSet<>(0);
   private Set oimChannelFileses = new HashSet(0);
   private Set<OimChannelShippingMap> oimChannelShippingMap = new HashSet<>();
-  
+
   public OimChannels() {
   }
 
@@ -166,6 +167,14 @@ public class OimChannels implements java.io.Serializable {
 
   public void setOimChannelShippingMap(Set<OimChannelShippingMap> oimChannelShippingMap) {
     this.oimChannelShippingMap = oimChannelShippingMap;
+  }
+
+  public String getSequenceNumber() {
+    return sequenceNumber;
+  }
+
+  public void setSequenceNumber(String sequenceNumber) {
+    this.sequenceNumber = sequenceNumber;
   }
 
 }
