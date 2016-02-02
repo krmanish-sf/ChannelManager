@@ -18,6 +18,7 @@ import javax.xml.datatype.XMLGregorianCalendar;
 
 import org.hibernate.Criteria;
 import org.hibernate.HibernateException;
+import org.hibernate.NonUniqueResultException;
 import org.hibernate.Query;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
@@ -1297,21 +1298,76 @@ public class OrderRepositoryDB extends RepositoryBase implements OrderRepository
   @Override
   public List<OrderDetail> checkHGItemAvailability(Map<Integer, String> hgItemMap) {
     List<OrderDetail> list = new ArrayList<OrderDetail>();
+    Session dbSession = SessionManager.currentSession();
+    OimChannels channel = null;
+    String skuPrefix = null;
+    int count = 0;
     for (Iterator<Integer> itr = hgItemMap.keySet().iterator(); itr.hasNext();) {
       int detailId = itr.next();
       String sku = hgItemMap.get(detailId);
-      int phiQty = HonestGreen.getPhiQuantity(sku);
-      if (phiQty > 0)
-        continue;
-      int hvaQty = HonestGreen.getHvaQuantity(sku, getVendorId(), phiQty);
-      if(hvaQty == 0){
-       Session dbSession = SessionManager.currentSession();
-       OimOrderDetails oimOrderDetail = (OimOrderDetails) dbSession.get(OimOrderDetails.class, detailId);
-       OrderDetail detail = OrderDetail.from(oimOrderDetail);
-       list.add(detail);
+      OimOrderDetails oimOrderDetail = (OimOrderDetails) dbSession.get(OimOrderDetails.class,
+          detailId);
+      if (count == 0) {
+        channel = oimOrderDetail.getOimOrders().getOimOrderBatches().getOimChannels();
+        Query query = dbSession.createSQLQuery(
+            "select SUPPLIER_PREFIX from KDYER.OIM_CHANNEL_SUPPLIER_MAP where supplier_id=1822 and CHANNEL_ID=:channelId");
+        query.setInteger("channelId", channel.getChannelId());
+        Object q = null;
+        try {
+          q = query.uniqueResult();
+        } catch (NonUniqueResultException e) {
+          LOG.error("Error in getting supplier prefix for supplier - Honest Green and Channel - {}",
+              channel.getChannelId());
+        }
+        if (q != null) {
+          skuPrefix = (String) q;
+        }
       }
-        
+      if(skuPrefix==null)
+        sku="HG"+sku;
+      else if(!"HG".equalsIgnoreCase(skuPrefix)){
+        sku = sku.replaceFirst(skuPrefix, "HG");
+      }
+      List<String> findSkuList = new ArrayList<String>();
+      String prefix = sku.substring(0, 2);
+      String tempSku = sku.substring(2, sku.length());
+      findSkuList.add(sku);
+      if (tempSku.startsWith("0")) {
+        String tempSku2 = tempSku.substring(1, tempSku.length());
+        findSkuList.add(prefix + tempSku2);
+      } else
+        findSkuList.add(prefix + "0" + tempSku);
+
+      boolean isPhi = isPHI(sku, findSkuList, dbSession);
+      if (isPhi)
+        continue;
+      boolean isHva = isHVA(sku, getVendorId(), findSkuList, dbSession);
+      if (!isHva) {
+        OrderDetail detail = OrderDetail.from(oimOrderDetail);
+        list.add(detail);
+      }
+      count++;
     }
     return list;
+  }
+
+  private boolean isHVA(String sku, Integer vendorId, List<String> skuList, Session dbSession) {
+    Query query = dbSession.createSQLQuery(
+        "select SKU from VENDOR_CUSTOM_FEEDS_PRODUCTS where sku IN (:skuList) and is_restricted=1 and VENDOR_CUSTOM_FEED_ID=(select VENDOR_CUSTOM_FEED_ID from VENDOR_CUSTOM_FEEDS where vendor_id=:vendorID AND IS_RESTRICTED=1)");
+    query.setParameterList("skuList", skuList);
+    query.setInteger("vendorID", vendorId);
+    List q = query.list();
+    if(q!=null && q.size()>0)
+      return true;
+    return false;
+  }
+
+  private boolean isPHI(String sku, List<String> skuList, Session dbSession) {
+    Query query = dbSession.createSQLQuery("select sku from PRODUCT where SKU IN (:skuList)");
+    query.setParameterList("skuList", skuList);
+    List q = query.list();
+    if (q != null && q.size() > 0)
+      return true;
+    return false;
   }
 }

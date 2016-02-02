@@ -176,7 +176,7 @@
 										{
 											"mData" : function(s) {
 												if(s.oimSuppliers.supplierId == 1822){
-													return '<select multiple id="warehouseLocation" class="pp" style="display:none;" name="ss_'+ s.oimSuppliers.supplierId	+'_warehouseLocation" required="required"><option value="PHI">PHI</option><option value="HVA">HVA</option></select>';
+													return '<input type="text" class="width-100 pp hide"  style="display:none;" name="ss_'+s.oimSuppliers.supplierId	+'_whLocation" id="ss_'+s.oimSuppliers.supplierId+'_warehouseLocation" data-bind-channel="customMapper:oimChannelSupplierMaps[oimSuppliers.supplierId='+ s.oimSuppliers.supplierId+'].warehouseLocation" keyattr=""/>'+'<select multiple id="warehouseLocation" class="pp" style="display:none;" name="ss_'+ s.oimSuppliers.supplierId	+'_warehouseLocation" required="required" ><option value="PHI">PHI</option><option value="HVA">HVA</option></select>';
 												}
 												else{
 													return '<span></span>';
@@ -482,6 +482,27 @@
 				$('#channelForm').attr('action',
 						'aggregators/channels/' + channel.channelId);
 				GenericBinder('channel', channel);
+				$('#ss_1822_warehouseLocation').trigger("chosen:updated");
+				var location = $("#ss_1822_warehouseLocation").attr('keyattr'); // PHI~HVA , PHI, HVA
+				var valArr = [];
+				if(location){
+				if(location.indexOf('~')!=-1){
+					//show both
+					valArr.push('HVA');
+					valArr.push('PHI');
+				}
+				else if(location=='PHI'){
+					valArr.push('PHI');
+				}
+				else if(location == 'HVA')
+					valArr.push('HVA');
+				//warehouseLocation
+				
+				i = 0, size = valArr.length;
+				for(i; i < size; i++){
+				  $("#warehouseLocation option[value='" + valArr[i] + "']").attr("selected", 1);
+				}
+			}
 				$('#btnSave').off('click').on('click', channel, function(e) {
 					$('#channelForm').validate();
 					$('#channelForm').submit();

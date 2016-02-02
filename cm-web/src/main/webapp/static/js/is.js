@@ -160,10 +160,14 @@ function DataBinder(object_id, dataObject) {
 					$bound.prop('checked', true);
 				else
 					$bound.prop('checked', false);
-			} else
+			} else{
 				$bound.val(val);
+				//console.log($bound);
+				$bound.attr('keyattr',val);
+			}
 		} else {
 			$bound.html(val);
+			
 		}
 	});
 	/*

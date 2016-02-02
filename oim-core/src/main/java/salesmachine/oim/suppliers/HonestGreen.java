@@ -246,30 +246,34 @@ public class HonestGreen extends Supplier implements HasTracking {
         else if (!configuredPrefix.equalsIgnoreCase(supplierDefaultPrefix)) {
           sku = sku.replaceFirst(configuredPrefix, supplierDefaultPrefix);
         }
-        int phiQty = getPhiQuantity(sku);
-        int hvaQty = getHvaQuantity(sku, vendorId, phiQty);
-        if(phiQty==0 && hvaQty==0){
+        Integer phiQty = getPhiQuantity(sku);
+        Integer hvaQty = getHvaQuantity(sku, vendorId, phiQty);
+        if(phiQty==null && hvaQty==null){
           failedOrders.put(orderDetail.getDetailId(), orderDetail.getSku() + " is not processed because it is not in our system.");
           continue;
         }
         if (!isSingleWarehouseConfigured) {
           // isHva = isRestricted(orderDetail.getSku(), vendorId,
           // supplierDefaultPrefix, configuredPrefix);
-          isHva = hvaQty > phiQty;
+          if(hvaQty==null)
+            hvaQty=0;
+          if(phiQty==null)
+            phiQty=0;
+          isHva = hvaQty.intValue() > phiQty.intValue();
         }
         if (isHva) {
-          if (hvaQty > 0) {
+      //    if (hvaQty > 0) {
             hvaItems.add(orderDetail);
-          } else {
-            failedOrders.put(orderDetail.getDetailId(), orderDetail.getSku() + " is out of stock");
-          }
+//          } else {
+//            failedOrders.put(orderDetail.getDetailId(), orderDetail.getSku() + " is out of stock");
+//          }
 
         } else {
-          if (phiQty > 0) {
+          //if (phiQty > 0) {
             phiItems.add(orderDetail);
-          } else {
-            failedOrders.put(orderDetail.getDetailId(), orderDetail.getSku() + " is out of stock");
-          }
+//          } else {
+//            failedOrders.put(orderDetail.getDetailId(), orderDetail.getSku() + " is out of stock");
+//          }
 
         }
       }
@@ -341,7 +345,7 @@ public class HonestGreen extends Supplier implements HasTracking {
         "Failed to put this order file " + fileName + " to " + ftpDetails.getUrl(), "text/html");
   }
 
-  public static int getHvaQuantity(String sku, Integer vendorId, int phiQuantity) {
+  public Integer getHvaQuantity(String sku, Integer vendorId, int phiQuantity) {
     List<String> findSkuList = new ArrayList<String>();
     String prefix = sku.substring(0,2);
     String tempSku = sku.substring(2, sku.length());
@@ -370,12 +374,13 @@ public class HonestGreen extends Supplier implements HasTracking {
     if (q != null) {
       log.debug("HVA Quantity {} for Sku {}", q.toString(), sku);
       tempQuantity = Integer.parseInt(q.toString());
+      return tempQuantity - phiQuantity;
     }
-
-    return tempQuantity - phiQuantity;
+    else
+      return null;   
   }
 
-  public static int getPhiQuantity(String sku) {
+  public Integer getPhiQuantity(String sku) {
     List<String> findSkuList = new ArrayList<String>();
     String prefix = sku.substring(0,2);
     String tempSku = sku.substring(2, sku.length());
@@ -403,8 +408,10 @@ public class HonestGreen extends Supplier implements HasTracking {
     if (q != null) {
       log.debug("PHI Quantity {} for Sku {}", q.toString(), sku);
       phiQuantity = Integer.parseInt(q.toString());
+      return phiQuantity;
     }
-    return phiQuantity;
+    else
+      return null;
   }
 
   private void sendToFTP(String fileName, FtpDetail ftpDetails)
@@ -1036,8 +1043,20 @@ public class HonestGreen extends Supplier implements HasTracking {
   }
 
   public static void main(String[] args) {
-    updateFromConfirmation();
-    updateFromTracking();
+   // updateFromConfirmation();
+   // updateFromTracking();
+    Session session = SessionManager.currentSession();
+    OimVendorSuppliers ovs = (OimVendorSuppliers)session.get(OimVendorSuppliers.class, 9881);
+    //462847
+    OimOrders order = (OimOrders) session.get(OimOrders.class, 462847);
+    try {
+      new HonestGreen().sendOrders(748154, ovs, order);
+    } catch (SupplierConfigurationException | SupplierCommunicationException
+        | SupplierOrderException | ChannelConfigurationException | ChannelCommunicationException
+        | ChannelOrderFormatException e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
+    }
   }
 
   public static Integer updateFromConfirmation() {
