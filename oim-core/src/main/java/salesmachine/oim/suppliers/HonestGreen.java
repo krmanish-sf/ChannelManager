@@ -248,32 +248,33 @@ public class HonestGreen extends Supplier implements HasTracking {
         }
         Integer phiQty = getPhiQuantity(sku);
         Integer hvaQty = getHvaQuantity(sku, vendorId, phiQty);
-        if(phiQty==null && hvaQty==null){
-          failedOrders.put(orderDetail.getDetailId(), orderDetail.getSku() + " is not processed because it is not in our system.");
+        if (phiQty == null && hvaQty == null) {
+          failedOrders.put(orderDetail.getDetailId(),
+              orderDetail.getSku() + " is not processed because it is not in our system.");
           continue;
         }
         if (!isSingleWarehouseConfigured) {
           // isHva = isRestricted(orderDetail.getSku(), vendorId,
           // supplierDefaultPrefix, configuredPrefix);
-          if(hvaQty==null)
-            hvaQty=0;
-          if(phiQty==null)
-            phiQty=0;
+          if (hvaQty == null)
+            hvaQty = 0;
+          if (phiQty == null)
+            phiQty = 0;
           isHva = hvaQty.intValue() > phiQty.intValue();
         }
         if (isHva) {
-      //    if (hvaQty > 0) {
-            hvaItems.add(orderDetail);
-//          } else {
-//            failedOrders.put(orderDetail.getDetailId(), orderDetail.getSku() + " is out of stock");
-//          }
+          // if (hvaQty > 0) {
+          hvaItems.add(orderDetail);
+          // } else {
+          // failedOrders.put(orderDetail.getDetailId(), orderDetail.getSku() + " is out of stock");
+          // }
 
         } else {
-          //if (phiQty > 0) {
-            phiItems.add(orderDetail);
-//          } else {
-//            failedOrders.put(orderDetail.getDetailId(), orderDetail.getSku() + " is out of stock");
-//          }
+          // if (phiQty > 0) {
+          phiItems.add(orderDetail);
+          // } else {
+          // failedOrders.put(orderDetail.getDetailId(), orderDetail.getSku() + " is out of stock");
+          // }
 
         }
       }
@@ -347,15 +348,14 @@ public class HonestGreen extends Supplier implements HasTracking {
 
   public Integer getHvaQuantity(String sku, Integer vendorId, int phiQuantity) {
     List<String> findSkuList = new ArrayList<String>();
-    String prefix = sku.substring(0,2);
+    String prefix = sku.substring(0, 2);
     String tempSku = sku.substring(2, sku.length());
     findSkuList.add(sku);
-    if(tempSku.startsWith("0")){
+    if (tempSku.startsWith("0")) {
       String tempSku2 = tempSku.substring(1, tempSku.length());
-      findSkuList.add(prefix+tempSku2);
-    }
-    else
-      findSkuList.add(prefix+"0"+tempSku);
+      findSkuList.add(prefix + tempSku2);
+    } else
+      findSkuList.add(prefix + "0" + tempSku);
     Session dbSession = SessionManager.currentSession();
     Query query = dbSession.createSQLQuery(
         "select QUANTITY from VENDOR_CUSTOM_FEEDS_PRODUCTS where sku IN (:skuList) and is_restricted=1 and VENDOR_CUSTOM_FEED_ID=(select VENDOR_CUSTOM_FEED_ID from VENDOR_CUSTOM_FEEDS where vendor_id=:vendorID AND IS_RESTRICTED=1)");
@@ -375,25 +375,22 @@ public class HonestGreen extends Supplier implements HasTracking {
       log.debug("HVA Quantity {} for Sku {}", q.toString(), sku);
       tempQuantity = Integer.parseInt(q.toString());
       return tempQuantity - phiQuantity;
-    }
-    else
-      return null;   
+    } else
+      return null;
   }
 
   public Integer getPhiQuantity(String sku) {
     List<String> findSkuList = new ArrayList<String>();
-    String prefix = sku.substring(0,2);
+    String prefix = sku.substring(0, 2);
     String tempSku = sku.substring(2, sku.length());
     findSkuList.add(sku);
-    if(tempSku.startsWith("0")){
+    if (tempSku.startsWith("0")) {
       String tempSku2 = tempSku.substring(1, tempSku.length());
-      findSkuList.add(prefix+tempSku2);
-    }
-    else
-      findSkuList.add(prefix+"0"+tempSku);
+      findSkuList.add(prefix + tempSku2);
+    } else
+      findSkuList.add(prefix + "0" + tempSku);
     Session dbSession = SessionManager.currentSession();
-    Query query = dbSession
-        .createSQLQuery("select QUANTITY from PRODUCT where SKU IN (:skuList)");
+    Query query = dbSession.createSQLQuery("select QUANTITY from PRODUCT where SKU IN (:skuList)");
     query.setParameterList("skuList", findSkuList);
     Object q = null;
     try {
@@ -409,8 +406,7 @@ public class HonestGreen extends Supplier implements HasTracking {
       log.debug("PHI Quantity {} for Sku {}", q.toString(), sku);
       phiQuantity = Integer.parseInt(q.toString());
       return phiQuantity;
-    }
-    else
+    } else
       return null;
   }
 
@@ -613,7 +609,8 @@ public class HonestGreen extends Supplier implements HasTracking {
       address = addressLine1 + " " + addressLine2;
       if (address.length() > 50) {
         throw new SupplierOrderException(
-            "Street Address and Suburb Address length is more than 50 characters, which can't fit the given Honest green validation rules. Please edit the order and resubmit. Store Order id is - "+order.getStoreOrderId());
+            "Street Address and Suburb Address length is more than 50 characters, which can't fit the given Honest green validation rules. Please edit the order and resubmit. Store Order id is - "
+                + order.getStoreOrderId());
       } else {
         if (address.length() > 24) {
           addressLine1 = address.substring(0, 24);
@@ -922,11 +919,22 @@ public class HonestGreen extends Supplier implements HasTracking {
       }
       for (POTracking poTracking : orderTrackingResponse.getPOTracking()) {
         salesmachine.oim.suppliers.modal.TrackingData trackingData = new salesmachine.oim.suppliers.modal.TrackingData();
-
+        String trackingNum = poTracking.getTrackingNumber();
         if ("A".equals(orderTrackingResponse.getPO().getShipVia())) {
-          trackingData.setCarrierCode("UPS");
-          trackingData.setCarrierName("UPS");
-          trackingData.setShippingMethod("Ground");
+          if (trackingNum != null && trackingNum.startsWith("1")) {
+            trackingData.setCarrierCode("UPS");
+            trackingData.setCarrierName("UPS");
+            trackingData.setShippingMethod("Ground");
+          } else if (trackingNum != null && trackingNum.startsWith("9")) {
+            trackingData.setCarrierCode("USPS");
+            trackingData.setCarrierName("USPS");
+            trackingData.setShippingMethod("PRIORITY");
+          }
+          else{
+            trackingData.setCarrierCode("UPS");
+            trackingData.setCarrierName("UPS");
+            trackingData.setShippingMethod("Ground");
+          }
         } else {
           trackingData.setCarrierName(orderTrackingResponse.getPO().getShipVia());
         }
@@ -1043,11 +1051,11 @@ public class HonestGreen extends Supplier implements HasTracking {
   }
 
   public static void main(String[] args) {
-   // updateFromConfirmation();
-   // updateFromTracking();
+    // updateFromConfirmation();
+    // updateFromTracking();
     Session session = SessionManager.currentSession();
-    OimVendorSuppliers ovs = (OimVendorSuppliers)session.get(OimVendorSuppliers.class, 9881);
-    //462847
+    OimVendorSuppliers ovs = (OimVendorSuppliers) session.get(OimVendorSuppliers.class, 9881);
+    // 462847
     OimOrders order = (OimOrders) session.get(OimOrders.class, 462847);
     try {
       new HonestGreen().sendOrders(748154, ovs, order);

@@ -1339,8 +1339,10 @@ public class OrderRepositoryDB extends RepositoryBase implements OrderRepository
         findSkuList.add(prefix + "0" + tempSku);
 
       boolean isPhi = isPHI(sku, findSkuList, dbSession);
-      if (isPhi)
+      if (isPhi){
+        count++;
         continue;
+      }
       boolean isHva = isHVA(sku, getVendorId(), findSkuList, dbSession);
       if (!isHva) {
         OrderDetail detail = OrderDetail.from(oimOrderDetail);

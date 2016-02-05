@@ -407,7 +407,7 @@ public class SupplierRepositoryDB extends RepositoryBase implements SupplierRepo
         e.printStackTrace();
       }
 
-    } else if (oimSuppliers.getSupplierId() == 221) { // Moteng
+    } else if (oimSuppliers.getSupplierId() == 221 || oimSuppliers.getSupplierId() == 2161) { // Moteng or RSR or any ftp based supplier
       try {
         tx = dbSession.beginTransaction();
         String ftpUrl = StringHandle.removeNull(getParameter("ftpUrl")).trim();

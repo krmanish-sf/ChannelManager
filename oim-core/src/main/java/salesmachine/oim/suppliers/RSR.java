@@ -47,10 +47,13 @@ import salesmachine.hibernatedb.OimChannels;
 import salesmachine.hibernatedb.OimOrderDetails;
 import salesmachine.hibernatedb.OimOrderProcessingRule;
 import salesmachine.hibernatedb.OimOrders;
+import salesmachine.hibernatedb.OimSupplierMethodattrValues;
+import salesmachine.hibernatedb.OimSupplierMethods;
 import salesmachine.hibernatedb.OimSupplierShippingMethod;
 import salesmachine.hibernatedb.OimVendorSuppliers;
 import salesmachine.hibernatedb.Reps;
 import salesmachine.hibernatedb.Vendors;
+import salesmachine.hibernatehelper.PojoHelper;
 import salesmachine.hibernatehelper.SessionManager;
 import salesmachine.oim.api.OimConstants;
 import salesmachine.oim.stores.api.IOrderImport;
@@ -68,7 +71,9 @@ import salesmachine.oim.suppliers.modal.TrackingData;
 import salesmachine.util.ApplicationProperties;
 import salesmachine.util.FtpDetail;
 import salesmachine.util.OimLogStream;
+import salesmachine.util.RsrErrorCodeProperty;
 import salesmachine.util.StringHandle;
+import salesmachine.util.FtpDetail.WareHouseType;
 
 public class RSR extends Supplier implements HasTracking {
 
@@ -254,6 +259,7 @@ public class RSR extends Supplier implements HasTracking {
       ftp.login(ftpDetails.getUserName(), ftpDetails.getPassword());
       ftp.setType(FTPTransferType.ASCII);
       ftp.setTimeout(60 * 1000 * 60 * 5);
+      ftp.chdir("/eo/incoming/");
       ftp.put(fileName, file.getName());
       // if (ftp.get(file.getName()) == null) {
       // sendErrorReportEmail(fileName, ftpDetails);
@@ -284,12 +290,26 @@ public class RSR extends Supplier implements HasTracking {
 
   private FtpDetail getFtpDetails(OimVendorSuppliers ovs) {
     FtpDetail ftpDetail = new FtpDetail();
-    // TODO - get configured ftp detail and set to ftpDetail object
-    // ftpDetail.setAccountNumber("TestAccount");
-    // ftpDetail.setUrl("ftp.rsrgroup.com");
-    // ftpDetail.setUserName("99999");
-    // ftpDetail.setPassword("Vt1234X");
-    return ftpDetail;
+    Session session = SessionManager.currentSession();
+    Query query = session.createQuery(
+        "select m from OimSupplierMethods as m left join m.oimSupplierMethodattrValueses v where m.deleteTm is null and m.oimSuppliers=:supp and m.oimSupplierMethodTypes.methodTypeId=:methodTypeId and v.deleteTm is null");
+    query.setEntity("supp", ovs.getOimSuppliers());
+    query.setInteger("methodTypeId", OimConstants.SUPPLIER_METHOD_TYPE_ORDERPUSH.intValue());
+    Iterator it = query.iterate();
+    if (!it.hasNext()) {
+      log.error("No method found for pushing orders to this supplier");
+     // return false;
+    }
+    OimSupplierMethods supplierMethods = (OimSupplierMethods) it.next();
+    Integer supplierMethodNameId = supplierMethods
+        .getOimSupplierMethodNames().getMethodNameId();
+    if (OimConstants.SUPPLIER_METHOD_NAME_FTP
+        .equals(supplierMethodNameId)) {
+      String ftp = PojoHelper.getSupplierMethodAttributeValue(
+          supplierMethods,
+          OimConstants.SUPPLIER_METHOD_ATTRIBUTES_FTPSERVER);
+    }
+    return null;
   }
 
   private String createOrderFile(OimOrders order, OimVendorSuppliers ovs, String poNum,
@@ -443,40 +463,124 @@ public class RSR extends Supplier implements HasTracking {
             oimOrderDetails, sku);
       } else {
         // get the failure reason from error file.
-        
+        StringBuffer sb = new StringBuffer();
+        String failureReasonStr = getOrderFailureReason(ftpDetail,ovs.getAccountNumber(), poNumber, oimOrderDetails,sb);
+        orderStatus.setStatus(OimConstants.OIM_SUPPLER_ORDER_STATUS_FAILED+" - "+failureReasonStr);
+        throw new SupplierOrderTrackingException(" This Order "+oimOrderDetails.getOimOrders().getStoreOrderId()+" is failed. - "+failureReasonStr);
       }
     }
     return orderStatus;
 
   }
 
-  // public static void main(String[] args) {
-  // RSR rsr = new RSR();
-  // Session session = SessionManager.currentSession();
-  // OimVendorSuppliers ovs = (OimVendorSuppliers) session.get(OimVendorSuppliers.class, 9961);
-  // OimOrders order = (OimOrders) session.get(OimOrders.class, 450567);
-  // try {
-  // rsr.sendOrders(641958, ovs, order);
-  // } catch (SupplierConfigurationException e) {
-  // // TODO Auto-generated catch block
-  // e.printStackTrace();
-  // } catch (SupplierCommunicationException e) {
-  // // TODO Auto-generated catch block
-  // e.printStackTrace();
-  // } catch (SupplierOrderException e) {
-  // System.out.println(e.getMessage());
-  // e.printStackTrace();
-  // } catch (ChannelConfigurationException e) {
-  // // TODO Auto-generated catch block
-  // e.printStackTrace();
-  // } catch (ChannelCommunicationException e) {
-  // // TODO Auto-generated catch block
-  // e.printStackTrace();
-  // } catch (ChannelOrderFormatException e) {
-  // // TODO Auto-generated catch block
-  // e.printStackTrace();
-  // }
-  // }
+  private String getOrderFailureReason(FtpDetail ftpDetail, String accountNumber, String poNumber,
+      OimOrderDetails detail, StringBuffer sb) {
+
+    FTPClient ftp = new FTPClient();
+    try {
+      ftp.setRemoteHost(ftpDetail.getUrl());
+      ftp.setDetectTransferMode(true);
+      ftp.connect();
+      ftp.login(ftpDetail.getUserName(), ftpDetail.getPassword());
+      ftp.setTimeout(60 * 1000 * 60 * 7);
+      ftp.chdir("/eo/outgoing/");
+      FTPFile[] ftpFiles = ftp.dirDetails("outgoing");
+      Arrays.sort(ftpFiles, new Comparator<FTPFile>() {
+        public int compare(FTPFile f1, FTPFile f2) {
+          return f2.lastModified().compareTo(f1.lastModified());
+        }
+      });
+      for (FTPFile ftpFile : ftpFiles) {
+        String errorFile = ftpFile.getName();
+        if (errorFile.equals("..") || errorFile.equals("."))
+          continue;
+        if (ftpFile.lastModified().before(detail.getProcessingTm()))
+          break;
+        if (errorFile.startsWith("EERR")
+            && errorFile.contains("-" + accountNumber + "-")) {
+          byte[] errorFileData = ftp.get(errorFile);
+          Map<Integer, String> orderDataMap = parseFileData(errorFileData);
+          for(Iterator<Integer> itr=orderDataMap.keySet().iterator();itr.hasNext();){
+            Integer lineNumber = itr.next();
+            String line = orderDataMap.get(lineNumber);
+            String errorCode = getErrorCode(lineNumber,line);
+            int errorCodeInt = Integer.parseInt(errorCode);
+            if(errorCodeInt>0){
+           String errorMessage =  getErrorMsgFromMappingFile(errorCode);
+           if(sb.length()==0)
+           sb.append(errorMessage);
+           else
+             sb.append(", "+errorMessage);
+            }
+            
+          }
+        }
+      }
+    } catch (IOException | FTPException | ParseException e) {
+      log.error(e.getMessage(), e);
+      //return false;
+    } finally {
+      try {
+        ftp.quit();
+      } catch (IOException e) {
+        // TODO Auto-generated catch block
+        e.printStackTrace();
+      } catch (FTPException e) {
+        // TODO Auto-generated catch block
+        e.printStackTrace();
+      }
+    }
+    return sb.toString();
+  
+  }
+
+  private String getErrorMsgFromMappingFile(String errorCode) {
+    return RsrErrorCodeProperty.getProperty(errorCode);
+  }
+
+  private String getErrorCode(Integer lineNumber, String line) {
+    String [] lineArray = line.split(";");
+    String errorCode=null;
+   if(lineNumber==1 && line.length()>5)
+    errorCode = lineArray[5];
+   else if(lineNumber==2 && line.length()>12)
+     errorCode = lineArray[12];
+   else if(lineNumber==3 && line.length()>6)
+     errorCode = lineArray[6];
+   else if(lineNumber==4 && line.length()>3)
+     errorCode = lineArray[3];
+   else if(lineNumber==5 && line.length()>3)
+     errorCode = lineArray[3];
+    return errorCode;
+  }
+
+   public static void main(String[] args) {
+   RSR rsr = new RSR();
+   Session session = SessionManager.currentSession();
+   OimVendorSuppliers ovs = (OimVendorSuppliers) session.get(OimVendorSuppliers.class, 9961);
+   OimOrders order = (OimOrders) session.get(OimOrders.class, 450567);
+   try {
+   rsr.sendOrders(641958, ovs, order);
+   } catch (SupplierConfigurationException e) {
+   // TODO Auto-generated catch block
+   e.printStackTrace();
+   } catch (SupplierCommunicationException e) {
+   // TODO Auto-generated catch block
+   e.printStackTrace();
+   } catch (SupplierOrderException e) {
+   System.out.println(e.getMessage());
+   e.printStackTrace();
+   } catch (ChannelConfigurationException e) {
+   // TODO Auto-generated catch block
+   e.printStackTrace();
+   } catch (ChannelCommunicationException e) {
+   // TODO Auto-generated catch block
+   e.printStackTrace();
+   } catch (ChannelOrderFormatException e) {
+   // TODO Auto-generated catch block
+   e.printStackTrace();
+   }
+   }
 
   private void getTrackingInfo(FtpDetail ftpDetail, OrderStatus orderStatus, String poNumber,
       String accountNumber, OimOrderDetails detail, String sku) {
@@ -488,6 +592,7 @@ public class RSR extends Supplier implements HasTracking {
       ftp.connect();
       ftp.login(ftpDetail.getUserName(), ftpDetail.getPassword());
       ftp.setTimeout(60 * 1000 * 60 * 7);
+      ftp.chdir("/eo/outgoing/");
       FTPFile[] ftpFiles = ftp.dirDetails("outgoing");
       Arrays.sort(ftpFiles, new Comparator<FTPFile>() {
         public int compare(FTPFile f1, FTPFile f2) {
@@ -576,6 +681,7 @@ public class RSR extends Supplier implements HasTracking {
       ftp.connect();
       ftp.login(ftpDetail.getUserName(), ftpDetail.getPassword());
       ftp.setTimeout(60 * 1000 * 60 * 7);
+      ftp.chdir("/eo/outgoing/");
       FTPFile[] ftpFiles = ftp.dirDetails("outgoing");
       Arrays.sort(ftpFiles, new Comparator<FTPFile>() {
         public int compare(FTPFile f1, FTPFile f2) {

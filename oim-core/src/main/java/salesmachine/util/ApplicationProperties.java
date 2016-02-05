@@ -39,7 +39,11 @@ public class ApplicationProperties {
 
   public static final String EL_PARTNER_KEY = "cm.supplier.el.partnerKey";
   public static final String EL_API_ORDER_ENDPOINT = "cm.supplier.el.api.orders.endpoint";
-
+  
+  public static final String DEVHUB_CLIENT_API_URL = "cm.devhub.apiURL";
+  public static final String DEVHUB_CLIENT_ID = "cm.devhub.clientId";
+  public static final String DEVHUB_CLIENT_SECRET = "cm.devhub.clientSecret";
+  
   private static final Logger log = LoggerFactory.getLogger(ApplicationProperties.class);
   private static final Properties prop = new Properties();
   private static InputStream input = null;

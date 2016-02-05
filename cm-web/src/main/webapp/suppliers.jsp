@@ -1158,7 +1158,7 @@ If you have not yet configured your supplier, click "Add Supplier" to do it now.
 											var ret = '';
 
 											if (o.oimSuppliers.supplierId == 1822
-													|| o.oimSuppliers.supplierId == 221) {
+													|| o.oimSuppliers.supplierId == 221 || o.oimSuppliers.supplierId == 2161) {
 												for (var i = 0; i < o.oimSuppliers.oimSupplierMethodses.length; i++) {
 													var oimSupplierMethod = o.oimSuppliers.oimSupplierMethodses[i];
 													if (oimSupplierMethod.oimSupplierMethodNames
@@ -1232,7 +1232,7 @@ If you have not yet configured your supplier, click "Add Supplier" to do it now.
 										"mData" : function(vendorSupplier) {
 											if (vendorSupplier.oimSuppliers.supplierId == 1822)
 												return '<a class="btn btn-info btn-sm hidden-xs icon-pencil" href="#mySupplierHGedit" data-toggle="modal" onclick="editHG((($(this)).parent()).parent())"></a><a class="btn btn-info btn-xs icon-pencil visible-xs btn-xs" href="#mySupplierHGedit" data-toggle="modal" onclick="editHG((($(this)).parent()).parent())"></a>';
-											else if (vendorSupplier.oimSuppliers.supplierId == 221) {
+											else if (vendorSupplier.oimSuppliers.supplierId == 221 || vendorSupplier.oimSuppliers.supplierId == 2161) {
 												return '<a class="btn btn-info btn-sm hidden-xs icon-pencil" href="#mySupplierFtpedit" data-toggle="modal" onclick="editFtpBasedSupplier((($(this)).parent()).parent())"></a><a class="btn btn-info btn-xs icon-pencil visible-xs btn-xs" href="#mySupplierFtpedit" data-toggle="modal" onclick="editFtpBasedSupplier((($(this)).parent()).parent())"></a>';
 											} else if (vendorSupplier.oimSuppliers.supplierId == 2002) {
 												//mySupplierHGedit
@@ -1286,7 +1286,7 @@ If you have not yet configured your supplier, click "Add Supplier" to do it now.
 					$('.europa').addClass('hide');
 					$('.customSupplierNameDiv').removeClass("show");
 					$('.customSupplierNameDiv').addClass("hide");
-					if (a == '221') {
+					if (a == '221' || a=='2161') {
 						$('.moteng-ftp').removeClass("hide");
 						$('.moteng-ftp').addClass("show");
 					} else if (a == '2002') {
