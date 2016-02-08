@@ -588,7 +588,6 @@
 		function b(e) {
 			var tr = $(e).parents('tr');
 			var orderDetail = tableModal.row(tr).data();
-			debugger;
 			updateOrderDetail(orderDetail, tr.find('input')[0], tr
 					.find('input')[1], tr.find('input')[2],
 					tr.find('input')[3], tr.find('select')[0], tr
@@ -645,7 +644,6 @@
 				return false;
 			}
 			if (quantity) {
-				debugger;
 				var quan = 0;
 				$("#trackingForm :input").each(function() {
 					if (startsWith(this.name, 'shipQuantity')) {
