@@ -105,6 +105,25 @@
 							<li class="dropdown-header"><i class="icon-warning-sign"></i>
 								Errors</li>
 						</ul></li>
+					<li class="light-blue"><a data-toggle="dropdown"
+						class="dropdown-toggle" href="#"> <i
+							class="icon-cog"></i><i class="icon-caret-down"></i>
+					</a>
+						<ul
+							class="user-menu pull-right dropdown-menu dropdown-yellow dropdown-caret dropdown-close">
+							<li
+						<c:if test="${fn:containsIgnoreCase(pageContext.request.requestURI, \"suppliers.jsp\")}"> class="active" </c:if>>
+						<a href="suppliers.jsp"> <i class="icon-truck"></i> <span
+							class="menu-text">Suppliers</span>
+					</a>
+					</li>
+					<li
+						<c:if test="${fn:containsIgnoreCase(pageContext.request.requestURI, \"importchannel.jsp\")}"> class="active" </c:if>>
+						<a href="importchannel.jsp"> <i class="icon-random"></i> <span
+							class="menu-text">Channels</span>
+					</a>
+					</li>
+						</ul></li>
 					<li class="light-blue"><a data-toggle="dropdown" href="#"
 						class="dropdown-toggle"> <!-- <img class="nav-user-photo"
 								src="static/images/user.jpg" alt="Jason's Photo"> --> <span
@@ -190,18 +209,18 @@
 							class="menu-text">Dashboard</span>
 					</a></li>
 					
-					<li
-						<c:if test="${fn:containsIgnoreCase(pageContext.request.requestURI, \"suppliers.jsp\")}"> class="active" </c:if>>
-						<a href="suppliers.jsp"> <i class="icon-truck"></i> <span
-							class="menu-text">Suppliers</span>
-					</a>
-					</li>
-					<li
-						<c:if test="${fn:containsIgnoreCase(pageContext.request.requestURI, \"importchannel.jsp\")}"> class="active" </c:if>>
-						<a href="importchannel.jsp"> <i class="icon-random"></i> <span
-							class="menu-text">Channels</span>
-					</a>
-					</li>
+<!-- 					<li -->
+<%-- 						<c:if test="${fn:containsIgnoreCase(pageContext.request.requestURI, \"suppliers.jsp\")}"> class="active" </c:if>> --%>
+<!-- 						<a href="suppliers.jsp"> <i class="icon-truck"></i> <span -->
+<!-- 							class="menu-text">Suppliers</span> -->
+<!-- 					</a> -->
+<!-- 					</li> -->
+<!-- 					<li -->
+<%-- 						<c:if test="${fn:containsIgnoreCase(pageContext.request.requestURI, \"importchannel.jsp\")}"> class="active" </c:if>> --%>
+<!-- 						<a href="importchannel.jsp"> <i class="icon-random"></i> <span -->
+<!-- 							class="menu-text">Channels</span> -->
+<!-- 					</a> -->
+<!-- 					</li> -->
 					<%-- <li
 						<c:if test="${fn:containsIgnoreCase(pageContext.request.requestURI, \"shipping-mappings.jsp\")}"> class="active" </c:if>>
 						<a href="shipping-mappings.jsp"> <i class="icon-exchange"></i>

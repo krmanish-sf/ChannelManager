@@ -59,7 +59,7 @@
 												<th class=" width-20"><i
 											class="icon-adjust icon-2x visible-xs "></i><span
 											class="hidden-xs">Actions</span></th>
-												<th class=" width-20"></th>
+												<th id ="edit-delete" class=" width-20"></th>
 											</tr>
 										</thead>
 									</table>

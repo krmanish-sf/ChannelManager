@@ -56,9 +56,9 @@ public class SessionManager {
     return s;
   }
   
-  public static void setSession(Session sessionObj){
-    session.set(sessionObj);
-    sessionObj=sessionObj;
+  public static void setSession(Session dbSession){
+    session.set(dbSession);
+    sessionObj=dbSession;
   }
 
   public static void closeSession() {
