@@ -196,7 +196,7 @@ If you have not yet configured your supplier, click "Add Supplier" to do it now.
                                 <option value="2">Processed</option>
                                 <option value="3">Failed</option>
                                 <option value="5">Manual</option>
-                                <option value="6">Canceled</option>
+                                <option value="6">Cancelled</option>
                               </select>
                             </div>
 												</div>

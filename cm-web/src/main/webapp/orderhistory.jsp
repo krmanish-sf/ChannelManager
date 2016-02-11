@@ -152,7 +152,7 @@
 						<option value="0">With selected</option>
                       	<option value="track">Recheck Orders</option>
                       	<option value="re-process">Resubmit Orders</option>
-                      	 <option value="delete">Mark As Manually Canceled</option>
+                      	 <option value="delete">Mark As Manually Cancelled</option>
                     	</select>
                   	</div>
                   	<div class="col-sm-3">

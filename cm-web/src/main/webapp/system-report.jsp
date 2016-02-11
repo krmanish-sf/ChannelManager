@@ -253,7 +253,7 @@
 					function formatOrderStatusData(data, supplierSalesData) {
 						supplierSalesData.push([ "Supplier Name",
 								'Unprocessed', 'Processed', 'Failed',
-								'Manually Processed', 'Canceled', 'Shipped' ]);
+								'Manually Processed', 'Cancelled', 'Shipped' ]);
 						for (var i = 0; i < data.order_processing.length; i++) {
 							supplierSalesData.push(data.order_processing[i]);
 						}
@@ -263,7 +263,7 @@
 					function formatChannelData(data, channelSalesData) {
 						channelSalesData.push([ "Channel Name", 'Unprocessed',
 								'Processed', 'Failed', 'Manually Processed',
-								'Canceled', 'Shipped' ]);
+								'Cancelled', 'Shipped' ]);
 						for (var i = 0; i < data.order_tracking.length; i++) {
 							channelSalesData.push(data.order_tracking[i]);
 						}

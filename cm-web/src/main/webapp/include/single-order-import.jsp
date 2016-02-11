@@ -344,7 +344,7 @@
 															<option value="3">Failed</option>
 															<option value="100">Unconfirmed</option>
 															<option value="5">Manually Processed</option>
-															<option value="6">Canceled</option>
+															<option value="6">Cancelled</option>
 														</select>
 														<button class="btn btn-warning btn-sm btn-delete-product"
 															type="button" style="display: none;">

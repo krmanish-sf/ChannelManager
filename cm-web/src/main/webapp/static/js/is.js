@@ -1,6 +1,6 @@
 var STATUS = [ {
 	"statusId" : 6,
-	"statusValue" : "Canceled"
+	"statusValue" : "Cancelled"
 }, {
 	"statusId" : 3,
 	"statusValue" : "Failed"

@@ -110,7 +110,7 @@
 						<option value="0">With selected</option>
                       <option value="process">Attempt to Process</option>
                       <option value="manually-processed">Mark as Manually Processed</option>
-                      <option value="delete">Mark As Manually Canceled</option>
+                      <option value="delete">Mark As Manually Cancelled</option>
                     </select>
                   </div>
                   <div class="col-sm-10">
@@ -142,7 +142,7 @@
 																colspan="1" style="width: 45px;"
 																aria-label="Order Id: activate to sort column ascending"><i
 																class="icon-sort-by-order-alt icon-2x blue visible-xs"></i><span
-																class="hidden-xs visible-sm">Order Id</span></th>
+																class="hidden-xs visible-sm">Order ID</span></th>
 															<th class="sorting" role="columnheader" tabindex="0"
 																aria-controls="tableprocesschannel" rowspan="1"
 																colspan="1" style="width: 45px;"
@@ -744,6 +744,7 @@
 				$.gritter.add({
 					title : "Update Order Detail",
 					text : "Order Detail updated successfully."
+					
 				});
 				table_xy.ajax.reload();
 				$('#myModalResolve').modal('hide');
