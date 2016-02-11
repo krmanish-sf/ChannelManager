@@ -59,8 +59,7 @@ public class OrderTest {
   public static void main(String[] args) {
     getUnconfirmedOrders();
   }
-  
-  
+
   public static void main1(String[] args) throws IOException, FTPException, ParseException {
     long processStartTime = System.currentTimeMillis();
     Map<FtpDetail, String> ftpDetailMap;
@@ -128,39 +127,44 @@ public class OrderTest {
     Map<Integer, ArrayList<String>> vendorOrderMap = new HashMap<Integer, ArrayList<String>>();
     query = session.createSQLQuery(
         "select o.store_order_id, c.vendor_id from kdyer.oim_orders o inner join kdyer.oim_order_batches b on o.batch_id=b.batch_id"
-        + " inner join kdyer.oim_channels c on c.channel_id=b.channel_id where o.order_id in(select d.order_id from kdyer.oim_order_details d "
-        + "where d.SUPPLIER_WAREHOUSE_CODE is not null and d.STATUS_ID=2 and d.SUPPLIER_ORDER_STATUS like '%Sent to supplier%' and d.PROCESSING_TM > trunc(sysdate-2) "
-        + "and PROCESSING_TM<trunc(sysdate-1))");
+            + " inner join kdyer.oim_channels c on c.channel_id=b.channel_id where o.order_id in(select d.order_id from kdyer.oim_order_details d "
+            + "where d.SUPPLIER_WAREHOUSE_CODE is not null and d.STATUS_ID=2 and d.SUPPLIER_ORDER_STATUS like '%Sent to supplier%' and d.PROCESSING_TM > trunc(sysdate-2) "
+            + "and PROCESSING_TM<trunc(sysdate-1))");
     List<Object[]> result = query.list();
     for (int j = 0; j < result.size(); j++) {
       Object[] obj = result.get(j);
-      String storeOrderNo = (String)obj[0];
+      String storeOrderNo = (String) obj[0];
       int vendorId = ((BigDecimal) obj[1]).intValue();
       ArrayList<String> orderList = vendorOrderMap.get(vendorId);
-      if(orderList!=null)
+      if (orderList != null)
         orderList.add(storeOrderNo);
-      else{
+      else {
         ArrayList<String> orderListNew = new ArrayList<String>();
         orderListNew.add(storeOrderNo);
         vendorOrderMap.put(vendorId, orderListNew);
       }
     }
-    if(vendorOrderMap.size()>0)
-      sb.append("These orders are still not found at confirmation directory for vendor(s) - : \n");
-    for(Iterator<Integer> itr = vendorOrderMap.keySet().iterator();itr.hasNext();){
+    if (vendorOrderMap.size() > 0) {
+      sb.append(
+          "ACTION REQUIRED: Assign this ticket to the CM Account Manager to review these orders and contact the client or HG to resolve these orders."
+              + " They are missing from the confirmation folder at HG so they may be missed and need a direct follow up. \n");
+      sb.append("\n");
+      sb.append("These orders are not found at confirmation directory for vendor(s) - : \n");
+    }
+    for (Iterator<Integer> itr = vendorOrderMap.keySet().iterator(); itr.hasNext();) {
       int vendorId = itr.next();
       sb.append("\n");
-      sb.append("Vendor - "+vendorId+" : \n");
-      ArrayList<String> orderList =  vendorOrderMap.get(vendorId);
-      for(int i=0;i<orderList.size();i++){
+      sb.append("Vendor - " + vendorId + " : \n");
+      ArrayList<String> orderList = vendorOrderMap.get(vendorId);
+      for (int i = 0; i < orderList.size(); i++) {
         String storeOrderNo = orderList.get(i);
-        sb.append(storeOrderNo+"\n");
+        sb.append(storeOrderNo + "\n");
       }
       sb.append("------------------------------ \n");
     }
-    if(vendorOrderMap.size()>0)
-    EmailUtil.sendEmail("support@inventorysource.com", "orders@inventorysource.com",
-        "manish@inventorysource.com", "Orders not confirmed at HG", sb.toString());
+    if (vendorOrderMap.size() > 0)
+      EmailUtil.sendEmail("support@inventorysource.com", "orders@inventorysource.com",
+          "manish@inventorysource.com", "Orders not confirmed at HG", sb.toString());
   }
 
   private static Map<String, List<PHIHVAData>> getVendorDataMap(String vendorId,
@@ -312,8 +316,8 @@ public class OrderTest {
       out.close();
 
       EmailUtil.sendEmailWithAttachment("orders@inventorysource.com", "support@inventorysource.com",
-          "manish@inventorysource.com, kelly@inventorysource.com",
-          emailSubject, emailBody, f.getAbsolutePath());
+          "manish@inventorysource.com, kelly@inventorysource.com", emailSubject, emailBody,
+          f.getAbsolutePath());
 
       // EmailUtil.sendEmailWithAttachment("manish@inventorysource.com",
       // "manish@inventorysource.com",
@@ -322,8 +326,7 @@ public class OrderTest {
     } else {
       emailBody = "There is no order found for last two days.";
       EmailUtil.sendEmail("orders@inventorysource.com", "support@inventorysource.com",
-          "manish@inventorysource.com, kelly@inventorysource.com",
-          emailSubject, emailBody);
+          "manish@inventorysource.com, kelly@inventorysource.com", emailSubject, emailBody);
 
       // EmailUtil.sendEmail("manish@inventorysource.com", "manish@inventorysource.com", "",
       // emailSubject, emailBody);
@@ -675,6 +678,10 @@ public class OrderTest {
         // generate email alert
         StringBuffer sb = new StringBuffer();
         sb.append(
+            "ACTION REQUIRED: Assign this ticket to this user’s account manager to reach out to Honest Green. "
+                + "There is a problem in their order FTP setup and HG must correct it before this user can receive orders over FTP.\n");
+        sb.append("\n");
+        sb.append(
             "Default order directories were not found on the HG FTP drive and it needs to be corrected by HG for VendorID - "
                 + vendorId + "\n");
         sb.append("Missing directories are : \n");
@@ -684,6 +691,7 @@ public class OrderTest {
           sb.append("shipping \n");
         if (!isTrackingDirExists)
           sb.append("tracking \n");
+        sb.append("\n");
         sb.append("FTP login details :- \n");
         sb.append("FTP : " + ftpDetail.getUrl() + "\n");
         sb.append("USERNAME : " + ftpDetail.getUserName() + "\n");
