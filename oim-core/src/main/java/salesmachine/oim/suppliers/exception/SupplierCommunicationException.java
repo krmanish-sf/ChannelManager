@@ -4,6 +4,7 @@ public class SupplierCommunicationException extends Exception {
 
 	private static final long serialVersionUID = 6119100562215223303L;
 	private static final String MSG = "Supplier Communication Error";
+	public static final String DB_CONNECTION_ISSUE = "Temporary database connection failure. Could not verify products for submission.";
 
 	/**
 	 * Constructs a new exception with {@code null} as its detail message. The

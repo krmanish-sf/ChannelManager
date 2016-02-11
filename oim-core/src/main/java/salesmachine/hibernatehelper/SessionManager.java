@@ -19,7 +19,7 @@ public class SessionManager {
   private SessionManager() {
     // Making private to
   }
-  
+
   private static Logger log = LoggerFactory.getLogger(SessionManager.class);
   private static final SessionFactory sessionFactory;
   private static Session sessionObj;
@@ -41,24 +41,25 @@ public class SessionManager {
   public static final ThreadLocal<Session> session = new ThreadLocal<Session>();
 
   public static Session currentSession() {
-    if(sessionObj!=null && sessionObj.isOpen())
+    if (sessionObj != null && sessionObj.isOpen())
       return sessionObj;
     // log.info("Fetching Current Session");
     Session s = session.get();
     // Open a new Session, if this Thread has none yet
     if (s == null) {
-      // log.info("No existing session found, opening new Session");
+      //log.info("No existing session found, opening new Session");
       s = sessionFactory.openSession();
+      //log.info(s.hashCode() + "");
       session.set(s);
     }
     // log.info("Session returned for TenantIdentifier : {}",
     // s.getTenantIdentifier());
     return s;
   }
-  
-  public static void setSession(Session dbSession){
+
+  public static void setSession(Session dbSession) {
     session.set(dbSession);
-    sessionObj=dbSession;
+    sessionObj = dbSession;
   }
 
   public static void closeSession() {
@@ -66,10 +67,10 @@ public class SessionManager {
 
     if (s != null)
       s.close();
-    session.set(null);
+    session.remove();
   }
-  
-  public static Session openSession(){
+
+  public static Session openSession() {
     return sessionFactory.openSession();
   }
 }

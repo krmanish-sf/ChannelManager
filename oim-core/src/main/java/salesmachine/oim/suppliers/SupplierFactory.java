@@ -224,14 +224,8 @@ public class SupplierFactory {
         return "Order Processed successfully.";
       }
       log.debug("Number of order details to process: " + countToProcess);
-
-      try {
-        log.debug("Sending orders to the supplier");
-        sendOrderToSupplier(vendorId, oimOrders, successfulOrders, failedOrders);
-      } catch (RuntimeException e) {
-        log.error(e.getMessage(), e);
-      }
-
+      log.debug("Sending orders to the supplier");
+      sendOrderToSupplier(vendorId, oimOrders, successfulOrders, failedOrders);
       updateOrderStatus(successfulOrders, OimConstants.ORDER_STATUS_PROCESSED_SUCCESS);
       updateFailedOrderStatus(failedOrders, OimConstants.ORDER_STATUS_PROCESSED_FAILED);
       if (failedOrders.size() == 0) {
@@ -253,9 +247,13 @@ public class SupplierFactory {
         }
         status = "Order processing failed for <br> " + failedResion;
       }
-    } catch (RuntimeException e) {
+    } catch (Exception e) {
       log.error(e.getMessage(), e);
-      return "Order Processing failed.";
+      status = e.getMessage();
+      Supplier.updateVendorSupplierOrderHistory(vendorId, null, e.getMessage(),
+          Supplier.ERROR_ORDER_PROCESSING);
+      log.error(e.getMessage(), e);
+      return "Order Processing failed. " + status;
     }
     return status;
   }
@@ -846,7 +844,7 @@ public class SupplierFactory {
     Session session = m_dbSession;
     Transaction tx = session.getTransaction();
     OimLogStream stream = new OimLogStream();
-    OrderStatus orderStatus =  orderStatus = new OrderStatus();
+    OrderStatus orderStatus = orderStatus = new OrderStatus();
     if (tx != null && tx.isActive())
       tx.commit();
     tx = session.beginTransaction();
@@ -887,7 +885,7 @@ public class SupplierFactory {
           AutomationManager.orderTrackMap.put(channelId, trackCount++);
         }
       } else {
-       
+
         orderStatus.setStatus("Tracking orders for "
             + oimOrderDetails.getOimSuppliers().getSupplierName() + " is not suported.");
       }

@@ -39,6 +39,8 @@ import javax.xml.bind.Unmarshaller;
 
 import org.apache.axis.encoding.Base64;
 import org.apache.axis.utils.ByteArrayOutputStream;
+import org.hibernate.HibernateError;
+import org.hibernate.HibernateException;
 import org.hibernate.NonUniqueResultException;
 import org.hibernate.Query;
 import org.hibernate.Session;
@@ -183,7 +185,11 @@ public class HonestGreen extends Supplier implements HasTracking {
           order.getStoreOrderId());
       throw new SupplierConfigurationException(
           "This order has more than one product having different PO number. Please make them unique.");
+    } catch (HibernateException e) {
+      throw new SupplierCommunicationException(SupplierCommunicationException.DB_CONNECTION_ISSUE
+          + " for order id - " + order.getOrderId(), e);
     }
+
     if (q != null) {
       poNum = (String) q;
       log.info("Reprocessing po - {}", poNum);
@@ -193,134 +199,131 @@ public class HonestGreen extends Supplier implements HasTracking {
       else
         poNum = ovs.getVendors().getVendorId() + "-" + order.getStoreOrderId();
     }
-    try {
-      Set<OimOrderDetails> phiItems = new HashSet<OimOrderDetails>();
-      Set<OimOrderDetails> hvaItems = new HashSet<OimOrderDetails>();
-      FtpDetail hvaFtpDetail = getFtpDetails(ovs, true);
-      FtpDetail phiFtpDetail = getFtpDetails(ovs, false);
-      boolean isSingleWarehouseConfigured = false;
-      boolean isHva = false;
-      if (hvaFtpDetail.getUrl() != null && phiFtpDetail.getUrl() == null) {
-        isSingleWarehouseConfigured = true;
-        isHva = true;
-      } else if (phiFtpDetail.getUrl() != null && hvaFtpDetail.getUrl() == null) {
-        isSingleWarehouseConfigured = true;
+    Set<OimOrderDetails> phiItems = new HashSet<OimOrderDetails>();
+    Set<OimOrderDetails> hvaItems = new HashSet<OimOrderDetails>();
+    FtpDetail hvaFtpDetail = getFtpDetails(ovs, true);
+    FtpDetail phiFtpDetail = getFtpDetails(ovs, false);
+    boolean isSingleWarehouseConfigured = false;
+    boolean isHva = false;
+    if (hvaFtpDetail.getUrl() != null && phiFtpDetail.getUrl() == null) {
+      isSingleWarehouseConfigured = true;
+      isHva = true;
+    } else if (phiFtpDetail.getUrl() != null && hvaFtpDetail.getUrl() == null) {
+      isSingleWarehouseConfigured = true;
+      isHva = false;
+    }
+    if (!isSingleWarehouseConfigured) {
+      query = session.createSQLQuery(
+          "SELECT WAREHOUSE_LOCATION from OIM_CHANNEL_SUPPLIER_MAP where channel_id=:channelId and SUPPLIER_ID=:supplierId");
+      query.setInteger("channelId", channelId);
+      query.setInteger("supplierId", ovs.getOimSuppliers().getSupplierId());
+      String warehouseLocations = null;
+      try {
+        warehouseLocations = (String) query.uniqueResult();
+      } catch (NonUniqueResultException e) {
+        log.error(e.getMessage(), e);
+      }
+      String phi = null;
+      String hva = null;
+      if (warehouseLocations != null) {
+        if (warehouseLocations.contains("~")) {
+          String[] warehouseArray = warehouseLocations.split("~");
+          for (int i = 0; i < warehouseArray.length; i++) {
+            if (warehouseArray[i].equalsIgnoreCase("PHI"))
+              phi = warehouseArray[i];
+            if (warehouseArray[i].equalsIgnoreCase("HVA"))
+              hva = warehouseArray[i];
+          }
+        } else {
+          isHva = warehouseLocations.equalsIgnoreCase("HVA");
+          isSingleWarehouseConfigured = true;
+        }
+      }
+      if (phi != null && hva == null)
         isHva = false;
+      if (hva != null && phi == null)
+        isHva = true;
+    }
+    for (OimOrderDetails orderDetail : ((Set<OimOrderDetails>) order.getOimOrderDetailses())) {
+      String sku = orderDetail.getSku();
+      if (configuredPrefix.equals(""))
+        sku = supplierDefaultPrefix + sku;
+      else if (!configuredPrefix.equalsIgnoreCase(supplierDefaultPrefix)) {
+        sku = sku.replaceFirst(configuredPrefix, supplierDefaultPrefix);
+      }
+      Integer phiQty = getPhiQuantity(sku);
+      int phiQtyInt = phiQty != null ? phiQty.intValue() : 0;
+      Integer hvaQty = getHvaQuantity(sku, vendorId, phiQtyInt);
+      if (phiQty == null && hvaQty == null) {
+        failedOrders.put(orderDetail.getDetailId(),
+            orderDetail.getSku() + " is not processed because it is not in our system.");
+        continue;
       }
       if (!isSingleWarehouseConfigured) {
-        query = session.createSQLQuery(
-            "SELECT WAREHOUSE_LOCATION from OIM_CHANNEL_SUPPLIER_MAP where channel_id=:channelId and SUPPLIER_ID=:supplierId");
-        query.setInteger("channelId", channelId);
-        query.setInteger("supplierId", ovs.getOimSuppliers().getSupplierId());
-        String warehouseLocations = null;
-        try {
-          warehouseLocations = (String) query.uniqueResult();
-        } catch (Exception e) {
-          e.printStackTrace();
-        }
-        String phi = null;
-        String hva = null;
-        if (warehouseLocations != null) {
-          if (warehouseLocations.contains("~")) {
-            String[] warehouseArray = warehouseLocations.split("~");
-            for (int i = 0; i < warehouseArray.length; i++) {
-              if (warehouseArray[i].equalsIgnoreCase("PHI"))
-                phi = warehouseArray[i];
-              if (warehouseArray[i].equalsIgnoreCase("HVA"))
-                hva = warehouseArray[i];
-            }
-          } else {
-            isHva = warehouseLocations.equalsIgnoreCase("HVA");
-            isSingleWarehouseConfigured = true;
-          }
-        }
-        if (phi != null && hva == null)
-          isHva = false;
-        if (hva != null && phi == null)
-          isHva = true;
+        // isHva = isRestricted(orderDetail.getSku(), vendorId,
+        // supplierDefaultPrefix, configuredPrefix);
+        if (hvaQty == null)
+          hvaQty = 0;
+        if (phiQty == null)
+          phiQty = 0;
+        isHva = hvaQty.intValue() > phiQty.intValue();
       }
-      for (OimOrderDetails orderDetail : ((Set<OimOrderDetails>) order.getOimOrderDetailses())) {
-        String sku = orderDetail.getSku();
-        if (configuredPrefix.equals(""))
-          sku = supplierDefaultPrefix + sku;
-        else if (!configuredPrefix.equalsIgnoreCase(supplierDefaultPrefix)) {
-          sku = sku.replaceFirst(configuredPrefix, supplierDefaultPrefix);
-        }
-        Integer phiQty = getPhiQuantity(sku);
-        Integer hvaQty = getHvaQuantity(sku, vendorId, phiQty);
-        if (phiQty == null && hvaQty == null) {
-          failedOrders.put(orderDetail.getDetailId(),
-              orderDetail.getSku() + " is not processed because it is not in our system.");
-          continue;
-        }
-        if (!isSingleWarehouseConfigured) {
-          // isHva = isRestricted(orderDetail.getSku(), vendorId,
-          // supplierDefaultPrefix, configuredPrefix);
-          if (hvaQty == null)
-            hvaQty = 0;
-          if (phiQty == null)
-            phiQty = 0;
-          isHva = hvaQty.intValue() > phiQty.intValue();
-        }
-        if (isHva) {
-          // if (hvaQty > 0) {
-          hvaItems.add(orderDetail);
-          // } else {
-          // failedOrders.put(orderDetail.getDetailId(), orderDetail.getSku() + " is out of stock");
-          // }
+      if (isHva) {
+        // if (hvaQty > 0) {
+        hvaItems.add(orderDetail);
+        // } else {
+        // failedOrders.put(orderDetail.getDetailId(), orderDetail.getSku() + " is out of stock");
+        // }
 
-        } else {
-          // if (phiQty > 0) {
-          phiItems.add(orderDetail);
-          // } else {
-          // failedOrders.put(orderDetail.getDetailId(), orderDetail.getSku() + " is out of stock");
-          // }
-
-        }
-      }
-      // ***************************************************
-      if (order.getOimOrderBatches().getOimChannels().getEmailNotifications() == 1) {
-        emailNotification = true;
-        String orderStatus = "Successfully Placed";
-        emailContent += "<b>Store Order ID " + order.getStoreOrderId() + "</b> -> " + orderStatus
-            + " ";
-        emailContent += "<br>";
-      }
-
-      if (hvaItems.size() > 0) {
-        // create order file and send order to Hva configured
-        // ftp
-        FtpDetail ftpDetails = getFtpDetails(ovs, true);
-
-        String fileName = createOrderFile(order, ovs, hvaItems, ftpDetails, poNum);
-
-        sendToFTP(fileName, ftpDetails);
-        for (OimOrderDetails od : hvaItems) {
-
-          successfulOrders.put(od.getDetailId(), new OrderDetailResponse(poNum,
-              OimConstants.OIM_SUPPLER_ORDER_STATUS_SENT_TO_SUPPLIER, "H"));
-        }
-        // if (emailNotification) {
-        sendEmail(emailContent, ftpDetails, fileName, "");
+      } else {
+        // if (phiQty > 0) {
+        phiItems.add(orderDetail);
+        // } else {
+        // failedOrders.put(orderDetail.getDetailId(), orderDetail.getSku() + " is out of stock");
         // }
 
       }
-      if (phiItems.size() > 0) {
-        // create order file and send order to PHI configured
-        FtpDetail ftpDetails = getFtpDetails(ovs, false);
-        String fileName = createOrderFile(order, ovs, phiItems, ftpDetails, poNum);
-        sendToFTP(fileName, ftpDetails);
-        for (OimOrderDetails od : phiItems) {
-          successfulOrders.put(od.getDetailId(), new OrderDetailResponse(poNum,
-              OimConstants.OIM_SUPPLER_ORDER_STATUS_SENT_TO_SUPPLIER, "P"));
-        }
-        // if (emailNotification) {
-        sendEmail(emailContent, ftpDetails, fileName, "");
-        // }
+    }
+    // ***************************************************
+    if (order.getOimOrderBatches().getOimChannels().getEmailNotifications() == 1) {
+      emailNotification = true;
+      String orderStatus = "Successfully Placed";
+      emailContent += "<b>Store Order ID " + order.getStoreOrderId() + "</b> -> " + orderStatus
+          + " ";
+      emailContent += "<br>";
+    }
 
+    if (hvaItems.size() > 0) {
+      // create order file and send order to Hva configured
+      // ftp
+      FtpDetail ftpDetails = getFtpDetails(ovs, true);
+
+      String fileName = createOrderFile(order, ovs, hvaItems, ftpDetails, poNum);
+
+      sendToFTP(fileName, ftpDetails);
+      for (OimOrderDetails od : hvaItems) {
+
+        successfulOrders.put(od.getDetailId(), new OrderDetailResponse(poNum,
+            OimConstants.OIM_SUPPLER_ORDER_STATUS_SENT_TO_SUPPLIER, "H"));
       }
-    } catch (RuntimeException e) {
-      log.error(e.getMessage(), e);
+      // if (emailNotification) {
+      sendEmail(emailContent, ftpDetails, fileName, "");
+      // }
+
+    }
+    if (phiItems.size() > 0) {
+      // create order file and send order to PHI configured
+      FtpDetail ftpDetails = getFtpDetails(ovs, false);
+      String fileName = createOrderFile(order, ovs, phiItems, ftpDetails, poNum);
+      sendToFTP(fileName, ftpDetails);
+      for (OimOrderDetails od : phiItems) {
+        successfulOrders.put(od.getDetailId(), new OrderDetailResponse(poNum,
+            OimConstants.OIM_SUPPLER_ORDER_STATUS_SENT_TO_SUPPLIER, "P"));
+      }
+      // if (emailNotification) {
+      sendEmail(emailContent, ftpDetails, fileName, "");
+      // }
+
     }
   }
 
@@ -607,16 +610,30 @@ public class HonestGreen extends Supplier implements HasTracking {
       String addressLine2 = StringHandle
           .removeComma(StringHandle.removeNull(order.getDeliverySuburb()).toUpperCase());
       address = addressLine1 + " " + addressLine2;
-      if (address.length() > 50) {
+      StringBuffer sb = new StringBuffer();
+
+      if (addressLine1.length() > 25)
+        sb.append(
+            "Street Address line 1 is longer than the Honest Green allows (25 max characters). Please edit and resubmit if possible or process manually.<br/>");
+
+      if (addressLine2.length() > 25)
+        sb.append(
+            "Street Address line 2 is longer than the Honest Green allows (25 max characters). Please edit and resubmit if possible or process manually.<br/>");
+
+      if (sb.length() > 0)
         throw new SupplierOrderException(
-            "Street Address and Suburb Address length is more than 50 characters, which can't fit the given Honest green validation rules. Please edit the order and resubmit. Store Order id is - "
-                + order.getStoreOrderId());
-      } else {
-        if (address.length() > 24) {
-          addressLine1 = address.substring(0, 24);
-          addressLine2 = address.substring(24, address.length() - 1);
-        }
+            sb.toString() + "Order ID is - " + order.getStoreOrderId());
+      // if (address.length() > 50) {
+      // throw new SupplierOrderException(
+      // "Street Address length is more than 25 characters, which can't fit the given Honest green
+      // validation rules. Please edit the order and resubmit. Store Order id is - "
+      // + order.getStoreOrderId());
+      // } else {
+      if (address.length() > 24) {
+        addressLine1 = address.substring(0, 24);
+        addressLine2 = address.substring(24, address.length() - 1);
       }
+      // }
       fOut.write(addressLine1.getBytes(ASCII));
       fOut.write(COMMA);
       fOut.write(addressLine2.getBytes(ASCII));
@@ -929,8 +946,7 @@ public class HonestGreen extends Supplier implements HasTracking {
             trackingData.setCarrierCode("USPS");
             trackingData.setCarrierName("USPS");
             trackingData.setShippingMethod("PRIORITY");
-          }
-          else{
+          } else {
             trackingData.setCarrierCode("UPS");
             trackingData.setCarrierName("UPS");
             trackingData.setShippingMethod("Ground");
