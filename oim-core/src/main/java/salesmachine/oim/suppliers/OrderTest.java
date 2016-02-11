@@ -159,7 +159,7 @@ public class OrderTest {
       sb.append("------------------------------ \n");
     }
     if(vendorOrderMap.size()>0)
-    EmailUtil.sendEmail("manish@inventorysource.com", "orders@inventorysource.com",
+    EmailUtil.sendEmail("support@inventorysource.com", "orders@inventorysource.com",
         "manish@inventorysource.com", "Orders not confirmed at HG", sb.toString());
   }
 
@@ -312,7 +312,7 @@ public class OrderTest {
       out.close();
 
       EmailUtil.sendEmailWithAttachment("orders@inventorysource.com", "support@inventorysource.com",
-          "manish@inventorysource.com, kelly@inventorysource.com, andrew@inventorysource.com",
+          "manish@inventorysource.com, kelly@inventorysource.com",
           emailSubject, emailBody, f.getAbsolutePath());
 
       // EmailUtil.sendEmailWithAttachment("manish@inventorysource.com",
@@ -322,7 +322,7 @@ public class OrderTest {
     } else {
       emailBody = "There is no order found for last two days.";
       EmailUtil.sendEmail("orders@inventorysource.com", "support@inventorysource.com",
-          "manish@inventorysource.com, kelly@inventorysource.com, andrew@inventorysource.com",
+          "manish@inventorysource.com, kelly@inventorysource.com",
           emailSubject, emailBody);
 
       // EmailUtil.sendEmail("manish@inventorysource.com", "manish@inventorysource.com", "",
@@ -689,7 +689,7 @@ public class OrderTest {
         sb.append("USERNAME : " + ftpDetail.getUserName() + "\n");
         sb.append("PASSWORD : " + ftpDetail.getPassword() + "\n");
         String subject = vendorId + " : Honest Green Default Ftp directories are missing";
-        EmailUtil.sendEmail("manish@inventorysource.com", "orders@inventorysource.com",
+        EmailUtil.sendEmail("support@inventorysource.com", "orders@inventorysource.com",
             "manish@inventorysource.com", subject, sb.toString());
 
       }
