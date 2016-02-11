@@ -227,14 +227,9 @@
 							<span class="menu-text">Shipping Mappings</span>
 					</a>
 					</li> --%>
-					<li
-						<c:if test="${fn:containsIgnoreCase(pageContext.request.requestURI, \"processorder.jsp\") || fn:containsIgnoreCase(pageContext.request.requestURI, \"orderhistory.jsp\")}"> class="open" </c:if>>
-						<a class="dropdown-toggle" href="#"> <i
-							class="icon-shopping-cart"></i> <span class="menu-text">Orders</span>
-							<b class="arrow icon-angle-down"></b>
-					</a>
-						<ul class="submenu"
-							<c:if test="${fn:containsIgnoreCase(pageContext.request.requestURI, \"processorder.jsp\") || fn:containsIgnoreCase(pageContext.request.requestURI, \"order-tracking.jsp\")|| fn:containsIgnoreCase(pageContext.request.requestURI, \"orderhistory.jsp\")}"> style="display: block;" </c:if>>
+					
+						
+							
 							<li
 								<c:if test="${fn:containsIgnoreCase(pageContext.request.requestURI, \"processorder.jsp\")}"> class="active" </c:if>>
 								<a href="processorder.jsp"> <i class="icon-share"></i>
@@ -255,8 +250,7 @@
 									History
 							</a>
 							</li>
-						</ul>
-					</li>
+					
 					<li
 						<c:if test="${fn:containsIgnoreCase(pageContext.request.requestURI, \"reportmax.jsp\") || fn:containsIgnoreCase(pageContext.request.requestURI, \"reportmin.jsp\")}"> class="open" </c:if>>
 						<a href="#" class="dropdown-toggle"> <i class="icon-lightbulb"></i>
