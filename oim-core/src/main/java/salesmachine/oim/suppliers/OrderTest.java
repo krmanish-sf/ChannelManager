@@ -19,6 +19,7 @@ import java.nio.file.Paths;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
@@ -55,7 +56,12 @@ public class OrderTest {
   private static String startDate = "";// 08/18/2015
   private static String endDate = "";// MM/DD/YYYY
 
-  public static void main(String[] args) throws IOException, FTPException, ParseException {
+  public static void main(String[] args) {
+    getUnconfirmedOrders();
+  }
+  
+  
+  public static void main1(String[] args) throws IOException, FTPException, ParseException {
     long processStartTime = System.currentTimeMillis();
     Map<FtpDetail, String> ftpDetailMap;
     if (args.length == 2) {
@@ -65,75 +71,29 @@ public class OrderTest {
     log.info("Strated getting all ftp details...");
     ftpDetailMap = getFtpDetails();
     log.info("Total {} number of ftp details found", ftpDetailMap.size());
-    Map<String, List<PHIHVAData>> vendorDataMap = new HashMap<String, List<PHIHVAData>>();
-    List<File> fileList = new ArrayList<File>();
 
+    List<File> fileList = new ArrayList<File>();
+    Map<String, List<PHIHVAData>> vendorDataMap = new HashMap<String, List<PHIHVAData>>();
     for (Iterator<FtpDetail> itr = ftpDetailMap.keySet().iterator(); itr.hasNext();) {
       FtpDetail ftpDetail = itr.next();
+      String vendorId = ftpDetailMap.get(ftpDetail);
       if (ftpDetail.getSupplierId() != 1822)
         continue;
       long fileCleanupStartTime = System.currentTimeMillis();
       String fileCleanupStartTimeStr = convertLongToDateString(fileCleanupStartTime);
       log.info("ftp file move process started at {} for {}", fileCleanupStartTimeStr, ftpDetail);
       try {
-        ftpMoveFile(ftpDetail);
+        ftpMoveFile(ftpDetail, vendorId);
       } catch (Exception e) {
         log.error("Error occure while moving the files at ftp {}", ftpDetail);
       }
       long fileCleanupEndTime = System.currentTimeMillis();
       String fileCleanupEndTimStr = convertLongToDateString(fileCleanupEndTime);
       log.info("ftp file move process ended at {} for {}", fileCleanupEndTimStr, ftpDetail);
-      String vendorId = ftpDetailMap.get(ftpDetail);
       // "/home/staging/cm-orders/report/"
       // test /home/manish-kumar/staging/cm-orders/report
-      String confirmationPath = "/home/staging/cm-orders/report/" + vendorId + "_"
-          + ftpDetail.getUserName() + "/confirmations/";
-      String shippingPath = "/home/staging/cm-orders/report/" + vendorId + "_"
-          + ftpDetail.getUserName() + "/shipping/";
-      String trackingPath = "/home/staging/cm-orders/report/" + vendorId + "_"
-          + ftpDetail.getUserName() + "/tracking/";
-      File confirmationDir = new File(confirmationPath);
-      if (!confirmationDir.exists())
-        confirmationDir.mkdirs();
-      File trackingDir = new File(trackingPath);
-      if (!trackingDir.exists())
-        trackingDir.mkdirs();
-      File shipingDir = new File(shippingPath);
-      if (!shipingDir.exists())
-        shipingDir.mkdirs();
-      boolean isPHI = ftpDetail.getWhareHouseType()
-          .getWharehouseType() == OimConstants.SUPPLIER_METHOD_TYPE_HG_PHI.intValue();
-      try {
-        long fileDownloadStartTime = System.currentTimeMillis();
-        String fileDownloadStartTimeStr = convertLongToDateString(fileDownloadStartTime);
-        log.info("Started downloading files at {} from ftp : {}", fileDownloadStartTimeStr,
-            ftpDetail);
-        try {
-           downloadFiles(ftpDetail, vendorId, confirmationPath, shippingPath, trackingPath);
-        } catch (Exception e) {
-          log.error("Error occured while downloading files for ftp {} {}", ftpDetail, e);
-          if (e instanceof SocketException) {
-            // downloadFiles(ftpDetail, vendorId, confirmationPath, shippingPath, trackingPath);
-          }
-        }
-      } catch (Exception e) {
-        log.error("error occure while downloading files from ftp ", e);
-      }
-      long fileDownloadEndTime = System.currentTimeMillis();
-      String fileDownloadStartEndStr = convertLongToDateString(fileDownloadEndTime);
-      log.info("Files download process completed at {} for ftp : {}", fileDownloadStartEndStr,
-          ftpDetail);
-      List<PHIHVAData> dataList = getData(ftpDetail, confirmationPath, shippingPath, trackingPath,
-          isPHI);
-      log.info("dataList size -- {}", dataList.size());
-      if (vendorDataMap.get(vendorId) != null) {
-        List<PHIHVAData> vendorDataList = vendorDataMap.get(vendorId);
-        vendorDataList.addAll(dataList);
-      } else {
-        vendorDataMap.put(vendorId, dataList);
-      }
+      vendorDataMap = getVendorDataMap(vendorId, ftpDetail);
     }
-
     long reportStartTime = System.currentTimeMillis();
     String reportStartTimeStr = convertLongToDateString(reportStartTime);
     log.info("Started creating report at {}", reportStartTimeStr);
@@ -146,10 +106,114 @@ public class OrderTest {
     long sendEmailCompleteTime = System.currentTimeMillis();
     String sendEmailCompleteTimeStr = convertLongToDateString(sendEmailCompleteTime);
     log.info("report created and sent as an email at {}", sendEmailCompleteTimeStr);
-    long total_time = sendEmailCompleteTime - processStartTime;
+    // get last 48 hrs to 24 hrs orders that are not placed to HG confirmation.
+    long unconfirmedOrderStartTime = System.currentTimeMillis();
+    String unconfirmedOrderStartTimeStr = convertLongToDateString(unconfirmedOrderStartTime);
+    log.info("Started getting all unconfirmed orders at {}", unconfirmedOrderStartTimeStr);
+    getUnconfirmedOrders();
+    long unconfirmedOrderEndTime = System.currentTimeMillis();
+    String unconfirmedOrderEndTimeStr = convertLongToDateString(unconfirmedOrderEndTime);
+    log.info("All unconfirmed orders were emailed at - {}", unconfirmedOrderEndTimeStr);
+    //
+    long total_time = unconfirmedOrderEndTime - processStartTime;
     int minutes = (int) ((total_time / (1000 * 60)) % 60);
     log.info("process completed in {} minutes ", minutes);
     log.info("Process complete...");
+  }
+
+  private static void getUnconfirmedOrders() {
+    Session session = SessionManager.currentSession();
+    Query query = null;
+    StringBuffer sb = new StringBuffer();
+    Map<Integer, ArrayList<String>> vendorOrderMap = new HashMap<Integer, ArrayList<String>>();
+    query = session.createSQLQuery(
+        "select o.store_order_id, c.vendor_id from kdyer.oim_orders o inner join kdyer.oim_order_batches b on o.batch_id=b.batch_id"
+        + " inner join kdyer.oim_channels c on c.channel_id=b.channel_id where o.order_id in(select d.order_id from kdyer.oim_order_details d "
+        + "where d.SUPPLIER_WAREHOUSE_CODE is not null and d.STATUS_ID=2 and d.SUPPLIER_ORDER_STATUS like '%Sent to supplier%' and d.PROCESSING_TM > trunc(sysdate-2) "
+        + "and PROCESSING_TM<trunc(sysdate-1))");
+    List<Object[]> result = query.list();
+    for (int j = 0; j < result.size(); j++) {
+      Object[] obj = result.get(j);
+      String storeOrderNo = (String)obj[0];
+      int vendorId = ((BigDecimal) obj[1]).intValue();
+      ArrayList<String> orderList = vendorOrderMap.get(vendorId);
+      if(orderList!=null)
+        orderList.add(storeOrderNo);
+      else{
+        ArrayList<String> orderListNew = new ArrayList<String>();
+        orderListNew.add(storeOrderNo);
+        vendorOrderMap.put(vendorId, orderListNew);
+      }
+    }
+    if(vendorOrderMap.size()>0)
+      sb.append("These orders are still not found at confirmation directory for vendor(s) - : \n");
+    for(Iterator<Integer> itr = vendorOrderMap.keySet().iterator();itr.hasNext();){
+      int vendorId = itr.next();
+      sb.append("\n");
+      sb.append("Vendor - "+vendorId+" : \n");
+      ArrayList<String> orderList =  vendorOrderMap.get(vendorId);
+      for(int i=0;i<orderList.size();i++){
+        String storeOrderNo = orderList.get(i);
+        sb.append(storeOrderNo+"\n");
+      }
+      sb.append("------------------------------ \n");
+    }
+    if(vendorOrderMap.size()>0)
+    EmailUtil.sendEmail("manish@inventorysource.com", "orders@inventorysource.com",
+        "manish@inventorysource.com", "Orders not confirmed at HG", sb.toString());
+  }
+
+  private static Map<String, List<PHIHVAData>> getVendorDataMap(String vendorId,
+      FtpDetail ftpDetail) throws IOException {
+    Map<String, List<PHIHVAData>> vendorDataMap = new HashMap<String, List<PHIHVAData>>();
+    String confirmationPath = "/home/staging/cm-orders/report/" + vendorId + "_"
+        + ftpDetail.getUserName() + "/confirmations/";
+    String shippingPath = "/home/staging/cm-orders/report/" + vendorId + "_"
+        + ftpDetail.getUserName() + "/shipping/";
+    String trackingPath = "/home/staging/cm-orders/report/" + vendorId + "_"
+        + ftpDetail.getUserName() + "/tracking/";
+    File confirmationDir = new File(confirmationPath);
+    if (!confirmationDir.exists())
+      confirmationDir.mkdirs();
+    File trackingDir = new File(trackingPath);
+    if (!trackingDir.exists())
+      trackingDir.mkdirs();
+    File shipingDir = new File(shippingPath);
+    if (!shipingDir.exists())
+      shipingDir.mkdirs();
+    boolean isPHI = ftpDetail.getWhareHouseType()
+        .getWharehouseType() == OimConstants.SUPPLIER_METHOD_TYPE_HG_PHI.intValue();
+    try {
+      long fileDownloadStartTime = System.currentTimeMillis();
+      String fileDownloadStartTimeStr = convertLongToDateString(fileDownloadStartTime);
+      log.info("Started downloading files at {} from ftp : {}", fileDownloadStartTimeStr,
+          ftpDetail);
+      try {
+        downloadFiles(ftpDetail, vendorId, confirmationPath, shippingPath, trackingPath);
+      } catch (Exception e) {
+        log.error("Error occured while downloading files for ftp {} {}", ftpDetail, e);
+        if (e instanceof SocketException) {
+          // downloadFiles(ftpDetail, vendorId, confirmationPath, shippingPath, trackingPath);
+        }
+      }
+    } catch (Exception e) {
+      log.error("error occure while downloading files from ftp ", e);
+    }
+    long fileDownloadEndTime = System.currentTimeMillis();
+    String fileDownloadStartEndStr = convertLongToDateString(fileDownloadEndTime);
+    log.info("Files download process completed at {} for ftp : {}", fileDownloadStartEndStr,
+        ftpDetail);
+    List<PHIHVAData> dataList = getData(ftpDetail, confirmationPath, shippingPath, trackingPath,
+        isPHI);
+    log.info("dataList size -- {}", dataList.size());
+    if (vendorDataMap.get(vendorId) != null) {
+      List<PHIHVAData> vendorDataList = vendorDataMap.get(vendorId);
+      vendorDataList.addAll(dataList);
+    } else {
+      vendorDataMap.put(vendorId, dataList);
+    }
+    return vendorDataMap;
+
   }
 
   private static void makeReportFromData(Map<String, List<PHIHVAData>> vendorDataMap,
@@ -496,7 +560,7 @@ public class OrderTest {
     fileOut.close();
   }
 
-  private static void ftpMoveFile(FtpDetail ftpDetail) {
+  private static void ftpMoveFile(FtpDetail ftpDetail, String vendorId) {
     Calendar cal = new GregorianCalendar();
     cal.add(Calendar.DAY_OF_MONTH, -60);
     Date moveFileDate = cal.getTime();
@@ -514,62 +578,120 @@ public class OrderTest {
       ftp.connect();
       ftp.login(ftpDetail.getUserName(), ftpDetail.getPassword());
       // File f = new File(fileDir + archiveDir);
-      String archivePath = fileDir + archiveDir;
-      try {
-        ftp.mkdir(archiveDir);
-      } catch (Exception e) {
-
-      }
-      String archive_shipPath = archiveDir + "shipping/";
-      try {
-        ftp.mkdir(archive_shipPath);
-      } catch (Exception e) {
-
-      }
-      String archive_ConfPath = archiveDir + "confirmations/";
-      try {
-        ftp.mkdir(archive_ConfPath);
-      } catch (Exception e) {
-
-      }
-      String archive_trackPath = archiveDir + "tracking/";
-      try {
-        ftp.mkdir(archive_trackPath);
-      } catch (Exception e) {
-
-      }
+      // String archivePath = fileDir + archiveDir;
 
       FTPFile[] ftpFiles = ftp.dirDetails(fileDir);
+      // checking the existence of confirmations, shipping and tracking directories
+      boolean isConfirmationDirExists = false;
+      boolean isShippingDirExists = false;
+      boolean isTrackingDirExists = false;
       for (int i = 0; i < ftpFiles.length; i++) {
         FTPFile ff = ftpFiles[i];
         if (ff.getName().startsWith(".") || ff.getName().startsWith(".."))
           continue;
         if (ff.isDir()) {
-          if (ff.getName().equals("confirmations") || ff.getName().equals("shipping")
-              || ff.getName().equals("tracking")) {
-            String dirName = ff.getName() + "/";
-            log.info("Checking files in directory - {}", dirName);
+          String dirName = ff.getName() + "/";
+          log.info("Checking files in directory - {}", dirName);
+          if (dirName.equals("confirmations/")) {
+            isConfirmationDirExists = true;
+            continue;
+          } else if (dirName.equals("shipping/")) {
+            isShippingDirExists = true;
+            continue;
+          } else if (dirName.equals("tracking/")) {
+            isTrackingDirExists = true;
+            continue;
+          }
+        }
+      }
+      if (isConfirmationDirExists && isShippingDirExists && isTrackingDirExists) {
+        try {
+          ftp.mkdir(archiveDir);
+        } catch (Exception e) {
 
-            FTPFile[] test1FileList = ftp.dirDetails(fileDir + dirName);
-            for (int j = 0; j < test1FileList.length; j++) {
-              String fileNme = ((FTPFile) test1FileList[j]).getName();
-              if (fileNme.startsWith(".") || fileNme.startsWith(".."))
-                continue;
-              FTPFile fileToMove = (FTPFile) test1FileList[j];
-              Date lastModifiedDate = fileToMove.lastModified();
-              if (lastModifiedDate.before(moveFileDate)) {
-                log.info("{} : {} : move {}", count++, fileToMove.getName(), moveCount++);
-                String fileOldLocation = fileDir + dirName + fileNme;
-                String fileNewLocation = fileDir + archiveDir + dirName + fileNme;
-                if (!moveFile(ftp, fileOldLocation, fileNewLocation))
-                  log.warn("Failed to move file {}", fileOldLocation);
-                if (moveCount > 5000)
-                  return;
-              } else
-                log.info("{} : {} : skip {}", count++, fileToMove.getName(), skipCount++);
+        }
+        ftp.chdir(archiveDir);
+        String[] archiveDirArr = ftp.dir();
+        for (int i = 0; i < archiveDirArr.length; i++) {
+          String fileName = archiveDirArr[i];
+          if (fileName.equals("shipping"))
+            ftp.rename("shipping", "IS_shipping");
+          if (fileName.equals("confirmations"))
+            ftp.rename("confirmations", "IS_confirmations");
+          if (fileName.equals("tracking"))
+            ftp.rename("tracking", "IS_tracking");
+        }
+        ftp.cdup();
+        String archive_shipPath = archiveDir + "IS_shipping/";
+        try {
+          ftp.mkdir(archive_shipPath);
+        } catch (Exception e) {
+
+        }
+        String archive_ConfPath = archiveDir + "IS_confirmations/";
+        try {
+          ftp.mkdir(archive_ConfPath);
+        } catch (Exception e) {
+
+        }
+        String archive_trackPath = archiveDir + "IS_tracking/";
+        try {
+          ftp.mkdir(archive_trackPath);
+        } catch (Exception e) {
+
+        }
+        for (int i = 0; i < ftpFiles.length; i++) {
+          FTPFile ff = ftpFiles[i];
+          if (ff.getName().startsWith(".") || ff.getName().startsWith(".."))
+            continue;
+          if (ff.isDir()) {
+            if (ff.getName().equals("confirmations") || ff.getName().equals("shipping")
+                || ff.getName().equals("tracking")) {
+              String dirName = ff.getName() + "/";
+              log.info("Checking files in directory - {}", dirName);
+
+              FTPFile[] test1FileList = ftp.dirDetails(fileDir + dirName);
+              for (int j = 0; j < test1FileList.length; j++) {
+                String fileNme = ((FTPFile) test1FileList[j]).getName();
+                if (fileNme.startsWith(".") || fileNme.startsWith(".."))
+                  continue;
+                FTPFile fileToMove = (FTPFile) test1FileList[j];
+                Date lastModifiedDate = fileToMove.lastModified();
+                if (lastModifiedDate.before(moveFileDate)) {
+                  log.info("{} : {} : move {}", count++, fileToMove.getName(), moveCount++);
+                  String fileOldLocation = fileDir + dirName + fileNme;
+                  String fileNewLocation = fileDir + archiveDir + "IS_" + dirName + fileNme;
+                  if (!moveFile(ftp, fileOldLocation, fileNewLocation))
+                    log.warn("Failed to move file {}", fileOldLocation);
+                  if (moveCount > 5000)
+                    return;
+                } else
+                  log.info("{} : {} : skip {}", count++, fileToMove.getName(), skipCount++);
+              }
             }
           }
         }
+      } else {
+        // generate email alert
+        StringBuffer sb = new StringBuffer();
+        sb.append(
+            "Default order directories were not found on the HG FTP drive and it needs to be corrected by HG for VendorID - "
+                + vendorId + "\n");
+        sb.append("Missing directories are : \n");
+        if (!isConfirmationDirExists)
+          sb.append("confirmations \n");
+        if (!isShippingDirExists)
+          sb.append("shipping \n");
+        if (!isTrackingDirExists)
+          sb.append("tracking \n");
+        sb.append("FTP login details :- \n");
+        sb.append("FTP : " + ftpDetail.getUrl() + "\n");
+        sb.append("USERNAME : " + ftpDetail.getUserName() + "\n");
+        sb.append("PASSWORD : " + ftpDetail.getPassword() + "\n");
+        String subject = vendorId + " : Honest Green Default Ftp directories are missing";
+        EmailUtil.sendEmail("manish@inventorysource.com", "orders@inventorysource.com",
+            "manish@inventorysource.com", subject, sb.toString());
+
       }
     } catch (Exception e) {
       // TODO Auto-generated catch block
