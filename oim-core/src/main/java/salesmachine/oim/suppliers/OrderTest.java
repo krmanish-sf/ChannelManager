@@ -56,11 +56,11 @@ public class OrderTest {
   private static String startDate = "";// 08/18/2015
   private static String endDate = "";// MM/DD/YYYY
 
-  public static void main(String[] args) {
-    getUnconfirmedOrders();
-  }
+//  public static void main(String[] args) {
+//    getUnconfirmedOrders();
+//  }
 
-  public static void main1(String[] args) throws IOException, FTPException, ParseException {
+  public static void main(String[] args) throws IOException, FTPException, ParseException {
     long processStartTime = System.currentTimeMillis();
     Map<FtpDetail, String> ftpDetailMap;
     if (args.length == 2) {
