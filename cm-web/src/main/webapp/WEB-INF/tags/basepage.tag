@@ -31,6 +31,7 @@
 <link rel="stylesheet" href="static/css/ace-fonts.min.css" />
 <!-- ace styles -->
 <link rel="stylesheet" href="static/css/jquery.gritter.min.css" />
+<link rel="stylesheet" href="static/css/notifIt.css">
 <link rel="stylesheet" href="static/css/ace.min.css" />
 <link rel="stylesheet" href="static/css/inventory.min.css" />
 <link rel="stylesheet" href="static/css/ace-rtl.min.css" />
@@ -435,6 +436,7 @@
 	<!-- <script type="text/javascript"
 		src="static/js/jquery.maskedinput.min.js"></script> -->
 	<script type="text/javascript" src="static/js/is.js"></script>
+	<script type="text/javascript" src="static/js/notifIt.js"></script>
 
 	<!-- ace scripts -->
 	<script src="static/js/ace-elements.min.js"></script>

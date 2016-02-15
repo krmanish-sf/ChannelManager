@@ -61,6 +61,7 @@ public class OrderTest {
 //  }
 
   public static void main(String[] args) throws IOException, FTPException, ParseException {
+    System.out.println("process start...");
     long processStartTime = System.currentTimeMillis();
     Map<FtpDetail, String> ftpDetailMap;
     if (args.length == 2) {
@@ -91,7 +92,7 @@ public class OrderTest {
       log.info("ftp file move process ended at {} for {}", fileCleanupEndTimStr, ftpDetail);
       // "/home/staging/cm-orders/report/"
       // test /home/manish-kumar/staging/cm-orders/report
-      vendorDataMap = getVendorDataMap(vendorId, ftpDetail);
+      vendorDataMap.putAll(getVendorDataMap(vendorId, ftpDetail));
     }
     long reportStartTime = System.currentTimeMillis();
     String reportStartTimeStr = convertLongToDateString(reportStartTime);
@@ -118,30 +119,34 @@ public class OrderTest {
     int minutes = (int) ((total_time / (1000 * 60)) % 60);
     log.info("process completed in {} minutes ", minutes);
     log.info("Process complete...");
+    System.out.println("process end");
   }
 
   private static void getUnconfirmedOrders() {
     Session session = SessionManager.currentSession();
     Query query = null;
     StringBuffer sb = new StringBuffer();
-    Map<Integer, ArrayList<String>> vendorOrderMap = new HashMap<Integer, ArrayList<String>>();
+    Map<Integer, HashMap<String,String>> vendorOrderMap = new HashMap<Integer, HashMap<String,String>>();
+    
     query = session.createSQLQuery(
-        "select o.store_order_id, c.vendor_id from kdyer.oim_orders o inner join kdyer.oim_order_batches b on o.batch_id=b.batch_id"
-            + " inner join kdyer.oim_channels c on c.channel_id=b.channel_id where o.order_id in(select d.order_id from kdyer.oim_order_details d "
-            + "where d.SUPPLIER_WAREHOUSE_CODE is not null and d.STATUS_ID=2 and d.SUPPLIER_ORDER_STATUS like '%Sent to supplier%' and d.PROCESSING_TM > trunc(sysdate-2) "
-            + "and PROCESSING_TM<trunc(sysdate-1))");
+        " select o.store_order_id, c.vendor_id, to_char(d.PROCESSING_TM, 'DD-MON-YYYY') from kdyer.oim_order_details d "
+        + "inner join kdyer.oim_orders o on d.order_id=o.order_id inner join kdyer.oim_order_batches b on o.batch_id=b.batch_id"
+        + " inner join kdyer.oim_channels c on c.channel_id=b.channel_id where d.SUPPLIER_WAREHOUSE_CODE is not null and d.STATUS_ID=2 "
+        + "and d.SUPPLIER_ORDER_STATUS like '%Sent to supplier%' and d.PROCESSING_TM > trunc(sysdate-2) and PROCESSING_TM<trunc(sysdate-1)");
     List<Object[]> result = query.list();
     for (int j = 0; j < result.size(); j++) {
       Object[] obj = result.get(j);
       String storeOrderNo = (String) obj[0];
       int vendorId = ((BigDecimal) obj[1]).intValue();
-      ArrayList<String> orderList = vendorOrderMap.get(vendorId);
-      if (orderList != null)
-        orderList.add(storeOrderNo);
+      String processingTm = (String) obj[2];
+      
+      HashMap<String,String> orderMap = vendorOrderMap.get(vendorId);
+      if (orderMap != null && orderMap.size()!=0)
+        orderMap.put(storeOrderNo, processingTm);
       else {
-        ArrayList<String> orderListNew = new ArrayList<String>();
-        orderListNew.add(storeOrderNo);
-        vendorOrderMap.put(vendorId, orderListNew);
+        HashMap<String,String> orderMapNew = new HashMap<String,String>();
+        orderMapNew.put(storeOrderNo,processingTm);
+        vendorOrderMap.put(vendorId, orderMapNew);
       }
     }
     if (vendorOrderMap.size() > 0) {
@@ -155,10 +160,11 @@ public class OrderTest {
       int vendorId = itr.next();
       sb.append("\n");
       sb.append("Vendor - " + vendorId + " : \n");
-      ArrayList<String> orderList = vendorOrderMap.get(vendorId);
-      for (int i = 0; i < orderList.size(); i++) {
-        String storeOrderNo = orderList.get(i);
-        sb.append(storeOrderNo + "\n");
+      HashMap<String,String> orderMap = vendorOrderMap.get(vendorId);
+      for(Iterator<String> itrt = orderMap.keySet().iterator();itrt.hasNext();){
+        String storeOrderNo =  itrt.next();
+        String processTm = orderMap.get(storeOrderNo);
+        sb.append(storeOrderNo +"\t"+processTm+ "\n");
       }
       sb.append("------------------------------ \n");
     }

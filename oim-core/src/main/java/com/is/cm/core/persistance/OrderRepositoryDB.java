@@ -698,7 +698,7 @@ public class OrderRepositoryDB extends RepositoryBase implements OrderRepository
     String customer_name = StringHandle.removeNull(map.get("customer_name"));//
     String customer_email = StringHandle.removeNull(map.get("customer_email"));//
     String customer_address = StringHandle.removeNull(map.get("customer_address"));//
-    String order_id = StringHandle.removeNull(map.get("customer_address"));//
+    String order_id = StringHandle.removeNull(map.get("order_id"));//
     String customer_zip = StringHandle.removeNull(map.get("customer_zip"));//
     String customer_phone = StringHandle.removeNull(map.get("customer_phone"));//
     String order_total_min = StringHandle.removeNull(map.get("order_total_min"));//
@@ -1198,11 +1198,12 @@ public class OrderRepositoryDB extends RepositoryBase implements OrderRepository
           orderTrackingList.add(orderTracking);
         }
       }
+      tx.commit();
       updateStoreOrder(detail, orderTrackingList, session);
       if (newTrackingCount > 0) {
         bf.append(newTrackingCount + " tracking details has been added and sent to store . <br>");
       }
-      tx.commit();
+     // tx.commit();
 
       return bf.toString();
     } catch (Exception e) {

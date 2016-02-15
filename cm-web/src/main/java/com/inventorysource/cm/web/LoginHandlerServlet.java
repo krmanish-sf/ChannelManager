@@ -45,8 +45,8 @@ public class LoginHandlerServlet extends HttpServlet {
 	protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		HttpSession session = req.getSession(false);
 		if (session == null || session.getAttribute("reps") == null) {
-			String username = req.getParameter("username");
-			String password = req.getParameter("password");
+			String username = StringHandle.removeNull(req.getParameter("username")).trim();
+			String password = StringHandle.removeNull(req.getParameter("password")).trim();
 			String done = req.getParameter("done");
 			Map<String, String> loginDetails = new HashMap<String, String>();
 			loginDetails.put("username", username);
