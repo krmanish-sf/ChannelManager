@@ -84,8 +84,6 @@ public class SupplierRepositoryDB extends RepositoryBase implements SupplierRepo
           }
           s.getOimSuppliers().setOimSupplierMethodses(newSupplieraMethods);
         }
-        LOG.info("Supplier {} has {} method(s)", s.getOimSuppliers().getSupplierName(),
-            s.getOimSuppliers().getOimSupplierMethodses().size());
 
         Set<OimSupplierMethods> oimSupplierMethodses = s.getOimSuppliers()
             .getOimSupplierMethodses();

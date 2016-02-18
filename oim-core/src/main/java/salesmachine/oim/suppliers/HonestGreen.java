@@ -610,19 +610,15 @@ public class HonestGreen extends Supplier implements HasTracking {
       String addressLine2 = StringHandle
           .removeComma(StringHandle.removeNull(order.getDeliverySuburb()).toUpperCase());
       address = addressLine1 + " " + addressLine2;
-      StringBuffer sb = new StringBuffer();
-
-      if (addressLine1.length() > 25)
-        sb.append(
-            "Street Address line 1 is longer than the Honest Green allows (25 max characters). Please edit and resubmit if possible or process manually.<br/>");
-
-      if (addressLine2.length() > 25)
-        sb.append(
-            "Street Address line 2 is longer than the Honest Green allows (25 max characters). Please edit and resubmit if possible or process manually.<br/>");
-
-      if (sb.length() > 0)
+      if(addressLine1.length() > 25 && addressLine2.length() > 25)
+        throw new SupplierOrderException("Error: Address Line 1 &2 are both more than the 25 characters Honest Green allows. Please update the shipping address lines if possible and try again, or manually process.");
+      else if (addressLine1.length() > 25)
         throw new SupplierOrderException(
-            sb.toString() + "Order ID is - " + order.getStoreOrderId());
+            "Error: Street Address line 1 is longer than the Honest Green allows (25 max characters). Please edit and resubmit if possible or process manually.");
+
+      else if (addressLine2.length() > 25)
+        throw new SupplierOrderException(
+            "Error: Street Address line 2 is longer than the Honest Green allows (25 max characters). Please edit and resubmit if possible or process manually.");
       // if (address.length() > 50) {
       // throw new SupplierOrderException(
       // "Street Address length is more than 25 characters, which can't fit the given Honest green
@@ -631,7 +627,7 @@ public class HonestGreen extends Supplier implements HasTracking {
       // } else {
       if (address.length() > 24) {
         addressLine1 = address.substring(0, 24);
-        addressLine2 = address.substring(24, address.length() - 1);
+        addressLine2 = address.substring(24, address.length());
       }
       // }
       fOut.write(addressLine1.getBytes(ASCII));
@@ -1070,11 +1066,11 @@ public class HonestGreen extends Supplier implements HasTracking {
     // updateFromConfirmation();
     // updateFromTracking();
     Session session = SessionManager.currentSession();
-    OimVendorSuppliers ovs = (OimVendorSuppliers) session.get(OimVendorSuppliers.class, 9881);
+    OimVendorSuppliers ovs = (OimVendorSuppliers) session.get(OimVendorSuppliers.class, 9681);
     // 462847
-    OimOrders order = (OimOrders) session.get(OimOrders.class, 462847);
+    OimOrders order = (OimOrders) session.get(OimOrders.class, 462170);
     try {
-      new HonestGreen().sendOrders(748154, ovs, order);
+      new HonestGreen().sendOrders(735585, ovs, order);
     } catch (SupplierConfigurationException | SupplierCommunicationException
         | SupplierOrderException | ChannelConfigurationException | ChannelCommunicationException
         | ChannelOrderFormatException e) {

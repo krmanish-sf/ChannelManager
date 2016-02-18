@@ -1288,7 +1288,7 @@ public class OrderRepositoryDB extends RepositoryBase implements OrderRepository
           ovs = (OimVendorSuppliers) it.next();
           if (ovs != null && ovs.getTestMode().intValue() == 1)
             return "Test mode is enable for supplier - " + supplier.getSupplierName()
-                + ". Please make it disable and try again";
+                + ". Please make it disable and try again.";
         }
       } catch (Exception e) {
       }

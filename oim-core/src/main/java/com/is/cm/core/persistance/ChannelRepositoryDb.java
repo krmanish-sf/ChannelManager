@@ -110,7 +110,14 @@ public class ChannelRepositoryDb extends RepositoryBase implements ChannelReposi
         addChannelAccessDetail(dbSession, c, OimConstants.CHANNEL_ACCESSDETAIL_SHOP_CATALOGID,
             StringHandle.removeNull(getParameter("catalog-id")));
         LOG.debug("Saved yahoo channel access details");
-      } else if (c.getOimSupportedChannels().getSupportedChannelId() != 0) {
+      }else if (c.getOimSupportedChannels().getSupportedChannelId() == 10){
+        addChannelAccessDetail(dbSession, c, OimConstants.CHANNEL_ACCESSDETAIL_CHANNEL_URL,
+            StringHandle.removeNull(getParameter("storeurl")));
+        addChannelAccessDetail(dbSession, c, OimConstants.CHANNEL_ACCESSDETAIL_DEVHUB_SITE_ID,
+            StringHandle.removeNull(getParameter("devhub-site-id")));
+        LOG.debug("Saved DevHub channel access details");
+      }
+      else if (c.getOimSupportedChannels().getSupportedChannelId() != 0) {
         addChannelAccessDetail(dbSession, c, OimConstants.CHANNEL_ACCESSDETAIL_CHANNEL_URL,
             StringHandle.removeNull(getParameter("storeurl")));
         addChannelAccessDetail(dbSession, c, OimConstants.CHANNEL_ACCESSDETAIL_FTP_URL,
