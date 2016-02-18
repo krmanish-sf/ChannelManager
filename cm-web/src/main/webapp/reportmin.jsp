@@ -143,11 +143,12 @@
 					var reportType = widget.find(
 							'select.report-type option:selected').val();
 					if (!reportType) {
-						$.gritter.add({
-							title : 'Generate Report',
-							text : 'Please select report type',
-							class_name : 'gritter-error'
-						});
+// 						$.gritter.add({
+// 							title : 'Generate Report',
+// 							text : 'Please select report type',
+// 							class_name : 'gritter-error'
+// 						});
+						errorAlert('Generate Report','Please select report type');
 						widget.find('select.report-type option:selected')
 								.focus();
 						return false;
@@ -178,11 +179,12 @@
 							var reportType = widget.find(
 									'select.report-type option:selected').val();
 							if (!reportType) {
-								$.gritter.add({
-									title : 'Download Report',
-									text : 'Please select report type',
-									class_name : 'gritter-error'
-								});
+// 								$.gritter.add({
+// 									title : 'Download Report',
+// 									text : 'Please select report type',
+// 									class_name : 'gritter-error'
+// 								});
+								errorAlert('Download Report','Please select report type');
 								widget.find(
 										'select.report-type option:selected')
 										.focus();

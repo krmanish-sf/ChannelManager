@@ -131,19 +131,21 @@
 		});
 		$("#addShipping").click(function() {
 			if (!$("#shippingText").val() || !$("#shippingMappingVal").val()) {
-				$.gritter.add({
-					title : 'Add Shipping',
-					text : "All fields are required to be filled.",
-					class_name : 'gritter-error'
-				});
+// 				$.gritter.add({
+// 					title : 'Add Shipping',
+// 					text : "All fields are required to be filled.",
+// 					class_name : 'gritter-error'
+// 				});
+				errorAlert('Add Shipping','All fields are required to be filled.');
 				return;
 			}
 			if (!shippingMethod) {
-				$.gritter.add({
-					title : 'Add Shipping',
-					text : "Invalid shipping method.",
-					class_name : 'gritter-error'
-				});
+// 				$.gritter.add({
+// 					title : 'Add Shipping',
+// 					text : "Invalid shipping method.",
+// 					class_name : 'gritter-error'
+// 				});
+				errorAlert('Add Shipping','Invalid shipping method.');
 				return;
 			}
 			$.CM.addShippingMapping(shippingMethod);

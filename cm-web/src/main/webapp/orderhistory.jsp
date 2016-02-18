@@ -614,10 +614,11 @@
 										message : true,
 										success : function(data) {
 											table.row(r).remove().draw();
-											$.gritter.add({
-												title : 'Order Tracking',
-												text : "Deleted Successfully."
-											});
+// 											$.gritter.add({
+// 												title : 'Order Tracking',
+// 												text : "Deleted Successfully."
+// 											});
+											successAlert('Order Tracking','Deleted Successfully.');
 											$('#myModaledit').modal('hide');
 											$('#TrackingModal').modal('hide');
 										}
@@ -637,10 +638,11 @@
 				}
 			});
 			if (str && str.length > 0) {
-				$.gritter.add({
-					title : "Error!!",
-					text : "These fields can not be empty - " + str
-				});
+// 				$.gritter.add({
+// 					title : "Error!!",
+// 					text : "These fields can not be empty - " + str
+// 				});
+				errorAlert('Error!!','These fields can not be empty - ' + str);
 				return false;
 			}
 			if (quantity) {
@@ -653,12 +655,13 @@
 				var intQuan = parseInt(quan);
 				var intQuantity = parseInt(quantity);
 				if (intQuan > intQuantity) {
-					$.gritter
-							.add({
-								title : "Error!!",
-								text : "Total number of Tracking quantity can not be greater than "
-										+ quantity
-							});
+// 					$.gritter
+// 							.add({
+// 								title : "Error!!",
+// 								text : "Total number of Tracking quantity can not be greater than "
+// 										+ quantity
+// 							});
+					errorAlert('Error!!','Total number of Tracking quantity can not be greater than '+quantity);
 					return false;
 				}
 			}
@@ -673,11 +676,12 @@
 				}
 			});
 			if (invalidShipDate.length > 0) {
-				$.gritter.add({
-					title : "Error!!",
-					text : "Ship date(s) " + invalidShipDate
-							+ "can not be greater than current date "
-				});
+// 				$.gritter.add({
+// 					title : "Error!!",
+// 					text : "Ship date(s) " + invalidShipDate
+// 							+ "can not be greater than current date "
+// 				});
+				errorAlert('Error!!','Ship date(s) '+invalidShipDate+' can not be greater than current date.');
 				return false;
 			}
 
@@ -854,19 +858,21 @@
 								+ orderDetail.detailId,
 						data : JSON.stringify(orderDetail),
 						success : function(data, textStatus, jqXHR) {
-							$.gritter.add({
-								title : "Update Order Detail",
-								text : "Order Detail updated successfully."
-							});
+// 							$.gritter.add({
+// 								title : "Update Order Detail",
+// 								text : "Order Detail updated successfully."
+// 							});
+							successAlert('Update Order Detail','Order Detail updated successfully.');
 							table_xy.ajax.reload();
 							getAlerts();
 							//$('#myModaledit').modal('hide');
 						},
 						error : function(data, textStatus, jqXHR) {
-							$.gritter.add({
-								title : "Update Order Detail",
-								text : "Error in updating order detail."
-							});
+// 							$.gritter.add({
+// 								title : "Update Order Detail",
+// 								text : "Error in updating order detail."
+// 							});
+							errorAlert('Update Order Detail','Error in updating order detail.');
 						}
 					});
 		}
@@ -981,18 +987,20 @@
 							data : JSON.stringify(e.data),
 							success : function(data, textStatus, jqXHR) {
 								table_xy.ajax.reload();
-								$.gritter.add({
-									title : "Update Order",
-									text : "Order updated successfully."
-								});
+// 								$.gritter.add({
+// 									title : "Update Order",
+// 									text : "Order updated successfully."
+// 								});
+								successAlert('Update Order','Order updated successfully.');
 								$('#myModaledit').modal('hide');
 
 							},
 							error : function(a, c, b) {
-								$.gritter.add({
-									title : "Update Order Detail",
-									text : "Error in updating order detail."
-								});
+// 								$.gritter.add({
+// 									title : "Update Order Detail",
+// 									text : "Error in updating order detail."
+// 								});
+								errorAlert('Update Order Detail','Error in updating order detail.');
 							}
 						});
 					});
@@ -1256,15 +1264,16 @@
 													method : 'POST',
 													message : true,
 													success : function(data) {
-														$.gritter
-																.add({
-																	title : 'Order Bulk Update',
-																	text : data.length
-																			+ ' Orders '
-																			+ $(
-																					'#processselect1 option:selected')
-																					.text()
-																});
+// 														$.gritter
+// 																.add({
+// 																	title : 'Order Bulk Update',
+// 																	text : data.length
+// 																			+ ' Orders '
+// 																			+ $(
+// 																					'#processselect1 option:selected')
+// 																					.text()
+// 																});
+														successAlert('Order Bulk Update',data.length+ ' Orders '+ $("#processselect1 option:selected").text());
 														table_xy.ajax.reload();
 														$.CM
 																.updateOrderSummary();
@@ -1300,11 +1309,12 @@
 													method : 'POST',
 													message : true,
 													success : function(data) {
-														$.gritter
-																.add({
-																	title : 'Order Tracking',
-																	text : data
-																});
+// 														$.gritter
+// 																.add({
+// 																	title : 'Order Tracking',
+// 																	text : data
+// 																});
+														successAlert('Order Tracking',data);
 														$('#myModaledit')
 																.modal('hide');
 														$('#TrackingModal')

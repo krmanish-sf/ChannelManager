@@ -1341,10 +1341,11 @@ If you have not yet configured your supplier, click "Add Supplier" to do it now.
 											: 'You missed '
 													+ errors
 													+ ' fields. They have been highlighted';
-									$.gritter.add({
-										title : "Supplier information",
-										text : message
-									});
+// 									$.gritter.add({
+// 										title : "Supplier information",
+// 										text : message
+// 									});
+									errorAlert('Supplier information',message);
 								}
 							},
 							submitHandler : function(form) {
@@ -1365,11 +1366,12 @@ If you have not yet configured your supplier, click "Add Supplier" to do it now.
 														$('.modal').modal(
 																'hide');
 
-														$.gritter
-																.add({
-																	title : 'Update Supplier',
-																	text : 'Supplier updated successfully.'
-																});
+// 														$.gritter
+// 																.add({
+// 																	title : 'Update Supplier',
+// 																	text : 'Supplier updated successfully.'
+// 																});
+														successAlert('Update Supplier','Supplier updated successfully.');
 														table_vendorSuppliers.ajax
 																.reload();
 													}
@@ -1397,10 +1399,11 @@ If you have not yet configured your supplier, click "Add Supplier" to do it now.
 											: 'You missed '
 													+ errors
 													+ ' fields. They have been highlighted';
-									$.gritter.add({
-										title : "Supplier information",
-										text : message
-									});
+// 									$.gritter.add({
+// 										title : "Supplier information",
+// 										text : message
+// 									});
+									errorAlert('Supplier information',message);
 								}
 							},
 							submitHandler : function(form) {
@@ -1421,11 +1424,12 @@ If you have not yet configured your supplier, click "Add Supplier" to do it now.
 														$('.modal').modal(
 																'hide');
 
-														$.gritter
-																.add({
-																	title : 'Update Supplier',
-																	text : 'Supplier updated successfully.'
-																});
+// 														$.gritter
+// 																.add({
+// 																	title : 'Update Supplier',
+// 																	text : 'Supplier updated successfully.'
+// 																});
+														successAlert('Update Supplier','Supplier updated successfully.');
 														table_vendorSuppliers.ajax
 																.reload();
 													}
@@ -1453,10 +1457,11 @@ If you have not yet configured your supplier, click "Add Supplier" to do it now.
 											: 'You missed '
 													+ errors
 													+ ' fields. They have been highlighted';
-									$.gritter.add({
-										title : "Supplier information",
-										text : message
-									});
+// 									$.gritter.add({
+// 										title : "Supplier information",
+// 										text : message
+// 									});
+									errorAlert('Supplier information',message);
 								}
 							},
 							submitHandler : function(form) {
@@ -1477,11 +1482,12 @@ If you have not yet configured your supplier, click "Add Supplier" to do it now.
 														$('.modal').modal(
 																'hide');
 
-														$.gritter
-																.add({
-																	title : 'Update Supplier',
-																	text : 'Supplier updated successfully.'
-																});
+// 														$.gritter
+// 																.add({
+// 																	title : 'Update Supplier',
+// 																	text : 'Supplier updated successfully.'
+// 																});
+														successAlert('Update Supplier','Supplier updated successfully.');
 														table_vendorSuppliers.ajax
 																.reload();
 													}
@@ -1510,10 +1516,11 @@ If you have not yet configured your supplier, click "Add Supplier" to do it now.
 											: 'You missed '
 													+ errors
 													+ ' fields. They have been highlighted';
-									$.gritter.add({
-										title : "Supplier information",
-										text : message
-									});
+// 									$.gritter.add({
+// 										title : "Supplier information",
+// 										text : message
+// 									});
+									errorAlert('Supplier information',message);
 								}
 							},
 							submitHandler : function(form) {
@@ -1534,11 +1541,12 @@ If you have not yet configured your supplier, click "Add Supplier" to do it now.
 														$('.modal').modal(
 																'hide');
 
-														$.gritter
-																.add({
-																	title : 'Update Supplier',
-																	text : 'Supplier updated successfully.'
-																});
+// 														$.gritter
+// 																.add({
+// 																	title : 'Update Supplier',
+// 																	text : 'Supplier updated successfully.'
+// 																});
+														successAlert('Update Supplier','Supplier updated successfully.');
 														table_vendorSuppliers.ajax
 																.reload();
 													}
@@ -1567,10 +1575,11 @@ If you have not yet configured your supplier, click "Add Supplier" to do it now.
 													+ errors
 													+ ' fields. They have been highlighted';
 
-									$.gritter.add({
-										title : "Supplier information",
-										text : message
-									});
+// 									$.gritter.add({
+// 										title : "Supplier information",
+// 										text : message
+// 									});
+									errorAlert('Supplier information',message);
 								}
 							},
 							submitHandler : function(form) {
@@ -1588,11 +1597,12 @@ If you have not yet configured your supplier, click "Add Supplier" to do it now.
 															.stringify(formObject),
 
 													success : function() {
-														$.gritter
-																.add({
-																	title : 'Add Supplier',
-																	text : 'Supplier added successfully.'
-																});
+// 														$.gritter
+// 																.add({
+// 																	title : 'Add Supplier',
+// 																	text : 'Supplier added successfully.'
+// 																});
+														successAlert('Add Supplier','Supplier added successfully.');
 														$('#mySupplieradd')
 																.modal('hide');
 														table_vendorSuppliers.ajax

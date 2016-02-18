@@ -238,10 +238,11 @@
 														+ errors
 														+ ' fields. They have been highlighted';
 
-										$.gritter.add({
-											title : "Single order information",
-											text : message
-										});
+// 										$.gritter.add({
+// 											title : "Single order information",
+// 											text : message
+// 										});
+										errorAlert('Single order information',message);
 									}
 								},
 
@@ -301,10 +302,11 @@
 														+ errors
 														+ ' fields. They have been highlighted';
 
-										$.gritter.add({
-											title : "Add/Edit Channel",
-											text : message
-										});
+// 										$.gritter.add({
+// 											title : "Add/Edit Channel",
+// 											text : message
+// 										});
+										errorAlert('Add/Edit Channel',message);
 									}
 								},
 
@@ -353,11 +355,12 @@
 																		textStatus,
 																		errorThrown) {
 																	if (jqXhr.status == 409) {
-																		$.gritter
-																				.add({
-																					title : "Add Channel",
-																					text : "Channel with this name already exists."
-																				});
+// 																		$.gritter
+// 																				.add({
+// 																					title : "Add Channel",
+// 																					text : "Channel with this name already exists."
+// 																				});
+																		errorAlert('Add Channel','Channel with this name already exists.');
 																		$(
 																				'a[href="#collapseOne"]')
 																				.click();
@@ -432,27 +435,30 @@
 																	.row(e[0])
 																	.remove()
 																	.draw();
-															$.gritter
-																	.add({
-																		title : "Delete Channel",
-																		text : "Channel deleted."
-																	});
+// 															$.gritter
+// 																	.add({
+// 																		title : "Delete Channel",
+// 																		text : "Channel deleted."
+// 																	});
+															successAlert('Delete Channel','Channel deleted.');
 														},
 														error : function(data,
 																textStatus,
 																jqXHR) {
-															$.gritter
-																	.add({
-																		title : "Delete Channel",
-																		text : "Error occured in deleting channel."
-																	});
+// 															$.gritter
+// 																	.add({
+// 																		title : "Delete Channel",
+// 																		text : "Error occured in deleting channel."
+// 																	});
+															errorAlert('Delete Channel','Error occured in deleting channel.');
 														}
 													});
 								} else {
-									$.gritter.add({
-										title : "Delete Channel",
-										text : "Action cancelled"
-									});
+// 									$.gritter.add({
+// 										title : "Delete Channel",
+// 										text : "Action cancelled"
+// 									});
+									successAlert('Delete Channel','Action cancelled');
 								}
 							});
 		}
@@ -683,13 +689,14 @@
 																																							'#uploadordermodal')
 																																							.modal(
 																																									'hide');
-																																					$.gritter
-																																							.add({
-																																								title : 'Order file processing',
-																																								text : "Imported "
-																																										+ data
-																																										+ " Orders"
-																																							});
+// 																																					$.gritter
+// 																																							.add({
+// 																																								title : 'Order file processing',
+// 																																								text : "Imported "
+// 																																										+ data
+// 																																										+ " Orders"
+// 																																							});
+																																					successAlert('Order file processing','Imported '+ data+ ' Orders');
 																																				}
 																																			});
 																														});
@@ -768,11 +775,12 @@
 																						.insertAfter('#sample-row');
 																			});
 														}
-														$.gritter
-																.add({
-																	title : 'Order file upload',
-																	text : data.status
-																});
+// 														$.gritter
+// 																.add({
+// 																	title : 'Order file upload',
+// 																	text : data.status
+// 																});
+														successAlert('Order file upload',data.status);
 													}
 												});
 							});

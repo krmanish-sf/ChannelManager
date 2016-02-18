@@ -741,20 +741,22 @@
 			url : 'aggregators/orders/orderdetails/' + orderDetail.detailId,
 			data : JSON.stringify(orderDetail),
 			success : function(data, textStatus, jqXHR) {
-				$.gritter.add({
-					title : "Update Order Detail",
-					text : "Order Detail updated successfully."
+// 				$.gritter.add({
+// 					title : "Update Order Detail",
+// 					text : "Order Detail updated successfully."
 					
-				});
+// 				});
+				successAlert('Update Order Detail','Order Detail updated successfully.');
 				table_xy.ajax.reload();
 				$('#myModalResolve').modal('hide');
 				$('#myModalEdit').modal('hide');
 			},
 			error : function(data, textStatus, jqXHR) {
-				$.gritter.add({
-					title : "Update Order Detail",
-					text : "Error in updating order detail."
-				});
+// 				$.gritter.add({
+// 					title : "Update Order Detail",
+// 					text : "Error in updating order detail."
+// 				});
+				errorAlert('Update Order Detail','Error in updating order detail.');
 			}
 		});
 	}
@@ -869,18 +871,20 @@
 				url : 'aggregators/orders',
 				data : JSON.stringify(e.data),
 				success : function(data, textStatus, jqXHR) {
-					$.gritter.add({
-						title : "Update Order",
-						text : "Order updated successfully."
-					});
+// 					$.gritter.add({
+// 						title : "Update Order",
+// 						text : "Order updated successfully."
+// 					});
+					successAlert('Update Order','Order updated successfully.');
 					$('#myModaledit').modal('hide');
 					table_xy.ajax.reload();
 				},
 				error : function(a, c, b) {
-					$.gritter.add({
-						title : "Update Order",
-						text : "Error in updating Order."
-					});
+// 					$.gritter.add({
+// 						title : "Update Order",
+// 						text : "Error in updating Order."
+// 					});
+					errorAlert('Update Order','Error in updating Order.');
 				}
 			});
 		});
@@ -1128,15 +1132,16 @@
 												data : JSON.stringify(orders),
 												method : 'POST',
 												success : function(data) {
-													$.gritter
-															.add({
-																title : 'Order Bulk Update',
-																text : data.length
-																		+ ' Orders '
-																		+ $(
-																				'#processselect1 option:selected')
-																				.text()
-															});
+// 													$.gritter
+// 															.add({
+// 																title : 'Order Bulk Update',
+// 																text : data.length
+// 																		+ ' Orders '
+// 																		+ $(
+// 																				'#processselect1 option:selected')
+// 																				.text()
+// 															});
+													successAlert('Order Bulk Update',data.length+' Orders '+$('#processselect1 option:selected').text());
 													table_xy.ajax.reload();
 													$.CM.updateOrderSummary();
 												}

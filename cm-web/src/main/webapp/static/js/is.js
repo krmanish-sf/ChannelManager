@@ -41,11 +41,12 @@ function fetchBigcommerceAuthData() {
 						success : function(data) {
 							var keySize = Object.keys(data).length;
 							if (keySize == 0) {
-								$.gritter
-										.add({
-											title : "Error",
-											text : "Verify Store Url, or app might not have been installed on your store"
-										});
+//								$.gritter
+//										.add({
+//											title : "Error",
+//											text : "Verify Store Url, or app might not have been installed on your store"
+//										});
+								errorAlert('Error','Verify Store Url, or app might not have been installed on your store');
 							}
 							$('#bc-auth-token').val(data.authToken);
 							$('#store-hash').val(data.context);
@@ -65,11 +66,12 @@ function fetchShopifyAuthData() {
 						success : function(data) {
 							var keySize = Object.keys(data).length;
 							if (keySize == 0) {
-								$.gritter
-										.add({
-											title : "Error",
-											text : "Verify Store Url, or app might not have been installed on your store"
-										});
+//								$.gritter
+//										.add({
+//											title : "Error",
+//											text : "Verify Store Url, or app might not have been installed on your store"
+//										});
+								errorAlert('Error','Verify Store Url, or app might not have been installed on your store');
 							}
 							$('#shopifyAuthId').val(data.authToken);
 						}
@@ -537,19 +539,21 @@ function drawSalesReportTable(data) {
 
 	$(document).ajaxError(function(event, XMLHttpRequest, ajaxOptions) {
 		if (typeof ajaxOptions.message == 'object') {
-			$.gritter.add({
-				title : ajaxOptions.message.title,
-				text : ajaxOptions.message.text
-			});
+//			$.gritter.add({
+//				title : ajaxOptions.message.title,
+//				text : ajaxOptions.message.text
+//			});
+			successAlert(ajaxOptions.message.title,ajaxOptions.message.text,30000);
 		}
 		if (XMLHttpRequest.status == 401) {
-			$.gritter.add({
-				title : "Session expired",
-				text : "Your session has expired. Please login again.",
-				after_close : function(e, manual_close) {
-					window.location = 'login.jsp';
-				}
-			});
+//			$.gritter.add({
+//				title : "Session expired",
+//				text : "Your session has expired. Please login again.",
+//				after_close : function(e, manual_close) {
+//					window.location = 'login.jsp';
+//				}
+//			});
+			successAlert('Session expired','Your session has expired. Please login again.',30000);
 
 		}
 	});
@@ -557,11 +561,12 @@ function drawSalesReportTable(data) {
 	$.gritter.options.position = 'center-top';
 	$(document).ajaxSuccess(function(event, XMLHttpRequest, ajaxOptions) {
 		if (typeof ajaxOptions.message === 'object') {
-			$.gritter.add({
-				title : ajaxOptions.message.title,
-				text : ajaxOptions.message.text
-
-			});
+//			$.gritter.add({
+//				title : ajaxOptions.message.title,
+//				text : ajaxOptions.message.text
+//
+//			});
+			successAlert(ajaxOptions.message.title,ajaxOptions.message.text,30000);
 		}
 	});
 	$(document).ajaxComplete(function(event, jqXHR, ajaxOptions) {
@@ -586,10 +591,11 @@ function drawSalesReportTable(data) {
 				method : "GET",
 				url : url,
 				success : function(data) {
-					$.gritter.add({
-						title : 'Pull Order',
-						text : data
-					});
+//					$.gritter.add({
+//						title : 'Pull Order',
+//						text : data
+//					});
+					successAlert('Pull Order',data);
 					$.CM.updateOrderSummary();
 				},
 				error : function(data, jqXhr, msg) {
@@ -598,12 +604,13 @@ function drawSalesReportTable(data) {
 				message : true
 			});
 		} else {
-			$.gritter
-					.add({
-						title : 'Pull Order',
-						text : "Test mode is enabled for this channel. Please make it disable and try again",
-						class_name : 'gritter-error'
-					});
+//			$.gritter
+//					.add({
+//						title : 'Pull Order',
+//						text : "Test mode is enabled for this channel. Please make it disable and try again",
+//						class_name : 'gritter-error'
+//					});
+			errorAlert('Pull Order','Test mode is enabled for this channel. Please make it disable and try again.');
 		}
 	};
 	$.CM.getOrderModification = function(detailId) {
@@ -686,11 +693,12 @@ function drawSalesReportTable(data) {
 			data : JSON.stringify(null),
 			method : 'POST',
 			success : function(data) {
-				$.gritter.add({
-					title : 'Order Processing Update',
-					text : data.length + ' Order(s) processed.'
-
-				});
+//				$.gritter.add({
+//					title : 'Order Processing Update',
+//					text : data.length + ' Order(s) processed.'
+//
+//				});
+				successAlert('Order Processing Update',data.length + ' Order(s) processed.');
 				if (typeof $.CM.updateOrderSummary === 'function')
 					$.CM.updateOrderSummary();
 			},
@@ -869,11 +877,12 @@ function drawSalesReportTable(data) {
 
 	$.CM.deleteShippingMethod = function(e, shippingMethodId, channelId) {
 		if (!channelId) {
-			$.gritter
-					.add({
-						title : 'Not Allowed',
-						text : "This shipping method is not specific to any channel. So you can not delete it."
-					});
+//			$.gritter
+//					.add({
+//						title : 'Not Allowed',
+//						text : "This shipping method is not specific to any channel. So you can not delete it."
+//					});
+			errorAlert('Not Allowed','This shipping method is not specific to any channel. So you can not delete it.');
 			return;
 		}
 		var isDelete = confirm("You are trying to delete an existing tracking. Are you sure?");
@@ -927,11 +936,12 @@ function drawSalesReportTable(data) {
 			}
 		});
 		if (!channelId) {
-			$.gritter
-					.add({
-						title : 'Not Allowed',
-						text : "This shipping method is not specific to any channel. So you can not update it."
-					});
+//			$.gritter
+//					.add({
+//						title : 'Not Allowed',
+//						text : "This shipping method is not specific to any channel. So you can not update it."
+//					});
+			errorAlert('Not Allowed','This shipping method is not specific to any channel. So you can not update it.');
 			return;
 		}
 		// href="#EditChannelShippingModal" data-toggle="modal"
@@ -1009,10 +1019,11 @@ function drawSalesReportTable(data) {
 			data : JSON.stringify(requestData),
 			message : true,
 			success : function(data) {
-				$.gritter.add({
-					title : 'Shipping Method',
-					text : data
-				});
+//				$.gritter.add({
+//					title : 'Shipping Method',
+//					text : data
+//				});
+				successAlert('Shipping Method',data);
 				$('#EditChannelShippingModal').modal('hide');
 				tableShippingMap.ajax.reload();
 			}
@@ -1179,11 +1190,12 @@ function drawSalesReportTable(data) {
 							method : "GET",
 							success : function(status) {
 								if (status != '') {
-									$.gritter.add({
-										title : 'Order Processing',
-										text : status,
-										class_name : 'gritter-error'
-									});
+//									$.gritter.add({
+//										title : 'Order Processing',
+//										text : status,
+//										class_name : 'gritter-error'
+//									});
+									errorAlert('Order Processing',status);
 								} else {
 									var map = {};
 									var hgItemCount = 0;
@@ -1257,12 +1269,13 @@ function drawSalesReportTable(data) {
 		$('#dontProcess')
 		.click(
 				function() {
-					$.gritter
-					.add({
-						title : 'Order Processing',
-						text : 'Order Processing Cancelled.',
-						class_name : 'gritter-error'
-					});
+//					$.gritter
+//					.add({
+//						title : 'Order Processing',
+//						text : 'Order Processing Cancelled.',
+//						class_name : 'gritter-error'
+//					});
+					errorAlert('Order Processing','Order Processing Cancelled.');
 					$('#processConfirmationModal').modal('hide');
 				});
 	}
@@ -1272,24 +1285,34 @@ function drawSalesReportTable(data) {
 			method : "POST",
 			data : JSON.stringify(order),
 			success : function(orderFetchStatus) {
-				$.gritter.add({
-					title : 'Order Processing',
-					text : orderFetchStatus,
-				// class_name
-				// :
-				// 'gritter-success'
-				});
-				table_xy.ajax.reload();
-				getAlerts();
+//				$.gritter.add({
+//					title : 'Order Processing',
+//					text : orderFetchStatus,
+//				// class_name
+//				// :
+//				// 'gritter-success'
+//				});
+				//Error:
+				if(orderFetchStatus.indexOf('Error:')!=-1){
+					orderFetchStatus = orderFetchStatus.replace('Error:','');
+					errorAlert('Order Processing',orderFetchStatus);
+				}
+				else{
+					successAlert('Order Processing',orderFetchStatus);
+					table_xy.ajax.reload();
+					getAlerts();
+				}
+				
 			},
 			error : function(a, b, c) {
-				$.gritter.add({
-					title : 'Order Processing',
-					text : 'Order Processing Failed.',
-				// class_name
-				// :
-				// 'gritter-error'
-				});
+//				$.gritter.add({
+//					title : 'Order Processing',
+//					text : 'Order Processing Failed.',
+//				// class_name
+//				// :
+//				// 'gritter-error'
+//				});
+				errorAlert('Order Processing','Order Processing Failed.');
 				table_xy.ajax.reload();
 				getAlerts();
 			}
@@ -1301,19 +1324,21 @@ function drawSalesReportTable(data) {
 			method : "GET",
 			success : function(status) {
 				$('#orderStatus' + orderDetailId).text(status);
-				$.gritter.add({
-					title : 'Order Tracking',
-					text : 'Order Status : ' + status,
-					class_name : 'gritter-success'
-				});
+//				$.gritter.add({
+//					title : 'Order Tracking',
+//					text : 'Order Status : ' + status,
+//					class_name : 'gritter-success'
+//				});
+				successAlert('Order Tracking','Order Status : ' + status);
 
 			},
 			error : function(a, b, c) {
-				$.gritter.add({
-					title : 'Order Tracking',
-					text : 'Order Tracking Failed.',
-					class_name : 'gritter-error'
-				});
+//				$.gritter.add({
+//					title : 'Order Tracking',
+//					text : 'Order Tracking Failed.',
+//					class_name : 'gritter-error'
+//				});
+				errorAlert('Order Tracking','Order Tracking Failed.');
 			}
 
 		});
@@ -1504,12 +1529,13 @@ function drawSalesReportTable(data) {
 		for (var i = 0; i < existingShippingMapping.length; i++) {
 			var obj = existingShippingMapping[i];
 			if (shippingText.localeCompare(obj.shippingRegEx) == 0) {
-				$.gritter
-						.add({
-							title : 'Add Shipping',
-							text : "Shipping Text already exists. Please try different value",
-							class_name : 'gritter-error'
-						});
+//				$.gritter
+//						.add({
+//							title : 'Add Shipping',
+//							text : "Shipping Text already exists. Please try different value",
+//							class_name : 'gritter-error'
+//						});
+				errorAlert('Add Shipping','Shipping Text already exists. Please try different value');
 				return;
 			}
 		}
@@ -1525,11 +1551,12 @@ function drawSalesReportTable(data) {
 			url : 'aggregators/channels/addShippingMethods/addShipping',
 			data : data,
 			success : function(a, b, c) {
-				$.gritter.add({
-					title : 'Add Shipping',
-					text : a,
-					class_name : 'gritter-success'
-				});
+//				$.gritter.add({
+//					title : 'Add Shipping',
+//					text : a,
+//					class_name : 'gritter-success'
+//				});
+				successAlert('Add Shipping',a);
 				tableShippingMap.ajax.reload();
 			}
 
@@ -1621,3 +1648,48 @@ $.fn.dataTableExt.oApi.fnReloadAjax = function(oSettings, sNewSource,
 		return formData;
 	};
 })(jQuery);
+
+function successAlert(title,msg,timeout) { // this will auto close after 6 seconds if timeout is not specified.
+	  var modal = bootbox.dialog({
+	    message: '<p style="text-align: center; font-size: 14px;">'+msg+'</p>',
+	    title: title,
+	   
+	    show: false,
+	    onEscape: function() {
+	      modal.modal('hide');
+	    }
+	  });
+	    
+	  modal.on("shown.bs.modal", function() {
+		  if(timeout){
+		    setTimeout(function() {
+		      modal.modal('hide');
+		    }, timeout);
+	  	  }
+		  else{
+			  setTimeout(function() {
+			      modal.modal('hide');
+			    }, 60000);
+		  }
+	  });
+	    
+	  modal.modal('show');
+	}
+
+function errorAlert(title,msg){
+	  var modal = bootbox.dialog({
+		    message: '<p style="text-align: justify; font-size: 14px;">'+msg+'</p>',
+		    title: title,
+		    buttons: {
+		        main: {
+		          label: "OK",
+		          className: "btn-primary"
+		        }
+		      },
+		    show: false,
+		    onEscape: function() {
+		      modal.modal('hide');
+		    }
+		  });
+		  modal.modal('show');
+}
