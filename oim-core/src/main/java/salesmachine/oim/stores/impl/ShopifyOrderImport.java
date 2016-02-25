@@ -583,16 +583,6 @@ public final class ShopifyOrderImport extends ChannelBase implements IOrderImpor
     return response;
   }
 
-  private String getStringFromStream(InputStream is) throws IOException {
-    StringBuffer streamBuffer = new StringBuffer();
-    BufferedReader reader = new BufferedReader(new InputStreamReader(is, "UTF-8"));
-    String inputLine;
-    while ((inputLine = reader.readLine()) != null) {
-      streamBuffer.append(inputLine + '\n');
-    }
-    reader.close();
-    return streamBuffer.toString();
-  }
 
   @Override
   public void cancelOrder(OimOrderDetails oimOrder) throws ChannelOrderFormatException {

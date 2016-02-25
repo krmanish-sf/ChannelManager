@@ -104,7 +104,7 @@ public class OrderTrackingTask extends TimerTask {
         }
         audit.setTrackTaskCompleted();
         audit.persistAutomationAudit();
-        // update the tracking to the store if not sent when got updated in CM (those details which
+        // update the tracking to the store (if not sent when got updated in CM. i.e those details which
         // has shipped status but not completed status)
         SQLQuery sqlQuery = session.createSQLQuery(
             "select * from kdyer.oim_order_tracking t where t.detail_id in (select d.detail_id from KDYER.OIM_ORDER_DETAILS d where"

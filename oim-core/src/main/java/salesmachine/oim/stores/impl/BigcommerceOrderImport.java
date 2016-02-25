@@ -501,16 +501,6 @@ public class BigcommerceOrderImport extends ChannelBase {
     return;
   }
 
-  private static String getStringFromStream(InputStream is) throws IOException {
-    StringBuffer streamBuffer = new StringBuffer();
-    BufferedReader reader = new BufferedReader(new InputStreamReader(is, "UTF-8"));
-    String inputLine;
-    while ((inputLine = reader.readLine()) != null) {
-      streamBuffer.append(inputLine + '\n');
-    }
-    reader.close();
-    return streamBuffer.toString();
-  }
 
   @Override
   public void cancelOrder(OimOrders oimOrder) throws ChannelOrderFormatException,

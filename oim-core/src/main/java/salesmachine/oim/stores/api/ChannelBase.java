@@ -1,5 +1,9 @@
 package salesmachine.oim.stores.api;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -111,6 +115,16 @@ public abstract class ChannelBase implements IOrderImport {
     countryCode = StringHandle.removeNull(countryCode);
     log.info("Country code for {} is {}", order.getDeliveryCountry(), countryCode);
     return countryCode;
+  }
+  protected String getStringFromStream(InputStream is) throws IOException {
+    StringBuffer streamBuffer = new StringBuffer();
+    BufferedReader reader = new BufferedReader(new InputStreamReader(is, "UTF-8"));
+    String inputLine;
+    while ((inputLine = reader.readLine()) != null) {
+      streamBuffer.append(inputLine + '\n');
+    }
+    reader.close();
+    return streamBuffer.toString();
   }
 
 }
