@@ -1,0 +1,60 @@
+<xs:schema attributeFormDefault="unqualified" elementFormDefault="qualified" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:element name="xmldata">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="Orders" maxOccurs="unbounded" minOccurs="0">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element type="xs:byte" name="OrderID"/>
+              <xs:element type="xs:string" name="BillingAddress1"/>
+              <xs:element type="xs:string" name="BillingAddress2"/>
+              <xs:element type="xs:string" name="BillingCity"/>
+              <xs:element type="xs:string" name="BillingCompanyName"/>
+              <xs:element type="xs:string" name="BillingCountry"/>
+              <xs:element type="xs:string" name="BillingFirstName"/>
+              <xs:element type="xs:string" name="BillingLastName"/>
+              <xs:element type="xs:long" name="BillingPhoneNumber"/>
+              <xs:element type="xs:short" name="BillingPostalCode"/>
+              <xs:element type="xs:string" name="BillingState"/>
+              <xs:element type="xs:byte" name="CustomerID"/>
+              <xs:element type="xs:string" name="IsGTSOrder"/>
+              <xs:element type="xs:string" name="OrderDate"/>
+              <xs:element type="xs:string" name="OrderStatus"/>
+              <xs:element type="xs:float" name="PaymentAmount"/>
+              <xs:element type="xs:byte" name="PaymentMethodID"/>
+              <xs:element type="xs:string" name="PONum"/>
+              <xs:element type="xs:string" name="ShipAddress1"/>
+              <xs:element type="xs:string" name="ShipAddress2"/>
+              <xs:element type="xs:string" name="ShipCity"/>
+              <xs:element type="xs:string" name="ShipCompanyName"/>
+              <xs:element type="xs:string" name="ShipCountry"/>
+              <xs:element type="xs:string" name="ShipFirstName"/>
+              <xs:element type="xs:string" name="ShipLastName"/>
+              <xs:element type="xs:long" name="ShipPhoneNumber"/>
+              <xs:element type="xs:byte" name="ShippingMethodID"/>
+              <xs:element type="xs:short" name="ShipPostalCode"/>
+              <xs:element type="xs:string" name="ShipResidential"/>
+              <xs:element type="xs:string" name="ShipState"/>
+              <xs:element type="xs:byte" name="sOrderID"/>
+              <xs:element name="OrderDetails" maxOccurs="unbounded" minOccurs="0">
+                <xs:complexType>
+                  <xs:sequence>
+                    <xs:element type="xs:byte" name="OrderDetailID"/>
+                    <xs:element type="xs:byte" name="OrderID"/>
+                    <xs:element type="xs:string" name="ProductCode"/>
+                    <xs:element type="xs:int" name="ProductID"/>
+                    <xs:element type="xs:string" name="ProductName"/>
+                    <xs:element type="xs:float" name="ProductPrice"/>
+                    <xs:element type="xs:byte" name="QtyShipped"/>
+                    <xs:element type="xs:byte" name="Quantity"/>
+                    <xs:element type="xs:float" name="TotalPrice"/>
+                  </xs:sequence>
+                </xs:complexType>
+              </xs:element>
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+</xs:schema>
