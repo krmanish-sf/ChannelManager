@@ -478,6 +478,7 @@
 								url : 'aggregators/reports/notifications',
 								method : 'GET',
 								success : function(data) {
+									console.log(data);
 									var count = 0;
 									$('#header-nav li ul.alert-details')
 											.empty();
@@ -509,7 +510,7 @@
 																		'pull-left')
 																.html(
 																		"Message: "
-																				+ data.supplierErrors[i].errormsg)
+																				+ data.supplierErrors[i].errordesc)
 																.appendTo(d2);
 														a.append(cldiv);
 														a.append(d2);
