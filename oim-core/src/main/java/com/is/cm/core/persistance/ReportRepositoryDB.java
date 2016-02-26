@@ -855,7 +855,7 @@ public class ReportRepositoryDB extends RepositoryBase implements
 		String hql = "select history.oimSuppliers as suppliers,"
 				+ "history.processingTm,history.errorCode, history.description "
 				+ "from salesmachine.hibernatedb.OimVendorsuppOrderhistory history "
-				+ "where vendors=:v and processingTm is not null and deleteTm is null order by processingTm";
+				+ "where vendors=:v and processingTm is not null and processingTm>(sysdate-1) and deleteTm is null order by processingTm";
 		Session dbSession = SessionManager.currentSession();
 		Query query = dbSession.createQuery(hql);
 		Iterator iter = query.setEntity("v", vendor).iterate();

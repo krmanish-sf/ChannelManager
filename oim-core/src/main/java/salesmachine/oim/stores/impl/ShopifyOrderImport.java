@@ -553,13 +553,13 @@ public final class ShopifyOrderImport extends ChannelBase implements IOrderImpor
       } else if (responseCode == 401) {
         throw new ChannelConfigurationException(
             "401- API Request is not valid for this shop. You are either not using the right Access Token or the permission for that token has been revoked");
-      } else if (responseCode == 422) {
+      } 
+      else if (responseCode == 422) {
         if(storeOrderId!=null)
-        throw new ChannelCommunicationException(
-            "422 - There was a problem with the body of your Request. Inspect the response body for the errors for store order id - "+storeOrderId);
-        throw new ChannelCommunicationException(
-            "422 - There was a problem with the body of your Request. Inspect the response body for the errors");
-      } else if (responseCode == 403) {
+          log.error("422 - There was a problem with the body of your Request. Inspect the response body for the errors for store order id - {}",storeOrderId);
+        log.error("422 - There was a problem with the body of your Request. Inspect the response body for the errors");
+      }
+      else if (responseCode == 403) {
         if(storeOrderId!=null)
         throw new ChannelConfigurationException(
             "Error occured for store order id - "+storeOrderId+" response code 403 - Forbidden access - verify app OAuth scopes");
