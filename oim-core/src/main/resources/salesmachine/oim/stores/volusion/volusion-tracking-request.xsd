@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<xs:schema id="xmldata" xmlns="" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata"
+xmlns:msprop="urn:schemas-microsoft-com:xml-msprop">
+<xs:element name="xmldata" msdata:IsDataSet="true" msdata:UseCurrentLocale="true">
+ <xs:complexType>
+    <xs:choice minOccurs="0" maxOccurs="unbounded">
+      <xs:element name="TrackingNumbers">
+        <xs:complexType>
+          <xs:sequence>
+              <xs:element msprop:TableNameXsd="TrackingNumbers" name="Form" msprop:maxLength="100" msprop:SqlDbType="VarChar"
+minOccurs="0" />
+             <xs:element name="Gateway" msprop:maxLength="15" msprop:SqlDbType="VarChar" minOccurs="0" />
+             <xs:element name="OrderID" msprop:SqlDbType="Int" minOccurs="0" />
+             <xs:element name="Package" msprop:maxLength="35" msprop:SqlDbType="VarChar" minOccurs="0" />
+             <xs:element name="ShipDate" msprop:SqlDbType="SmallDateTime" minOccurs="0" />
+             <xs:element name="Shipment_Cost" msprop:SqlDbType="Money" minOccurs="0" />
+             <xs:element name="ShippingMethodID" msprop:SqlDbType="Int" minOccurs="0" />
+             <xs:element name="TrackingNumber" msprop:maxLength="30" msprop:SqlDbType="VarChar" minOccurs="1" />
+             <xs:element name="MarkOrderShipped" msprop:maxLength="5" msprop:SqlDbType="VarChar" minOccurs="0" />
+             <xs:element name="SendShippedEmail" msprop:maxLength="5" msprop:SqlDbType="VarChar" minOccurs="0" />
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+    </xs:choice>
+    </xs:complexType>
+ </xs:element>
+</xs:schema>

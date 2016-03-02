@@ -117,6 +117,16 @@ public class ChannelRepositoryDb extends RepositoryBase implements ChannelReposi
             StringHandle.removeNull(getParameter("devhub-site-id")));
         LOG.debug("Saved DevHub channel access details");
       }
+      else if(c.getOimSupportedChannels().getSupportedChannelId() == 11){
+        addChannelAccessDetail(dbSession, c, OimConstants.CHANNEL_ACCESSDETAIL_CHANNEL_URL,
+            StringHandle.removeNull(getParameter("storeurl")));
+        addChannelAccessDetail(dbSession, c, OimConstants.CHANNEL_ACCESSDETAIL_ADMIN_LOGIN,
+            StringHandle.removeNull(getParameter("volusion-store-login")));
+        addChannelAccessDetail(dbSession, c, OimConstants.CHANNEL_ACCESSDETAIL_ADMIN_PWD,
+            StringHandle.removeNull(getParameter("volusion-store-password")));
+        LOG.debug("Saved Volusion channel access details");
+      
+      }
       else if (c.getOimSupportedChannels().getSupportedChannelId() != 0) {
         addChannelAccessDetail(dbSession, c, OimConstants.CHANNEL_ACCESSDETAIL_CHANNEL_URL,
             StringHandle.removeNull(getParameter("storeurl")));

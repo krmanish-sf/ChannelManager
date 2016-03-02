@@ -436,8 +436,6 @@
 	<!-- <script type="text/javascript"
 		src="static/js/jquery.maskedinput.min.js"></script> -->
 	<script type="text/javascript" src="static/js/is.js"></script>
-	<script type="text/javascript" src="static/js/notifIt.js"></script>
-
 	<!-- ace scripts -->
 	<script src="static/js/ace-elements.min.js"></script>
 	<script src="static/js/ace.min.js"></script>

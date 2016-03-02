@@ -248,6 +248,31 @@
 														 />
 												</div>
 											</div>
+											
+											<div class="form-group store-info volusion-store">
+												<label for="volusion-store-login"
+													class="col-sm-5 control-label no-padding-right">Login</label>
+												<div class="col-sm-7">
+													<input type="text" id="volusion-login" name="volusion-store-login"
+														class="width-70" placeholder="example@domain.com"
+														required="required"
+														data-bind-channel="customMapper:oimChannelAccessDetailses[oimChannelAccessFields.fieldId=5].detailFieldValue"
+														 />
+												</div>
+											</div>
+											
+											<div class="form-group store-info volusion-store">
+												<label for="volusion-store-password"
+													class="col-sm-5 control-label no-padding-right">Encrypted Password</label>
+												<div class="col-sm-7">
+													<input type="password" id="volusion-login" name="volusion-store-password"
+														class="width-70" placeholder="password"
+														required="required"
+														data-bind-channel="customMapper:oimChannelAccessDetailses[oimChannelAccessFields.fieldId=6].detailFieldValue"
+														 />
+												</div>
+											</div>
+											
 											<div class="form-group center">
 												<!-- <input type="button"
 															class="btn btn-success btn-sm" value="Test Settings" /> -->

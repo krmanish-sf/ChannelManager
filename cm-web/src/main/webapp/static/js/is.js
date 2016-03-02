@@ -1496,6 +1496,22 @@ function drawSalesReportTable(data) {
 					$(this).hide();
 			});
 			break;
+		case "10":
+			$(".store-info").each(function(i, e) {
+				if ($(this).hasClass('devhub-store'))
+					$(this).show();
+				else
+					$(this).hide();
+			});
+			break;
+		case "11":
+			$(".store-info").each(function(i, e) {
+				if ($(this).hasClass('volusion-store'))
+					$(this).show();
+				else
+					$(this).hide();
+			});
+			break;
 		case "0":
 		default:
 			$(".store-info").hide();
@@ -1669,7 +1685,7 @@ function successAlert(title,msg,timeout) { // this will auto close after 6 secon
 		  else{
 			  setTimeout(function() {
 			      modal.modal('hide');
-			    }, 60000);
+			    }, 6000);
 		  }
 	  });
 	    

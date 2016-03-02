@@ -194,10 +194,16 @@ public class HonestGreen extends Supplier implements HasTracking {
       poNum = (String) q;
       log.info("Reprocessing po - {}", poNum);
     } else {
-      if (isOrderFromAmazonStore)
-        poNum = order.getStoreOrderId();
-      else
-        poNum = ovs.getVendors().getVendorId() + "-" + order.getStoreOrderId();
+      // if (isOrderFromAmazonStore)
+      // poNum = order.getStoreOrderId();
+      // else
+      // poNum = ovs.getVendors().getVendorId() + "-" + order.getStoreOrderId();
+      poNum = order.getOrderId() + "-" + order.getStoreOrderId(); // ISD-445 - HG only reads first
+                                                                  // 12 chars . so making it unique.
+                                                                  // (Note :- they only read 12
+                                                                  // chars but they doesn't delete
+                                                                  // any char in
+                                                                  // confirmation/tracking files. )
     }
     Set<OimOrderDetails> phiItems = new HashSet<OimOrderDetails>();
     Set<OimOrderDetails> hvaItems = new HashSet<OimOrderDetails>();
@@ -610,8 +616,9 @@ public class HonestGreen extends Supplier implements HasTracking {
       String addressLine2 = StringHandle
           .removeComma(StringHandle.removeNull(order.getDeliverySuburb()).toUpperCase());
       address = addressLine1 + " " + addressLine2;
-      if(addressLine1.length() > 25 && addressLine2.length() > 25)
-        throw new SupplierOrderException("Error: Address Line 1 &2 are both more than the 25 characters Honest Green allows. Please update the shipping address lines if possible and try again, or manually process.");
+      if (addressLine1.length() > 25 && addressLine2.length() > 25)
+        throw new SupplierOrderException(
+            "Error: Address Line 1 &2 are both more than the 25 characters Honest Green allows. Please update the shipping address lines if possible and try again, or manually process.");
       else if (addressLine1.length() > 25)
         throw new SupplierOrderException(
             "Error: Street Address line 1 is longer than the Honest Green allows (25 max characters). Please edit and resubmit if possible or process manually.");
