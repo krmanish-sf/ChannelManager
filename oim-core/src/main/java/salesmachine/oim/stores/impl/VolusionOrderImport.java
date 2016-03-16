@@ -452,7 +452,7 @@ public class VolusionOrderImport extends ChannelBase implements IOrderImport {
       connection.connect();
       responseCode = connection.getResponseCode();
       String response = getStringFromStream(connection.getInputStream());
-      System.out.println(response);
+      log.info(response);
     } catch (IOException e) {
       log.error("Error occured for updating tracking number to store for sku : "
           + oimOrderDetails.getSku(), e);

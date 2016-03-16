@@ -1,16 +1,12 @@
 package salesmachine.oim.stores.impl;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
+import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -18,8 +14,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
-
-import javax.net.ssl.HttpsURLConnection;
 
 import org.apache.commons.httpclient.methods.StringRequestEntity;
 import org.hibernate.HibernateException;
@@ -41,6 +35,7 @@ import salesmachine.hibernatedb.OimOrderStatuses;
 import salesmachine.hibernatedb.OimOrders;
 import salesmachine.hibernatedb.OimSuppliers;
 import salesmachine.hibernatehelper.PojoHelper;
+import salesmachine.hibernatehelper.SessionManager;
 import salesmachine.oim.api.OimConstants;
 import salesmachine.oim.stores.api.ChannelBase;
 import salesmachine.oim.stores.api.IOrderImport;
@@ -61,24 +56,21 @@ public class DevHubOrderImport extends ChannelBase implements IOrderImport {
   private String clientId;
   private String secrateKey;
   private static final String GET_REQUEST_METHOD = "GET";
-  private static final String POST_REQUEST_METHOD = "POST";
   private static final String PUT_REQUEST_METHOD = "PUT";
   private static final String SPACE = " ";
   private int noOfApiRequests = 0;
-  // new
-  // inprocess
-  // shipped
-  // cancelled
+  private static final int limit = 10;
+  private static final String HOST = "beautyvertical.ibuyrite.com";
+  private static final String PATH = "/api/v2/shoporders/";
 
   // End Point -- http://ibuyrite.cloudfrontend.net/api/v2/?format=json
   @Override
   public boolean init(OimChannels oimChannel, Session dbSession)
       throws ChannelConfigurationException {
     super.init(oimChannel, dbSession);
-    storeUrl = StringHandle.removeNull(PojoHelper.getChannelAccessDetailValue(m_channel,
-        OimConstants.CHANNEL_ACCESSDETAIL_CHANNEL_URL));
-    if (storeUrl.endsWith("/"))
-      storeUrl = storeUrl.substring(0, storeUrl.length() - 1);
+    // storeUrl = StringHandle.removeNull(PojoHelper.getChannelAccessDetailValue(m_channel,
+    // OimConstants.CHANNEL_ACCESSDETAIL_CHANNEL_URL));
+    storeUrl = "http://beautyvertical.ibuyrite.com";
     clientId = ApplicationProperties.getProperty(ApplicationProperties.DEVHUB_CLIENT_ID);
     secrateKey = ApplicationProperties.getProperty(ApplicationProperties.DEVHUB_CLIENT_SECRET);
     siteID = StringHandle.removeNull(PojoHelper.getChannelAccessDetailValue(m_channel,
@@ -89,12 +81,6 @@ public class DevHubOrderImport extends ChannelBase implements IOrderImport {
           "Channel setup is not correct. Please provide correct details.");
     }
     return true;
-  }
-
-  public static void main(String[] args) throws ChannelCommunicationException,
-      ChannelOrderFormatException, ChannelConfigurationException {
-
-    new DevHubOrderImport().getVendorOrders(null, null);
   }
 
   @Override
@@ -119,11 +105,7 @@ public class DevHubOrderImport extends ChannelBase implements IOrderImport {
           "Error in channel Setup : Order Status When imported to Channel Manager is not correctly configured");
 
     String status = m_orderProcessingRule.getPullWithStatus();
-    // String status = "new";
-   // siteID = "1643737";
     String requestUrl = storeUrl;
-    // String requestUrl = devHubEndPoint + "?site_id=" + siteID + "&status=" + status+"&limit=10";
-
     JSONParser parser = new JSONParser();
     int totalOrders = 0;
     JSONArray orderArr = new JSONArray();
@@ -135,9 +117,6 @@ public class DevHubOrderImport extends ChannelBase implements IOrderImport {
       JSONObject jsonObject;
       try {
         jsonObject = (JSONObject) parser.parse(response);
-        // Object obj = parser.parse(new
-        // FileReader("/home/manish-kumar/git/isource-cm/isource-cm/oim-core/src/main/resources/store-scripts/devhub-response.json"));
-        // jsonObject = (JSONObject)obj;
       } catch (ParseException e1) {
         log.error("Error in parsing response from Devhub store - " + storeUrl, e1);
         throw new ChannelOrderFormatException(
@@ -146,7 +125,6 @@ public class DevHubOrderImport extends ChannelBase implements IOrderImport {
       JSONObject metaInfo = (JSONObject) jsonObject.get("meta");
       if (metaInfo.get("next") != null && !"null".equalsIgnoreCase((String) metaInfo.get("next"))) {
         appendToUrl = StringHandle.removeNull((String) metaInfo.get("next"));
-        // requestUrl = devHubEndPoint + appendToUrl;
       } else {
         isCompleted = true;
       }
@@ -161,6 +139,8 @@ public class DevHubOrderImport extends ChannelBase implements IOrderImport {
             log.info("Order#{} is already imported in the system, updating Order.", storeOrderId);
             continue;
           }
+          if (tx != null && tx.isActive())
+            tx.commit();
           tx = m_dbSession.beginTransaction();
           oimOrders = new OimOrders();
 
@@ -208,10 +188,6 @@ public class DevHubOrderImport extends ChannelBase implements IOrderImport {
               StringHandle.removeNull((String) orderObj.get("ship_to_postal_code")));
           oimOrders.setCustomerCountry(
               StringHandle.removeNull((String) orderObj.get("ship_to_country")));
-          oimOrders.setInsertionTm(new Date());
-          oimOrders.setOimOrderBatches(batch);
-          batch.getOimOrderses().add(oimOrders);
-          oimOrders.setOrderFetchTm(new Date());
           SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
           Date orderTm = null;
           try {
@@ -225,17 +201,35 @@ public class DevHubOrderImport extends ChannelBase implements IOrderImport {
             oimOrders.setOrderTotalAmount(((Number) orderObj.get("price")).doubleValue());
           } else if (orderObj.get("price") instanceof String)
             oimOrders.setOrderTotalAmount(Double.valueOf(((String) orderObj.get("price"))));
-          // oimOrders.setPayMethod((String) orderObj.get("gateway")); TODO
-          String shippingDetails;
-          try {
-            shippingDetails = StringHandle.removeNull((String) orderObj.get("shipping_lines"));
-          } catch (IndexOutOfBoundsException e) {
-            shippingDetails = "Standard Shipping";
-            log.warn("Order {} has no shipping method from store. Assigning default [{}] ",
-                oimOrders.getStoreOrderId(), shippingDetails);
+          oimOrders.setPayMethod("Credit Card");
+
+          String prodResponse = sendRequestOAuth(null, requestUrl, GET_REQUEST_METHOD,
+              oimOrders.getStoreOrderId(), null, null, false);
+          log.info("item response :- " + prodResponse);
+          if (prodResponse == null) {
+            log.error("Got null response for order id - " + oimOrders.getStoreOrderId());
+            continue;
           }
-          oimOrders.setShippingDetails(shippingDetails);
-          if (oimChannelShippingMapList != null) {
+          oimOrders.setInsertionTm(new Date());
+          oimOrders.setOimOrderBatches(batch);
+          batch.getOimOrderses().add(oimOrders);
+          oimOrders.setOrderFetchTm(new Date());
+          JSONObject itemJObject = new JSONObject();
+          JSONParser itemJParser = new JSONParser();
+          try {
+            itemJObject = (JSONObject) itemJParser.parse(prodResponse);
+          } catch (ParseException e1) {
+            log.error("Error in parsing response from Devhub store - " + storeUrl, e1);
+          }
+          String shippingDetails = null;
+
+          JSONArray itemArray = (JSONArray) itemJObject.get("cart_items");
+          if (itemArray.size() > 0) {
+            JSONObject productJson = (JSONObject) itemArray.get(0);
+            shippingDetails = StringHandle.removeNull((String) productJson.get("shipping_name"));
+            oimOrders.setShippingDetails(shippingDetails);
+          }
+          if (oimChannelShippingMapList != null && shippingDetails != null) {
             for (OimChannelShippingMap entity : oimChannelShippingMapList) {
               String shippingRegEx = entity.getShippingRegEx();
               if (shippingDetails.equalsIgnoreCase(shippingRegEx)) {
@@ -249,22 +243,10 @@ public class DevHubOrderImport extends ChannelBase implements IOrderImport {
             log.warn("Shipping can't be mapped for order " + oimOrders.getStoreOrderId());
           m_dbSession.saveOrUpdate(oimOrders);
           // setting product information
-          String prodResponse = sendRequestOAuth(null, requestUrl, GET_REQUEST_METHOD, oimOrders.getStoreOrderId(), null,
-              null, false);
-          log.info("item response :- " + prodResponse);
-          JSONObject itemJObject = new JSONObject();
-          JSONParser itemJParser = new JSONParser();
-          try {
-            itemJObject = (JSONObject) itemJParser.parse(prodResponse);
-          } catch (ParseException e1) {
-            log.error("Error in parsing response from Devhub store - " + storeUrl, e1);
-          }
-          JSONArray itemArray = (JSONArray) itemJObject.get("cart_items");
           Set<OimOrderDetails> detailSet = new HashSet<OimOrderDetails>();
           for (int j = 0; j < itemArray.size(); j++) {
             OimOrderDetails details = new OimOrderDetails();
             JSONObject item = (JSONObject) itemArray.get(j);
-
             details.setInsertionTm(new Date());
             details
                 .setOimOrderStatuses(new OimOrderStatuses(OimConstants.ORDER_STATUS_UNPROCESSED));
@@ -345,14 +327,14 @@ public class DevHubOrderImport extends ChannelBase implements IOrderImport {
       tx.rollback();
     }
     log.debug("Finished importing orders...");
-    // log.info("Returning Order batch with size: {}", batch.getOimOrderses().size());
+    log.info("Returning Order batch with size: {}", batch.getOimOrderses().size());
 
   }
 
   private void sendAcknowledgementToStore(String storeUrl, String storeOrderId)
       throws ChannelConfigurationException, ChannelCommunicationException,
       ChannelOrderFormatException {
-    String appendToUrl = "/api/v2/shoporders/" + storeOrderId + "/";
+    String appendToUrl = PATH + storeOrderId + "/";
     JSONObject jObject = new JSONObject();
     jObject.put("status", m_orderProcessingRule.getConfirmedStatus());
     sendRequestOAuth(jObject.toString(), storeUrl, PUT_REQUEST_METHOD, storeOrderId, appendToUrl,
@@ -365,49 +347,50 @@ public class DevHubOrderImport extends ChannelBase implements IOrderImport {
           ChannelOrderFormatException {
 
     String response = null;
-    HttpsURLConnection connection = null;
+    HttpURLConnection connection = null;
     URL url;
     int responseCode = 0;
     try {
       String appendToRequest = null;
+      OAuthProvider oAuthProvider = null;
+      String host = HOST;
+      String path = PATH;
+      List<String> additionalParameters = new ArrayList<String>();
       if (appendToUrl == null && requestMethod.equalsIgnoreCase(GET_REQUEST_METHOD)) {
-        if (isOrderRequest)
+
+        if (isOrderRequest) { // get all products
           appendToRequest = "/api/v2/shoporders/?site_id=" + siteID + "&status=" + status
-              + "&limit=10&";
-        else
-          appendToRequest = "/api/v2/shoporders/" + storeOrderId + "/?"; // item request
-        String signature = OAuthProvider.getSignature(requestUrl, secrateKey);
-        appendToRequest += "oauth_consumer_key=" + clientId;
-        appendToRequest += "&oauth_signature_method=HMAC-SHA1";
-        appendToRequest += "&oauth_timestamp=" + (System.currentTimeMillis() / 1000);
-        appendToRequest += "&oauth_nonce=" + (int) (Math.random() * 100000000);
-        appendToRequest += "&oauth_version=1.0";
-        appendToRequest += "&oauth_signature=" + signature;
+              + "&limit=10";
+          additionalParameters.add("site_id=" + siteID);
+          additionalParameters.add("status=" + status);
+          additionalParameters.add("limit=" + limit);
+        } else { // get item description based on order ID
+          appendToRequest = PATH + storeOrderId + "/"; // item request
+          path = PATH + storeOrderId;
+          oAuthProvider = new OAuthProvider(host, path, clientId, secrateKey);
+        }
         requestUrl = requestUrl + appendToRequest;
 
-      } else {
+      } else { // put method or next order fetch call
         requestUrl = requestUrl + appendToUrl;
+        if (requestMethod.equalsIgnoreCase(GET_REQUEST_METHOD)) {
+          String parameter = appendToUrl.substring(appendToUrl.indexOf("?"), appendToUrl.length());
+          String[] parameters = parameter.split("&");
+          for (int i = 0; i < parameters.length; i++) {
+            additionalParameters.add(parameters[i]);
+          }
+        }
       }
-
-      url = new URL(null, requestUrl, new sun.net.www.protocol.https.Handler());
-      connection = (HttpsURLConnection) url.openConnection();
+      oAuthProvider = new OAuthProvider(host, path, clientId, secrateKey);
+      String oauthHeader = oAuthProvider.generateOauthHeader(requestMethod, additionalParameters);
+      url = new URL(requestUrl);
+      connection = (HttpURLConnection) url.openConnection();
       connection.setRequestMethod(requestMethod);
       connection.setDoOutput(true);
-
-      if (data != null && (requestMethod.equalsIgnoreCase(POST_REQUEST_METHOD)
-          || requestMethod.equalsIgnoreCase(PUT_REQUEST_METHOD))) {
-        // OAuth
-        // oauth_consumer_key="kTC5SQfXBDA4kr9WN8UhWW3ESENTWLvt",oauth_signature_method="HMAC-SHA1",oauth_timestamp="1455527406",
-        // oauth_nonce="rlJwSv",oauth_version="1.0",oauth_signature="6bsuoeRQgzdlgXBtTJo7HqHa4N4%3D"
-        String signature = OAuthProvider.getSignature(requestUrl, secrateKey);
-        String authorizationParam = "OAuth oauth_consumer_key=\"" + clientId+"\"";
-        authorizationParam += ",oauth_signature_method=\"HMAC-SHA1\"";
-        authorizationParam += ",oauth_timestamp=\"" + (System.currentTimeMillis() / 1000)+"\"";
-        authorizationParam += ",oauth_nonce=\"" + (int) (Math.random() * 100000000)+"\"";
-        authorizationParam += ",oauth_version=\"1.0\"";
-        authorizationParam += ",oauth_signature=\"" + signature+"\"";
+      connection.addRequestProperty("Authorization", oauthHeader);
+      if (data != null) {
         connection.addRequestProperty("Content-type", "application/json");
-        connection.addRequestProperty("Authorization", authorizationParam);
+        connection.addRequestProperty("Accept", "application/json");
         byte[] req = data.getBytes();
         OutputStream out = connection.getOutputStream();
         out.write(req);
@@ -415,11 +398,15 @@ public class DevHubOrderImport extends ChannelBase implements IOrderImport {
       }
       connection.connect();
       responseCode = connection.getResponseCode();
-      if (responseCode == 200 || responseCode ==202) {
-        response = getStringFromStream(connection.getInputStream());
-        System.out.println(response);
-      } else if (responseCode == 201 && requestMethod.equalsIgnoreCase(POST_REQUEST_METHOD)) {
-        response = getStringFromStream(connection.getInputStream());
+      if (responseCode == 200 || responseCode == 202) {
+        InputStream is = connection.getInputStream();
+        if (is != null) {
+          response = getStringFromStream(connection.getInputStream());
+          log.info(response);
+        }
+      } else if (requestMethod.equalsIgnoreCase(GET_REQUEST_METHOD) && !isOrderRequest
+          && responseCode == 400) {
+        log.error("Error occered because this order has no items in the cart..");
       } else if (responseCode == 429) {
         noOfApiRequests++;
         connection.disconnect();
@@ -461,12 +448,6 @@ public class DevHubOrderImport extends ChannelBase implements IOrderImport {
       throw new ChannelConfigurationException("MalformedURLException - " + requestUrl);
     } catch (IOException e) {
       throw new ChannelCommunicationException(e.getMessage());
-    } catch (InvalidKeyException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
-    } catch (NoSuchAlgorithmException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
     } finally {
       if (connection != null)
         connection.disconnect();
@@ -478,30 +459,51 @@ public class DevHubOrderImport extends ChannelBase implements IOrderImport {
   public void updateStoreOrder(OimOrderDetails oimOrderDetails, OrderStatus orderStatus)
       throws ChannelCommunicationException, ChannelOrderFormatException,
       ChannelConfigurationException {
-    // this method is implemented for tracking purpose
     log.info("order id is - {}", oimOrderDetails.getOimOrders().getOrderId());
     log.info("order status is - {}", orderStatus);
-
     if (!orderStatus.isShipped()) {
       return;
     }
+    clientId = ApplicationProperties.getProperty(ApplicationProperties.DEVHUB_CLIENT_ID);
+    secrateKey = ApplicationProperties.getProperty(ApplicationProperties.DEVHUB_CLIENT_SECRET);
     String requestUrl = storeUrl;
     String appendToUrl = "/api/v2/shoporders/" + oimOrderDetails.getOimOrders().getStoreOrderId()
         + "/";
-
-    // { "id" : "Item ID here", "shipping_name" : "UPS GROUND", "shipping_tracking" :
-    // "1234567890","quantity":"2" }
     JSONObject jsonObject = new JSONObject();
-    JSONArray lineItemArray = new JSONArray();
-    JSONArray trackingNos = new JSONArray();
-    int qty = 0;
-    for (TrackingData trackingData : orderStatus.getTrackingData()) {
-      trackingNos.add(trackingData.getShipperTrackingNumber());
-      qty += trackingData.getQuantity();
-      jsonObject.put("id", oimOrderDetails.getStoreOrderItemId());
-      jsonObject.put("shipping_name", orderStatus.getTrackingData().get(0).getCarrierName() + SPACE
-          + orderStatus.getTrackingData().get(0).getShippingMethod());
-      jsonObject.put("shipping_tracking", trackingData.getShipperTrackingNumber());
+    jsonObject.put("site_id", Integer.parseInt(siteID));
+    int count = 0;
+    JSONArray jArray = new JSONArray();
+
+    OimOrders oimOrders = oimOrderDetails.getOimOrders();
+    for (OimOrderDetails detail : oimOrders.getOimOrderDetailses()) {
+      JSONObject itemObject = new JSONObject();
+      itemObject.put("id", Integer.parseInt(oimOrderDetails.getStoreOrderItemId()));
+      itemObject.put("order_id",
+          Integer.parseInt(oimOrderDetails.getOimOrders().getStoreOrderId()));
+      itemObject.put("quantity", oimOrderDetails.getQuantity());
+      itemObject.put("site_id", Integer.parseInt(siteID));
+      JSONObject productJson = new JSONObject();
+      productJson.put("sku", oimOrderDetails.getSku());
+      itemObject.put("product", productJson);
+      if (detail.getDetailId().intValue() == oimOrderDetails.getDetailId().intValue()) {
+        itemObject.put("shipping_name", orderStatus.getTrackingData().get(0).getCarrierName()
+            + SPACE + orderStatus.getTrackingData().get(0).getShippingMethod());
+        itemObject.put("shipping_tracking",
+            orderStatus.getTrackingData().get(0).getShipperTrackingNumber());
+        count++;
+      } else {
+        if (detail.getOimOrderStatuses().getStatusId() == OimConstants.ORDER_STATUS_SHIPPED
+            || detail.getOimOrderStatuses().getStatusId() == OimConstants.ORDER_STATUS_COMPLETE) {
+          count++;
+        }
+      }
+      jArray.add(itemObject);
+    }
+    jsonObject.put("cart_items", jArray);
+    if (count == oimOrders.getOimOrderDetailses().size())
+      jsonObject.put("status", "shipped");
+    else {
+      jsonObject.put("status", "inprocess");
     }
 
     log.info("request for fullfillment : {}", jsonObject.toJSONString());
@@ -513,9 +515,8 @@ public class DevHubOrderImport extends ChannelBase implements IOrderImport {
       log.error("Error in parsing tracking request json {}", e);
       throw new ChannelOrderFormatException("Error in parsing tracking request json", e);
     }
-    this.noOfApiRequests = 0;
-    // sendRequestOAuth(jsonObject.toString(), requestUrl,
-    // POST_REQUEST_METHOD,oimOrderDetails.getOimOrders().getStoreOrderId());
+    String response = sendRequestOAuth(jsonObject.toString(), requestUrl, PUT_REQUEST_METHOD,
+        oimOrderDetails.getOimOrders().getStoreOrderId(), appendToUrl, null, false);
 
   }
 
@@ -533,4 +534,17 @@ public class DevHubOrderImport extends ChannelBase implements IOrderImport {
 
   }
 
+  public static void main(String[] args) throws ChannelCommunicationException,
+      ChannelOrderFormatException, ChannelConfigurationException {
+    // 9846405
+    Session session = SessionManager.currentSession();
+    OimOrderDetails oimOrderDetails = (OimOrderDetails) session.get(OimOrderDetails.class, 9846405);
+    OrderStatus orderStatus = new OrderStatus();
+    TrackingData td = new TrackingData();
+    td.setCarrierName("UPS");
+    td.setShippingMethod("GROUND");
+    td.setShipperTrackingNumber("TESTTRACK9999");
+    orderStatus.addTrackingData(td);
+    new DevHubOrderImport().updateStoreOrder(oimOrderDetails, orderStatus);
+  }
 }

@@ -105,6 +105,7 @@ public class OimConstants {
 	public static final String OIM_SUPPLER_ORDER_STATUS_SENT_TO_SUPPLIER = "Sent to supplier.";
 	public static final String OIM_SUPPLER_ORDER_STATUS_SHIPPED = "Shipped";
 	public static final String OIM_SUPPLER_ORDER_STATUS_FAILED = "Failed";
+	public static final String OIM_SUPPLER_ORDER_STATUS_COMPLETED = "Completed";
 	public static final Integer OIM_SUPLLIER_HONEST_GREEN_ID = 1822;
 	
 }

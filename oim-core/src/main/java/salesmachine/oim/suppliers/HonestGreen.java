@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Hashtable;
@@ -36,6 +37,9 @@ import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
 import javax.xml.bind.Unmarshaller;
+import javax.xml.datatype.DatatypeConfigurationException;
+import javax.xml.datatype.DatatypeFactory;
+import javax.xml.datatype.XMLGregorianCalendar;
 
 import org.apache.axis.encoding.Base64;
 import org.apache.axis.utils.ByteArrayOutputStream;
@@ -43,6 +47,7 @@ import org.hibernate.HibernateError;
 import org.hibernate.HibernateException;
 import org.hibernate.NonUniqueResultException;
 import org.hibernate.Query;
+import org.hibernate.SQLQuery;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
 import org.hibernate.criterion.Restrictions;
@@ -194,16 +199,10 @@ public class HonestGreen extends Supplier implements HasTracking {
       poNum = (String) q;
       log.info("Reprocessing po - {}", poNum);
     } else {
-      // if (isOrderFromAmazonStore)
-      // poNum = order.getStoreOrderId();
-      // else
-      // poNum = ovs.getVendors().getVendorId() + "-" + order.getStoreOrderId();
-      poNum = order.getOrderId() + "-" + order.getStoreOrderId(); // ISD-445 - HG only reads first
-                                                                  // 12 chars . so making it unique.
-                                                                  // (Note :- they only read 12
-                                                                  // chars but they doesn't delete
-                                                                  // any char in
-                                                                  // confirmation/tracking files. )
+      if (isOrderFromAmazonStore)
+        poNum = order.getStoreOrderId();
+      else
+        poNum = ovs.getVendors().getVendorId() + "-" + order.getStoreOrderId();
     }
     Set<OimOrderDetails> phiItems = new HashSet<OimOrderDetails>();
     Set<OimOrderDetails> hvaItems = new HashSet<OimOrderDetails>();
@@ -1069,7 +1068,7 @@ public class HonestGreen extends Supplier implements HasTracking {
     }
   }
 
-  public static void main(String[] args) {
+  public static void main1(String[] args) {
     // updateFromConfirmation();
     // updateFromTracking();
     Session session = SessionManager.currentSession();
@@ -1084,6 +1083,111 @@ public class HonestGreen extends Supplier implements HasTracking {
       // TODO Auto-generated catch block
       e.printStackTrace();
     }
+  }
+
+  public static void main(String[] args) {
+    Marshaller marshaller = null;
+    try {
+      marshaller = jaxbContext2.createMarshaller();
+    } catch (JAXBException e) {
+      log.error(e.getMessage(), e);
+
+    }
+    AmazonEnvelope envelope = new AmazonEnvelope();
+    Header header = new Header();
+    header.setDocumentVersion("1.01");
+    header.setMerchantIdentifier(sellerId);
+    envelope.setHeader(header);
+    envelope.setMessageType("OrderFulfillment");
+    long msgId = 1L;
+    
+    SubmitFeedRequest submitFeedRequest = new SubmitFeedRequest();
+    submitFeedRequest.setMerchant(sellerId);
+    submitFeedRequest.setMWSAuthToken(mwsAuthToken);
+    submitFeedRequest.setMarketplaceIdList(new IdList(marketPlaceIdList));
+    submitFeedRequest.setFeedType("_POST_ORDER_FULFILLMENT_DATA_");
+    Session session = SessionManager.currentSession();
+    SQLQuery sqlQuery = session.createSQLQuery(
+        "select * from kdyer.oim_order_tracking t where t.detail_id in (select d.detail_id from KDYER.OIM_ORDER_DETAILS d where"
+            + " d.status_id=7 and d.PROCESSING_TM>to_date('01-MAR-16','DD-Mon-YY'))");
+    sqlQuery.addEntity(OimOrderTracking.class);
+    List<OimOrderTracking> trackingList = sqlQuery.list();
+    Transaction tx = session.beginTransaction();
+    for (OimOrderTracking td : trackingList) {
+      OimOrderDetails detail = td.getDetail();
+      System.out.println("updating order detail --"+detail.getDetailId());
+      detail.setSupplierOrderStatus(OimConstants.OIM_SUPPLER_ORDER_STATUS_COMPLETED);
+        detail.setOimOrderStatuses(new OimOrderStatuses(OimConstants.ORDER_STATUS_COMPLETE));
+       session.saveOrUpdate(detail);
+      Message message = new Message();
+      message.setMessageID(BigInteger.valueOf(msgId++));
+      envelope.getMessage().add(message);
+      OrderFulfillment fulfillment = new OrderFulfillment();
+      message.setOrderFulfillment(fulfillment);
+      fulfillment.setAmazonOrderID(detail.getOimOrders().getStoreOrderId());
+      fulfillment.setMerchantFulfillmentID(
+          BigInteger.valueOf(detail.getOimOrders().getOrderId().longValue()));
+      GregorianCalendar c = new GregorianCalendar();
+      c.setTime(td.getShipDate());
+      XMLGregorianCalendar shipDate = null;
+      try {
+        shipDate = DatatypeFactory.newInstance().newXMLGregorianCalendar(c);
+      } catch (DatatypeConfigurationException e) {
+        // TODO Auto-generated catch block
+        e.printStackTrace();
+      }
+      fulfillment.setFulfillmentDate(shipDate);
+      Item i = new Item();
+      i.setAmazonOrderItemCode(detail.getStoreOrderItemId());
+      i.setQuantity(BigInteger.valueOf(td.getShipQuantity()));
+      i.setMerchantFulfillmentItemID(BigInteger.valueOf(detail.getDetailId()));
+      FulfillmentData value = new FulfillmentData();
+      // value.setCarrierCode(orderStatus.getTrackingData().getCarrierCode());
+      value.setCarrierName(td.getShippingCarrier());
+      value.setShipperTrackingNumber(td.getTrackingNumber());
+      value.setShippingMethod(td.getShippingMethod());
+      fulfillment.getItem().add(i);
+      fulfillment.setFulfillmentData(value);
+    }
+   
+    ByteArrayOutputStream os = new ByteArrayOutputStream();
+    if (marshaller != null) {
+      try {
+        marshaller.marshal(envelope, os);
+      } catch (JAXBException e) {
+        log.error(e.getMessage(), e);
+//        throw new ChannelOrderFormatException(
+//            "Error in Updating Store order - " + e.getMessage(), e);
+      }
+    }
+    InputStream inputStream = new ByteArrayInputStream(os.toByteArray());
+    submitFeedRequest.setFeedContent(inputStream);
+    try {
+      submitFeedRequest.setContentMD5(
+          Base64.encode((MessageDigest.getInstance("MD5").digest(os.toByteArray()))));
+    } catch (NoSuchAlgorithmException e) {
+      log.error(e.getMessage(), e);
+//      throw new ChannelCommunicationException(
+//          "Error in submiting feed request while updating order to store - " + e.getMessage(),
+//          e);
+    }
+    log.info("SubmitFeedRequest: {}", os.toString());
+    SubmitFeedResponse submitFeed = null;
+    try {
+      if (envelope.getMessage().size() > 0) {
+        submitFeed = service.submitFeed(submitFeedRequest);
+        log.info(submitFeed.toXML());
+      } else {
+        log.info("Feed not submitted, Evnelop is empty.");
+      }
+
+    } catch (MarketplaceWebServiceException e) {
+      log.error(e.getMessage(), e);
+//      throw new ChannelCommunicationException(
+//          "Error in submiting feed request while updating order to store - " + e.getMessage(),
+//          e);
+    }
+    tx.commit();
   }
 
   public static Integer updateFromConfirmation() {

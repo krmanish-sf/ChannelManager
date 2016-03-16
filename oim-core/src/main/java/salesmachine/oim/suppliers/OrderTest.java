@@ -56,11 +56,96 @@ public class OrderTest {
   private static String startDate = "";// 08/18/2015
   private static String endDate = "";// MM/DD/YYYY
 
-//  public static void main(String[] args) {
-//    getUnconfirmedOrders();
-//  }
+  public static void main(String[] args) {
+    System.out.println("process start...");
+    long processStartTime = System.currentTimeMillis();
+    Map<FtpDetail, String> ftpDetailMap = getFtpDetails();
+    for (Iterator<FtpDetail> itr = ftpDetailMap.keySet().iterator(); itr.hasNext();) {
+      FtpDetail ftpDetail = itr.next();
+      String vendorId = ftpDetailMap.get(ftpDetail);
+      if (ftpDetail.getSupplierId() != 1822)
+        continue;
+      try {
+        checkExistanceOfNecessaryDir(ftpDetail, vendorId);
+      } catch (Exception e) {
+        log.error("Error occure while moving the files at ftp {}", ftpDetail);
+      }
+    }
+    getUnconfirmedOrders();
+    long unconfirmedOrderEndTime = System.currentTimeMillis();
+    String unconfirmedOrderEndTimeStr = convertLongToDateString(unconfirmedOrderEndTime);
+    log.info("All unconfirmed orders were emailed at - {}", unconfirmedOrderEndTimeStr);
+    long total_time = unconfirmedOrderEndTime - processStartTime;
+    int minutes = (int) ((total_time / (1000 * 60)) % 60);
+    log.info("process completed in {} minutes ", minutes);
+    log.info("process end");
+    // System.out.println("process end");
+  }
 
-  public static void main(String[] args) throws IOException, FTPException, ParseException {
+  private static void checkExistanceOfNecessaryDir(FtpDetail ftpDetail, String vendorId)
+      throws IOException, FTPException, ParseException {
+    log.info("checking necessary dirs for vendor - {} and account number - {} ", vendorId,
+        ftpDetail.getAccountNumber());
+    FTPClient ftp = new FTPClient();
+    String fileDir = "/users/" + ftpDetail.getUserName() + "/";
+    ftp.setRemoteHost(ftpDetail.getUrl());
+    ftp.connect();
+    ftp.login(ftpDetail.getUserName(), ftpDetail.getPassword());
+    FTPFile[] ftpFiles = ftp.dirDetails(fileDir);
+    // checking the existence of confirmations, shipping and tracking directories
+    boolean isConfirmationDirExists = false;
+    boolean isShippingDirExists = false;
+    boolean isTrackingDirExists = false;
+    for (int i = 0; i < ftpFiles.length; i++) {
+      FTPFile ff = ftpFiles[i];
+      if (ff.getName().startsWith(".") || ff.getName().startsWith(".."))
+        continue;
+      if (ff.isDir()) {
+        String dirName = ff.getName() + "/";
+        log.info("Checking files in directory - {}", dirName);
+        if (dirName.equals("confirmations/")) {
+          isConfirmationDirExists = true;
+          continue;
+        } else if (dirName.equals("shipping/")) {
+          isShippingDirExists = true;
+          continue;
+        } else if (dirName.equals("tracking/")) {
+          isTrackingDirExists = true;
+          continue;
+        }
+      }
+    }
+    if (!isConfirmationDirExists || !isShippingDirExists || !isTrackingDirExists) {
+      // generate email alert
+      StringBuffer sb = new StringBuffer();
+      sb.append(
+          "ACTION REQUIRED: Assign this ticket to this user’s account manager to reach out to Honest Green. "
+              + "There is a problem in their order FTP setup and HG must correct it before this user can receive orders over FTP.\n");
+      sb.append("\n");
+      sb.append(
+          "Default order directories were not found on the HG FTP drive and it needs to be corrected by HG for VendorID - "
+              + vendorId + "\n");
+      sb.append("Missing directories are : \n");
+      if (!isConfirmationDirExists)
+        sb.append("confirmations \n");
+      if (!isShippingDirExists)
+        sb.append("shipping \n");
+      if (!isTrackingDirExists)
+        sb.append("tracking \n");
+      sb.append("\n");
+      sb.append("FTP login details :- \n");
+      sb.append("FTP : " + ftpDetail.getUrl() + "\n");
+      sb.append("USERNAME : " + ftpDetail.getUserName() + "\n");
+      sb.append("PASSWORD : " + ftpDetail.getPassword() + "\n");
+      String subject = vendorId + " : Honest Green Default Ftp directories are missing";
+      EmailUtil.sendEmail("support@inventorysource.com", "orders@inventorysource.com",
+          "manish@inventorysource.com", subject, sb.toString());
+
+    }
+
+  }
+
+  public static void oldMain(String[] args) throws IOException, FTPException, ParseException {
     System.out.println("process start...");
     long processStartTime = System.currentTimeMillis();
     Map<FtpDetail, String> ftpDetailMap;
@@ -126,26 +211,26 @@ public class OrderTest {
     Session session = SessionManager.currentSession();
     Query query = null;
     StringBuffer sb = new StringBuffer();
-    Map<Integer, HashMap<String,String>> vendorOrderMap = new HashMap<Integer, HashMap<String,String>>();
-    
+    Map<Integer, HashMap<String, String>> vendorOrderMap = new HashMap<Integer, HashMap<String, String>>();
+
     query = session.createSQLQuery(
         " select o.store_order_id, c.vendor_id, to_char(d.PROCESSING_TM, 'DD-MON-YYYY') from kdyer.oim_order_details d "
-        + "inner join kdyer.oim_orders o on d.order_id=o.order_id inner join kdyer.oim_order_batches b on o.batch_id=b.batch_id"
-        + " inner join kdyer.oim_channels c on c.channel_id=b.channel_id where d.SUPPLIER_WAREHOUSE_CODE is not null and d.STATUS_ID=2 "
-        + "and d.SUPPLIER_ORDER_STATUS like '%Sent to supplier%' and d.PROCESSING_TM > trunc(sysdate-2) and PROCESSING_TM<trunc(sysdate-1)");
+            + "inner join kdyer.oim_orders o on d.order_id=o.order_id inner join kdyer.oim_order_batches b on o.batch_id=b.batch_id"
+            + " inner join kdyer.oim_channels c on c.channel_id=b.channel_id where d.SUPPLIER_WAREHOUSE_CODE is not null and d.STATUS_ID=2 "
+            + "and d.SUPPLIER_ORDER_STATUS like '%Sent to supplier%' and d.PROCESSING_TM > trunc(sysdate-2) and PROCESSING_TM<trunc(sysdate-1)");
     List<Object[]> result = query.list();
     for (int j = 0; j < result.size(); j++) {
       Object[] obj = result.get(j);
       String storeOrderNo = (String) obj[0];
       int vendorId = ((BigDecimal) obj[1]).intValue();
       String processingTm = (String) obj[2];
-      
-      HashMap<String,String> orderMap = vendorOrderMap.get(vendorId);
-      if (orderMap != null && orderMap.size()!=0)
+
+      HashMap<String, String> orderMap = vendorOrderMap.get(vendorId);
+      if (orderMap != null && orderMap.size() != 0)
         orderMap.put(storeOrderNo, processingTm);
       else {
-        HashMap<String,String> orderMapNew = new HashMap<String,String>();
-        orderMapNew.put(storeOrderNo,processingTm);
+        HashMap<String, String> orderMapNew = new HashMap<String, String>();
+        orderMapNew.put(storeOrderNo, processingTm);
         vendorOrderMap.put(vendorId, orderMapNew);
       }
     }
@@ -160,11 +245,11 @@ public class OrderTest {
       int vendorId = itr.next();
       sb.append("\n");
       sb.append("Vendor - " + vendorId + " : \n");
-      HashMap<String,String> orderMap = vendorOrderMap.get(vendorId);
-      for(Iterator<String> itrt = orderMap.keySet().iterator();itrt.hasNext();){
-        String storeOrderNo =  itrt.next();
+      HashMap<String, String> orderMap = vendorOrderMap.get(vendorId);
+      for (Iterator<String> itrt = orderMap.keySet().iterator(); itrt.hasNext();) {
+        String storeOrderNo = itrt.next();
         String processTm = orderMap.get(storeOrderNo);
-        sb.append(storeOrderNo +"\t"+processTm+ "\n");
+        sb.append(storeOrderNo + "\t" + processTm + "\n");
       }
       sb.append("------------------------------ \n");
     }
