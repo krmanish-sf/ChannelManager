@@ -197,7 +197,7 @@ public class SupplierFactory {
                       + " Supplier: " + detail.getOimSuppliers().getSupplierName(),
                   Supplier.ERROR_UNCONFIGURED_SUPPLIER, detail);
               // return false;
-              return "Supplier not configured for sku" + detail.getSku() + " for channel : "
+              return "Supplier not configured for sku - " + detail.getSku() + " for channel : "
                   + oimChannels.getChannelName();
             } else {
               log.info("Channel Supplier Mapping : {}", list);
