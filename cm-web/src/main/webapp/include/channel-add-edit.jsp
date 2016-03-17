@@ -62,7 +62,7 @@
 													</label>
 												</div>
 											</div> -->
-											<div class="form-group">
+											<div class="form-group notForDevHub">
 												<label for="storeurl"
 													class="col-sm-5 control-label no-padding-right">Store
 													URL</label>
@@ -237,17 +237,17 @@
 												</div>
 											</div>
 											
-											<div class="form-group store-info devhub-store">
-												<label for="devhub-site-id"
-													class="col-sm-5 control-label no-padding-right">Site ID</label>
-												<div class="col-sm-7">
-													<input type="text" id="devhubSiteID" name="devhub-site-id"
-														class="width-70" placeholder="Site ID"
-														required="required"
-														data-bind-channel="customMapper:oimChannelAccessDetailses[oimChannelAccessFields.fieldId=19].detailFieldValue"
-														 />
-												</div>
-											</div>
+<!-- 											<div class="form-group store-info devhub-store"> -->
+<!-- 												<label for="devhub-site-id" -->
+<!-- 													class="col-sm-5 control-label no-padding-right">Site ID</label> -->
+<!-- 												<div class="col-sm-7"> -->
+<!-- 													<input type="text" id="devhubSiteID" name="devhub-site-id" -->
+<!-- 														class="width-70" placeholder="Site ID" -->
+<!-- 														required="required" -->
+<!-- 														data-bind-channel="customMapper:oimChannelAccessDetailses[oimChannelAccessFields.fieldId=19].detailFieldValue" -->
+<!-- 														 /> -->
+<!-- 												</div> -->
+<!-- 											</div> -->
 											
 											<div class="form-group store-info volusion-store">
 												<label for="volusion-store-login"

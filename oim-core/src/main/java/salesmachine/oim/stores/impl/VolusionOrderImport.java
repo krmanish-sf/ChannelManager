@@ -273,8 +273,9 @@ public class VolusionOrderImport extends ChannelBase implements IOrderImport {
             // For those shippingIds which we get from Volusion and have found mapping with our
             // existing Shipping method, created a file to automatically
             // assign shipping method if found.
-            String methodId = VolusionShippingCodeMapWithIS.getProperty(shippingMethodId);
-            if (methodId != null) {
+            String methodStr = VolusionShippingCodeMapWithIS.getProperty(shippingMethodId);
+            if (methodStr != null) {
+              int methodId = Integer.parseInt(methodStr);
               OimShippingMethod oimShippingMethod = (OimShippingMethod) m_dbSession
                   .get(OimShippingMethod.class, methodId);
               oimOrders.setOimShippingMethod(oimShippingMethod);

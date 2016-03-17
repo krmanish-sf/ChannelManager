@@ -113,8 +113,8 @@ public class ChannelRepositoryDb extends RepositoryBase implements ChannelReposi
       }else if (c.getOimSupportedChannels().getSupportedChannelId() == 10){
         addChannelAccessDetail(dbSession, c, OimConstants.CHANNEL_ACCESSDETAIL_CHANNEL_URL,
             StringHandle.removeNull(getParameter("storeurl")));
-        addChannelAccessDetail(dbSession, c, OimConstants.CHANNEL_ACCESSDETAIL_DEVHUB_SITE_ID,
-            StringHandle.removeNull(getParameter("devhub-site-id")));
+//        addChannelAccessDetail(dbSession, c, OimConstants.CHANNEL_ACCESSDETAIL_DEVHUB_SITE_ID,
+//            StringHandle.removeNull(getParameter("devhub-site-id")));
         LOG.debug("Saved DevHub channel access details");
       }
       else if(c.getOimSupportedChannels().getSupportedChannelId() == 11){

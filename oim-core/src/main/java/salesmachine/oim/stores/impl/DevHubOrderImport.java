@@ -33,6 +33,7 @@ import salesmachine.hibernatedb.OimOrderBatchesTypes;
 import salesmachine.hibernatedb.OimOrderDetails;
 import salesmachine.hibernatedb.OimOrderStatuses;
 import salesmachine.hibernatedb.OimOrders;
+import salesmachine.hibernatedb.OimShippingMethod;
 import salesmachine.hibernatedb.OimSuppliers;
 import salesmachine.hibernatehelper.PojoHelper;
 import salesmachine.hibernatehelper.SessionManager;
@@ -45,14 +46,16 @@ import salesmachine.oim.stores.exception.ChannelOrderFormatException;
 import salesmachine.oim.suppliers.modal.OrderStatus;
 import salesmachine.oim.suppliers.modal.TrackingData;
 import salesmachine.util.ApplicationProperties;
+import salesmachine.util.DevhubShippingMapping;
 import salesmachine.util.OAuthProvider;
 import salesmachine.util.StringHandle;
+import salesmachine.util.VolusionShippingCodeMapWithIS;
 
 public class DevHubOrderImport extends ChannelBase implements IOrderImport {
 
   private static final Logger log = LoggerFactory.getLogger(DevHubOrderImport.class);
   private String storeUrl;
-  private String siteID;
+ // private String siteID;
   private String clientId;
   private String secrateKey;
   private static final String GET_REQUEST_METHOD = "GET";
@@ -73,13 +76,13 @@ public class DevHubOrderImport extends ChannelBase implements IOrderImport {
     storeUrl = "http://beautyvertical.ibuyrite.com";
     clientId = ApplicationProperties.getProperty(ApplicationProperties.DEVHUB_CLIENT_ID);
     secrateKey = ApplicationProperties.getProperty(ApplicationProperties.DEVHUB_CLIENT_SECRET);
-    siteID = StringHandle.removeNull(PojoHelper.getChannelAccessDetailValue(m_channel,
-        OimConstants.CHANNEL_ACCESSDETAIL_DEVHUB_SITE_ID));
-    if (storeUrl.length() == 0 || siteID.length() == 0) {
-      log.error("Channel setup is not correct. Please provide correct details.");
-      throw new ChannelConfigurationException(
-          "Channel setup is not correct. Please provide correct details.");
-    }
+//    siteID = StringHandle.removeNull(PojoHelper.getChannelAccessDetailValue(m_channel,
+//        OimConstants.CHANNEL_ACCESSDETAIL_DEVHUB_SITE_ID));
+//    if (storeUrl.length() == 0 || siteID.length() == 0) {
+//      log.error("Channel setup is not correct. Please provide correct details.");
+//      throw new ChannelConfigurationException(
+//          "Channel setup is not correct. Please provide correct details.");
+//    }
     return true;
   }
 
@@ -239,6 +242,16 @@ public class DevHubOrderImport extends ChannelBase implements IOrderImport {
               }
             }
           }
+          if (oimOrders.getOimShippingMethod() == null && shippingDetails!=null) {
+            String methodIdStr = DevhubShippingMapping.getProperty(shippingDetails);
+            if(methodIdStr!=null){
+            int methodId = Integer.parseInt(methodIdStr);
+              OimShippingMethod oimShippingMethod = (OimShippingMethod) m_dbSession
+                  .get(OimShippingMethod.class, methodId);
+              oimOrders.setOimShippingMethod(oimShippingMethod);
+            }
+            
+          }
           if (oimOrders.getOimShippingMethod() == null)
             log.warn("Shipping can't be mapped for order " + oimOrders.getStoreOrderId());
           m_dbSession.saveOrUpdate(oimOrders);
@@ -359,9 +372,8 @@ public class DevHubOrderImport extends ChannelBase implements IOrderImport {
       if (appendToUrl == null && requestMethod.equalsIgnoreCase(GET_REQUEST_METHOD)) {
 
         if (isOrderRequest) { // get all products
-          appendToRequest = "/api/v2/shoporders/?site_id=" + siteID + "&status=" + status
+          appendToRequest = "/api/v2/shoporders/?status=" + status
               + "&limit=10";
-          additionalParameters.add("site_id=" + siteID);
           additionalParameters.add("status=" + status);
           additionalParameters.add("limit=" + limit);
         } else { // get item description based on order ID
@@ -470,7 +482,7 @@ public class DevHubOrderImport extends ChannelBase implements IOrderImport {
     String appendToUrl = "/api/v2/shoporders/" + oimOrderDetails.getOimOrders().getStoreOrderId()
         + "/";
     JSONObject jsonObject = new JSONObject();
-    jsonObject.put("site_id", Integer.parseInt(siteID));
+//    jsonObject.put("site_id", Integer.parseInt(siteID));
     int count = 0;
     JSONArray jArray = new JSONArray();
 
@@ -481,7 +493,7 @@ public class DevHubOrderImport extends ChannelBase implements IOrderImport {
       itemObject.put("order_id",
           Integer.parseInt(oimOrderDetails.getOimOrders().getStoreOrderId()));
       itemObject.put("quantity", oimOrderDetails.getQuantity());
-      itemObject.put("site_id", Integer.parseInt(siteID));
+//      itemObject.put("site_id", Integer.parseInt(siteID));
       JSONObject productJson = new JSONObject();
       productJson.put("sku", oimOrderDetails.getSku());
       itemObject.put("product", productJson);
