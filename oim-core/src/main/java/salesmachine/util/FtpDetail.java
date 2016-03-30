@@ -1,6 +1,12 @@
 package salesmachine.util;
 
+import java.util.Iterator;
+
+import salesmachine.hibernatedb.OimSupplierMethodattrValues;
+import salesmachine.hibernatedb.OimSupplierMethods;
+import salesmachine.hibernatedb.OimVendorSuppliers;
 import salesmachine.oim.api.OimConstants;
+import salesmachine.util.FtpDetail.WareHouseType;
 
 public class FtpDetail {
   String accountNumber;
@@ -145,6 +151,44 @@ public class FtpDetail {
 
   public void setSupplierId(int supplierId) {
     this.supplierId = supplierId;
+  }
+  
+  public static FtpDetail getFtpDetails(OimVendorSuppliers ovs, boolean isHVA) {
+    FtpDetail ftpDetail = new FtpDetail();
+    for (Iterator<OimSupplierMethods> itr = ovs.getOimSuppliers().getOimSupplierMethodses()
+        .iterator(); itr.hasNext();) {
+      OimSupplierMethods oimSupplierMethods = itr.next();
+      WareHouseType wareHouseType = isHVA ? WareHouseType.HVA : WareHouseType.PHI;
+
+      ftpDetail.setWhareHouseType(wareHouseType);
+
+      if (oimSupplierMethods.getOimSupplierMethodTypes().getMethodTypeId()
+          .intValue() == wareHouseType.getWharehouseType()) {
+
+        if (oimSupplierMethods.getVendor() != null && oimSupplierMethods.getVendor().getVendorId()
+            .intValue() == ovs.getVendors().getVendorId().intValue()) {
+          for (Iterator<OimSupplierMethodattrValues> iterator = oimSupplierMethods
+              .getOimSupplierMethodattrValueses().iterator(); iterator.hasNext();) {
+            OimSupplierMethodattrValues oimSupplierMethodattrValues = iterator.next();
+
+            if (oimSupplierMethodattrValues.getOimSupplierMethodattrNames().getAttrId()
+                .intValue() == OimConstants.SUPPLIER_METHOD_ATTRIBUTES_FTPACCOUNT)
+              ftpDetail.setAccountNumber(oimSupplierMethodattrValues.getAttributeValue());
+            if (oimSupplierMethodattrValues.getOimSupplierMethodattrNames().getAttrId()
+                .intValue() == OimConstants.SUPPLIER_METHOD_ATTRIBUTES_FTPSERVER)
+              ftpDetail.setUrl(oimSupplierMethodattrValues.getAttributeValue());
+            if (oimSupplierMethodattrValues.getOimSupplierMethodattrNames().getAttrId()
+                .intValue() == OimConstants.SUPPLIER_METHOD_ATTRIBUTES_FTPLOGIN)
+              ftpDetail.setUserName(oimSupplierMethodattrValues.getAttributeValue());
+            if (oimSupplierMethodattrValues.getOimSupplierMethodattrNames().getAttrId()
+                .intValue() == OimConstants.SUPPLIER_METHOD_ATTRIBUTES_FTPPASSWORD)
+              ftpDetail.setPassword(oimSupplierMethodattrValues.getAttributeValue());
+          }
+          break;
+        }
+      }
+    }
+    return ftpDetail;
   }
 }
 

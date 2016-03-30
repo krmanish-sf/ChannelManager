@@ -206,8 +206,8 @@ public class HonestGreen extends Supplier implements HasTracking {
     }
     Set<OimOrderDetails> phiItems = new HashSet<OimOrderDetails>();
     Set<OimOrderDetails> hvaItems = new HashSet<OimOrderDetails>();
-    FtpDetail hvaFtpDetail = getFtpDetails(ovs, true);
-    FtpDetail phiFtpDetail = getFtpDetails(ovs, false);
+    FtpDetail hvaFtpDetail = FtpDetail.getFtpDetails(ovs, true);
+    FtpDetail phiFtpDetail = FtpDetail.getFtpDetails(ovs, false);
     boolean isSingleWarehouseConfigured = false;
     boolean isHva = false;
     if (hvaFtpDetail.getUrl() != null && phiFtpDetail.getUrl() == null) {
@@ -259,37 +259,22 @@ public class HonestGreen extends Supplier implements HasTracking {
       Integer phiQty = getPhiQuantity(sku);
       int phiQtyInt = phiQty != null ? phiQty.intValue() : 0;
       Integer hvaQty = getHvaQuantity(sku, vendorId, phiQtyInt);
+      int hvaQtyInt = hvaQty !=null ? hvaQty.intValue() :0;
       if (phiQty == null && hvaQty == null) {
         failedOrders.put(orderDetail.getDetailId(),
             orderDetail.getSku() + " is not processed because it is not in our system.");
         continue;
       }
       if (!isSingleWarehouseConfigured) {
-        // isHva = isRestricted(orderDetail.getSku(), vendorId,
-        // supplierDefaultPrefix, configuredPrefix);
-        if (hvaQty == null)
-          hvaQty = 0;
-        if (phiQty == null)
-          phiQty = 0;
-        isHva = hvaQty.intValue() > phiQty.intValue();
+        isHva = isRestricted(sku, vendorId, phiQtyInt, hvaQtyInt);
       }
       if (isHva) {
-        // if (hvaQty > 0) {
         hvaItems.add(orderDetail);
-        // } else {
-        // failedOrders.put(orderDetail.getDetailId(), orderDetail.getSku() + " is out of stock");
-        // }
 
       } else {
-        // if (phiQty > 0) {
         phiItems.add(orderDetail);
-        // } else {
-        // failedOrders.put(orderDetail.getDetailId(), orderDetail.getSku() + " is out of stock");
-        // }
-
       }
     }
-    // ***************************************************
     if (order.getOimOrderBatches().getOimChannels().getEmailNotifications() == 1) {
       emailNotification = true;
       String orderStatus = "Successfully Placed";
@@ -299,9 +284,7 @@ public class HonestGreen extends Supplier implements HasTracking {
     }
 
     if (hvaItems.size() > 0) {
-      // create order file and send order to Hva configured
-      // ftp
-      FtpDetail ftpDetails = getFtpDetails(ovs, true);
+      FtpDetail ftpDetails = FtpDetail.getFtpDetails(ovs, true);
 
       String fileName = createOrderFile(order, ovs, hvaItems, ftpDetails, poNum);
 
@@ -318,7 +301,7 @@ public class HonestGreen extends Supplier implements HasTracking {
     }
     if (phiItems.size() > 0) {
       // create order file and send order to PHI configured
-      FtpDetail ftpDetails = getFtpDetails(ovs, false);
+      FtpDetail ftpDetails = FtpDetail.getFtpDetails(ovs, false);
       String fileName = createOrderFile(order, ovs, phiItems, ftpDetails, poNum);
       sendToFTP(fileName, ftpDetails);
       for (OimOrderDetails od : phiItems) {
@@ -445,19 +428,14 @@ public class HonestGreen extends Supplier implements HasTracking {
     }
   }
 
-  private boolean isRestricted(String sku, int vendorID, String defaultPrefix,
-      String configuredPrefix) {
-    // if is restricted value is 0 in product table and 1 in vendor custom
-    // product
-    // or if is restricted value is 1 in product table
-    // Transaction tx = null;
+  private boolean isRestricted(String sku, int vendorID, int phiQty, int hvaQty) {
     Session dbSession = SessionManager.currentSession();
     // tx = dbSession.beginTransaction();
-    if (configuredPrefix.equals(""))
-      sku = defaultPrefix + sku;
-    else if (!configuredPrefix.equalsIgnoreCase(defaultPrefix)) {
-      sku = sku.replaceFirst(configuredPrefix, defaultPrefix);
-    }
+    // if (configuredPrefix.equals(""))
+    // sku = defaultPrefix + sku;
+    // else if (!configuredPrefix.equalsIgnoreCase(defaultPrefix)) {
+    // sku = sku.replaceFirst(configuredPrefix, defaultPrefix);
+    // }
     Query query = dbSession.createQuery(
         "select p.isRestricted from salesmachine.hibernatedb.Product p where p.sku=:sku");
     query.setString("sku", sku);
@@ -483,10 +461,9 @@ public class HonestGreen extends Supplier implements HasTracking {
 
       if (restrictedVal != null && ((BigDecimal) restrictedVal).intValue() == 1) {
         log.debug("{} is restricted in VENDOR_CUSTOM_FEEDS_PRODUCTS table", sku);
-        // HVAPhiMap.put(sku, orderDetail);
-        int phiQuantity = getPhiQuantity(sku);
-        int hvaQuantity = getHvaQuantity(sku, vendorID, phiQuantity);
-        if (hvaQuantity > phiQuantity) {
+        // int phiQuantity = getPhiQuantity(sku);
+        // int hvaQuantity = getHvaQuantity(sku, vendorID, phiQuantity);
+        if (hvaQty > phiQty) {
           return true;
         } else
           return false;
@@ -753,31 +730,31 @@ public class HonestGreen extends Supplier implements HasTracking {
     // ftpDetails = getFtpDetails(ovs, false);
     if (oimOrderDetails.getSupplierWareHouseCode() != null
         && oimOrderDetails.getSupplierWareHouseCode().equals("H"))
-      ftpDetails = getFtpDetails(ovs, true);
+      ftpDetails = FtpDetail.getFtpDetails(ovs, true);
     else if (oimOrderDetails.getSupplierWareHouseCode() != null
         && oimOrderDetails.getSupplierWareHouseCode().equals("P"))
-      ftpDetails = getFtpDetails(ovs, false);
-    else {
-      FtpDetail hvaFtpDetail = getFtpDetails(ovs, true);
-      FtpDetail phiFtpDetail = getFtpDetails(ovs, false);
-      boolean isSingleWarehouseConfigured = false;
-      boolean isHva = false;
-      if (hvaFtpDetail.getUrl() != null && phiFtpDetail.getUrl() == null) {
-        isSingleWarehouseConfigured = true;
-        isHva = true;
-      } else if (phiFtpDetail.getUrl() != null && hvaFtpDetail.getUrl() == null) {
-        isSingleWarehouseConfigured = true;
-        isHva = false;
-      }
-      if (!isSingleWarehouseConfigured)
-        isHva = isRestricted(oimOrderDetails.getSku(), ovs.getVendors().getVendorId(),
-            supplierDefaultPrefix, configuredPrefix);
-      if (isHva) {
-        ftpDetails = hvaFtpDetail;
-      } else {
-        ftpDetails = phiFtpDetail;
-      }
-    }
+      ftpDetails = FtpDetail.getFtpDetails(ovs, false);
+    // else {
+    // FtpDetail hvaFtpDetail = getFtpDetails(ovs, true);
+    // FtpDetail phiFtpDetail = getFtpDetails(ovs, false);
+    // boolean isSingleWarehouseConfigured = false;
+    // boolean isHva = false;
+    // if (hvaFtpDetail.getUrl() != null && phiFtpDetail.getUrl() == null) {
+    // isSingleWarehouseConfigured = true;
+    // isHva = true;
+    // } else if (phiFtpDetail.getUrl() != null && hvaFtpDetail.getUrl() == null) {
+    // isSingleWarehouseConfigured = true;
+    // isHva = false;
+    // }
+    // if (!isSingleWarehouseConfigured)
+    // isHva = isRestricted(oimOrderDetails.getSku(), ovs.getVendors().getVendorId(),
+    // supplierDefaultPrefix, configuredPrefix);
+    // if (isHva) {
+    // ftpDetails = hvaFtpDetail;
+    // } else {
+    // ftpDetails = phiFtpDetail;
+    // }
+    // }
     if (ftpDetails != null) {
       FTPClient ftp = new FTPClient();
       try {
@@ -788,19 +765,6 @@ public class HonestGreen extends Supplier implements HasTracking {
         ftp.setTimeout(60 * 1000 * 60 * 7);
         String unfiNumber = findUNFIFromConfirmations(ftp, oimOrderDetails, trackingMeta,
             orderStatus);
-        // if(unfiNumber==null){
-        // EmailUtil.sendEmail("support@inventorysource.com",
-        // "support@inventorysource.com", "",
-        // "Order confirmation failed for OrderID"+tempTrackingMeta,
-        // "Order confirmation file for order id - "+tempTrackingMeta+"
-        // is not found at HG's ftp for
-        // account - "+ftpDetails.getAccountNumber(),
-        // "text/html");
-        // orderStatus.setStatus("Order Confirmation Failed");
-        //
-        // return orderStatus;
-        // }
-
         getTrackingInfo(ftpDetails, ftp, unfiNumber, orderStatus, oimOrderDetails, trackingMeta);
       } catch (IOException | FTPException | ParseException | JAXBException e) {
         log.error(e.getMessage(), e);
@@ -1006,44 +970,6 @@ public class HonestGreen extends Supplier implements HasTracking {
     return null;
   }
 
-  private FtpDetail getFtpDetails(OimVendorSuppliers ovs, boolean isHVA) {
-    FtpDetail ftpDetail = new FtpDetail();
-    for (Iterator<OimSupplierMethods> itr = ovs.getOimSuppliers().getOimSupplierMethodses()
-        .iterator(); itr.hasNext();) {
-      OimSupplierMethods oimSupplierMethods = itr.next();
-      WareHouseType wareHouseType = isHVA ? WareHouseType.HVA : WareHouseType.PHI;
-
-      ftpDetail.setWhareHouseType(wareHouseType);
-
-      if (oimSupplierMethods.getOimSupplierMethodTypes().getMethodTypeId()
-          .intValue() == wareHouseType.getWharehouseType()) {
-
-        if (oimSupplierMethods.getVendor() != null && oimSupplierMethods.getVendor().getVendorId()
-            .intValue() == ovs.getVendors().getVendorId().intValue()) {
-          for (Iterator<OimSupplierMethodattrValues> iterator = oimSupplierMethods
-              .getOimSupplierMethodattrValueses().iterator(); iterator.hasNext();) {
-            OimSupplierMethodattrValues oimSupplierMethodattrValues = iterator.next();
-
-            if (oimSupplierMethodattrValues.getOimSupplierMethodattrNames().getAttrId()
-                .intValue() == OimConstants.SUPPLIER_METHOD_ATTRIBUTES_FTPACCOUNT)
-              ftpDetail.setAccountNumber(oimSupplierMethodattrValues.getAttributeValue());
-            if (oimSupplierMethodattrValues.getOimSupplierMethodattrNames().getAttrId()
-                .intValue() == OimConstants.SUPPLIER_METHOD_ATTRIBUTES_FTPSERVER)
-              ftpDetail.setUrl(oimSupplierMethodattrValues.getAttributeValue());
-            if (oimSupplierMethodattrValues.getOimSupplierMethodattrNames().getAttrId()
-                .intValue() == OimConstants.SUPPLIER_METHOD_ATTRIBUTES_FTPLOGIN)
-              ftpDetail.setUserName(oimSupplierMethodattrValues.getAttributeValue());
-            if (oimSupplierMethodattrValues.getOimSupplierMethodattrNames().getAttrId()
-                .intValue() == OimConstants.SUPPLIER_METHOD_ATTRIBUTES_FTPPASSWORD)
-              ftpDetail.setPassword(oimSupplierMethodattrValues.getAttributeValue());
-          }
-          break;
-        }
-      }
-    }
-    return ftpDetail;
-  }
-
   private static String sellerId = "A2V8R85K60KD3B",
       mwsAuthToken = "amzn.mws.c8a76813-c733-c66e-5215-2ef9bcecff4b";
   private static List<String> marketPlaceIdList = new ArrayList<String>();
@@ -1068,13 +994,12 @@ public class HonestGreen extends Supplier implements HasTracking {
     }
   }
 
-  public static void main1(String[] args) {
+  public static void main(String[] args) {
     // updateFromConfirmation();
     // updateFromTracking();
     Session session = SessionManager.currentSession();
     OimVendorSuppliers ovs = (OimVendorSuppliers) session.get(OimVendorSuppliers.class, 9681);
-    // 462847
-    OimOrders order = (OimOrders) session.get(OimOrders.class, 462170);
+    OimOrders order = (OimOrders) session.get(OimOrders.class, 477569);
     try {
       new HonestGreen().sendOrders(735585, ovs, order);
     } catch (SupplierConfigurationException | SupplierCommunicationException
@@ -1085,7 +1010,7 @@ public class HonestGreen extends Supplier implements HasTracking {
     }
   }
 
-  public static void main(String[] args) {
+  public static void main2(String[] args) {
     Marshaller marshaller = null;
     try {
       marshaller = jaxbContext2.createMarshaller();
@@ -1100,7 +1025,7 @@ public class HonestGreen extends Supplier implements HasTracking {
     envelope.setHeader(header);
     envelope.setMessageType("OrderFulfillment");
     long msgId = 1L;
-    
+
     SubmitFeedRequest submitFeedRequest = new SubmitFeedRequest();
     submitFeedRequest.setMerchant(sellerId);
     submitFeedRequest.setMWSAuthToken(mwsAuthToken);
@@ -1115,10 +1040,10 @@ public class HonestGreen extends Supplier implements HasTracking {
     Transaction tx = session.beginTransaction();
     for (OimOrderTracking td : trackingList) {
       OimOrderDetails detail = td.getDetail();
-      System.out.println("updating order detail --"+detail.getDetailId());
+      System.out.println("updating order detail --" + detail.getDetailId());
       detail.setSupplierOrderStatus(OimConstants.OIM_SUPPLER_ORDER_STATUS_COMPLETED);
-        detail.setOimOrderStatuses(new OimOrderStatuses(OimConstants.ORDER_STATUS_COMPLETE));
-       session.saveOrUpdate(detail);
+      detail.setOimOrderStatuses(new OimOrderStatuses(OimConstants.ORDER_STATUS_COMPLETE));
+      session.saveOrUpdate(detail);
       Message message = new Message();
       message.setMessageID(BigInteger.valueOf(msgId++));
       envelope.getMessage().add(message);
@@ -1149,15 +1074,15 @@ public class HonestGreen extends Supplier implements HasTracking {
       fulfillment.getItem().add(i);
       fulfillment.setFulfillmentData(value);
     }
-   
+
     ByteArrayOutputStream os = new ByteArrayOutputStream();
     if (marshaller != null) {
       try {
         marshaller.marshal(envelope, os);
       } catch (JAXBException e) {
         log.error(e.getMessage(), e);
-//        throw new ChannelOrderFormatException(
-//            "Error in Updating Store order - " + e.getMessage(), e);
+        // throw new ChannelOrderFormatException(
+        // "Error in Updating Store order - " + e.getMessage(), e);
       }
     }
     InputStream inputStream = new ByteArrayInputStream(os.toByteArray());
@@ -1167,9 +1092,9 @@ public class HonestGreen extends Supplier implements HasTracking {
           Base64.encode((MessageDigest.getInstance("MD5").digest(os.toByteArray()))));
     } catch (NoSuchAlgorithmException e) {
       log.error(e.getMessage(), e);
-//      throw new ChannelCommunicationException(
-//          "Error in submiting feed request while updating order to store - " + e.getMessage(),
-//          e);
+      // throw new ChannelCommunicationException(
+      // "Error in submiting feed request while updating order to store - " + e.getMessage(),
+      // e);
     }
     log.info("SubmitFeedRequest: {}", os.toString());
     SubmitFeedResponse submitFeed = null;
@@ -1183,9 +1108,9 @@ public class HonestGreen extends Supplier implements HasTracking {
 
     } catch (MarketplaceWebServiceException e) {
       log.error(e.getMessage(), e);
-//      throw new ChannelCommunicationException(
-//          "Error in submiting feed request while updating order to store - " + e.getMessage(),
-//          e);
+      // throw new ChannelCommunicationException(
+      // "Error in submiting feed request while updating order to store - " + e.getMessage(),
+      // e);
     }
     tx.commit();
   }
