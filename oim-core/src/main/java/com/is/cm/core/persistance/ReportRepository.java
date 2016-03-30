@@ -1,6 +1,7 @@
 package com.is.cm.core.persistance;
 
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -33,4 +34,12 @@ public interface ReportRepository {
 			DataTableCriterias criterias);
 
 	List getChannelAlerts();
+
+	List<HashMap<String, Integer>> getOrderHistory();
+
+  List fetchUnShippedOrders(int vendorID);
+
+  List fetchUnConfirmedOrders(int vendorID);
+
+  List trackOrderFileLocation(String vid, String poNumber, String location, String detailId);
 }

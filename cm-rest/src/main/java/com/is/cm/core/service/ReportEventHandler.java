@@ -1,5 +1,6 @@
 package com.is.cm.core.service;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -101,5 +102,28 @@ public class ReportEventHandler implements ReportService {
 		PagedDataResult<OrderBatch> pagedDataResult = reportRepository
 				.getChannelPullHistory(event.getEntity());
 		return new PagedDataResultEvent<OrderBatch>(pagedDataResult);
+	}
+	@Override
+	public ReadCollectionEvent getOrderHistory(RequestReadEvent requestReadEvent) {
+		List alertAndErrors = reportRepository.getOrderHistory();
+		//return new ReadCollectionEvent(alertAndErrors);
+		return new ReadCollectionEvent(alertAndErrors);
+	}
+	@Override
+	public ReadCollectionEvent fetchUnShippedOrders(int vendorID) {
+		List resultList = reportRepository.fetchUnShippedOrders(vendorID);
+		return new ReadCollectionEvent(resultList);
+	}
+	//fetchUnConfirmedOrders
+	@Override
+	public ReadCollectionEvent fetchUnConfirmedOrders(int vendorID) {
+		List resultList = reportRepository.fetchUnConfirmedOrders(vendorID);
+		return new ReadCollectionEvent(resultList);
+	}
+	
+	@Override
+	public ReadCollectionEvent trackOrderFileLocation(String vid, String poNumber,String location,String detailId) {
+		List resultList = reportRepository.trackOrderFileLocation(vid,poNumber,location,detailId);
+		return new ReadCollectionEvent(resultList);
 	}
 }
