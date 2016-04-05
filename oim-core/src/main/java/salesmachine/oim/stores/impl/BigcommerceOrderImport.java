@@ -356,10 +356,7 @@ public class BigcommerceOrderImport extends ChannelBase {
               shipMethod = removeNull(shippingAddObj.get("shipping_method"));
               oimOrders.setShippingDetails(shipMethod);
             }
-            oimOrders.setInsertionTm(new Date());
-            oimOrders.setOimOrderBatches(batch);
-            batch.getOimOrderses().add(oimOrders);
-            oimOrders.setOrderFetchTm(new Date());
+            
             String orderCreatedTm = removeNull(orderJsonObj.get("date_created"));
             Date order_tm = null;
             try {
@@ -383,14 +380,13 @@ public class BigcommerceOrderImport extends ChannelBase {
             if (oimOrders.getOimShippingMethod() == null)
               log.warn("Shipping can't be mapped for order " + oimOrders.getStoreOrderId());
 
-            m_dbSession.saveOrUpdate(oimOrders);
-
             String product_resource = removeNull(
                 ((JSONObject) orderJsonObj.get("products")).get("resource"));
             String product_resource_url = storeBaseURL + product_resource + ".json";
             Set<OimOrderDetails> detailSet = new HashSet<OimOrderDetails>();
             JSONArray orderItems = (JSONArray) parser
                 .parse(sendRequest(null, product_resource_url, GET_METHOD_TYPE));
+            Set<String> notMatchingSkuSet = new HashSet<String>();
             for (int x = 0; x < orderItems.size(); x++) {
               JSONObject orderItem = (JSONObject) orderItems.get(x);
               OimOrderDetails details = new OimOrderDetails();
@@ -400,6 +396,11 @@ public class BigcommerceOrderImport extends ChannelBase {
               details
                   .setOimOrderStatuses(new OimOrderStatuses(OimConstants.ORDER_STATUS_UNPROCESSED));
               String sku = removeNull(orderItem.get("sku")).toUpperCase();
+              if (m_channel.getOnlyPullMatchingOrders() == 1) {
+                if (!isProductMatchesWithSupplier(sku)) {
+                  notMatchingSkuSet.add(sku);
+                }
+              }
               OimSuppliers oimSuppliers = null;
               String prefix = null;
               List<OimSuppliers> blankPrefixSupplierList = new ArrayList<OimSuppliers>();
@@ -431,9 +432,31 @@ public class BigcommerceOrderImport extends ChannelBase {
               details.setSku(sku);
               details.setStoreOrderItemId(removeNull(orderItem.get("id")));
               details.setOimOrders(oimOrders);
-              m_dbSession.save(details);
+             // m_dbSession.save(details);
               detailSet.add(details);
             }
+            if (orderItems.size() == notMatchingSkuSet.size()) {
+              StringBuffer sb = new StringBuffer();
+              for (Iterator<String> it = notMatchingSkuSet.iterator(); it.hasNext();) {
+                String sku = it.next();
+                sb.append(sku);
+                if (it.hasNext())
+                  sb.append(",");
+              }
+              log.info(
+                  "order id {} skipped because it has all the skus which are not starting with any of the configured supplier's prefix - {}",
+                  storeOrderId, sb.toString());
+              continue;
+            }
+            for (Iterator<OimOrderDetails> dtl = detailSet.iterator(); dtl.hasNext();) {
+              OimOrderDetails detailToSave = dtl.next();
+              m_dbSession.saveOrUpdate(detailToSave);
+            }
+            oimOrders.setInsertionTm(new Date());
+            oimOrders.setOimOrderBatches(batch);
+            batch.getOimOrderses().add(oimOrders);
+            oimOrders.setOrderFetchTm(new Date());
+            m_dbSession.saveOrUpdate(oimOrders);
             // Check if store is not in test mode.
             if (m_channel.getTestMode() == 0) {
               // update order status on store to acknowledge order has been received by CM

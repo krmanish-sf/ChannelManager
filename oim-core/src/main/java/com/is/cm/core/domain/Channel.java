@@ -26,6 +26,8 @@ public class Channel extends DomainBase implements Serializable {
   private Date deleteTm;
   private Date lastFetchTm;
   private boolean testMode;
+  private boolean onlyPullMatchingOrders;
+
   @JsonDeserialize(as = HashSet.class)
   private Set<ChannelAccessDetail> oimChannelAccessDetailses;
   @JsonDeserialize(as = HashSet.class)
@@ -153,6 +155,13 @@ public class Channel extends DomainBase implements Serializable {
   public void setOimChannelFileses(Set<ChannelFile> oimChannelFileses) {
     this.oimChannelFileses = oimChannelFileses;
   }
+  public boolean isOnlyPullMatchingOrders() {
+    return onlyPullMatchingOrders;
+  }
+
+  public void setOnlyPullMatchingOrders(boolean onlyPullMatchingOrders) {
+    this.onlyPullMatchingOrders = onlyPullMatchingOrders;
+  }
 
   public static Channel from(OimChannels oimChannel) {
     if (oimChannel == null)
@@ -167,7 +176,7 @@ public class Channel extends DomainBase implements Serializable {
     target.setInsertionTm(oimChannel.getInsertionTm());
     target.setTestMode(oimChannel.getTestMode() != null && oimChannel.getTestMode() == 1);
     target.setVendors(Vendor.from(oimChannel.getVendors()));
-
+    target.setOnlyPullMatchingOrders(oimChannel.getOnlyPullMatchingOrders() !=null && oimChannel.getOnlyPullMatchingOrders() ==1);
     if (oimChannel.getOimChannelAccessDetailses() != null) {
       Set<ChannelAccessDetail> channelAccessDetails = new HashSet<ChannelAccessDetail>();
       for (OimChannelAccessDetails oimChannelAccessDetails : oimChannel

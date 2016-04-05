@@ -177,6 +177,9 @@ public class VolusionOrderImport extends ChannelBase implements IOrderImport {
           log.info("Order#{} is already imported in the system, updating Order.", storeOrderId);
           continue;
         }
+        tx = m_dbSession.getTransaction();
+        if (tx != null && tx.isActive())
+          tx.commit();
         tx = m_dbSession.beginTransaction();
         OimOrders oimOrders = new OimOrders();
         oimOrders.setOrderNumber(Byte.toString(order.getOrderID()));
@@ -287,6 +290,7 @@ public class VolusionOrderImport extends ChannelBase implements IOrderImport {
 
         // setting oimOrderDetails
         Set<OimOrderDetails> detailSet = new HashSet<OimOrderDetails>();
+        Set<String> notMatchingSkuSet = new HashSet<String>();
         for (OrderDetails item : order.getOrderDetails()) {
           OimOrderDetails oimOrderDetail = new OimOrderDetails();
 
@@ -296,6 +300,11 @@ public class VolusionOrderImport extends ChannelBase implements IOrderImport {
           oimOrderDetail
               .setOimOrderStatuses(new OimOrderStatuses(OimConstants.ORDER_STATUS_UNPROCESSED));
           String sku = item.getProductCode();
+          if (m_channel.getOnlyPullMatchingOrders() == 1) {
+            if (!isProductMatchesWithSupplier(sku)) {
+              notMatchingSkuSet.add(sku);
+            }
+          }
           OimSuppliers oimSuppliers = null;
           String prefix = null;
           List<OimSuppliers> blankPrefixSupplierList = new ArrayList<OimSuppliers>();
@@ -334,9 +343,29 @@ public class VolusionOrderImport extends ChannelBase implements IOrderImport {
           oimOrderDetail.setSku(sku);
           oimOrderDetail.setStoreOrderItemId(new Byte(item.getOrderDetailID()).toString());
           oimOrderDetail.setOimOrders(oimOrders);
-          m_dbSession.saveOrUpdate(oimOrderDetail);
           detailSet.add(oimOrderDetail);
         }
+        if (order.getOrderDetails().size() == notMatchingSkuSet.size()) {
+          StringBuffer sb = new StringBuffer();
+          for (Iterator<String> it = notMatchingSkuSet.iterator(); it.hasNext();) {
+            String sku = it.next();
+            sb.append(sku);
+            if (it.hasNext())
+              sb.append(",");
+          }
+          log.info(
+              "order id {} skipped because it has all the skus which are not starting with any of the configured supplier's prefix - {}",
+              storeOrderId, sb.toString());
+          continue;
+        }
+        for (Iterator<OimOrderDetails> dtl = detailSet.iterator(); dtl.hasNext();) {
+          OimOrderDetails detailToSave = dtl.next();
+          m_dbSession.saveOrUpdate(detailToSave);
+        }
+        oimOrders.setInsertionTm(new Date());
+        oimOrders.setOimOrderBatches(batch);
+        oimOrders.setOrderFetchTm(new Date());
+        batch.getOimOrderses().add(oimOrders);
         oimOrders.setOimOrderDetailses(detailSet);
         m_dbSession.saveOrUpdate(oimOrders);
         try {

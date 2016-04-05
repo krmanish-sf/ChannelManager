@@ -129,7 +129,7 @@ class AmazonOrderImport extends ChannelBase implements IOrderImport {
       throws ChannelCommunicationException, ChannelOrderFormatException,
       ChannelConfigurationException {
     Transaction tx = m_dbSession.getTransaction();
-    String amazonOrderId=null;
+    String amazonOrderId = null;
     try {
       batch.setOimChannels(m_channel);
       batch.setOimOrderBatchesTypes(batchesTypes);
@@ -142,7 +142,7 @@ class AmazonOrderImport extends ChannelBase implements IOrderImport {
       m_dbSession.save(batch);
       tx.commit();
 
-      tx = m_dbSession.beginTransaction();
+      // tx = m_dbSession.beginTransaction();
 
       // Create a request.
       ListOrdersRequest listOrdersRequest = new ListOrdersRequest();
@@ -160,13 +160,13 @@ class AmazonOrderImport extends ChannelBase implements IOrderImport {
       }
       List<Message> msgList = new ArrayList<Message>();
       Calendar c = Calendar.getInstance();
-//      if (m_channel.getLastFetchTm() != null) {
-//        c.setTime(m_channel.getLastFetchTm());
-//        c.add(Calendar.HOUR, -2);
-//      } else {
-//        c.setTime(new Date());
-//        c.add(Calendar.DATE, -5);
-//      }
+      // if (m_channel.getLastFetchTm() != null) {
+      // c.setTime(m_channel.getLastFetchTm());
+      // c.add(Calendar.HOUR, -2);
+      // } else {
+      // c.setTime(new Date());
+      // c.add(Calendar.DATE, -5);
+      // }
       c.setTime(new Date());
       c.add(Calendar.HOUR, -24);
       log.info("Set to fetch Orders after {}", c.getTime());
@@ -199,177 +199,227 @@ class AmazonOrderImport extends ChannelBase implements IOrderImport {
             continue;
           }
           log.info("Order#{} fetched.", amazonOrderId);
-          OimOrders oimOrder = new OimOrders();
-          oimOrder.setStoreOrderId(amazonOrderId);
-          if (order.getShippingAddress() != null) {
-            oimOrder.setBillingCity(StringHandle.removeComma(order.getShippingAddress().getCity()));
-            oimOrder.setBillingCompany(
-                StringHandle.removeComma(order.getShippingAddress().getAddressLine3()));
-            oimOrder.setBillingCountry(
-                StringHandle.removeComma(order.getShippingAddress().getCounty()));
-            oimOrder.setBillingEmail(StringHandle.removeComma(order.getBuyerEmail()));
-            oimOrder.setBillingName(StringHandle.removeComma(order.getShippingAddress().getName()));
-            oimOrder
-                .setBillingPhone(StringHandle.removeComma(order.getShippingAddress().getPhone()));
-            oimOrder.setBillingState(
-                StringHandle.removeComma(order.getShippingAddress().getStateOrRegion()));
-            oimOrder.setBillingStreetAddress(
-                StringHandle.removeComma(order.getShippingAddress().getAddressLine1()));
-            oimOrder.setBillingSuburb(
-                StringHandle.removeComma(order.getShippingAddress().getAddressLine2()));
-            oimOrder.setBillingZip(
-                StringHandle.removeComma(order.getShippingAddress().getPostalCode()));
-
-            oimOrder
-                .setCustomerCity(StringHandle.removeComma(order.getShippingAddress().getCity()));
-            oimOrder.setCustomerCompany(
-                StringHandle.removeComma(order.getShippingAddress().getAddressLine3()));
-            oimOrder.setCustomerCountry(
-                StringHandle.removeComma(order.getShippingAddress().getCounty()));
-            oimOrder.setCustomerEmail(StringHandle.removeComma(order.getBuyerEmail()));
-            oimOrder
-                .setCustomerName(StringHandle.removeComma(order.getShippingAddress().getName()));
-            oimOrder
-                .setCustomerPhone(StringHandle.removeComma(order.getShippingAddress().getPhone()));
-            oimOrder.setCustomerState(
-                StringHandle.removeComma(order.getShippingAddress().getStateOrRegion()));
-            oimOrder.setCustomerStreetAddress(
-                StringHandle.removeComma(order.getShippingAddress().getAddressLine1()));
-            oimOrder.setCustomerSuburb(
-                StringHandle.removeComma(order.getShippingAddress().getAddressLine2()));
-            oimOrder.setCustomerZip(
-                StringHandle.removeComma(order.getShippingAddress().getPostalCode()));
-
-            oimOrder
-                .setDeliveryCity(StringHandle.removeComma(order.getShippingAddress().getCity()));
-            oimOrder.setDeliveryCompany(
-                StringHandle.removeComma(order.getShippingAddress().getAddressLine3()));
-            oimOrder.setDeliveryCountry(
-                StringHandle.removeComma(order.getShippingAddress().getCounty()));
-            oimOrder.setDeliveryEmail(StringHandle.removeComma(order.getBuyerEmail()));
-            oimOrder
-                .setDeliveryName(StringHandle.removeComma(order.getShippingAddress().getName()));
-            oimOrder
-                .setDeliveryPhone(StringHandle.removeComma(order.getShippingAddress().getPhone()));
-            oimOrder.setDeliveryState(
-                StringHandle.removeComma(order.getShippingAddress().getStateOrRegion()));
-            oimOrder.setDeliveryStreetAddress(
-                StringHandle.removeComma(order.getShippingAddress().getAddressLine1()));
-            oimOrder.setDeliverySuburb(
-                StringHandle.removeComma(order.getShippingAddress().getAddressLine2()));
-            oimOrder.setDeliveryZip(
-                StringHandle.removeComma(order.getShippingAddress().getPostalCode()));
-          }
-          oimOrder.setInsertionTm(new Date());
-          oimOrder.setOimOrderBatches(batch);
-          batch.getOimOrderses().add(oimOrder);
-          // oimOrders.setOrderComment(order2.);
-          oimOrder.setOrderFetchTm(new Date());
-          oimOrder.setOrderTm(order.getPurchaseDate().toGregorianCalendar().getTime());
-          oimOrder.setOrderTotalAmount(Double.parseDouble(order.getOrderTotal().getAmount()));
-          oimOrder.setPayMethod(order.getPaymentMethod());
-          oimOrder.setShippingDetails(order.getShipServiceLevel());
-          String shippingDetails = order.getShipServiceLevel();
-          for (OimChannelShippingMap entity : oimChannelShippingMapList) {
-            String shippingRegEx = entity.getShippingRegEx();
-            if (shippingDetails.equalsIgnoreCase(shippingRegEx)) {
-              oimOrder.setOimShippingMethod(entity.getOimShippingMethod());
-              log.info("Shipping set to " + entity.getOimShippingMethod());
-              break;
-            }
-          }
-
-          if (oimOrder.getOimShippingMethod() == null)
-            log.warn("Shipping can't be mapped for order " + oimOrder.getStoreOrderId());
-          // setting delivery state code
-          if (order.getShippingAddress().getStateOrRegion().length() == 2) {
-            oimOrder.setDeliveryStateCode(order.getShippingAddress().getStateOrRegion());
-          } else {
-            String stateCode = validateAndGetStateCode(oimOrder);
-            if (stateCode != "")
-              oimOrder.setDeliveryStateCode(stateCode);
-          }
-
-          oimOrder.setDeliveryCountryCode(order.getShippingAddress().getCountryCode());
-          m_dbSession.saveOrUpdate(oimOrder);
-          Thread.sleep(1000);
-          ListOrderItemsRequest itemsRequest = new ListOrderItemsRequest();
-          itemsRequest.setSellerId(sellerId);
-          itemsRequest.setMWSAuthToken(mwsAuthToken);
-
-          itemsRequest.setAmazonOrderId(amazonOrderId);
-
-          ListOrderItemsResponse listOrderResponse = orderMwsClient.listOrderItems(itemsRequest);
-          ListOrderItemsResult listOrderItemsResult = listOrderResponse.getListOrderItemsResult();
-          Set<OimOrderDetails> detailSet = new HashSet<OimOrderDetails>();
+          OimOrders oimOrder;
           try {
-            Thread.sleep(1000);
-          } catch (InterruptedException e) {
-            log.warn(e.getMessage());
-          }
-          for (OrderItem orderItem : listOrderItemsResult.getOrderItems()) {
-            OimOrderDetails details = new OimOrderDetails();
-            double itemPrice = Double.parseDouble(orderItem.getItemPrice().getAmount());
-            // Amazon returns total price for this order item which needs to be divided by quantity
-            // before saving.
-            itemPrice = itemPrice / orderItem.getQuantityOrdered();
-            details.setCostPrice(itemPrice);
-            details.setInsertionTm(new Date());
-            details
-                .setOimOrderStatuses(new OimOrderStatuses(OimConstants.ORDER_STATUS_UNPROCESSED));
-            String sku = orderItem.getSellerSKU();
-            OimSuppliers oimSuppliers = null;
-            String prefix = null;
-            List<OimSuppliers> blankPrefixSupplierList = new ArrayList<OimSuppliers>();
-            for (Iterator<OimSuppliers> itr = supplierMap.keySet().iterator(); itr.hasNext();) {
-              OimSuppliers supplier = itr.next();
-              prefix = supplierMap.get(supplier);
-              if (prefix == null) {
-                blankPrefixSupplierList.add(supplier);
-                continue;
-              }
-              if (sku.toUpperCase().startsWith(prefix)) {
-                oimSuppliers = supplier;
+            tx = m_dbSession.getTransaction();
+            if (tx != null && tx.isActive())
+              tx.commit();
+            tx = m_dbSession.beginTransaction();
+            oimOrder = new OimOrders();
+            oimOrder.setStoreOrderId(amazonOrderId);
+            if (order.getShippingAddress() != null) {
+              oimOrder
+                  .setBillingCity(StringHandle.removeComma(order.getShippingAddress().getCity()));
+              oimOrder.setBillingCompany(
+                  StringHandle.removeComma(order.getShippingAddress().getAddressLine3()));
+              oimOrder.setBillingCountry(
+                  StringHandle.removeComma(order.getShippingAddress().getCounty()));
+              oimOrder.setBillingEmail(StringHandle.removeComma(order.getBuyerEmail()));
+              oimOrder
+                  .setBillingName(StringHandle.removeComma(order.getShippingAddress().getName()));
+              oimOrder
+                  .setBillingPhone(StringHandle.removeComma(order.getShippingAddress().getPhone()));
+              oimOrder.setBillingState(
+                  StringHandle.removeComma(order.getShippingAddress().getStateOrRegion()));
+              oimOrder.setBillingStreetAddress(
+                  StringHandle.removeComma(order.getShippingAddress().getAddressLine1()));
+              oimOrder.setBillingSuburb(
+                  StringHandle.removeComma(order.getShippingAddress().getAddressLine2()));
+              oimOrder.setBillingZip(
+                  StringHandle.removeComma(order.getShippingAddress().getPostalCode()));
+
+              oimOrder
+                  .setCustomerCity(StringHandle.removeComma(order.getShippingAddress().getCity()));
+              oimOrder.setCustomerCompany(
+                  StringHandle.removeComma(order.getShippingAddress().getAddressLine3()));
+              oimOrder.setCustomerCountry(
+                  StringHandle.removeComma(order.getShippingAddress().getCounty()));
+              oimOrder.setCustomerEmail(StringHandle.removeComma(order.getBuyerEmail()));
+              oimOrder
+                  .setCustomerName(StringHandle.removeComma(order.getShippingAddress().getName()));
+              oimOrder.setCustomerPhone(
+                  StringHandle.removeComma(order.getShippingAddress().getPhone()));
+              oimOrder.setCustomerState(
+                  StringHandle.removeComma(order.getShippingAddress().getStateOrRegion()));
+              oimOrder.setCustomerStreetAddress(
+                  StringHandle.removeComma(order.getShippingAddress().getAddressLine1()));
+              oimOrder.setCustomerSuburb(
+                  StringHandle.removeComma(order.getShippingAddress().getAddressLine2()));
+              oimOrder.setCustomerZip(
+                  StringHandle.removeComma(order.getShippingAddress().getPostalCode()));
+
+              oimOrder
+                  .setDeliveryCity(StringHandle.removeComma(order.getShippingAddress().getCity()));
+              oimOrder.setDeliveryCompany(
+                  StringHandle.removeComma(order.getShippingAddress().getAddressLine3()));
+              oimOrder.setDeliveryCountry(
+                  StringHandle.removeComma(order.getShippingAddress().getCounty()));
+              oimOrder.setDeliveryEmail(StringHandle.removeComma(order.getBuyerEmail()));
+              oimOrder
+                  .setDeliveryName(StringHandle.removeComma(order.getShippingAddress().getName()));
+              oimOrder.setDeliveryPhone(
+                  StringHandle.removeComma(order.getShippingAddress().getPhone()));
+              oimOrder.setDeliveryState(
+                  StringHandle.removeComma(order.getShippingAddress().getStateOrRegion()));
+              oimOrder.setDeliveryStreetAddress(
+                  StringHandle.removeComma(order.getShippingAddress().getAddressLine1()));
+              oimOrder.setDeliverySuburb(
+                  StringHandle.removeComma(order.getShippingAddress().getAddressLine2()));
+              oimOrder.setDeliveryZip(
+                  StringHandle.removeComma(order.getShippingAddress().getPostalCode()));
+            }
+            // oimOrder.setInsertionTm(new Date());
+            // oimOrder.setOimOrderBatches(batch);
+            // batch.getOimOrderses().add(oimOrder);
+            // oimOrders.setOrderComment(order2.);
+            oimOrder.setOrderFetchTm(new Date());
+            oimOrder.setOrderTm(order.getPurchaseDate().toGregorianCalendar().getTime());
+            oimOrder.setOrderTotalAmount(Double.parseDouble(order.getOrderTotal().getAmount()));
+            oimOrder.setPayMethod(order.getPaymentMethod());
+            oimOrder.setShippingDetails(order.getShipServiceLevel());
+            String shippingDetails = order.getShipServiceLevel();
+            for (OimChannelShippingMap entity : oimChannelShippingMapList) {
+              String shippingRegEx = entity.getShippingRegEx();
+              if (shippingDetails.equalsIgnoreCase(shippingRegEx)) {
+                oimOrder.setOimShippingMethod(entity.getOimShippingMethod());
+                log.info("Shipping set to " + entity.getOimShippingMethod());
                 break;
               }
             }
-            if (oimSuppliers == null && blankPrefixSupplierList.size() == 1) {
-              oimSuppliers = blankPrefixSupplierList.get(0);
+
+            if (oimOrder.getOimShippingMethod() == null)
+              log.warn("Shipping can't be mapped for order " + oimOrder.getStoreOrderId());
+            // setting delivery state code
+            if (order.getShippingAddress().getStateOrRegion().length() == 2) {
+              oimOrder.setDeliveryStateCode(order.getShippingAddress().getStateOrRegion());
+            } else {
+              String stateCode = validateAndGetStateCode(oimOrder);
+              if (stateCode != "")
+                oimOrder.setDeliveryStateCode(stateCode);
+            }
+
+            oimOrder.setDeliveryCountryCode(order.getShippingAddress().getCountryCode());
+            // m_dbSession.saveOrUpdate(oimOrder);
+            Thread.sleep(1000);
+            ListOrderItemsRequest itemsRequest = new ListOrderItemsRequest();
+            itemsRequest.setSellerId(sellerId);
+            itemsRequest.setMWSAuthToken(mwsAuthToken);
+
+            itemsRequest.setAmazonOrderId(amazonOrderId);
+
+            ListOrderItemsResponse listOrderResponse = orderMwsClient.listOrderItems(itemsRequest);
+            ListOrderItemsResult listOrderItemsResult = listOrderResponse.getListOrderItemsResult();
+            Set<OimOrderDetails> detailSet = new HashSet<OimOrderDetails>();
+            try {
+              Thread.sleep(1000);
+            } catch (InterruptedException e) {
+              log.warn(e.getMessage());
+            }
+            Set<String> notMatchingSkuSet = new HashSet<String>();
+            List<OrderItem> orderItems = listOrderItemsResult.getOrderItems();
+            for (OrderItem orderItem : orderItems) {
+              OimOrderDetails details = new OimOrderDetails();
+              double itemPrice = Double.parseDouble(orderItem.getItemPrice().getAmount());
+              // Amazon returns total price for this order item which needs to be divided by
+              // quantity
+              // before saving.
+              itemPrice = itemPrice / orderItem.getQuantityOrdered();
+              details.setCostPrice(itemPrice);
+              details.setInsertionTm(new Date());
+              details
+                  .setOimOrderStatuses(new OimOrderStatuses(OimConstants.ORDER_STATUS_UNPROCESSED));
+              String sku = orderItem.getSellerSKU();
+              if (m_channel.getOnlyPullMatchingOrders() == 1) {
+                if (!isProductMatchesWithSupplier(sku)) {
+                  notMatchingSkuSet.add(sku);
+                }
+              }
+              OimSuppliers oimSuppliers = null;
+              String prefix = null;
+              List<OimSuppliers> blankPrefixSupplierList = new ArrayList<OimSuppliers>();
+              for (Iterator<OimSuppliers> itr = supplierMap.keySet().iterator(); itr.hasNext();) {
+                OimSuppliers supplier = itr.next();
+                prefix = supplierMap.get(supplier);
+                if (prefix == null) {
+                  blankPrefixSupplierList.add(supplier);
+                  continue;
+                }
+                if (sku.toUpperCase().startsWith(prefix)) {
+                  oimSuppliers = supplier;
+                  break;
+                }
+              }
+              if (oimSuppliers == null && blankPrefixSupplierList.size() == 1) {
+                oimSuppliers = blankPrefixSupplierList.get(0);
+
+              }
+              if (oimSuppliers != null) {
+                details.setOimSuppliers(oimSuppliers);
+              }
+              details.setProductDesc(orderItem.getTitle());
+              details.setProductName(orderItem.getTitle());
+              details.setQuantity(orderItem.getQuantityOrdered());
+              details.setSalePrice(itemPrice);
+              details.setSku(orderItem.getSellerSKU());
+              details.setStoreOrderItemId(orderItem.getOrderItemId());
+              details.setOimOrders(oimOrder);
+              // m_dbSession.save(details);
+              detailSet.add(details);
 
             }
-            if (oimSuppliers != null) {
-              details.setOimSuppliers(oimSuppliers);
+            if (orderItems.size() == notMatchingSkuSet.size()) {
+              StringBuffer sb = new StringBuffer();
+              for (Iterator<String> it = notMatchingSkuSet.iterator(); it.hasNext();) {
+                String sku = it.next();
+                sb.append(sku);
+                if (it.hasNext())
+                  sb.append(",");
+              }
+              log.info(
+                  "order id {} skipped because it has all the skus which are not starting with any of the configured supplier's prefix - {}",
+                  amazonOrderId, sb.toString());
+              continue;
             }
-            details.setProductDesc(orderItem.getTitle());
-            details.setProductName(orderItem.getTitle());
-            details.setQuantity(orderItem.getQuantityOrdered());
-            details.setSalePrice(itemPrice);
-            details.setSku(orderItem.getSellerSKU());
-            details.setStoreOrderItemId(orderItem.getOrderItemId());
-            details.setOimOrders(oimOrder);
-            m_dbSession.save(details);
-            detailSet.add(details);
+            for (Iterator<OimOrderDetails> dtl = detailSet.iterator(); dtl.hasNext();) {
+              OimOrderDetails detailToSave = dtl.next();
+              m_dbSession.saveOrUpdate(detailToSave);
+            }
+            oimOrder.setInsertionTm(new Date());
+            oimOrder.setOimOrderBatches(batch);
+            batch.getOimOrderses().add(oimOrder);
+            oimOrder.setOimOrderDetailses(detailSet);
+            m_dbSession.saveOrUpdate(oimOrder);
+            numOrdersSaved++;
+            tx.commit();
 
+            Message message = new Message();
+            message.setMessageID(BigInteger.valueOf(numOrdersSaved));
+
+            msgList.add(message);
+            OrderAcknowledgement acknowledgement = new OrderAcknowledgement();
+            message.setOrderAcknowledgement(acknowledgement);
+            acknowledgement.setAmazonOrderID(amazonOrderId);
+            acknowledgement.setMerchantOrderID(oimOrder.getOrderId().toString());
+            acknowledgement.setStatusCode(m_orderProcessingRule.getConfirmedStatus());
+            for (OimOrderDetails oimOrderDetails : oimOrder.getOimOrderDetailses()) {
+              OrderAcknowledgement.Item item = new OrderAcknowledgement.Item();
+              item.setAmazonOrderItemCode(oimOrderDetails.getStoreOrderItemId());
+              item.setMerchantOrderItemID(oimOrderDetails.getDetailId().toString());
+              acknowledgement.getItem().add(item);
+            }
+          } catch (HibernateException e) {
+            log.error("Error occured during pull of store order id - " + amazonOrderId, e);
+            try {
+              m_dbSession.clear();
+              tx.rollback();
+            } catch (RuntimeException e1) {
+              log.error("Couldn’t roll back transaction", e1);
+              e1.printStackTrace();
+            }
+            // throw new ChannelOrderFormatException(
+            // "Error occured during pull of store order id - " + amazonOrderId, e);
           }
-          oimOrder.setOimOrderDetailses(detailSet);
-          m_dbSession.saveOrUpdate(oimOrder);
-          numOrdersSaved++;
 
-          Message message = new Message();
-          message.setMessageID(BigInteger.valueOf(numOrdersSaved));
-
-          msgList.add(message);
-          OrderAcknowledgement acknowledgement = new OrderAcknowledgement();
-          message.setOrderAcknowledgement(acknowledgement);
-          acknowledgement.setAmazonOrderID(amazonOrderId);
-          acknowledgement.setMerchantOrderID(oimOrder.getOrderId().toString());
-          acknowledgement.setStatusCode(m_orderProcessingRule.getConfirmedStatus());
-          for (OimOrderDetails oimOrderDetails : oimOrder.getOimOrderDetailses()) {
-            OrderAcknowledgement.Item item = new OrderAcknowledgement.Item();
-            item.setAmazonOrderItemCode(oimOrderDetails.getStoreOrderItemId());
-            item.setMerchantOrderItemID(oimOrderDetails.getDetailId().toString());
-            acknowledgement.getItem().add(item);
-          }
         }
         lastPass = false;
         if (nextToken != null) {
@@ -389,11 +439,16 @@ class AmazonOrderImport extends ChannelBase implements IOrderImport {
           }
         }
       } while (nextToken != null || lastPass);
-
-      m_dbSession.persist(batch);
-      m_channel.setLastFetchTm(new Date());
-      m_dbSession.persist(m_channel);
-      tx.commit();
+      try {
+        if (tx != null && tx.isActive())
+          tx.commit();
+        tx = m_dbSession.beginTransaction();
+        m_channel.setLastFetchTm(new Date());
+        m_dbSession.persist(m_channel);
+        tx.commit();
+      } catch (HibernateException e) {
+        tx.rollback();
+      }
 
       if (msgList.isEmpty()) {
         log.debug("Acknowledegement message list is empty.");
@@ -405,9 +460,9 @@ class AmazonOrderImport extends ChannelBase implements IOrderImport {
             msgList);
       }
       log.debug("Finished importing orders...");
-    } 
-    catch(HibernateException e){
-      log.error("Error occured during saving the pulled order. store order id - " + amazonOrderId, e);
+    } catch (HibernateException e) {
+      log.error("Error occured during saving the pulled order. store order id - " + amazonOrderId,
+          e);
       try {
         m_dbSession.clear();
         tx.rollback();
@@ -416,9 +471,8 @@ class AmazonOrderImport extends ChannelBase implements IOrderImport {
         e1.printStackTrace();
       }
       throw new ChannelOrderFormatException(
-          "Error occured during pull of store order id - " + amazonOrderId , e);
-    }
-    catch (RuntimeException e) {
+          "Error occured during pull of store order id - " + amazonOrderId, e);
+    } catch (RuntimeException e) {
       if (tx != null && tx.isActive())
         tx.rollback();
       log.error(e.getMessage(), e);
@@ -427,8 +481,7 @@ class AmazonOrderImport extends ChannelBase implements IOrderImport {
     } catch (InterruptedException e1) {
       log.error(e1.getMessage());
       throw new ChannelOrderFormatException(e1.getMessage(), e1);
-    }
-    catch (Exception e1) {
+    } catch (Exception e1) {
       log.error(e1.getMessage());
       throw new ChannelOrderFormatException(e1.getMessage(), e1);
     }

@@ -126,5 +126,19 @@ public abstract class ChannelBase implements IOrderImport {
     reader.close();
     return streamBuffer.toString();
   }
+  
+  protected boolean isProductMatchesWithSupplier(String sku) {
+    for (Iterator<OimSuppliers> itr = supplierMap.keySet().iterator(); itr.hasNext();) {
+      OimSuppliers supplier = itr.next();
+      String prefix = supplierMap.get(supplier);
+      if (StringHandle.isNullOrEmpty(prefix)) {
+        continue;
+      }
+      if (sku.toUpperCase().startsWith(prefix.toUpperCase())) {
+        return true;
+      }
+    }
+    return false;
+  }
 
 }

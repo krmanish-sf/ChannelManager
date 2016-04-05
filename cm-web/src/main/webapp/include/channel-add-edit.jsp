@@ -318,6 +318,15 @@
 												</tbody>
 											</table>
 											<div class="form-group"></div>
+												<div class="form-group">
+											<label for="onlyPullMatchingOrders"
+												class="col-sm-7 control-label no-padding-right no-padding-top">Only pull matching supplier's orders</label>
+											<div class="col-sm-5">
+												<input type="checkbox" id="onlyPullMatchingOrders" class="ace ace-switch ace-switch-4"
+													name="onlyPullMatchingOrders" data-bind-channel="onlyPullMatchingOrders" onchange="validatePrefix()"/>
+												<span class="lbl middle"></span>
+											</div>
+										</div>
 											<div class="form-group center">
 												<button class="btn btn-info btn-sm second-button"
 													type="button">
@@ -402,6 +411,28 @@
 	</div>
 </div>
 <script>
+
+// $('#onlyPullMatchingOrders').on('change', '.toggle', function(e) {
+// 	console.log('called...');
+// 	if ($(this).is(':checked')) {
+// 		console.log('checked called....');
+// 		$(".supplier_prefix:visible").each(function(){
+// 			console.log(this.value);
+// 		})
+// 	}
+// });
+
+function validatePrefix(){
+	console.log('called...');
+	if(document.getElementById("onlyPullMatchingOrders").checked){
+		$(".supplier_prefix:visible").each(function(){
+			if(this.value===''){
+				document.getElementById("onlyPullMatchingOrders").checked = false;
+				errorAlert('','Supplier Prefix must be configured to use this option');
+			}
+		});
+	}
+}
 	function openUrl() {
 		var strUrl = document.getElementsByName('storeurl')[0].value;
 		if (strUrl) {

@@ -21,6 +21,8 @@ public class OimChannels implements java.io.Serializable {
   private Date deleteTm;
   private Date lastFetchTm;
   private Integer testMode = 0;
+  private Integer onlyPullMatchingOrders = 0;
+
   private String sequenceNumber;
   private Set<OimChannelAccessDetails> oimChannelAccessDetailses = new HashSet<>(0);
   private Set oimOrderBatcheses = new HashSet(0);
@@ -175,6 +177,14 @@ public class OimChannels implements java.io.Serializable {
 
   public void setSequenceNumber(String sequenceNumber) {
     this.sequenceNumber = sequenceNumber;
+  }
+  
+  public Integer getOnlyPullMatchingOrders() {
+    return onlyPullMatchingOrders;
+  }
+
+  public void setOnlyPullMatchingOrders(Integer onlyPullMatchingOrders) {
+    this.onlyPullMatchingOrders = onlyPullMatchingOrders;
   }
 
 }

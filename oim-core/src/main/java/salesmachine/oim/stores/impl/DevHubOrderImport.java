@@ -204,9 +204,9 @@ public class DevHubOrderImport extends ChannelBase implements IOrderImport {
             log.error("Got null response for order id - " + oimOrders.getStoreOrderId());
             continue;
           }
-          oimOrders.setInsertionTm(new Date());
-          oimOrders.setOimOrderBatches(batch);
-          batch.getOimOrderses().add(oimOrders);
+//          oimOrders.setInsertionTm(new Date());
+//          oimOrders.setOimOrderBatches(batch);
+//          batch.getOimOrderses().add(oimOrders);
           oimOrders.setOrderFetchTm(new Date());
           JSONObject itemJObject = new JSONObject();
           JSONParser itemJParser = new JSONParser();
@@ -248,6 +248,7 @@ public class DevHubOrderImport extends ChannelBase implements IOrderImport {
           m_dbSession.saveOrUpdate(oimOrders);
           // setting product information
           Set<OimOrderDetails> detailSet = new HashSet<OimOrderDetails>();
+          Set<String> notMatchingSkuSet = new HashSet<String>();
           for (int j = 0; j < itemArray.size(); j++) {
             OimOrderDetails details = new OimOrderDetails();
             JSONObject item = (JSONObject) itemArray.get(j);
@@ -255,6 +256,11 @@ public class DevHubOrderImport extends ChannelBase implements IOrderImport {
             details
                 .setOimOrderStatuses(new OimOrderStatuses(OimConstants.ORDER_STATUS_UNPROCESSED));
             String sku = (String) ((JSONObject) item.get("product")).get("sku");
+            if (m_channel.getOnlyPullMatchingOrders() == 1) {
+              if (!isProductMatchesWithSupplier(sku)) {
+                notMatchingSkuSet.add(sku);
+              }
+            }
             details.setCostPrice(Double.parseDouble(StringHandle
                 .removeNull((String) ((JSONObject) item.get("product")).get("wholesale_price"))));
             OimSuppliers oimSuppliers = null;
@@ -268,7 +274,7 @@ public class DevHubOrderImport extends ChannelBase implements IOrderImport {
                   blankPrefixSupplierList.add(supplier);
                   continue;
                 }
-                if (sku.toUpperCase().startsWith(prefix)) {
+                if (sku.toUpperCase().startsWith(prefix.toUpperCase())) {
                   oimSuppliers = supplier;
                   break;
                 }
@@ -288,9 +294,29 @@ public class DevHubOrderImport extends ChannelBase implements IOrderImport {
             details.setSku(sku);
             details.setStoreOrderItemId(((long) item.get("id")) + "");
             details.setOimOrders(oimOrders);
-            m_dbSession.saveOrUpdate(details);
+           // m_dbSession.saveOrUpdate(details);
             detailSet.add(details);
           }
+          if (itemArray.size() == notMatchingSkuSet.size()) {
+            StringBuffer sb = new StringBuffer();
+            for (Iterator<String> it = notMatchingSkuSet.iterator(); it.hasNext();) {
+              String sku = it.next();
+              sb.append(sku);
+              if (it.hasNext())
+                sb.append(",");
+            }
+            log.info(
+                "order id {} skipped because it has all the skus which are not starting with any of the configured supplier's prefix - {}",
+                storeOrderId, sb.toString());
+            continue;
+          }
+          for (Iterator<OimOrderDetails> dtl = detailSet.iterator(); dtl.hasNext();) {
+            OimOrderDetails detailToSave = dtl.next();
+            m_dbSession.saveOrUpdate(detailToSave);
+          }
+          oimOrders.setInsertionTm(new Date());
+          oimOrders.setOimOrderBatches(batch);
+          batch.getOimOrderses().add(oimOrders);
           oimOrders.setOimOrderDetailses(detailSet);
           m_dbSession.saveOrUpdate(oimOrders);
           if (m_channel.getTestMode() == 0) {
