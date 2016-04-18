@@ -323,7 +323,7 @@
 												class="col-sm-7 control-label no-padding-right no-padding-top">Only pull matching supplier's orders</label>
 											<div class="col-sm-5">
 												<input type="checkbox" id="onlyPullMatchingOrders" class="ace ace-switch ace-switch-4"
-													name="onlyPullMatchingOrders" data-bind-channel="onlyPullMatchingOrders" onchange="validatePrefix()"/>
+													name="onlyPullMatchingOrders" data-bind-channel="onlyPullMatchingOrders" onchange="validatePrefix()" value="1" keyattr="" />
 												<span class="lbl middle"></span>
 											</div>
 										</div>
@@ -423,7 +423,6 @@
 // });
 
 function validatePrefix(){
-	console.log('called...');
 	if(document.getElementById("onlyPullMatchingOrders").checked){
 		$(".supplier_prefix:visible").each(function(){
 			if(this.value===''){

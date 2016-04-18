@@ -994,21 +994,30 @@ public class HonestGreen extends Supplier implements HasTracking {
     }
   }
 
-  public static void main(String[] args) {
-    // updateFromConfirmation();
-    // updateFromTracking();
-    Session session = SessionManager.currentSession();
-    OimVendorSuppliers ovs = (OimVendorSuppliers) session.get(OimVendorSuppliers.class, 9681);
-    OimOrders order = (OimOrders) session.get(OimOrders.class, 477569);
-    try {
-      new HonestGreen().sendOrders(735585, ovs, order);
-    } catch (SupplierConfigurationException | SupplierCommunicationException
-        | SupplierOrderException | ChannelConfigurationException | ChannelCommunicationException
-        | ChannelOrderFormatException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
-    }
-  }
+//  public static void main(String[] args) {
+//    // updateFromConfirmation();
+//    // updateFromTracking();
+//    Session session = SessionManager.currentSession();
+//    OimVendorSuppliers ovs = (OimVendorSuppliers) session.get(OimVendorSuppliers.class, 9881);
+//    Query query = session.createSQLQuery("select order_id from kdyer.oim_orders where store_order_id in ('2832193671')");
+//    List list = query.list();
+//    
+//    for(int i=0;i<list.size();i++){
+//      int orderId = ((BigDecimal)list.get(i)).intValue();
+//      System.out.println(orderId);
+//      try {
+//       OimOrders order = (OimOrders) session.get(OimOrders.class, orderId);
+//        new HonestGreen().sendOrders(748154, ovs, order);
+//      } catch (SupplierConfigurationException | SupplierCommunicationException
+//          | SupplierOrderException | ChannelConfigurationException | ChannelCommunicationException
+//          | ChannelOrderFormatException e) {
+//        // TODO Auto-generated catch block
+//        e.printStackTrace();
+//      }
+//    }
+//    //OimOrders order = (OimOrders) session.get(OimOrders.class, 477569);
+//    
+//  }
 
   public static void main2(String[] args) {
     Marshaller marshaller = null;

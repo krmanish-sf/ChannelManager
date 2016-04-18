@@ -59,7 +59,7 @@
 												<th class=" width-20"><i
 											class="icon-adjust icon-2x visible-xs "></i><span
 											class="hidden-xs">Actions</span></th>
-												<th id ="edit-delete" class=" width-20"></th>
+												<th id="edit-delete" class=" width-20"></th>
 											</tr>
 										</thead>
 									</table>
@@ -157,7 +157,7 @@
 								"aoColumns" : [
 										{
 											"mData" : function(s) {
-												return '<input type="checkbox" class="toggle" name="sid_'+s.oimSuppliers.supplierId+'" data-bind-channel="customMapper:oimChannelSupplierMaps[oimSuppliers.supplierId='+s.oimSuppliers.supplierId+'].oimSuppliers.supplierId" value="'+s.oimSuppliers.supplierId+'"/>';
+												return '<input type="checkbox" class="toggle supplier_conf_id" name="sid_'+s.oimSuppliers.supplierId+'" data-bind-channel="customMapper:oimChannelSupplierMaps[oimSuppliers.supplierId='+s.oimSuppliers.supplierId+'].oimSuppliers.supplierId" value="'+s.oimSuppliers.supplierId+'"/>';
 											}
 										},
 										{
@@ -165,7 +165,7 @@
 										},
 										{
 											"mData" : function(s) {
-												return '<input type="text" class="supplier_prefix width-100 pp"  style="display:none;" name="ss_'+s.oimSuppliers.supplierId	+'_skuprefix" id="ss_'+s.oimSuppliers.supplierId+'_skuprefix" data-bind-channel="customMapper:oimChannelSupplierMaps[oimSuppliers.supplierId='+ s.oimSuppliers.supplierId+'].supplierPrefix"/>';
+												return '<input type="text" class="supplier_prefix width-100 pp"  style="display:none;" name="ss_'+s.oimSuppliers.supplierId	+'_skuprefix" id="ss_'+s.oimSuppliers.supplierId+'_skuprefix" data-bind-channel="customMapper:oimChannelSupplierMaps[oimSuppliers.supplierId='+ s.oimSuppliers.supplierId+'].supplierPrefix" keyattr=""/>';
 											}
 										},
 										{
@@ -175,10 +175,10 @@
 										},
 										{
 											"mData" : function(s) {
-												if(s.oimSuppliers.supplierId == 1822){
-													return '<input type="text" class="width-100 pp hide"  style="display:none;" name="ss_'+s.oimSuppliers.supplierId	+'_whLocation" id="ss_'+s.oimSuppliers.supplierId+'_warehouseLocation" data-bind-channel="customMapper:oimChannelSupplierMaps[oimSuppliers.supplierId='+ s.oimSuppliers.supplierId+'].warehouseLocation" keyattr=""/>'+'<select multiple id="warehouseLocation" class="pp" style="display:none;" name="ss_'+ s.oimSuppliers.supplierId	+'_warehouseLocation" required="required" ><option value="PHI">PHI</option><option value="HVA">HVA</option></select>';
-												}
-												else{
+												if (s.oimSuppliers.supplierId == 1822) {
+													return '<input type="text" class="width-100 pp hide"  style="display:none;" name="ss_'+s.oimSuppliers.supplierId	+'_whLocation" id="ss_'+s.oimSuppliers.supplierId+'_warehouseLocation" data-bind-channel="customMapper:oimChannelSupplierMaps[oimSuppliers.supplierId='+ s.oimSuppliers.supplierId+'].warehouseLocation" keyattr=""/>'
+															+ '<select multiple id="warehouseLocation" class="pp" style="display:none;" name="ss_'+ s.oimSuppliers.supplierId	+'_warehouseLocation" required="required" ><option value="PHI">PHI</option><option value="HVA">HVA</option></select>';
+												} else {
 													return '<span></span>';
 												}
 											}
@@ -238,11 +238,12 @@
 														+ errors
 														+ ' fields. They have been highlighted';
 
-// 										$.gritter.add({
-// 											title : "Single order information",
-// 											text : message
-// 										});
-										errorAlert('Single order information',message);
+										// 										$.gritter.add({
+										// 											title : "Single order information",
+										// 											text : message
+										// 										});
+										errorAlert('Single order information',
+												message);
 									}
 								},
 
@@ -302,11 +303,11 @@
 														+ errors
 														+ ' fields. They have been highlighted';
 
-// 										$.gritter.add({
-// 											title : "Add/Edit Channel",
-// 											text : message
-// 										});
-										errorAlert('Add/Edit Channel',message);
+										// 										$.gritter.add({
+										// 											title : "Add/Edit Channel",
+										// 											text : message
+										// 										});
+										errorAlert('Add/Edit Channel', message);
 									}
 								},
 
@@ -325,14 +326,18 @@
 											var formArray = $(form)
 													.serializeArray();
 											var formObject = {};
-											var count=0;
-											$.each(formArray, function(i, v) {
-												if(v.name=='ss_1822_warehouseLocation' && count==0){
-													v.name='ss_1822_warehouseLocation1';
-													count++;
-												}
-												formObject[v.name] = v.value;
-											});
+											var count = 0;
+											$
+													.each(
+															formArray,
+															function(i, v) {
+																if (v.name == 'ss_1822_warehouseLocation'
+																		&& count == 0) {
+																	v.name = 'ss_1822_warehouseLocation1';
+																	count++;
+																}
+																formObject[v.name] = v.value;
+															});
 											$(this)
 													.CRUD(
 															{
@@ -355,12 +360,14 @@
 																		textStatus,
 																		errorThrown) {
 																	if (jqXhr.status == 409) {
-// 																		$.gritter
-// 																				.add({
-// 																					title : "Add Channel",
-// 																					text : "Channel with this name already exists."
-// 																				});
-																		errorAlert('Add Channel','Channel with this name already exists.');
+																		// 																		$.gritter
+																		// 																				.add({
+																		// 																					title : "Add Channel",
+																		// 																					text : "Channel with this name already exists."
+																		// 																				});
+																		errorAlert(
+																				'Add Channel',
+																				'Channel with this name already exists.');
 																		$(
 																				'a[href="#collapseOne"]')
 																				.click();
@@ -435,30 +442,35 @@
 																	.row(e[0])
 																	.remove()
 																	.draw();
-// 															$.gritter
-// 																	.add({
-// 																		title : "Delete Channel",
-// 																		text : "Channel deleted."
-// 																	});
-															successAlert('Delete Channel','Channel deleted.');
+															// 															$.gritter
+															// 																	.add({
+															// 																		title : "Delete Channel",
+															// 																		text : "Channel deleted."
+															// 																	});
+															successAlert(
+																	'Delete Channel',
+																	'Channel deleted.');
 														},
 														error : function(data,
 																textStatus,
 																jqXHR) {
-// 															$.gritter
-// 																	.add({
-// 																		title : "Delete Channel",
-// 																		text : "Error occured in deleting channel."
-// 																	});
-															errorAlert('Delete Channel','Error occured in deleting channel.');
+															// 															$.gritter
+															// 																	.add({
+															// 																		title : "Delete Channel",
+															// 																		text : "Error occured in deleting channel."
+															// 																	});
+															errorAlert(
+																	'Delete Channel',
+																	'Error occured in deleting channel.');
 														}
 													});
 								} else {
-// 									$.gritter.add({
-// 										title : "Delete Channel",
-// 										text : "Action cancelled"
-// 									});
-									successAlert('Delete Channel','Action cancelled');
+									// 									$.gritter.add({
+									// 										title : "Delete Channel",
+									// 										text : "Action cancelled"
+									// 									});
+									successAlert('Delete Channel',
+											'Action cancelled');
 								}
 							});
 		}
@@ -476,9 +488,26 @@
 				});
 				$("#channelForm").find('select').val('');
 				$('#channelForm').attr('action', 'aggregators/channels');
-				$('#btnSave').off('click').on('click', function(e) {
-					$('#channelForm').validate();
-					$('#channelForm').submit();
+				$('#btnSave').off('click').on('click', channel, function(e) {
+					if ($('#onlyPullMatchingOrders').is(
+							':checked')) {
+						var popupDisplayed = false;
+						$(".supplier_conf_id:checked")
+								.each(
+										function() {
+											if ($(this).closest('tr').find('.supplier_prefix').val()=='' && popupDisplayed==false) {
+												document
+														.getElementById("onlyPullMatchingOrders").checked = false;
+												errorAlert(
+														'Invalid Configuration',
+														"'Only pull matching suppliers orders' option will not work for your account as one of the supplier prefix is blank in settings. All suppliers should be set with prefix to use this option.");
+												popupDisplayed = true;
+											}
+										});
+					} else {
+ 						$('#channelForm').validate();
+ 						$('#channelForm').submit();
+					}
 				});
 				break;
 			case "edit":
@@ -491,27 +520,45 @@
 				$('#ss_1822_warehouseLocation').trigger("chosen:updated");
 				var location = $("#ss_1822_warehouseLocation").attr('keyattr'); // PHI~HVA , PHI, HVA
 				var valArr = [];
-				if(location){
-				if(location.indexOf('~')!=-1){
-					//show both
-					valArr.push('HVA');
-					valArr.push('PHI');
+				if (location) {
+					if (location.indexOf('~') != -1) {
+						//show both
+						valArr.push('HVA');
+						valArr.push('PHI');
+					} else if (location == 'PHI') {
+						valArr.push('PHI');
+					} else if (location == 'HVA')
+						valArr.push('HVA');
+					//warehouseLocation
+
+					i = 0, size = valArr.length;
+					for (i; i < size; i++) {
+						$(
+								"#warehouseLocation option[value='" + valArr[i]
+										+ "']").attr("selected", 1);
+					}
 				}
-				else if(location=='PHI'){
-					valArr.push('PHI');
-				}
-				else if(location == 'HVA')
-					valArr.push('HVA');
-				//warehouseLocation
-				
-				i = 0, size = valArr.length;
-				for(i; i < size; i++){
-				  $("#warehouseLocation option[value='" + valArr[i] + "']").attr("selected", 1);
-				}
-			}
 				$('#btnSave').off('click').on('click', channel, function(e) {
-					$('#channelForm').validate();
-					$('#channelForm').submit();
+					if ($('#onlyPullMatchingOrders').is(
+							':checked')) {
+						var popupDisplayed = false;
+						$(".supplier_conf_id:checked")
+								.each(
+										function() {
+											console.log($(this).closest('tr').find('.supplier_prefix').val());
+											if ($(this).closest('tr').find('.supplier_prefix').val()=='' && popupDisplayed==false) {
+												document
+														.getElementById("onlyPullMatchingOrders").checked = false;
+												errorAlert(
+														'Invalid Configuration',
+														"'Only pull matching suppliers orders' option will not work for your account as one of the supplier prefix is blank in settings. All suppliers should be set with prefix to use this option.");
+												popupDisplayed = true;
+											}
+										});
+					} else {
+ 						$('#channelForm').validate();
+ 						$('#channelForm').submit();
+					}
 				});
 				break;
 			}
@@ -689,14 +736,18 @@
 																																							'#uploadordermodal')
 																																							.modal(
 																																									'hide');
-// 																																					$.gritter
-// 																																							.add({
-// 																																								title : 'Order file processing',
-// 																																								text : "Imported "
-// 																																										+ data
-// 																																										+ " Orders"
-// 																																							});
-																																					successAlert('Order file processing','Imported '+ data+ ' Orders');
+																																					// 																																					$.gritter
+																																					// 																																							.add({
+																																					// 																																								title : 'Order file processing',
+																																					// 																																								text : "Imported "
+																																					// 																																										+ data
+																																					// 																																										+ " Orders"
+																																					// 																																							});
+																																					successAlert(
+																																							'Order file processing',
+																																							'Imported '
+																																									+ data
+																																									+ ' Orders');
 																																				}
 																																			});
 																														});
@@ -775,12 +826,14 @@
 																						.insertAfter('#sample-row');
 																			});
 														}
-// 														$.gritter
-// 																.add({
-// 																	title : 'Order file upload',
-// 																	text : data.status
-// 																});
-														successAlert('Order file upload',data.status);
+														// 														$.gritter
+														// 																.add({
+														// 																	title : 'Order file upload',
+														// 																	text : data.status
+														// 																});
+														successAlert(
+																'Order file upload',
+																data.status);
 													}
 												});
 							});

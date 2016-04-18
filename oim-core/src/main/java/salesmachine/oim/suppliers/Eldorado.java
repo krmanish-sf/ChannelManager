@@ -28,6 +28,7 @@ import org.hibernate.Session;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import salesmachine.email.EmailUtil;
 import salesmachine.hibernatedb.OimOrderDetails;
 import salesmachine.hibernatedb.OimOrders;
 import salesmachine.hibernatedb.OimSupplierShippingMethod;
@@ -208,7 +209,12 @@ public class Eldorado extends Supplier implements HasTracking {
       OimSupplierShippingMethod code = Supplier.findShippingCodeFromUserMapping(
           Supplier.loadSupplierShippingMap(ovs.getOimSuppliers(), ovs.getVendors()),
           order.getOimShippingMethod());
-      elOrder.setShipVia("UGR"/* code.toString() */);
+      if(code==null){
+        throw new SupplierOrderException(
+            "the shipping method specified is not configured for Eldorado for order id :" + order.getStoreOrderId());
+      }
+   //   elOrder.setShipVia("UGR"/* code.toString() */);
+      elOrder.setShipVia(code.getName());
       elOrder.setProducts(products);
       try (ByteArrayOutputStream os = new ByteArrayOutputStream()) {
         marshaller.marshal(elOrder, os);
@@ -220,9 +226,16 @@ public class Eldorado extends Supplier implements HasTracking {
             successfulOrders.put(oimOrderDetails.getDetailId(),
                 new OrderDetailResponse(order.getOrderId().toString(), "InProcess", null));
           }
+          EmailUtil.sendEmail("orders@inventorysource.com", "support@inventorysource.com", "",
+              "VID: "+vendorId+", Order id "+ order.getStoreOrderId()+" processed to Eldorado",
+              "VID: "+vendorId+", Order id "+ order.getStoreOrderId()+" processed to Eldorado", "text/html");
         } else {
           for (OimOrderDetails oimOrderDetails : order.getOimOrderDetailses()) {
             failedOrders.put(oimOrderDetails.getDetailId(),"Failed order processing for sku - "+oimOrderDetails.getSku());
+            
+            EmailUtil.sendEmail("orders@inventorysource.com", "support@inventorysource.com", "",
+                "VID: "+vendorId+", Order id "+ order.getStoreOrderId()+" Failed to process to Eldorado",
+                "VID: "+vendorId+", Order id "+ order.getStoreOrderId()+" Failed to process to Eldorado. Please check.", "text/html");
           }
         }
       }

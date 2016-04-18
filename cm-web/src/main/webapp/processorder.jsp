@@ -710,7 +710,7 @@
 			return false;
 		}
 		if (quantity.value <= 0) {
-			alert('Quantity must be positive');
+			alert('Quantity must be greater than zero');
 			quantity.focus();
 			return false;
 		}

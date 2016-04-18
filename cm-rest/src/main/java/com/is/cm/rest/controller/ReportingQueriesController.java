@@ -206,6 +206,7 @@ public class ReportingQueriesController {
 	@ResponseBody
 	public List trackOrderFileLocation(@PathVariable("vid") String vid, @PathVariable("poNumber") String poNumber,
 			@PathVariable("location") String location, @PathVariable("detailId") String detailId) {
+		log.info("Request for getting tracking file information for PONum {}",poNumber);
 		ReadCollectionEvent event = reportService.trackOrderFileLocation(vid, poNumber, location,detailId);
 		return event.getEntity();
 	}
