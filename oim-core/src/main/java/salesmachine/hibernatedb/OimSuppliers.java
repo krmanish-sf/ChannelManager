@@ -96,11 +96,11 @@ public class OimSuppliers implements java.io.Serializable {
 		this.description = description;
 	}
 
-	public Set getOimSupplierMethodses() {
+	public Set<OimSupplierMethods> getOimSupplierMethodses() {
 		return this.oimSupplierMethodses;
 	}
 
-	public void setOimSupplierMethodses(Set oimSupplierMethodses) {
+	public void setOimSupplierMethodses(Set<OimSupplierMethods> oimSupplierMethodses) {
 		this.oimSupplierMethodses = oimSupplierMethodses;
 	}
 

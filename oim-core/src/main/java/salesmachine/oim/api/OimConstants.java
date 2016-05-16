@@ -56,6 +56,7 @@ public class OimConstants {
 	public static final Integer SUPPLIER_METHOD_ATTRIBUTES_FILEFORMAT = new Integer(8);
 	public static final Integer SUPPLIER_METHOD_ATTRIBUTES_FTPACCOUNT = new Integer(9);
 	public static final Integer SUPPLIER_METHOD_ATTRIBUTES_FTPTYPE = new Integer(10);
+	public static final Integer SUPPLIER_METHOD_ATTRIBUTES_ACCOUNTNAME = new Integer(11);
 	
 	public static final String FILE_FORMAT_PARAMS_USEHEADER = "USE_HEADER";
 	public static final String FILE_FORMAT_PARAMS_FIELD_DELIMITER = "FIELD_DELIMITER";

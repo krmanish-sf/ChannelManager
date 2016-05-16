@@ -443,6 +443,16 @@ If you have not yet configured your supplier, click "Add Supplier" to do it now.
 															required="required" />
                             </div>
 							</div>
+							<div class="form-group baker-tayler-edit">
+                              <label
+														class="col-sm-5 control-label no-padding-right">Account Name</label>
+                              <div class="col-sm-7">
+                              <input class="width-70" name="accountname"
+															type="text" 
+															data-bind-vendorsupplier="customMapper:oimSuppliers.oimSupplierMethodses[oimSupplierMethodTypes.methodTypeId=1].oimSupplierMethodattrValueses[oimSupplierMethodattrNames.attrId=11].attributeValue" 
+															required="required" />
+                            </div>
+												</div>
 							  <div class="form-group">
                               <label
 														class="col-sm-5 control-label no-padding-right">Username</label>
@@ -726,10 +736,17 @@ If you have not yet configured your supplier, click "Add Supplier" to do it now.
                             </div>
 												</div>
 												
-							
+							 <div class="form-group supplier-class baker-tayler">
+                              <label
+														class="col-sm-5 control-label no-padding-right">Account Name</label>
+                              <div class="col-sm-7">
+                              <input class="width-70" name="accountname"
+															type="text" value="" required />
+                            </div>
+												</div>
 							  <div class="form-group supplier-class account-class">
                               <label
-														class="col-sm-5 control-label no-padding-right">Account</label>
+														class="col-sm-5 control-label no-padding-right">Account Number</label>
                               <div class="col-sm-7">
                               <input class="width-70" name="accountno"
 															type="text" value="" required />
@@ -1004,6 +1021,13 @@ If you have not yet configured your supplier, click "Add Supplier" to do it now.
 		} else {
 			$('#customSupplierFileFormatDiv').hide();
 			$('.supplieremailDiv').hide();
+			if(vendorSupplier.oimSuppliers.supplierId==2202){
+				$('.baker-tayler-edit').removeClass("hide");
+				$('.baker-tayler-edit').addClass("show");
+			}else{
+				$('.baker-tayler-edit').removeClass("show");
+				$('.baker-tayler-edit').addClass("hide");
+			}
 		}
 
 		$('#saveshippingmapping').off('click').on(
@@ -1232,7 +1256,7 @@ If you have not yet configured your supplier, click "Add Supplier" to do it now.
 										"mData" : function(vendorSupplier) {
 											if (vendorSupplier.oimSuppliers.supplierId == 1822)
 												return '<a class="btn btn-info btn-sm hidden-xs icon-pencil" href="#mySupplierHGedit" data-toggle="modal" onclick="editHG((($(this)).parent()).parent())"></a><a class="btn btn-info btn-xs icon-pencil visible-xs btn-xs" href="#mySupplierHGedit" data-toggle="modal" onclick="editHG((($(this)).parent()).parent())"></a>';
-											else if (vendorSupplier.oimSuppliers.supplierId == 221 || vendorSupplier.oimSuppliers.supplierId == 2161) {
+											else if (vendorSupplier.oimSuppliers.supplierId == 221 || vendorSupplier.oimSuppliers.supplierId == 2161 || vendorSupplier.oimSuppliers.supplierId == 2202) {
 												return '<a class="btn btn-info btn-sm hidden-xs icon-pencil" href="#mySupplierFtpedit" data-toggle="modal" onclick="editFtpBasedSupplier((($(this)).parent()).parent())"></a><a class="btn btn-info btn-xs icon-pencil visible-xs btn-xs" href="#mySupplierFtpedit" data-toggle="modal" onclick="editFtpBasedSupplier((($(this)).parent()).parent())"></a>';
 											} else if (vendorSupplier.oimSuppliers.supplierId == 2002) {
 												//mySupplierHGedit
@@ -1267,6 +1291,8 @@ If you have not yet configured your supplier, click "Add Supplier" to do it now.
 				$('.account-class').addClass("show");
 				$('.supplierDefaultShippingCodeDiv').removeClass("hide");
 				$('.supplierDefaultShippingCodeDiv').addClass("show");
+				$('.baker-tayler').removeClass("show");
+				$('.baker-tayler').addClass("hide");
 			} else {
 				if (a == '1822') {
 					$('.honestGreen-settings').removeClass("hide");
@@ -1282,6 +1308,8 @@ If you have not yet configured your supplier, click "Add Supplier" to do it now.
 					$('.supplier-class').addClass("show");
 					$('.moteng-ftp').removeClass("show");
 					$('.moteng-ftp').addClass("hide");
+					$('.baker-tayler').removeClass("show");
+					$('.baker-tayler').addClass("hide");
 					$('.europa').removeClass("show");
 					$('.europa').addClass('hide');
 					$('.customSupplierNameDiv').removeClass("show");
@@ -1294,6 +1322,13 @@ If you have not yet configured your supplier, click "Add Supplier" to do it now.
 						$('.europa').addClass("show");
 						$('.supplier-class').removeClass("show");
 						$('.supplier-class').addClass("hide");
+					}
+					else if(a=='2202'){
+						$('.moteng-ftp').removeClass("hide");
+						$('.moteng-ftp').addClass("show");
+						$('.baker-tayler').removeClass("hide");
+						$('.baker-tayler').addClass("show");
+						
 					}
 				}
 				$('.customfileformatDiv').hide();
