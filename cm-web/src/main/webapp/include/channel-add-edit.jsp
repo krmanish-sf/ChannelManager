@@ -4,7 +4,7 @@
 	pageEncoding="UTF-8" session="false"%>
 <div class="modal fade" id="mychanneledit" tabindex="-1" role="dialog"
 	aria-hidden="true">
-	<div id="mychanneleditdailog" class="modal-dialog">
+	<div id="mychanneleditdailog" class="modal-dialog" style="width: 650px;">
 		<div class="modal-content">
 			<div class="modal-header">
 				<button type="button" class="close" data-dismiss="modal"
@@ -272,6 +272,39 @@
 														 />
 												</div>
 											</div>
+											<div class="form-group store-info ordoro-store">
+												<label for="login"
+													class="col-sm-5 control-label no-padding-right">
+													Login</label>
+												<div class="col-sm-7">
+													<input type="text" id="login" required="required"
+														placeholder="admin@example.com"
+														data-bind-channel="customMapper:oimChannelAccessDetailses[oimChannelAccessFields.fieldId=5].detailFieldValue"
+														name="login" class="width-70" />
+												</div>
+											</div>
+											<div class="form-group store-info ordoro-store">
+												<label for="password"
+													class="col-sm-5 control-label no-padding-right">
+													Password</label>
+												<div class="col-sm-7">
+													<input type="password" id="password" required="required"
+														placeholder="password"
+														data-bind-channel="customMapper:oimChannelAccessDetailses[oimChannelAccessFields.fieldId=6].detailFieldValue"
+														name="password" class="width-70" />
+												</div>
+											</div>
+											<div class="form-group store-info ordoro-store">
+												<label for="cartID"
+													class="col-sm-5 control-label no-padding-right">
+													Cart ID</label>
+												<div class="col-sm-7">
+													<input type="text" id="cartID" required="required"
+														placeholder="cart ID"
+														data-bind-channel="customMapper:oimChannelAccessDetailses[oimChannelAccessFields.fieldId=21].detailFieldValue"
+														name="cartID" class="width-70" />
+												</div>
+											</div>
 											
 											<div class="form-group center">
 												<!-- <input type="button"
@@ -312,6 +345,8 @@
 															Order automation</th>
 														<th class="sorting_disabled"><i class="blue"></i>
 															Warehouse Location</th>
+														<th class="sorting_disabled"><i class="blue"></i>
+															Channel-Supplier ID</th>
 													</tr>
 												</thead>
 												<tbody>

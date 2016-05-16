@@ -925,7 +925,8 @@ public class SupplierFactory {
         }
       }
     }
-    tx.commit();
+    if (tx != null && tx.isActive())
+      tx.commit();
     // Update the store with tracking info
     OimOrders oimOrders = oimOrderDetails.getOimOrders();
     OimChannels oimChannels = oimOrders.getOimOrderBatches().getOimChannels();

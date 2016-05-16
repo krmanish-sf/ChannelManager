@@ -319,12 +319,12 @@ public class DevHubOrderImport extends ChannelBase implements IOrderImport {
           batch.getOimOrderses().add(oimOrders);
           oimOrders.setOimOrderDetailses(detailSet);
           m_dbSession.saveOrUpdate(oimOrders);
+          tx.commit();
           if (m_channel.getTestMode() == 0) {
             sendAcknowledgementToStore(storeUrl, storeOrderId);
           } else {
             log.warn("Acknowledgement to channel was not sent as Channel is set to test mode.");
           }
-          tx.commit();
         } catch (HibernateException e) {
           log.error("Error occured during pull of store order id - " + storeOrderId, e);
           try {

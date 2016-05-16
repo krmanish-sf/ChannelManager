@@ -60,4 +60,6 @@ public interface OrderRepository {
   String geSuppliertTestModeStatus(Integer entity);
 
   List<OrderDetail> checkHGItemAvailability(Map<Integer, String> hgItemMap);
+
+  void updateDetailWithStatus(OimOrderDetails detail, Integer orderStatus);
 }

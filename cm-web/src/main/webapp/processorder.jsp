@@ -1122,6 +1122,7 @@
 								alert('Please select an order.');
 								return false;
 							}
+							console.log(orders.length);
 							$(this)
 									.CRUD(
 											{
@@ -1131,7 +1132,8 @@
 																.val(),
 												data : JSON.stringify(orders),
 												method : 'POST',
-												success : function(data) {
+												success : function(d) {
+													console.log(d);
 // 													$.gritter
 // 															.add({
 // 																title : 'Order Bulk Update',
@@ -1141,7 +1143,7 @@
 // 																				'#processselect1 option:selected')
 // 																				.text()
 // 															});
-													successAlert('Order Bulk Update',data.length+' Orders '+$('#processselect1 option:selected').text());
+													successAlert('Order Bulk Update',d.length+' Orders '+$('#processselect1 option:selected').text());
 													table_xy.ajax.reload();
 													$.CM.updateOrderSummary();
 												}

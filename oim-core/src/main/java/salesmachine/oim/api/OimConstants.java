@@ -23,6 +23,7 @@ public class OimConstants {
 	public static final Integer CHANNEL_ACCESSDETAIL_SHOPIFY_ACCESS_CODE = new Integer(17);
 	public static final Integer CHANNEL_ACCESSDETAIL_BIGCOMMERCE_STORE_ID = new Integer(18);
 	public static final Integer CHANNEL_ACCESSDETAIL_DEVHUB_SITE_ID = new Integer(19);	
+	public static final Integer CHANNEL_ACCESSDETAIL_ORDORO_CART_ID = new Integer(21);
 	
 	public static final Integer ORDERBATCH_TYPE_ID_AUTOMATED = new Integer(1);
 	public static final Integer ORDERBATCH_TYPE_ID_MANUAL = new Integer(2);

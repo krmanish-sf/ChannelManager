@@ -38,6 +38,7 @@ import salesmachine.oim.api.OimConstants;
 import salesmachine.oim.stores.exception.ChannelCommunicationException;
 import salesmachine.oim.stores.exception.ChannelConfigurationException;
 import salesmachine.oim.stores.exception.ChannelOrderFormatException;
+import salesmachine.oim.stores.modal.volusion.order.Xmldata;
 import salesmachine.oim.suppliers.exception.SupplierCommunicationException;
 import salesmachine.oim.suppliers.exception.SupplierConfigurationException;
 import salesmachine.oim.suppliers.exception.SupplierOrderException;
@@ -67,7 +68,7 @@ public class Eldorado extends Supplier implements HasTracking {
 
   static {
     try {
-      jaxbContext = JAXBContext.newInstance(XMLInputOrder.class, XMLOrders.class,
+      jaxbContext = JAXBContext.newInstance(XMLInputOrder.class,
           ELTrackRequest.class, salesmachine.oim.suppliers.modal.el.tracking.XMLOrders.class);
     } catch (JAXBException e) {
       log.error("Error in initializing XML parsing context.");
@@ -130,6 +131,21 @@ public class Eldorado extends Supplier implements HasTracking {
 
     return status;
   }
+  
+//  public static void main(String[] args) {
+//    Eldorado el = new Eldorado();
+//   Session dbSession =  SessionManager.currentSession();
+//   OimVendorSuppliers ovs = (OimVendorSuppliers)dbSession.get(OimVendorSuppliers.class, 10701);
+//   OimOrders order = (OimOrders)dbSession.get(OimOrders.class, 497641);
+//    try {
+//      el.sendOrders(431906, ovs, order);
+//    } catch (SupplierConfigurationException | SupplierCommunicationException
+//        | SupplierOrderException | ChannelConfigurationException | ChannelCommunicationException
+//        | ChannelOrderFormatException e) {
+//      // TODO Auto-generated catch block
+//      e.printStackTrace();
+//    }
+//  }
 
   @Override
   public void sendOrders(Integer vendorId, OimVendorSuppliers ovs, OimOrders order)
@@ -217,9 +233,18 @@ public class Eldorado extends Supplier implements HasTracking {
       elOrder.setShipVia(code.getName());
       elOrder.setProducts(products);
       try (ByteArrayOutputStream os = new ByteArrayOutputStream()) {
+        JAXBContext jaxbContext1 = JAXBContext.newInstance(salesmachine.oim.suppliers.modal.el.XMLInputOrder.class);
+        marshaller = jaxbContext1.createMarshaller();
         marshaller.marshal(elOrder, os);
+       // System.out.println("request -->"+ os.toString().replace("<XML_InputOrder>", "").replace("</XML_InputOrder>", ""));
         String response = postRequest(orderEndPoint,
             os.toString().replace("<XML_InputOrder>", "").replace("</XML_InputOrder>", ""));
+//        String response = "<XML_Orders><Success>SAP: Your order (Reference ID: ) was accepted by the Eldorado Partner Gateway!</Success></XML_Orders>";
+        log.info("order id - {} is processed. Here is the response - {}",order.getStoreOrderId(),response);
+        JAXBContext jaxbContext = JAXBContext.newInstance(XMLOrders.class);
+        unmarshaller = jaxbContext.createUnmarshaller();
+      //  salesmachine.oim.suppliers.modal.el.tracking.XMLOrders cannot be cast to salesmachine.oim.suppliers.modal.el.XMLOrders
+
         XMLOrders xmlOrder = (XMLOrders) unmarshaller.unmarshal(new StringReader(response));
         if (!StringHandle.isNullOrEmpty(xmlOrder.getSuccess())) {
           for (OimOrderDetails oimOrderDetails : order.getOimOrderDetailses()) {
@@ -228,14 +253,14 @@ public class Eldorado extends Supplier implements HasTracking {
           }
           EmailUtil.sendEmail("orders@inventorysource.com", "support@inventorysource.com", "",
               "VID: "+vendorId+", Order id "+ order.getStoreOrderId()+" processed to Eldorado",
-              "VID: "+vendorId+", Order id "+ order.getStoreOrderId()+" processed to Eldorado", "text/html");
+              response, "text/html");
         } else {
           for (OimOrderDetails oimOrderDetails : order.getOimOrderDetailses()) {
             failedOrders.put(oimOrderDetails.getDetailId(),"Failed order processing for sku - "+oimOrderDetails.getSku());
             
             EmailUtil.sendEmail("orders@inventorysource.com", "support@inventorysource.com", "",
                 "VID: "+vendorId+", Order id "+ order.getStoreOrderId()+" Failed to process to Eldorado",
-                "VID: "+vendorId+", Order id "+ order.getStoreOrderId()+" Failed to process to Eldorado. Please check.", "text/html");
+                response, "text/html");
           }
         }
       }
@@ -243,6 +268,10 @@ public class Eldorado extends Supplier implements HasTracking {
       log.error(e.getMessage(), e);
     } catch (JAXBException | ClassCastException e) {
       log.error(e.getMessage());
+      //temp email. will remove once it is tested properly.
+      EmailUtil.sendEmail("orders@inventorysource.com", "support@inventorysource.com", "",
+          "Error in processing Eldorado order for VID: "+vendorId+", Order id "+ order.getStoreOrderId(),
+          e.getMessage(), "text/html");
       throw new SupplierConfigurationException("Error in serializing order object.", e);
     }
 

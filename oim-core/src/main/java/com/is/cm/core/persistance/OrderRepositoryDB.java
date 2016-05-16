@@ -1373,4 +1373,23 @@ public class OrderRepositoryDB extends RepositoryBase implements OrderRepository
       return true;
     return false;
   }
+  
+  @Override
+  public void updateDetailWithStatus(OimOrderDetails detail, Integer orderStatus) {
+
+    Session dbSession = SessionManager.currentSession();
+    Transaction tx = null;
+    try {
+      tx = dbSession.beginTransaction();
+      detail.setOimOrderStatuses(new OimOrderStatuses(orderStatus));
+      dbSession.saveOrUpdate(detail);
+      tx.commit();
+    } catch (Exception e) {
+      if (tx != null && tx.isActive())
+        tx.rollback();
+      LOG.error("Error in updating order detail.", e);
+    }
+  
+    
+  }
 }

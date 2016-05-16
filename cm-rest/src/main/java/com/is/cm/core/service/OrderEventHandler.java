@@ -2,9 +2,11 @@ package com.is.cm.core.service;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.hibernate.Session;
 import org.slf4j.Logger;
@@ -141,17 +143,18 @@ public class OrderEventHandler implements OrderService {
 	    throws SupplierConfigurationException,
 	    SupplierCommunicationException, SupplierOrderException {
 	Order order = event.getEntity();
-	String orderProcessStatus = processOrderInternal(order);
+	OimOrders oimOrders = orderRepository.getById(order.getOrderId());
+	String orderProcessStatus = processOrderInternal(oimOrders);
 	    return new UpdatedEvent<String>(0, orderProcessStatus);
     }
 
-    private String processOrderInternal(Order order)
+    private String processOrderInternal(OimOrders oimOrders)
 	    throws SupplierConfigurationException,
 	    SupplierCommunicationException, SupplierOrderException {
 	Session dbSession = SessionManager.currentSession();
 	SupplierFactory osop = new SupplierFactory(
 		dbSession);
-	OimOrders oimOrders = orderRepository.getById(order.getOrderId());
+	//OimOrders oimOrders = orderRepository.getById(order.getOrderId());
 	return osop.processVendorOrder(VendorContext.get(), oimOrders);
     }
 
@@ -180,7 +183,7 @@ public class OrderEventHandler implements OrderService {
 	}
 
 	LOG.debug("Order Size: {}", orders.size());
-	List<Order> list = new ArrayList<Order>();
+	Set<Order> orderSet = new HashSet<Order>();
 	for (Integer id : orders) {
 	    OimOrders order = orderRepository.getById(id);
 	    if ("manually-processed".equalsIgnoreCase(status)) {
@@ -189,10 +192,10 @@ public class OrderEventHandler implements OrderService {
 		    OimOrderDetails detail = (OimOrderDetails) dit.next();
 		    detail.setOimOrderStatuses(new OimOrderStatuses(
 			    OimConstants.ORDER_STATUS_MANUALLY_PROCESSED));
-		    orderRepository.update(detail);
-		    list.add(Order.from(order));
+		    orderRepository.updateDetailWithStatus(detail, OimConstants.ORDER_STATUS_MANUALLY_PROCESSED);;
 
 		}
+		orderSet.add(Order.from(order));
 	    } else if ("delete".equalsIgnoreCase(status))
 
 	    {
@@ -206,7 +209,7 @@ public class OrderEventHandler implements OrderService {
 			detail.setOimOrderStatuses(new OimOrderStatuses(
 				OimConstants.ORDER_STATUS_CANCELED));
 			orderRepository.update(detail);
-			list.add(Order.from(order));
+			orderSet.add(Order.from(order));
 		    }
 		    channelService.cancelOrder(order);
 		} catch (ChannelConfigurationException
@@ -218,8 +221,9 @@ public class OrderEventHandler implements OrderService {
 
 	    {
 		try {
-		    processOrderInternal(Order.from(order));
-		    list.add(Order.from(order));
+		    processOrderInternal(order);
+		    Order orderJsonObj = Order.from(order);
+		    orderSet.add(orderJsonObj);
 		} catch (Exception e) {
 		    LOG.error("Error occured in placing order", e);
 		}
@@ -233,7 +237,7 @@ public class OrderEventHandler implements OrderService {
 		    OimOrders oimOrders = orderRepository
 			    .getById(order.getOrderId());
 		    osop.reprocessVendorOrder(VendorContext.get(), oimOrders);
-		    list.add(Order.from(order));
+		    orderSet.add(Order.from(order));
 		} catch (Exception e) {
 		    LOG.error("Error occured in re-submitting orders", e);
 		}
@@ -253,13 +257,15 @@ public class OrderEventHandler implements OrderService {
 			    osop.trackOrder(VendorContext.get(),
 				    detail.getDetailId());
 		    }
-		    list.add(Order.from(order));
+		    orderSet.add(Order.from(order));
 		} catch (Exception e) {
 		    LOG.error("Error occured in tracking orders", e);
 		}
 	    }
 
 	}
+	List<Order> list = new ArrayList<Order>();
+	list.addAll(orderSet);
 	return new UpdatedEvent<List<Order>>(0, list);
 
     }

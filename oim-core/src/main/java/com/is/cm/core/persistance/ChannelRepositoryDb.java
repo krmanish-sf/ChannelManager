@@ -127,6 +127,17 @@ public class ChannelRepositoryDb extends RepositoryBase implements ChannelReposi
         LOG.debug("Saved Volusion channel access details");
       
       }
+      else if(c.getOimSupportedChannels().getSupportedChannelId() == 12){
+        addChannelAccessDetail(dbSession, c, OimConstants.CHANNEL_ACCESSDETAIL_CHANNEL_URL,
+            StringHandle.removeNull(getParameter("storeurl")));
+        addChannelAccessDetail(dbSession, c, OimConstants.CHANNEL_ACCESSDETAIL_ORDORO_CART_ID,
+            StringHandle.removeNull(getParameter("cartID")));
+        addChannelAccessDetail(dbSession, c, OimConstants.CHANNEL_ACCESSDETAIL_ADMIN_LOGIN,
+            StringHandle.removeNull(getParameter("login")));
+        addChannelAccessDetail(dbSession, c, OimConstants.CHANNEL_ACCESSDETAIL_ADMIN_PWD,
+            StringHandle.removeNull(getParameter("password")));
+        LOG.debug("Saved Ordoro channel access details");
+      }
       else if (c.getOimSupportedChannels().getSupportedChannelId() != 0) {
         addChannelAccessDetail(dbSession, c, OimConstants.CHANNEL_ACCESSDETAIL_CHANNEL_URL,
             StringHandle.removeNull(getParameter("storeurl")));
@@ -213,7 +224,11 @@ public class ChannelRepositoryDb extends RepositoryBase implements ChannelReposi
         if(!warehouseLocation2.equals("") && !warehouseLocation1.equals("")){
           m.setWarehouseLocation(warehouseLocation1+"~"+warehouseLocation2);
         }
-       
+        String channelSupplierIdStr = request.get("ss_" + os.getSupplierId() + "_chn_supp_id");
+       if(!StringHandle.isNullOrEmpty(channelSupplierIdStr)){
+         int channelSupplierId = Integer.parseInt(channelSupplierIdStr.trim());
+         m.setChannelSupplierId(channelSupplierId);
+       }
         m.setOimChannels(c);
         m.setOimSuppliers(os);
         m.setSupplierPrefix(skuPrefix);

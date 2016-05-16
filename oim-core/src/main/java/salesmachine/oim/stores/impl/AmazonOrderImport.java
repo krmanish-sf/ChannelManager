@@ -24,6 +24,7 @@ import org.apache.axis.utils.ByteArrayOutputStream;
 import org.hibernate.HibernateException;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
+import org.hibernate.TransactionException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -416,6 +417,9 @@ class AmazonOrderImport extends ChannelBase implements IOrderImport {
               log.error("Couldn’t roll back transaction", e1);
               e1.printStackTrace();
             }
+            if (e instanceof TransactionException) {
+              log.error("duplicate store order id - " + amazonOrderId);
+            } 
             // throw new ChannelOrderFormatException(
             // "Error occured during pull of store order id - " + amazonOrderId, e);
           }

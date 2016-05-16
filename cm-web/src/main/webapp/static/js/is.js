@@ -726,6 +726,7 @@ function drawSalesReportTable(data) {
 										endDate : new Date().getMonthRange().sEndDate
 									}),
 							success : function(data, textStatus, jqXHR) {
+								//console.log(data);
 								try {
 									$("#tasks").empty();
 									var productsales = data.productsales;
@@ -1450,7 +1451,8 @@ function drawSalesReportTable(data) {
 								|| $(this).hasClass('yahoo-store')
 								|| $(this).hasClass('shop-store')
 								|| $(this).hasClass('shopify-store')
-								|| $(this).hasClass('bc-store'))
+								|| $(this).hasClass('bc-store')
+							    || $(this).hasClass('ordoro-store'))
 							$(this).hide();
 						else
 							$(this).show();
@@ -1507,6 +1509,14 @@ function drawSalesReportTable(data) {
 		case "11":
 			$(".store-info").each(function(i, e) {
 				if ($(this).hasClass('volusion-store'))
+					$(this).show();
+				else
+					$(this).hide();
+			});
+			break;
+		case "12":
+			$(".store-info").each(function(i, e) {
+				if ($(this).hasClass('ordoro-store'))
 					$(this).show();
 				else
 					$(this).hide();

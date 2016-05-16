@@ -24,6 +24,7 @@ import org.apache.commons.httpclient.methods.StringRequestEntity;
 import org.hibernate.HibernateException;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
+import org.hibernate.TransactionException;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -158,12 +159,10 @@ public final class ShopifyOrderImport extends ChannelBase implements IOrderImpor
     log.info("Set to fetch Orders after {}", fetchOrdersAfter);
     try {
       SimpleDateFormat df = new SimpleDateFormat("YYYY-MM-dd HH:mm:ss zZ");
-      requestUrl += "?updated_at_min=" + URLEncoder.encode(df.format(fetchOrdersAfter), "UTF-8");
+      requestUrl += "&updated_at_min=" + URLEncoder.encode(df.format(fetchOrdersAfter), "UTF-8");
     } catch (UnsupportedEncodingException e1) {
       log.warn("Encoding type [UTF-8] is invalid");
     }
-    // requestUrl += "&limit=250&page=";
-
     JSONParser parser = new JSONParser();
     int totalOrders = 0;
     int pageNo = 0;
@@ -172,8 +171,10 @@ public final class ShopifyOrderImport extends ChannelBase implements IOrderImpor
       String orderRequestUrl = requestUrl + "&limit=250&page=" + ++pageNo;
       this.noOfApiRequests = 0;
       String response = sendRequestOAuth(null, orderRequestUrl, GET_REQUEST_METHOD, null);
+
       JSONObject jsonObject;
       try {
+
         jsonObject = (JSONObject) parser.parse(response);
       } catch (ParseException e1) {
         log.error(
@@ -390,13 +391,13 @@ public final class ShopifyOrderImport extends ChannelBase implements IOrderImpor
           batch.getOimOrderses().add(oimOrders);
           m_dbSession.saveOrUpdate(oimOrders);
           String acknowledgementURL = storeUrl + "/admin/orders/" + storeOrderId + ".json"; // 704264451
+          tx.commit();
           if (m_channel.getTestMode() == 0) {
             sendAcknowledgementToStore(acknowledgementURL, storeOrderId, tags);
           } else {
             log.warn("Acknowledgement to channel was not sent as Channel is set to test mode.");
           }
-          tx.commit();
-
+          totalOrders++;
         } catch (HibernateException e) {
           log.error("Error occured during pull of store order id - " + storeOrderId, e);
           try {
@@ -406,15 +407,18 @@ public final class ShopifyOrderImport extends ChannelBase implements IOrderImpor
             log.error("Couldn’t roll back transaction", e1);
             e1.printStackTrace();
           }
-          throw new ChannelOrderFormatException(
-              "Error occured during pull of store order id - " + storeOrderId, e);
+          if (e instanceof TransactionException) {
+            log.error("duplicate store order id - " + storeOrderId);
+          } else
+            throw new ChannelOrderFormatException(
+                "Error occured during pull of store order id - " + storeOrderId, e);
         } catch (Exception e) {
           log.error("Error occured during pull of store order id - " + storeOrderId, e);
           tx.rollback();
           throw new ChannelOrderFormatException("Error occured during pull of store order id - "
               + storeOrderId + " cause - " + e.getMessage(), e);
         }
-        totalOrders++;
+
       }
     } while (orderArr.size() > 0);
     log.info("Fetched {} order(s)", totalOrders);

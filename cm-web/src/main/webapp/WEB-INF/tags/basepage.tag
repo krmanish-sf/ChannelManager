@@ -476,7 +476,6 @@
 								url : 'aggregators/reports/notifications',
 								method : 'GET',
 								success : function(data) {
-									console.log(data);
 									var count = 0;
 									$('#header-nav li ul.alert-details')
 											.empty();

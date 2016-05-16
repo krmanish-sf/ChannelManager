@@ -31,5 +31,8 @@
          <property name="warehouseLocation" type="string">
             <column name="WAREHOUSE_LOCATION" length="20" />
         </property>
+         <property name="channelSupplierId" type="java.lang.Integer">
+            <column name="CHANNEL_SUPPLIER_ID" precision="22" scale="0" />
+        </property>
     </class>
 </hibernate-mapping>
