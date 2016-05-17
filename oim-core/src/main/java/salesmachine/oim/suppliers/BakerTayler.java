@@ -59,7 +59,6 @@ import salesmachine.oim.suppliers.exception.SupplierOrderTrackingException;
 import salesmachine.oim.suppliers.modal.OrderDetailResponse;
 import salesmachine.oim.suppliers.modal.OrderStatus;
 import salesmachine.util.FtpDetail;
-import salesmachine.util.MotengContryCode;
 import salesmachine.util.OimLogStream;
 import salesmachine.util.StringHandle;
 
@@ -470,15 +469,15 @@ public class BakerTayler extends Supplier implements HasTracking {
 
 	private String createOrderFile(OimOrders order, OimVendorSuppliers ovs, String poNum, String shippingCode) throws ChannelCommunicationException,
 			ChannelOrderFormatException, SupplierOrderException {
-		String uploadfilename = "/tmp/" + "BK_" + ovs.getAccountNumber() + "_" + order.getOrderNumber() + ".done";
+		String uploadfilename = "/tmp/" + "BK_" + ovs.getAccountNumber() + "_" + order.getStoreOrderId() + ".done";
 		File f = new File(uploadfilename);
-		log.info("created file name for Moteng:{}", f.getName());
-		try {
+		log.info("created file name for Baker Tayler:{}", f.getName());
+		/*try {
 			order.setDeliveryCountryCode(MotengContryCode.getProperty(order.getDeliveryCountry()));
 		} catch (Exception e) {
 			log.error(e.getMessage(), e);
 			throw new SupplierOrderException(e.getMessage(), e);
-		}
+		}*/
 		try (FileOutputStream fOut = new FileOutputStream(f)) {
 			// first line
 			fOut.write(FIRST_LINE);
@@ -504,15 +503,16 @@ public class BakerTayler extends Supplier implements HasTracking {
 			String ediAd2 = "";
 			String ediAd3 = "";
 			ediAd1 = deliveryAddress;
-			if (deliveryAddress.length() > 30) {
-				ediAd1 = deliveryAddress.substring(0, 30);
+			if (deliveryAddress.length() <= 30) {
+				ediAd1 = deliveryAddress.substring(0, deliveryAddress.length());
 			}
-			if (deliveryAddress.length() > 60) {
-				ediAd2 = deliveryAddress.substring(30, 60);
+			if (deliveryAddress.length() > 30 && deliveryAddress.length() <= 60) {
+				ediAd2 = deliveryAddress.substring(30, deliveryAddress.length());
 			}
-			if (deliveryAddress.length() <= 90) {
+			if (deliveryAddress.length() > 60 && deliveryAddress.length() <= 90) {
 				ediAd3 = deliveryAddress.substring(60);
-			} else {
+			} 
+			if(deliveryAddress.length() > 90){
 				throw new SupplierOrderException("Delivery Street address can not be greater than 90 characters.");
 			}
 			// line 3 street address
