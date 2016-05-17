@@ -449,9 +449,9 @@ public class BakerTayler extends Supplier implements HasTracking {
 			ftp.setType(FTPTransferType.ASCII);
 			ftp.setTimeout(60 * 1000 * 60 * 5);
 			ftp.put(fileName, remoteDir + file.getName());
-			if (ftp.get(file.getName()) == null) {
+			/*if (ftp.get(file.getName()) == null) {
 				sendErrorReportEmail(fileName, ftpDetails);
-			}
+			}*/
 			ftp.quit();
 		} catch (IOException e) {
 			log.error(e.getMessage(), e);
