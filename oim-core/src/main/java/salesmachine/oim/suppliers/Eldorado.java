@@ -103,6 +103,7 @@ public class Eldorado extends Supplier implements HasTracking {
       case "RECORD":
         TrackingData trackingData = new TrackingData();
         trackingData.setCarrierCode(trackingResponse.getOrder().getCarrierCode());
+        trackingData.setCarrierName(trackingResponse.getOrder().getCarrierCode());
         trackingData.setShippingMethod(trackingResponse.getOrder().getServiceCode());
         trackingData.setQuantity(oimOrderDetails.getQuantity());
         trackingData.setShipperTrackingNumber(trackingResponse.getOrder().getTrackingNumber());

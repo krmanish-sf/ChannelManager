@@ -338,15 +338,15 @@ public class BF extends Supplier implements HasTracking {
                   // Session session = SessionManager.currentSession();
                   // session.update(detail);
 
-                  OimChannels oimChannels = order.getOimOrderBatches().getOimChannels();
-
-                  IOrderImport iOrderImport = ChannelFactory.getIOrderImport(oimChannels);
-
-                  salesmachine.oim.suppliers.modal.OrderStatus orderStatus = new salesmachine.oim.suppliers.modal.OrderStatus();
-                  orderStatus.setStatus(((OimOrderProcessingRule) oimChannels
-                      .getOimOrderProcessingRules().iterator().next()).getProcessedStatus());
-                  if (oimChannels.getTestMode() == 0)
-                  iOrderImport.updateStoreOrder(detail, orderStatus);
+//                  OimChannels oimChannels = order.getOimOrderBatches().getOimChannels();
+//
+//                  IOrderImport iOrderImport = ChannelFactory.getIOrderImport(oimChannels);
+//
+//                  salesmachine.oim.suppliers.modal.OrderStatus orderStatus = new salesmachine.oim.suppliers.modal.OrderStatus();
+//                  orderStatus.setStatus(((OimOrderProcessingRule) oimChannels
+//                      .getOimOrderProcessingRules().iterator().next()).getProcessedStatus());
+//                  if (oimChannels.getTestMode() == 0)
+//                  iOrderImport.updateStoreOrder(detail, orderStatus);
 
                 }
               }

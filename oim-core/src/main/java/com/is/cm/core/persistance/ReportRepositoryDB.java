@@ -1220,12 +1220,13 @@ public class ReportRepositoryDB extends RepositoryBase implements ReportReposito
   }
 
   @Override
+  //this method is only specific to Honest green. It will be use to throw KbAdmin alert for unconfirmed orders.
   public List fetchUnConfirmedOrders(int vendorID) {
     List<HashMap<String, String>> returnList = new ArrayList<HashMap<String, String>>();
     StringBuilder sb = new StringBuilder(
         "select o.store_order_id,d.supplier_order_number,d.sku,to_char(d.PROCESSING_TM, 'MM/DD/YYYY'),d.supplier_order_status,d.supplier_warehouse_code,d.quantity"
             + " from kdyer.oim_order_details d inner join kdyer.oim_orders o on d.order_id=o.order_id inner join kdyer.oim_order_batches b on b.batch_id=o.batch_id "
-            + "inner join kdyer.oim_channels c on c.channel_id=b.channel_id where d.status_id=2 and d.SUPPLIER_ORDER_STATUS like '%Sent to supplier%' and d.PROCESSING_TM<sysdate-1 and d.PROCESSING_TM>sysdate-7 and c.vendor_id ="
+            + "inner join kdyer.oim_channels c on c.channel_id=b.channel_id where d.status_id=2 and d.SUPPLIER_ORDER_STATUS like '%Sent to supplier%' and d.PROCESSING_TM<sysdate-1 and d.PROCESSING_TM>sysdate-7 and d.SUPPLIER_ID=1822 and c.vendor_id ="
             + vendorID);
     Session dbSession = SessionManager.currentSession();
     SQLQuery reportQuery = dbSession.createSQLQuery(sb.toString());
@@ -1241,7 +1242,7 @@ public class ReportRepositoryDB extends RepositoryBase implements ReportReposito
         String locationId = (String) values[5];
         String quantity = ((BigDecimal) values[6]).intValue() + "";
         String status = "Processed";
-        String location = locationId.equalsIgnoreCase("H") ? "HVA" : "PHI";
+        String location = StringHandle.removeNull(locationId).equalsIgnoreCase("H") ? "HVA" : "PHI";
         HashMap<String, String> valueMap = new HashMap<String, String>();
         valueMap.put("storeOrderId", storeOrderId);
         valueMap.put("PONumber", PONumber);

@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -21,7 +22,11 @@ import java.util.List;
 import java.util.Set;
 
 import javax.net.ssl.HttpsURLConnection;
+import javax.xml.datatype.DatatypeConfigurationException;
+import javax.xml.datatype.DatatypeFactory;
+import javax.xml.datatype.XMLGregorianCalendar;
 
+import org.apache.commons.httpclient.methods.StringRequestEntity;
 import org.hibernate.HibernateException;
 import org.hibernate.Query;
 import org.hibernate.Session;
@@ -53,6 +58,7 @@ import salesmachine.oim.stores.exception.ChannelCommunicationException;
 import salesmachine.oim.stores.exception.ChannelConfigurationException;
 import salesmachine.oim.stores.exception.ChannelOrderFormatException;
 import salesmachine.oim.suppliers.modal.OrderStatus;
+import salesmachine.oim.suppliers.modal.TrackingData;
 import salesmachine.util.StringHandle;
 import sun.misc.BASE64Encoder;
 
@@ -63,7 +69,6 @@ import sun.misc.BASE64Encoder;
 public class OrdoroOrderImport extends ChannelBase implements IOrderImport {
 
   private static final Logger log = LoggerFactory.getLogger(OrdoroOrderImport.class);
-  private static String CART_ID;
   private static String USER_NAME;
   private static String PASSWORD;
   private static final String GET_REQUEST_METHOD = "GET";
@@ -71,35 +76,18 @@ public class OrdoroOrderImport extends ChannelBase implements IOrderImport {
   private static final String PUT_REQUEST_METHOD = "PUT";
   private int noOfApiRequests = 0;
   private static final String orderEndPoint = "https://api.ordoro.com/order";
+  private static final String trackingEndPoint = "https://api.ordoro.com/shipment";
   static int limit = 100;
 
   @Override
   public boolean init(OimChannels oimChannel, Session dbSession)
       throws ChannelConfigurationException {
     super.init(oimChannel, dbSession);
-    CART_ID = StringHandle.removeNull(PojoHelper.getChannelAccessDetailValue(m_channel,
-        OimConstants.CHANNEL_ACCESSDETAIL_ORDORO_CART_ID));
     USER_NAME = StringHandle.removeNull(PojoHelper.getChannelAccessDetailValue(m_channel,
         OimConstants.CHANNEL_ACCESSDETAIL_ADMIN_LOGIN));
     PASSWORD = StringHandle.removeNull(PojoHelper.getChannelAccessDetailValue(m_channel,
         OimConstants.CHANNEL_ACCESSDETAIL_ADMIN_PWD));
-
-    if (CART_ID.length() == 0) {
-      log.error("Channel setup is not correct. Please configure CartID.");
-      throw new ChannelConfigurationException(
-          "Channel setup is not correct. Please configure CartID.");
-    }
     return true;
-  }
-
-  public static void main(String[] args) {
-    try {
-      new OrdoroOrderImport().getVendorOrders(null, null);
-    } catch (ChannelCommunicationException | ChannelOrderFormatException
-        | ChannelConfigurationException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
-    }
   }
 
   @Override
@@ -107,20 +95,20 @@ public class OrdoroOrderImport extends ChannelBase implements IOrderImport {
       throws ChannelCommunicationException, ChannelOrderFormatException,
       ChannelConfigurationException {
     // cartId = "64619"; -- manual cart
-   // cartId = "64620"; // shopify cart
-     Transaction tx = m_dbSession.getTransaction();
-     batch.setOimChannels(m_channel);
-     batch.setOimOrderBatchesTypes(batchesTypes);
-     if (tx != null && tx.isActive())
-     tx.commit();
-     tx = m_dbSession.beginTransaction();
-     batch.setInsertionTm(new Date());
-     batch.setCreationTm(new Date());
-     m_dbSession.save(batch);
-     tx.commit();
-     if (StringHandle.removeNull(m_orderProcessingRule.getPullWithStatus()).equals(""))
-     throw new ChannelConfigurationException(
-     "Error in channel Setup : Orders To Pull From Channel not correctly configured");
+    // cartId = "64620"; // shopify cart
+    Transaction tx = m_dbSession.getTransaction();
+    batch.setOimChannels(m_channel);
+    batch.setOimOrderBatchesTypes(batchesTypes);
+    if (tx != null && tx.isActive())
+      tx.commit();
+    tx = m_dbSession.beginTransaction();
+    batch.setInsertionTm(new Date());
+    batch.setCreationTm(new Date());
+    m_dbSession.save(batch);
+    tx.commit();
+    if (StringHandle.removeNull(m_orderProcessingRule.getPullWithStatus()).equals(""))
+      throw new ChannelConfigurationException(
+          "Error in channel Setup : Orders To Pull From Channel not correctly configured");
     HashMap<Integer, String> mappedSupplierMap = getMappedSupplierIds();
     Calendar c = Calendar.getInstance();
     c.setTime(new Date());
@@ -129,8 +117,8 @@ public class OrdoroOrderImport extends ChannelBase implements IOrderImport {
     log.info("Set to fetch Orders after {}", fetchOrdersAfter);
 
     String status = m_orderProcessingRule.getPullWithStatus();
-    //String status = "in_process";
-    String requestUrl = orderEndPoint + "/?cart=" + CART_ID + "&status=" + status;
+    // String status = "in_process";
+    String requestUrl = orderEndPoint + "/?status=" + status;
     try {
       SimpleDateFormat df = new SimpleDateFormat("YYYY-MM-dd HH:mm:ss zZ");
       requestUrl += "&start_order_date=" + URLEncoder.encode(df.format(fetchOrdersAfter), "UTF-8");
@@ -147,9 +135,12 @@ public class OrdoroOrderImport extends ChannelBase implements IOrderImport {
       try {
         jsonObject = (JSONObject) parser.parse(response);
       } catch (ParseException e1) {
-        log.error("Error in parsing response from Ordoro store (cartId)- " + CART_ID, e1);
+        log.error("Error in parsing response from Ordoro store for channel- "
+            + m_channel.getChannelName(), e1);
         throw new ChannelOrderFormatException(
-            "Error in parsing response from Ordoro store (cartId) - " + CART_ID, e1);
+            "Error in parsing response from Ordoro store for channel - "
+                + m_channel.getChannelName(),
+            e1);
       }
       int count = ((Long) jsonObject.get("count")).intValue();
       int orderLimit = ((Long) jsonObject.get("limit")).intValue();
@@ -165,15 +156,19 @@ public class OrdoroOrderImport extends ChannelBase implements IOrderImport {
         try {
           JSONObject orderObj = (JSONObject) orderArr.get(i);
           storeOrderId = orderObj.get("order_id").toString();
-          System.out.println(storeOrderId);
-           if (orderAlreadyImported(storeOrderId)) {
-           log.info("Order#{} is already imported in the system, updating Order.", storeOrderId);
-           continue;
-           }
-           tx = m_dbSession.getTransaction();
-           if (tx != null && tx.isActive())
-           tx.commit();
-           tx = m_dbSession.beginTransaction();
+          String shippability = (String)orderObj.get("shippability");
+          if("unshippable".equalsIgnoreCase(shippability)){
+            log.info("Store order id {} is unshippable.. ignoring it...",storeOrderId);
+            continue;
+          }
+          if (orderAlreadyImported(storeOrderId)) {
+            log.info("Order#{} is already imported in the system, updating Order.", storeOrderId);
+            continue;
+          }
+          tx = m_dbSession.getTransaction();
+          if (tx != null && tx.isActive())
+            tx.commit();
+          tx = m_dbSession.beginTransaction();
           oimOrders = new OimOrders();
           oimOrders.setStoreOrderId(storeOrderId);
 
@@ -251,7 +246,7 @@ public class OrdoroOrderImport extends ChannelBase implements IOrderImport {
             e.printStackTrace();
           }
           oimOrders.setOrderTm(orderTm);
-          oimOrders.setOrderTotalAmount((double)orderObj.get("grand_total"));
+          oimOrders.setOrderTotalAmount((double) orderObj.get("grand_total"));
           // oimOrders.setPayMethod((String) orderObj.get("gateway"));
           String shippingDetails = null;
           try {
@@ -285,7 +280,7 @@ public class OrdoroOrderImport extends ChannelBase implements IOrderImport {
           for (int j = 0; j < itemArray.size(); j++) {
             OimOrderDetails detail = new OimOrderDetails();
             JSONObject item = (JSONObject) itemArray.get(j);
-            detail.setCostPrice((double)item.get("item_price"));
+            detail.setCostPrice((double) item.get("item_price"));
             detail.setInsertionTm(new Date());
             detail.setOimOrderStatuses(
                 new OimOrderStatuses(OimConstants.ORDER_STATUS_PROCESSED_SUCCESS));
@@ -294,9 +289,10 @@ public class OrdoroOrderImport extends ChannelBase implements IOrderImport {
             detail.setProductDesc((String) product.get("name"));
             detail.setProductName((String) product.get("name"));
             detail.setQuantity((int) (long) (item.get("quantity")));
-            detail.setSalePrice((double)item.get("total_price"));
+            detail.setSalePrice((double) item.get("total_price"));
             detail.setSku(sku);
             detail.setStoreOrderItemId(((long) item.get("order_line_id")) + "");
+            detail.setSupplierOrderStatus(OimConstants.OIM_SUPPLER_ORDER_STATUS_SENT_TO_SUPPLIER);
             detail.setOimOrders(oimOrders);
             detailSet.add(detail);
             detail = getShipmentAndSupplierForOrderDetail(detail, orderObj, mappedSupplierMap);
@@ -320,7 +316,7 @@ public class OrdoroOrderImport extends ChannelBase implements IOrderImport {
           log.error("Error occured during pull of store order id - " + storeOrderId, e);
           try {
             m_dbSession.clear();
-             tx.rollback();
+            tx.rollback();
           } catch (RuntimeException e1) {
             log.error("Couldn’t roll back transaction", e1);
             e1.printStackTrace();
@@ -332,7 +328,7 @@ public class OrdoroOrderImport extends ChannelBase implements IOrderImport {
                 "Error occured during pull of store order id - " + storeOrderId, e);
         } catch (Exception e) {
           log.error("Error occured during pull of store order id - " + storeOrderId, e);
-           tx.rollback();
+          tx.rollback();
           throw new ChannelOrderFormatException("Error occured during pull of store order id - "
               + storeOrderId + " cause - " + e.getMessage(), e);
         }
@@ -398,7 +394,7 @@ public class OrdoroOrderImport extends ChannelBase implements IOrderImport {
   private boolean isMatchingProduct(JSONArray itemArray, String sku, Integer quantity) {
     for (int i = 0; i < itemArray.size(); i++) {
       JSONObject item = (JSONObject) itemArray.get(i);
-      JSONObject product = (JSONObject)item.get("product");
+      JSONObject product = (JSONObject) item.get("product");
       String prod_sku = (String) product.get("sku");
       if (!sku.equalsIgnoreCase(prod_sku))
         continue;
@@ -418,7 +414,7 @@ public class OrdoroOrderImport extends ChannelBase implements IOrderImport {
     URL url;
     int responseCode = 0;
     try {
-     
+
       url = new URL(requestUrl);
       connection = (HttpsURLConnection) url.openConnection();
       connection.setRequestMethod(requestMethod);
@@ -499,7 +495,83 @@ public class OrdoroOrderImport extends ChannelBase implements IOrderImport {
   public void updateStoreOrder(OimOrderDetails oimOrderDetails, OrderStatus orderStatus)
       throws ChannelCommunicationException, ChannelOrderFormatException,
       ChannelConfigurationException {
+    // this method is implemented for tracking purpose
+    log.info("order id is - {}", oimOrderDetails.getOimOrders().getOrderId());
+    log.info("order status is - {}", orderStatus);
+    if (!orderStatus.isShipped()) {
+      return;
+    }
+    if (orderStatus.getTrackingData().isEmpty())
+      return;
+    // https://api.ordoro.com/shipment/1-1007-1/tracking/
+    String poNumber = oimOrderDetails.getSupplierOrderNumber();
+    SimpleDateFormat df = new SimpleDateFormat("YYYY-MM-dd HH:mm:ss zZ");
+    String shipDate = df.format(orderStatus.getTrackingData().get(0).getShipDate().toGregorianCalendar().getTime());
+    String carrierName = !StringHandle
+        .isNullOrEmpty(orderStatus.getTrackingData().get(0).getCarrierCode())
+            ? orderStatus.getTrackingData().get(0).getCarrierCode()
+            : orderStatus.getTrackingData().get(0).getCarrierName();
+    String trackingNumber = orderStatus.getTrackingData().get(0).getShipperTrackingNumber();
+    String shippingMethod = orderStatus.getTrackingData().get(0).getShippingMethod();
+    String requestUrl = trackingEndPoint + "/" + poNumber + "/tracking/";
+    JSONObject jsonObject = new JSONObject();
+    jsonObject.put("notify_cart", true);
+    jsonObject.put("ship_date", shipDate);
+    JSONObject trackingObject = new JSONObject();
+    trackingObject.put("vendor", carrierName);
+    trackingObject.put("tracking", trackingNumber);
+    trackingObject.put("shipping_method", shippingMethod);
+    jsonObject.put("tracking", trackingObject);
 
+    log.info("request for fullfillment : {}", jsonObject.toJSONString());
+    StringRequestEntity requestEntity = null;
+    try {
+      requestEntity = new StringRequestEntity(jsonObject.toJSONString(), "application/json",
+          "UTF-8");
+    } catch (UnsupportedEncodingException e) {
+      log.error("Error in parsing tracking request json {}", e);
+      throw new ChannelOrderFormatException("Error in parsing tracking request json", e);
+    }
+    sendRequestOAuth(jsonObject.toString(), requestUrl, POST_REQUEST_METHOD,
+        oimOrderDetails.getOimOrders().getStoreOrderId());
+    log.info("Updated Store with tracking information");
+
+  }
+
+  // public static void main(String[] args) {
+  // try {
+  // new OrdoroOrderImport().getVendorOrders(null, null);
+  // } catch (ChannelCommunicationException | ChannelOrderFormatException
+  // | ChannelConfigurationException e) {
+  // // TODO Auto-generated catch block
+  // e.printStackTrace();
+  // }
+  // }
+
+  public static void main(String[] args) throws ChannelCommunicationException,
+      ChannelOrderFormatException, ChannelConfigurationException {
+    Session session = SessionManager.currentSession();
+    OimOrderDetails oimOrderDetails = (OimOrderDetails) session.get(OimOrderDetails.class, 10323821);
+    OrderStatus orderStatus = new OrderStatus();
+    TrackingData td = new TrackingData();
+    td.setCarrierName("UPS");
+    td.setShippingMethod("GROUND");
+    td.setShipperTrackingNumber("TESTTRACK9999");
+    GregorianCalendar c = new GregorianCalendar();
+    c.setTime(new Date());
+    XMLGregorianCalendar date2 = null;
+    try {
+      date2 = DatatypeFactory.newInstance().newXMLGregorianCalendar(c);
+    } catch (DatatypeConfigurationException e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
+    }
+    td.setShipDate(date2);
+    orderStatus.addTrackingData(td);
+    OrdoroOrderImport orderImport = new OrdoroOrderImport();
+    orderImport.USER_NAME = "integrations@inventorysource.com";
+    orderImport.PASSWORD = "Aut0Inventory!";
+    orderImport.updateStoreOrder(oimOrderDetails, orderStatus);
   }
 
   @Override

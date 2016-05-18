@@ -86,11 +86,11 @@
                   <div class="widget-header widget-header-flat">
                     <h4 class="lighter"> <i
 										class="icon-star orange"></i> My Channels </h4>
-                    <div class="widget-toolbar">
-											<a class="btn btn-purple" onclick="channel('add')"
-										data-toggle="modal" href="#mychanneledit">Add New Channel</a> <a
-										data-action="collapse" href="#"> <i
-										class="icon-chevron-up"></i> </a> </div>
+<!--                     <div class="widget-toolbar"> -->
+<!-- 											<a class="btn btn-purple" onclick="channel('add')" -->
+<!-- 										data-toggle="modal" href="#mychanneledit">Add New Channel</a> <a -->
+<!-- 										data-action="collapse" href="#"> <i -->
+<!-- 										class="icon-chevron-up"></i> </a> </div> -->
                   </div>
                   <div class="widget-body">
                     <div id="tabledashmychannel"

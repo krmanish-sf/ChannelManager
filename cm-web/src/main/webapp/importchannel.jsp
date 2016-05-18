@@ -185,8 +185,7 @@
 										},
 										{
 											"mData" : function(s) {
-												//console.log(s.oimSuppliers.supplierId);
-												return '<input type="text" class="width-100 pp" name="ss_'+s.oimSuppliers.supplierId+'_chn_supp_id" id="ss_'+s.oimSuppliers.supplierId+'_chn_supp_id" data-bind-channel="customMapper:oimChannelSupplierMaps[oimSuppliers.supplierId='+ s.oimSuppliers.supplierId+'].channelSupplierId" keyattr=""/>';
+													return '<input type="text" class="width-100 pp" name="ss_'+s.oimSuppliers.supplierId+'_chn_supp_id" id="ss_'+s.oimSuppliers.supplierId+'_chn_supp_id" data-bind-channel="customMapper:oimChannelSupplierMaps[oimSuppliers.supplierId='+ s.oimSuppliers.supplierId+'].channelSupplierId" keyattr=""/>';
 											}
 										}
 										]

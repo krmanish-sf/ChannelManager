@@ -1182,7 +1182,7 @@ If you have not yet configured your supplier, click "Add Supplier" to do it now.
 											var ret = '';
 
 											if (o.oimSuppliers.supplierId == 1822
-													|| o.oimSuppliers.supplierId == 221 || o.oimSuppliers.supplierId == 2161) {
+													|| o.oimSuppliers.supplierId == 221 || o.oimSuppliers.supplierId == 2161 || o.oimSuppliers.supplierId ==2202) {
 												for (var i = 0; i < o.oimSuppliers.oimSupplierMethodses.length; i++) {
 													var oimSupplierMethod = o.oimSuppliers.oimSupplierMethodses[i];
 													if (oimSupplierMethod.oimSupplierMethodNames

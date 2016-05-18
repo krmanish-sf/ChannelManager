@@ -203,20 +203,20 @@ public class GreenSupply extends Supplier {
         // session.update(od);
         successfulOrders.put(od.getDetailId(),
             new OrderDetailResponse(poNumber, "Sent to supplier.", null));
-        OimChannels oimChannels = order.getOimOrderBatches().getOimChannels();
-        OimLogStream stream = new OimLogStream();
-        try {
-          {
-            IOrderImport iOrderImport = ChannelFactory.getIOrderImport(oimChannels);
-            OrderStatus orderStatus = new OrderStatus();
-            orderStatus.setStatus(((OimOrderProcessingRule) oimChannels.getOimOrderProcessingRules()
-                .iterator().next()).getProcessedStatus());
-            if (oimChannels.getTestMode() == 0)
-              iOrderImport.updateStoreOrder(od, orderStatus);
-          }
-        } catch (ChannelConfigurationException e) {
-          stream.println(e.getMessage());
-        }
+//        OimChannels oimChannels = order.getOimOrderBatches().getOimChannels();
+//        OimLogStream stream = new OimLogStream();
+//        try {
+//          {
+//            IOrderImport iOrderImport = ChannelFactory.getIOrderImport(oimChannels);
+//            OrderStatus orderStatus = new OrderStatus();
+//            orderStatus.setStatus(((OimOrderProcessingRule) oimChannels.getOimOrderProcessingRules()
+//                .iterator().next()).getProcessedStatus());
+//            if (oimChannels.getTestMode() == 0)
+//              iOrderImport.updateStoreOrder(od, orderStatus);
+//          }
+//        } catch (ChannelConfigurationException e) {
+//          stream.println(e.getMessage());
+//        }
       }
       // }
       // }

@@ -294,17 +294,17 @@
 														name="password" class="width-70" />
 												</div>
 											</div>
-											<div class="form-group store-info ordoro-store">
-												<label for="cartID"
-													class="col-sm-5 control-label no-padding-right">
-													Cart ID</label>
-												<div class="col-sm-7">
-													<input type="text" id="cartID" required="required"
-														placeholder="cart ID"
-														data-bind-channel="customMapper:oimChannelAccessDetailses[oimChannelAccessFields.fieldId=21].detailFieldValue"
-														name="cartID" class="width-70" />
-												</div>
-											</div>
+<!-- 											<div class="form-group store-info ordoro-store"> -->
+<!-- 												<label for="cartID" -->
+<!-- 													class="col-sm-5 control-label no-padding-right"> -->
+<!-- 													Cart ID</label> -->
+<!-- 												<div class="col-sm-7"> -->
+<!-- 													<input type="text" id="cartID" required="required" -->
+<!-- 														placeholder="cart ID" -->
+<!-- 														data-bind-channel="customMapper:oimChannelAccessDetailses[oimChannelAccessFields.fieldId=21].detailFieldValue" -->
+<!-- 														name="cartID" class="width-70" /> -->
+<!-- 												</div> -->
+<!-- 											</div> -->
 											
 											<div class="form-group center">
 												<!-- <input type="button"

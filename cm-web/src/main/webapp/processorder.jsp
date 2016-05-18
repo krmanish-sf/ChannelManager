@@ -1122,7 +1122,6 @@
 								alert('Please select an order.');
 								return false;
 							}
-							console.log(orders.length);
 							$(this)
 									.CRUD(
 											{
@@ -1133,7 +1132,6 @@
 												data : JSON.stringify(orders),
 												method : 'POST',
 												success : function(d) {
-													console.log(d);
 // 													$.gritter
 // 															.add({
 // 																title : 'Order Bulk Update',

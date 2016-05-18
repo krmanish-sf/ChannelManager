@@ -130,8 +130,8 @@ public class ChannelRepositoryDb extends RepositoryBase implements ChannelReposi
       else if(c.getOimSupportedChannels().getSupportedChannelId() == 12){
         addChannelAccessDetail(dbSession, c, OimConstants.CHANNEL_ACCESSDETAIL_CHANNEL_URL,
             StringHandle.removeNull(getParameter("storeurl")));
-        addChannelAccessDetail(dbSession, c, OimConstants.CHANNEL_ACCESSDETAIL_ORDORO_CART_ID,
-            StringHandle.removeNull(getParameter("cartID")));
+//        addChannelAccessDetail(dbSession, c, OimConstants.CHANNEL_ACCESSDETAIL_ORDORO_CART_ID,
+//            StringHandle.removeNull(getParameter("cartID")));
         addChannelAccessDetail(dbSession, c, OimConstants.CHANNEL_ACCESSDETAIL_ADMIN_LOGIN,
             StringHandle.removeNull(getParameter("login")));
         addChannelAccessDetail(dbSession, c, OimConstants.CHANNEL_ACCESSDETAIL_ADMIN_PWD,

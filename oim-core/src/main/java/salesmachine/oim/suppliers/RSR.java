@@ -404,7 +404,6 @@ public class RSR extends Supplier implements HasTracking {
         fOut.write(SEMI_COLON);
         fOut.write(getBytes(shippingMethodCode));
         fOut.write(NEW_LINE);
-
       }
       // order detail section end
       // order trailer section started
@@ -648,6 +647,7 @@ public class RSR extends Supplier implements HasTracking {
                 trackingData.setQuantity(qty);
                 trackingData.setShipperTrackingNumber(trackingNo);
                 trackingData.setShippingMethod(shippingMethod);
+                trackingData.setShipDate(shipDate);
                 orderStatus.addTrackingData(trackingData);
                 trackingFound=true;
                 break;

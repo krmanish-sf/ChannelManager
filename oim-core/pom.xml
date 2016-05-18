@@ -322,11 +322,16 @@
 			<artifactId>json-simple</artifactId>
 			<version>1.1</version>
 		</dependency>
+		<!-- <dependency> -->
+		<!-- <groupId>sshtools-j2ssh</groupId> -->
+		<!-- <artifactId>sshtools-j2ssh</artifactId> -->
+		<!-- <version>0.1.5-beta</version> -->
+		<!-- <classifier>2003-04-30</classifier> -->
+		<!-- </dependency> -->
 		<dependency>
-			<groupId>sshtools-j2ssh</groupId>
-			<artifactId>sshtools-j2ssh</artifactId>
-			<version>0.1.5-beta</version>
-			<classifier>2003-04-30</classifier>
+			<groupId>sshtools</groupId>
+			<artifactId>j2ssh-core</artifactId>
+			<version>0.2.2</version>
 		</dependency>
 		<dependency>
 			<groupId>com.itextpdf</groupId>

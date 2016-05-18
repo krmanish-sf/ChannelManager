@@ -181,22 +181,22 @@ public class CustomSupplier extends Supplier {
         fOut.write(seperater);
         fOut.write(StringHandle.removeNull(od.getQuantity().toString()).getBytes(ASCII));
         fOut.write(NEW_LINE);
-        OimChannels oimChannels = order.getOimOrderBatches().getOimChannels();
-        OimLogStream stream = new OimLogStream();
-
-        try {
-          IOrderImport iOrderImport = ChannelFactory.getIOrderImport(oimChannels);
-          OrderStatus orderStatus = new OrderStatus();
-          orderStatus.setStatus(
-              ((OimOrderProcessingRule) oimChannels.getOimOrderProcessingRules().iterator().next())
-                  .getProcessedStatus());
-          if (oimChannels.getTestMode() == 0)
-            iOrderImport.updateStoreOrder(od, orderStatus);
-
-        } catch (ChannelConfigurationException e) {
-          log.error(e.getMessage(), e);
-          stream.println(e.getMessage());
-        }
+//        OimChannels oimChannels = order.getOimOrderBatches().getOimChannels();
+//        OimLogStream stream = new OimLogStream();
+//
+//        try {
+//          IOrderImport iOrderImport = ChannelFactory.getIOrderImport(oimChannels);
+//          OrderStatus orderStatus = new OrderStatus();
+//          orderStatus.setStatus(
+//              ((OimOrderProcessingRule) oimChannels.getOimOrderProcessingRules().iterator().next())
+//                  .getProcessedStatus());
+//          if (oimChannels.getTestMode() == 0)
+//            iOrderImport.updateStoreOrder(od, orderStatus);
+//
+//        } catch (ChannelConfigurationException e) {
+//          log.error(e.getMessage(), e);
+//          stream.println(e.getMessage());
+//        }
       }
 
       fOut.flush();
