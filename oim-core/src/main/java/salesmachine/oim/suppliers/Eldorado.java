@@ -11,6 +11,8 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.GregorianCalendar;
+import java.util.Random;
+import java.util.Scanner;
 
 import javax.net.ssl.HttpsURLConnection;
 import javax.xml.bind.JAXBContext;
@@ -68,8 +70,8 @@ public class Eldorado extends Supplier implements HasTracking {
 
   static {
     try {
-      jaxbContext = JAXBContext.newInstance(XMLInputOrder.class,
-          ELTrackRequest.class, salesmachine.oim.suppliers.modal.el.tracking.XMLOrders.class);
+      jaxbContext = JAXBContext.newInstance(XMLInputOrder.class, ELTrackRequest.class,
+          salesmachine.oim.suppliers.modal.el.tracking.XMLOrders.class);
     } catch (JAXBException e) {
       log.error("Error in initializing XML parsing context.");
     }
@@ -94,6 +96,8 @@ public class Eldorado extends Supplier implements HasTracking {
       xmlOrder.setOrder(order);
       request.setXMLOrders(xmlOrder);
       marshaller.marshal(request, os);
+      log.info("request -- {}", os.toString());
+
       String response = postRequest(TRACKING_ENDPOINT,
           os.toString().replace("<ELTrackRequest>", "").replace("</ELTrackRequest>", ""));
       salesmachine.oim.suppliers.modal.el.tracking.XMLOrders trackingResponse = (salesmachine.oim.suppliers.modal.el.tracking.XMLOrders) unmarshaller
@@ -110,6 +114,17 @@ public class Eldorado extends Supplier implements HasTracking {
         SimpleDateFormat df = new SimpleDateFormat("MM/dd/yyyy hh:mm:ss a");
         GregorianCalendar c = new GregorianCalendar();
         Date date = df.parse(trackingResponse.getOrder().getDateShipment());
+        if (date.before(oimOrderDetails.getProcessingTm())) {
+          String subject = "Old Tracking found for Vendor - " + ovs.getVendors().getVendorId();
+          String message = "Order tracking response - " + response;
+          EmailUtil.sendEmail("orders@inventorysource.com", "support@inventorysource.com",
+              "ruchi@inventorysource.com", subject, message);
+          throw new SupplierOrderTrackingException(
+              "Got an older tracking details from Eldorado dated - " + date.toString()
+                  + " for StoreOrderId -" + oimOrderDetails.getOimOrders().getStoreOrderId()
+                  + " and PONumber - " + oimOrderDetails.getSupplierOrderNumber());
+
+        }
         c.setTime(date);
         XMLGregorianCalendar shipDate = DatatypeFactory.newInstance().newXMLGregorianCalendar(c);
         trackingData.setShipDate(shipDate);
@@ -132,21 +147,21 @@ public class Eldorado extends Supplier implements HasTracking {
 
     return status;
   }
-  
-//  public static void main(String[] args) {
-//    Eldorado el = new Eldorado();
-//   Session dbSession =  SessionManager.currentSession();
-//   OimVendorSuppliers ovs = (OimVendorSuppliers)dbSession.get(OimVendorSuppliers.class, 10701);
-//   OimOrders order = (OimOrders)dbSession.get(OimOrders.class, 497641);
-//    try {
-//      el.sendOrders(431906, ovs, order);
-//    } catch (SupplierConfigurationException | SupplierCommunicationException
-//        | SupplierOrderException | ChannelConfigurationException | ChannelCommunicationException
-//        | ChannelOrderFormatException e) {
-//      // TODO Auto-generated catch block
-//      e.printStackTrace();
-//    }
-//  }
+
+  // public static void main(String[] args) {
+  // Eldorado el = new Eldorado();
+  // Session dbSession = SessionManager.currentSession();
+  // OimVendorSuppliers ovs = (OimVendorSuppliers)dbSession.get(OimVendorSuppliers.class, 10701);
+  // OimOrders order = (OimOrders)dbSession.get(OimOrders.class, 497641);
+  // try {
+  // el.sendOrders(431906, ovs, order);
+  // } catch (SupplierConfigurationException | SupplierCommunicationException
+  // | SupplierOrderException | ChannelConfigurationException | ChannelCommunicationException
+  // | ChannelOrderFormatException e) {
+  // // TODO Auto-generated catch block
+  // e.printStackTrace();
+  // }
+  // }
 
   @Override
   public void sendOrders(Integer vendorId, OimVendorSuppliers ovs, OimOrders order)
@@ -164,7 +179,7 @@ public class Eldorado extends Supplier implements HasTracking {
       elOrder.setAddressLine2(order.getDeliverySuburb());
       elOrder.setCity(order.getDeliveryCity());
       elOrder.setCountryCode(order.getDeliveryCountryCode());
-      String poNum=null; 
+      String poNum = null;
       Session session = SessionManager.currentSession();
       Query query = session.createSQLQuery(
           "select  distinct SUPPLIER_ORDER_NUMBER from kdyer.OIM_ORDER_DETAILS where ORDER_ID=:orderId and SUPPLIER_ID=:supplierId");
@@ -183,13 +198,16 @@ public class Eldorado extends Supplier implements HasTracking {
       if (q != null) {
         poNum = (String) q;
         log.info("Reprocessing PO NUmber - {}", poNum);
+      } else {
+      //poNum = StringHandle.removeNull(order.getOrderId()).toString();
+        poNum = String.valueOf(generateTenDigitPO(order.getOrderId()));
       }
-      else{
-        poNum=StringHandle.removeNull(order.getOrderId()).toString();
-      }
-      if(poNum instanceof String ==false){
-        log.error("This order - {} conatins an alphanumeric PO Number. Eldorado only supports numbers only for PO",order.getStoreOrderId());
-        throw new SupplierOrderException("This order - "+order.getStoreOrderId()+" conatins an alphanumeric PO Number. Eldorado only supports numbers only for PO");
+      if (poNum instanceof String == false) {
+        log.error(
+            "This order - {} conatins an alphanumeric PO Number. Eldorado only supports numbers only for PO",
+            order.getOrderId());
+        throw new SupplierOrderException("This order - " + order.getStoreOrderId()
+            + " conatins an alphanumeric PO Number. Eldorado only supports numbers only for PO");
       }
       elOrder.setCustPONumber(poNum);// EL requires numbers only PO
       elOrder.setEnteredByCode(ovs.getLogin());
@@ -226,41 +244,50 @@ public class Eldorado extends Supplier implements HasTracking {
       OimSupplierShippingMethod code = Supplier.findShippingCodeFromUserMapping(
           Supplier.loadSupplierShippingMap(ovs.getOimSuppliers(), ovs.getVendors()),
           order.getOimShippingMethod());
-      if(code==null){
+      if (code == null) {
         throw new SupplierOrderException(
-            "the shipping method specified is not configured for Eldorado for order id :" + order.getStoreOrderId());
+            "the shipping method specified is not configured for Eldorado for order id :"
+                + order.getStoreOrderId());
       }
-   //   elOrder.setShipVia("UGR"/* code.toString() */);
+      // elOrder.setShipVia("UGR"/* code.toString() */);
       elOrder.setShipVia(code.getName());
       elOrder.setProducts(products);
       try (ByteArrayOutputStream os = new ByteArrayOutputStream()) {
-        JAXBContext jaxbContext1 = JAXBContext.newInstance(salesmachine.oim.suppliers.modal.el.XMLInputOrder.class);
+        JAXBContext jaxbContext1 = JAXBContext
+            .newInstance(salesmachine.oim.suppliers.modal.el.XMLInputOrder.class);
         marshaller = jaxbContext1.createMarshaller();
         marshaller.marshal(elOrder, os);
-       // System.out.println("request -->"+ os.toString().replace("<XML_InputOrder>", "").replace("</XML_InputOrder>", ""));
+        // System.out.println("request -->"+ os.toString().replace("<XML_InputOrder>",
+        // "").replace("</XML_InputOrder>", ""));
         String response = postRequest(orderEndPoint,
             os.toString().replace("<XML_InputOrder>", "").replace("</XML_InputOrder>", ""));
-//        String response = "<XML_Orders><Success>SAP: Your order (Reference ID: ) was accepted by the Eldorado Partner Gateway!</Success></XML_Orders>";
-        log.info("order id - {} is processed. Here is the response - {}",order.getStoreOrderId(),response);
+        // String response = "<XML_Orders><Success>SAP: Your order (Reference ID: ) was accepted by
+        // the Eldorado Partner Gateway!</Success></XML_Orders>";
+        log.info("order id - {} is processed. Here is the response - {}", order.getStoreOrderId(),
+            response);
         JAXBContext jaxbContext = JAXBContext.newInstance(XMLOrders.class);
         unmarshaller = jaxbContext.createUnmarshaller();
-      //  salesmachine.oim.suppliers.modal.el.tracking.XMLOrders cannot be cast to salesmachine.oim.suppliers.modal.el.XMLOrders
+        // salesmachine.oim.suppliers.modal.el.tracking.XMLOrders cannot be cast to
+        // salesmachine.oim.suppliers.modal.el.XMLOrders
 
         XMLOrders xmlOrder = (XMLOrders) unmarshaller.unmarshal(new StringReader(response));
         if (!StringHandle.isNullOrEmpty(xmlOrder.getSuccess())) {
           for (OimOrderDetails oimOrderDetails : order.getOimOrderDetailses()) {
             successfulOrders.put(oimOrderDetails.getDetailId(),
-                new OrderDetailResponse(order.getOrderId().toString(), "InProcess", null));
+                new OrderDetailResponse(poNum, "InProcess", null));
           }
-          EmailUtil.sendEmail("orders@inventorysource.com", "support@inventorysource.com", "",
-              "VID: "+vendorId+", Order id "+ order.getStoreOrderId()+" processed to Eldorado",
+          EmailUtil.sendEmail(
+              "orders@inventorysource.com", "support@inventorysource.com", "", "VID: " + vendorId
+                  + ", Order id " + order.getStoreOrderId() + " processed to Eldorado",
               response, "text/html");
         } else {
           for (OimOrderDetails oimOrderDetails : order.getOimOrderDetailses()) {
-            failedOrders.put(oimOrderDetails.getDetailId(),"Failed order processing for sku - "+oimOrderDetails.getSku());
-            
-            EmailUtil.sendEmail("orders@inventorysource.com", "support@inventorysource.com", "",
-                "VID: "+vendorId+", Order id "+ order.getStoreOrderId()+" Failed to process to Eldorado",
+            failedOrders.put(oimOrderDetails.getDetailId(),
+                "Failed order processing for sku - " + oimOrderDetails.getSku());
+
+            EmailUtil.sendEmail("orders@inventorysource.com",
+                "support@inventorysource.com", "", "VID: " + vendorId + ", Order id "
+                    + order.getStoreOrderId() + " Failed to process to Eldorado",
                 response, "text/html");
           }
         }
@@ -269,10 +296,12 @@ public class Eldorado extends Supplier implements HasTracking {
       log.error(e.getMessage(), e);
     } catch (JAXBException | ClassCastException e) {
       log.error(e.getMessage());
-      //temp email. will remove once it is tested properly.
-      EmailUtil.sendEmail("orders@inventorysource.com", "support@inventorysource.com", "",
-          "Error in processing Eldorado order for VID: "+vendorId+", Order id "+ order.getStoreOrderId(),
-          e.getMessage(), "text/html");
+      // temp email. will remove once it is tested properly.
+      EmailUtil
+          .sendEmail("orders@inventorysource.com",
+              "support@inventorysource.com", "", "Error in processing Eldorado order for VID: "
+                  + vendorId + ", Order id " + order.getStoreOrderId(),
+              e.getMessage(), "text/html");
       throw new SupplierConfigurationException("Error in serializing order object.", e);
     }
 
@@ -338,5 +367,31 @@ public class Eldorado extends Supplier implements HasTracking {
         connection.disconnect();
       }
     }
+  }
+
+  private static long generateTenDigitPO(int poNum) {
+    long randomNum = 0;
+    long returnVal = poNum;
+    randomNum = generateRandom(poNum);
+    if (randomNum > 0) {
+      String num_str = poNum + "" + randomNum;
+      returnVal = Long.parseLong(num_str);
+    }
+    return returnVal;
+  }
+
+  public static long generateRandom(int num) {
+    int length = String.valueOf(num).length();
+    int randomNumSize = 10 - length;
+    if (randomNumSize > 0) {
+      Random random = new Random();
+      char[] digits = new char[randomNumSize];
+      digits[0] = (char) (random.nextInt(9) + '1');
+      for (int i = 1; i < randomNumSize; i++) {
+        digits[i] = (char) (random.nextInt(10) + '0');
+      }
+      return Long.parseLong(new String(digits));
+    }
+    return 0;
   }
 }

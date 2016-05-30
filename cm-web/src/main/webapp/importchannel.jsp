@@ -509,7 +509,12 @@
 														"'Only pull matching suppliers orders' option will not work for your account as one of the supplier prefix is blank in settings. All suppliers should be set with prefix to use this option.");
 												popupDisplayed = true;
 											}
+											
 										});
+						if(popupDisplayed==false){
+							$('#channelForm').validate();
+	 						$('#channelForm').submit();
+						}
 					} else {
  						$('#channelForm').validate();
  						$('#channelForm').submit();
