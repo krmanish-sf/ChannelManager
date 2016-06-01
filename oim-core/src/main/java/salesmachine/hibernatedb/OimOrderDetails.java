@@ -29,6 +29,7 @@ public class OimOrderDetails implements java.io.Serializable {
   private String supplierOrderNumber;
   private String storeOrderItemId;
   private String supplierWareHouseCode;
+  private Date lastTrackTm;
 
   private Set<OimOrderTracking> oimOrderTracking = new HashSet<>(0);
 
@@ -199,5 +200,14 @@ public class OimOrderDetails implements java.io.Serializable {
   public void setOimOrderTracking(Set<OimOrderTracking> oimOrderTracking) {
     this.oimOrderTracking = oimOrderTracking;
   }
+
+  public Date getLastTrackTm() {
+    return lastTrackTm;
+  }
+
+  public void setLastTrackTm(Date lastTrackTm) {
+    this.lastTrackTm = lastTrackTm;
+  }
+  
 
 }

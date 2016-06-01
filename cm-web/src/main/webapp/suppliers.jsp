@@ -109,7 +109,7 @@ If you have not yet configured your supplier, click "Add Supplier" to do it now.
 												</div>
                          
                          
-							<div class="form-group">
+							<div class="form-group" id="account-number">
                               <label
 														class="col-sm-5 control-label no-padding-right">Account</label>
                               <div class="col-sm-7">
@@ -174,7 +174,7 @@ If you have not yet configured your supplier, click "Add Supplier" to do it now.
                             </div>
 												</div>
 												
-							 <div class="form-group">
+							 <div class="form-group" id="test-mode">
                               <label
 														class="col-sm-5 control-label no-padding-right">Test Mode</label>
                               <div class="col-sm-7">
@@ -926,11 +926,22 @@ If you have not yet configured your supplier, click "Add Supplier" to do it now.
 			$('.customSupplierNameDiv').show();
 			$('.defShipCode').show();
 		} else {
-			$('#customSupplierFileFormatDiv').hide();
-			$('.supplieremailDiv').hide();
-			$('.customSupplierNameDiv').hide();
-			$('.defShipCode').hide();
-			$('.non-custom').show();
+			if(vendorSupplier.oimSuppliers.supplierId == 2224 || vendorSupplier.oimSuppliers.supplierId == 2225){
+				$('#customSupplierFileFormatDiv').hide();
+				$('.supplieremailDiv').hide();
+				$('.customSupplierNameDiv').hide();
+				$('.defShipCode').hide();
+				$('.non-custom').hide();
+				$('#orderaction').hide();
+				$('#account-number').hide();
+			}else{
+				$('#customSupplierFileFormatDiv').hide();
+				$('.supplieremailDiv').hide();
+				$('.customSupplierNameDiv').hide();
+				$('.defShipCode').hide();
+				$('.non-custom').show();
+			}
+			
 		}
 
 		$('#saveshippingmapping').off('click').on(
@@ -1231,6 +1242,9 @@ If you have not yet configured your supplier, click "Add Supplier" to do it now.
 													ret += "<strong>Account</strong>: "
 														+ o.accountNumber;
 												}
+												else if(o.oimSuppliers.supplierId == 2224 || o.oimSuppliers.supplierId == 2225){
+													ret = "<span></span>";
+												}
 												else {
 													ret += "<strong>Account</strong>: "
 															+ o.accountNumber;
@@ -1327,9 +1341,13 @@ If you have not yet configured your supplier, click "Add Supplier" to do it now.
 						$('.moteng-ftp').removeClass("hide");
 						$('.moteng-ftp').addClass("show");
 						$('.baker-tayler').removeClass("hide");
-						$('.baker-tayler').addClass("show");
-						
+						$('.baker-tayler').addClass("show");	
 					}
+					else if(a == '2224' || a == '2225'){ // Rotcho or Fox
+						$('.supplier-class').removeClass("show");
+						$('.supplier-class').addClass("hide");
+					}
+					
 				}
 				$('.customfileformatDiv').hide();
 				$('.supplieremailDiv').hide();

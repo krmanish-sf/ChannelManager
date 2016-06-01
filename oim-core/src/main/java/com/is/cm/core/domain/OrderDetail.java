@@ -37,6 +37,7 @@ public class OrderDetail extends DomainBase implements java.io.Serializable {
   private String supplierOrderStatus;
   private String supplierOrderNumber;
   private String storeOrderItemId;
+  private Date lastTrackTm;
   @JsonDeserialize(as = HashSet.class)
   private Set<OrderTracking> orderTrackings = new HashSet<OrderTracking>(0);
 
@@ -145,6 +146,14 @@ public class OrderDetail extends DomainBase implements java.io.Serializable {
 
   public void setProductDesc(String productDesc) {
     this.productDesc = productDesc;
+  }
+
+  public Date getLastTrackTm() {
+    return lastTrackTm;
+  }
+
+  public void setLastTrackTm(Date lastTrackTm) {
+    this.lastTrackTm = lastTrackTm;
   }
 
   public static OrderDetail from(OimOrderDetails oimOrderDetails) {

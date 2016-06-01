@@ -58,7 +58,7 @@ public class OrderTrackingTask extends TimerTask {
       session = SessionManager.openSession();
       SessionManager.setSession(session);
       Calendar cal = new GregorianCalendar();
-      cal.add(Calendar.DAY_OF_MONTH, -60);
+      cal.add(Calendar.DAY_OF_MONTH, -30);
       Date cutoffTime = cal.getTime();
       log.info("New session created for order tracking task at- {}", new Date());
       Query query = null;
@@ -66,16 +66,24 @@ public class OrderTrackingTask extends TimerTask {
         query = session.createQuery("select distinct o from salesmachine.hibernatedb.OimOrders o "
             + "left join fetch o.oimOrderDetailses d where o.deleteTm is null and "
             + "d.deleteTm is null and d.supplierOrderStatus is not null and "
-            + "d.oimOrderStatuses.statusId = '2' order by d.processingTm desc");
-
+            + "d.oimOrderStatuses.statusId = '2' and o.insertionTm> :insertionTm and d.lastTrackTm is null order by d.processingTm desc");
+        query.setDate("insertionTm", cutoffTime);
         List<OimOrders> trackOrderList = query.list();
+        Calendar c = Calendar.getInstance();
+        c.setTime(new Date());
+        c.add(Calendar.HOUR, -12);
+        Date fetchOrdersAfter = c.getTime();
+        System.out.println(fetchOrdersAfter);
+        query = session.createQuery("select distinct o from salesmachine.hibernatedb.OimOrders o "
+            + "left join fetch o.oimOrderDetailses d where o.deleteTm is null and "
+            + "d.deleteTm is null and d.supplierOrderStatus is not null and "
+            + "d.oimOrderStatuses.statusId = '2'  and o.insertionTm> :insertionTm and d.lastTrackTm> :lastDate order by d.processingTm desc");
+        query.setDate("insertionTm", cutoffTime);
+        query.setDate("lastDate", fetchOrdersAfter);
+        log.info("count of orders which will be sent to UPS for tracking is {}",query.list().size());
+        trackOrderList.addAll(query.list());
         log.info("Found {} orders to track...", trackOrderList.size());
         for (OimOrders oimorder : trackOrderList) {
-          if (oimorder.getInsertionTm().before(cutoffTime)) {
-            // log.info("Store order id - {} is older than 60 days. so skipping
-            // it.",oimorder.getStoreOrderId());
-            continue;
-          }
           session.refresh(oimorder);
           Set orderdetails = oimorder.getOimOrderDetailses();
           Iterator odIter = orderdetails.iterator();

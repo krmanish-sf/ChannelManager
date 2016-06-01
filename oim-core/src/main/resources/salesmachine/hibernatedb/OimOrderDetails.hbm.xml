@@ -37,6 +37,9 @@
         <property name="deleteTm" type="java.util.Date">
             <column name="DELETE_TM" length="7" />
         </property>
+         <property name="lastTrackTm" type="java.util.Date">
+            <column name="LAST_TRACKED_TM" length="7" />
+        </property>
         <property name="quantity" type="java.lang.Integer">
             <column name="QUANTITY" precision="22" scale="0" />
         </property>
@@ -47,7 +50,7 @@
             <column name="PRODUCT_DESC" length="500" />
         </property>
          <property name="supplierOrderStatus" type="string">
-            <column name="SUPPLIER_ORDER_STATUS" length="50" />
+            <column name="SUPPLIER_ORDER_STATUS" length="1000" />
         </property>
          <property name="supplierOrderNumber" type="string">
             <column name="SUPPLIER_ORDER_NUMBER" length="50" />
