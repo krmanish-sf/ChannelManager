@@ -502,19 +502,30 @@ public class BakerTayler extends Supplier implements HasTracking {
 			String ediAd1 = "";
 			String ediAd2 = "";
 			String ediAd3 = "";
-			ediAd1 = deliveryAddress;
-			if (deliveryAddress.length() <= 30) {
-				ediAd1 = deliveryAddress.substring(0, deliveryAddress.length());
-			}
-			if (deliveryAddress.length() > 30 && deliveryAddress.length() <= 60) {
-				ediAd2 = deliveryAddress.substring(30, deliveryAddress.length());
-			}
-			if (deliveryAddress.length() > 60 && deliveryAddress.length() <= 90) {
-				ediAd3 = deliveryAddress.substring(60);
-			} 
-			if(deliveryAddress.length() > 90){
-				throw new SupplierOrderException("Delivery Street address can not be greater than 90 characters.");
-			}
+//			ediAd1 = deliveryAddress;
+//			if (deliveryAddress.length() <= 30) {
+//				ediAd1 = deliveryAddress.substring(0, deliveryAddress.length());
+//			}
+//			if (deliveryAddress.length() > 30 && deliveryAddress.length() <= 60) {
+//				ediAd2 = deliveryAddress.substring(30, deliveryAddress.length());
+//			}
+//			if (deliveryAddress.length() > 60 && deliveryAddress.length() <= 90) {
+//				ediAd3 = deliveryAddress.substring(60);
+//			} 
+//			if(deliveryAddress.length() > 90){
+//				throw new SupplierOrderException("Delivery Street address can not be greater than 90 characters.");
+//			}
+			int addressLength = deliveryAddress.length();
+			if (addressLength > 90) {
+        throw new SupplierOrderException("Delivery Street address can not be greater than 90 characters.");
+      }
+			ediAd1 = deliveryAddress.substring(0, addressLength <= 30 ? addressLength : 30);
+      if (addressLength > 30) {
+        ediAd2 = deliveryAddress.substring(30, addressLength <= 60 ? addressLength : 60);
+      }
+      if (addressLength > 60) {
+        ediAd3 = deliveryAddress.substring(60, addressLength <= 90 ? addressLength : 90);
+      }
 			// line 3 street address
 			// upto 30 chars only else continue in next EDIAD2
 			fOut.write("000003;EDIAD1=".getBytes());
