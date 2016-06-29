@@ -9,6 +9,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.Random;
@@ -90,13 +91,13 @@ public class Eldorado extends Supplier implements HasTracking {
       salesmachine.oim.suppliers.modal.el.tracking.ELTrackRequest.XMLOrders xmlOrder = new salesmachine.oim.suppliers.modal.el.tracking.ELTrackRequest.XMLOrders();
       Order order = new Order();
       order.setOrderCustomer(ovs.getAccountNumber());
-      Integer trackingId = Integer.parseInt(trackingMeta.toString());
+      int trackingId = Integer.parseInt(trackingMeta.toString());
       order.setOrderId(trackingId);
       order.setOrderShippingCost(false);
       xmlOrder.setOrder(order);
       request.setXMLOrders(xmlOrder);
       marshaller.marshal(request, os);
-      log.info("request -- {}", os.toString());
+      log.info("request for tracking for storeOrderId {} is -- {}",oimOrderDetails.getOimOrders().getStoreOrderId(), os.toString());
 
       String response = postRequest(TRACKING_ENDPOINT,
           os.toString().replace("<ELTrackRequest>", "").replace("</ELTrackRequest>", ""));
@@ -105,6 +106,7 @@ public class Eldorado extends Supplier implements HasTracking {
       String responseCode = trackingResponse.getOrder().getResponseCode();
       switch (responseCode) {
       case "RECORD":
+        if(!StringHandle.isNullOrEmpty(trackingResponse.getOrder().getTrackingNumber())){
         TrackingData trackingData = new TrackingData();
         trackingData.setCarrierCode(trackingResponse.getOrder().getCarrierCode());
         trackingData.setCarrierName(trackingResponse.getOrder().getCarrierCode());
@@ -114,23 +116,31 @@ public class Eldorado extends Supplier implements HasTracking {
         SimpleDateFormat df = new SimpleDateFormat("MM/dd/yyyy hh:mm:ss a");
         GregorianCalendar c = new GregorianCalendar();
         Date date = df.parse(trackingResponse.getOrder().getDateShipment());
-        if (date.before(oimOrderDetails.getProcessingTm())) {
-          String subject = "Old Tracking found for Vendor - " + ovs.getVendors().getVendorId();
-          String message = "Order tracking response - " + response;
-          EmailUtil.sendEmail("orders@inventorysource.com", "support@inventorysource.com",
-              "ruchi@inventorysource.com", subject, message);
-          throw new SupplierOrderTrackingException(
-              "Got an older tracking details from Eldorado dated - " + date.toString()
-                  + " for StoreOrderId -" + oimOrderDetails.getOimOrders().getStoreOrderId()
-                  + " and PONumber - " + oimOrderDetails.getSupplierOrderNumber());
-
-        }
+       
+//        if (date.before(oimOrderDetails.getProcessingTm())) {
+//          String subject = "Old Tracking found for Vendor - " + ovs.getVendors().getVendorId();
+//          String message = "Order tracking response - " + response;
+//          EmailUtil.sendEmail("orders@inventorysource.com", "support@inventorysource.com",
+//              "ruchi@inventorysource.com", subject, message);
+//          throw new SupplierOrderTrackingException(
+//              "Got an older tracking details from Eldorado dated - " + date.toString()
+//                  + " for StoreOrderId -" + oimOrderDetails.getOimOrders().getStoreOrderId()
+//                  + " and PONumber - " + oimOrderDetails.getSupplierOrderNumber());
+//
+//        }
         c.setTime(date);
         XMLGregorianCalendar shipDate = DatatypeFactory.newInstance().newXMLGregorianCalendar(c);
         trackingData.setShipDate(shipDate);
         status.setStatus(OimConstants.OIM_SUPPLER_ORDER_STATUS_SHIPPED);
         status.addTrackingData(trackingData);
         break;
+        }else{
+          log.error("Got Empty Tracking Response for storeOrderId - {} and poNum - {}",oimOrderDetails.getOimOrders().getStoreOrderId(),trackingId);
+        String subject = "Got Empty Tracking Response for storeOrderId - "+oimOrderDetails.getOimOrders().getStoreOrderId();
+        String message = response;
+        EmailUtil.sendEmail("manish@inventorysource.com", "support@inventorysource.com",
+            "", subject, message);
+        }
       case "NO_RECORD":
         throw new SupplierOrderTrackingException(
             "No record found with the given order id:" + trackingMeta);
@@ -144,24 +154,29 @@ public class Eldorado extends Supplier implements HasTracking {
       log.error(e.getMessage(), e);
       throw new SupplierOrderTrackingException(e.getMessage(), e);
     }
+    catch (Exception e) {
+      log.error(e.getMessage(), e);
+    }
 
     return status;
   }
 
-  // public static void main(String[] args) {
-  // Eldorado el = new Eldorado();
-  // Session dbSession = SessionManager.currentSession();
-  // OimVendorSuppliers ovs = (OimVendorSuppliers)dbSession.get(OimVendorSuppliers.class, 10701);
-  // OimOrders order = (OimOrders)dbSession.get(OimOrders.class, 497641);
-  // try {
-  // el.sendOrders(431906, ovs, order);
-  // } catch (SupplierConfigurationException | SupplierCommunicationException
-  // | SupplierOrderException | ChannelConfigurationException | ChannelCommunicationException
-  // | ChannelOrderFormatException e) {
-  // // TODO Auto-generated catch block
-  // e.printStackTrace();
-  // }
-  // }
+   public static void main(String[] args) {
+//   Eldorado el = new Eldorado();
+//   Session dbSession = SessionManager.currentSession();
+//   OimVendorSuppliers ovs = (OimVendorSuppliers)dbSession.get(OimVendorSuppliers.class, 10701);
+//   OimOrders order = (OimOrders)dbSession.get(OimOrders.class, 504103);
+//   try {
+//   el.sendOrders(431906, ovs, order);
+//   } catch (SupplierConfigurationException | SupplierCommunicationException
+//   | SupplierOrderException | ChannelConfigurationException | ChannelCommunicationException
+//   | ChannelOrderFormatException e) {
+//   // TODO Auto-generated catch block
+//   e.printStackTrace();
+//   }
+     int val = generateNineDigitPO(111111);
+     System.out.println(val);
+   }
 
   @Override
   public void sendOrders(Integer vendorId, OimVendorSuppliers ovs, OimOrders order)
@@ -200,9 +215,9 @@ public class Eldorado extends Supplier implements HasTracking {
         log.info("Reprocessing PO NUmber - {}", poNum);
       } else {
       //poNum = StringHandle.removeNull(order.getOrderId()).toString();
-        poNum = String.valueOf(generateTenDigitPO(order.getOrderId()));
+        poNum = String.valueOf(generateNineDigitPO(order.getOrderId()));
       }
-      if (poNum instanceof String == false) {
+      if (poNum.matches("[0-9]+") == false) {
         log.error(
             "This order - {} conatins an alphanumeric PO Number. Eldorado only supports numbers only for PO",
             order.getOrderId());
@@ -214,7 +229,7 @@ public class Eldorado extends Supplier implements HasTracking {
       elOrder.setName(order.getDeliveryName());
       elOrder.setPhoneNumber(order.getDeliveryPhone());
       elOrder.setSourceCode(ovs.getPassword());
-      elOrder.setSourceOrderNumber(order.getOrderId().toString());
+      elOrder.setSourceOrderNumber(poNum);
       elOrder.setSpecialInstructions(order.getOrderComment());
       elOrder.setStateCode(order.getDeliveryStateCode());
       elOrder.setZipCode(order.getDeliveryZip());
@@ -369,20 +384,20 @@ public class Eldorado extends Supplier implements HasTracking {
     }
   }
 
-  private static long generateTenDigitPO(int poNum) {
-    long randomNum = 0;
-    long returnVal = poNum;
+  private static int generateNineDigitPO(int poNum) {
+    int randomNum = 0;
+    int returnVal = poNum;
     randomNum = generateRandom(poNum);
     if (randomNum > 0) {
       String num_str = poNum + "" + randomNum;
-      returnVal = Long.parseLong(num_str);
+      returnVal = Integer.parseInt(num_str);
     }
     return returnVal;
   }
 
-  public static long generateRandom(int num) {
+  public static int generateRandom(int num) {
     int length = String.valueOf(num).length();
-    int randomNumSize = 10 - length;
+    int randomNumSize = 9 - length;
     if (randomNumSize > 0) {
       Random random = new Random();
       char[] digits = new char[randomNumSize];
@@ -390,7 +405,7 @@ public class Eldorado extends Supplier implements HasTracking {
       for (int i = 1; i < randomNumSize; i++) {
         digits[i] = (char) (random.nextInt(10) + '0');
       }
-      return Long.parseLong(new String(digits));
+      return Integer.parseInt(new String(digits));
     }
     return 0;
   }

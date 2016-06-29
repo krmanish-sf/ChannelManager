@@ -77,7 +77,7 @@ public class OrderTrackingTask extends TimerTask {
         query = session.createQuery("select distinct o from salesmachine.hibernatedb.OimOrders o "
             + "left join fetch o.oimOrderDetailses d where o.deleteTm is null and "
             + "d.deleteTm is null and d.supplierOrderStatus is not null and "
-            + "d.oimOrderStatuses.statusId = '2'  and o.insertionTm> :insertionTm and d.lastTrackTm> :lastDate order by d.processingTm desc");
+            + "d.oimOrderStatuses.statusId = '2'  and o.insertionTm > :insertionTm and d.lastTrackTm < :lastDate order by d.processingTm desc");
         query.setDate("insertionTm", cutoffTime);
         query.setDate("lastDate", fetchOrdersAfter);
         log.info("count of orders which will be sent to UPS for tracking is {}",query.list().size());

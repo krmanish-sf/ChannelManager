@@ -504,12 +504,12 @@ public class DevHubOrderImport extends ChannelBase implements IOrderImport {
     OimOrders oimOrders = oimOrderDetails.getOimOrders();
     for (OimOrderDetails detail : oimOrders.getOimOrderDetailses()) {
       JSONObject itemObject = new JSONObject();
-      itemObject.put("id", Integer.parseInt(oimOrderDetails.getStoreOrderItemId()));
+      itemObject.put("id", Integer.parseInt(detail.getStoreOrderItemId()));
       itemObject.put("order_id",
           Integer.parseInt(oimOrderDetails.getOimOrders().getStoreOrderId()));
-      itemObject.put("quantity", oimOrderDetails.getQuantity());
+      itemObject.put("quantity", detail.getQuantity());
       JSONObject productJson = new JSONObject();
-      productJson.put("sku", oimOrderDetails.getSku());
+      productJson.put("sku", detail.getSku());
       itemObject.put("product", productJson);
       if (detail.getDetailId().intValue() == oimOrderDetails.getDetailId().intValue()) {
         itemObject.put("shipping_name", orderStatus.getTrackingData().get(0).getCarrierName()

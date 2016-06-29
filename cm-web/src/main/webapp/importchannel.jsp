@@ -168,11 +168,11 @@
 												return '<input type="text" class="supplier_prefix width-70 pp"  style="display:none;" name="ss_'+s.oimSuppliers.supplierId	+'_skuprefix" id="ss_'+s.oimSuppliers.supplierId+'_skuprefix" data-bind-channel="customMapper:oimChannelSupplierMaps[oimSuppliers.supplierId='+ s.oimSuppliers.supplierId+'].supplierPrefix" keyattr=""/>';
 											}
 										},
-										{
-											"mData" : function(s) {
-												return '<select id="ss_' +s.oimSuppliers.supplierId	+'_enableorderauto" class="pp" style="display:none;" name="ss_'+ s.oimSuppliers.supplierId	+'_enableorderauto" data-bind-channel="customMapper:oimChannelSupplierMaps[oimSuppliers.supplierId='+ s.oimSuppliers.supplierId	+ '].enableOrderAutomation" required="required"><option selected="" value="1">Yes</option><option value="0">No</option></select>';
-											}
-										},
+// 										{
+// 											"mData" : function(s) {
+// 												return '<select id="ss_' +s.oimSuppliers.supplierId	+'_enableorderauto" class="pp" style="display:none;" name="ss_'+ s.oimSuppliers.supplierId	+'_enableorderauto" data-bind-channel="customMapper:oimChannelSupplierMaps[oimSuppliers.supplierId='+ s.oimSuppliers.supplierId	+ '].enableOrderAutomation" required="required"><option selected="" value="1">Yes</option><option value="0">No</option></select>';
+// 											}
+// 										},
 										{
 											"mData" : function(s) {
 												if (s.oimSuppliers.supplierId == 1822) {

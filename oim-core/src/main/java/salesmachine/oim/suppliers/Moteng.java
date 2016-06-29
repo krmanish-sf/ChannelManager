@@ -210,22 +210,22 @@ public class Moteng extends Supplier implements HasTracking {
         fOut.write(TAB);
         fOut.write(StringHandle.removeNull(od.getQuantity().toString()).getBytes(ASCII));
         fOut.write(NEW_LINE);
- //       OimChannels oimChannels = order.getOimOrderBatches().getOimChannels();
- //       OimLogStream stream = new OimLogStream();
+        // OimChannels oimChannels = order.getOimOrderBatches().getOimChannels();
+        // OimLogStream stream = new OimLogStream();
 
-//        try {
-//          IOrderImport iOrderImport = ChannelFactory.getIOrderImport(oimChannels);
-//          OrderStatus orderStatus = new OrderStatus();
-//          orderStatus.setStatus(
-//              ((OimOrderProcessingRule) oimChannels.getOimOrderProcessingRules().iterator().next())
-//                  .getProcessedStatus());
-//          if (oimChannels.getTestMode() == 0)
-//            iOrderImport.updateStoreOrder(od, orderStatus);
-//
-//        } catch (ChannelConfigurationException e) {
-//          log.error(e.getMessage(), e);
-//          stream.println(e.getMessage());
-//        }
+        // try {
+        // IOrderImport iOrderImport = ChannelFactory.getIOrderImport(oimChannels);
+        // OrderStatus orderStatus = new OrderStatus();
+        // orderStatus.setStatus(
+        // ((OimOrderProcessingRule) oimChannels.getOimOrderProcessingRules().iterator().next())
+        // .getProcessedStatus());
+        // if (oimChannels.getTestMode() == 0)
+        // iOrderImport.updateStoreOrder(od, orderStatus);
+        //
+        // } catch (ChannelConfigurationException e) {
+        // log.error(e.getMessage(), e);
+        // stream.println(e.getMessage());
+        // }
       }
 
       fOut.flush();
@@ -297,7 +297,7 @@ public class Moteng extends Supplier implements HasTracking {
         Map<Integer, String> orderDataMap = parseFileData(trackingFileData);
         for (Iterator itr = orderDataMap.values().iterator(); itr.hasNext();) {
           String line = (String) itr.next();
-          String[] lineArray = line.split(",");
+          String[] lineArray = line.split("\t");
           String shippingMethod;
           String shipDateString;
           int qty;
@@ -340,10 +340,19 @@ public class Moteng extends Supplier implements HasTracking {
             orderStatus.setPartialShipped(false);
           }
           salesmachine.oim.suppliers.modal.TrackingData trackingData = new salesmachine.oim.suppliers.modal.TrackingData();
-          trackingData.setCarrierCode(oimOrderDetails.getOimOrders().getOimShippingMethod()
-              .getOimShippingCarrier().getName());
-          trackingData.setCarrierName(oimOrderDetails.getOimOrders().getOimShippingMethod()
-              .getOimShippingCarrier().getName());
+         String shippingMethodInFile =  getShippingCarrierNameFromFile(shippingMethod, oimOrderDetails);
+         if(shippingMethodInFile!=null){
+           trackingData.setCarrierCode(shippingMethodInFile);
+           trackingData.setCarrierName(shippingMethodInFile);
+         }
+         else{
+           trackingData.setCarrierCode(shippingMethod);
+           trackingData.setCarrierName(shippingMethod);
+         }
+//          trackingData.setCarrierCode(oimOrderDetails.getOimOrders().getOimShippingMethod()
+//              .getOimShippingCarrier().getName());
+//          trackingData.setCarrierName(oimOrderDetails.getOimOrders().getOimShippingMethod()
+//              .getOimShippingCarrier().getName());
           trackingData.setQuantity(qty);
           trackingData.setShipperTrackingNumber(trackingNo);
           XMLGregorianCalendar shipDate = null;
@@ -369,6 +378,26 @@ public class Moteng extends Supplier implements HasTracking {
     }
 
     return orderStatus;
+  }
+
+  private String getShippingCarrierNameFromFile(String shippingMethod, OimOrderDetails detail) {
+    Session session = SessionManager.currentSession();
+    int supplierId = detail.getOimSuppliers().getSupplierId();
+    String queryString = "select shipping_name from KDYER.OIM_SUPPLIER_SHIPPING_METHODS where supplier_id=:supplierId and shipping_code=:shippingMethod";
+    Query query = session.createSQLQuery(queryString);
+    query.setInteger("supplierId", supplierId);
+    query.setString("shippingMethod", shippingMethod);
+    Object q = null;
+    try {
+      q = query.uniqueResult();
+    } catch (Exception e) {
+      log.error("Got multiple supplier shipping details for detailId - {} . Exception is : {}",
+          detail.getDetailId(), e.getMessage());
+      e.printStackTrace();
+    }
+    if (q != null)
+      return (String) q;
+    return null;
   }
 
   private OrderStatus getOrderStatusFromSFTP(OrderStatus orderStatus, FtpDetail ftpDetail,

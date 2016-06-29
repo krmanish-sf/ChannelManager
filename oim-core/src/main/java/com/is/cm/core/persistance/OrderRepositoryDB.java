@@ -59,7 +59,6 @@ import salesmachine.oim.stores.impl.ChannelFactory;
 import salesmachine.oim.stores.modal.shop.order.CCORDER;
 import salesmachine.oim.stores.modal.shop.order.CCTRANSMISSION;
 import salesmachine.oim.stores.modal.shop.order.ITEMS;
-import salesmachine.oim.suppliers.HonestGreen;
 import salesmachine.oim.suppliers.SupplierFactory;
 import salesmachine.oim.suppliers.exception.SupplierCommunicationException;
 import salesmachine.oim.suppliers.exception.SupplierConfigurationException;

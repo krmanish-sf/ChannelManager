@@ -208,8 +208,8 @@ public class ChannelRepositoryDb extends RepositoryBase implements ChannelReposi
       OimSuppliers os = ovs.getOimSuppliers();
       if (os.getSupplierId().toString().equals(request.get("sid_" + os.getSupplierId()))) {
         String skuPrefix = request.get("ss_" + os.getSupplierId() + "_skuprefix");
-        boolean enableOrderAuto = (Integer
-            .parseInt(request.get("ss_" + os.getSupplierId() + "_enableorderauto")) > 0);
+//        boolean enableOrderAuto = (Integer
+//            .parseInt(request.get("ss_" + os.getSupplierId() + "_enableorderauto")) > 0);
         OimChannelSupplierMap m = new OimChannelSupplierMap();
         // for multiple support warehouse for Honest green . task id - https://sourcefuse.atlassian.net/browse/ISD-309
         String warehouseLocation1 = StringHandle.removeNull(request.get("ss_" + os.getSupplierId() + "_warehouseLocation1"));
@@ -232,7 +232,7 @@ public class ChannelRepositoryDb extends RepositoryBase implements ChannelReposi
         m.setOimChannels(c);
         m.setOimSuppliers(os);
         m.setSupplierPrefix(skuPrefix);
-        m.setEnableOrderAutomation(enableOrderAuto ? 1 : 0);
+        m.setEnableOrderAutomation(1);
         m.setInsertionTm(new Date());
         dbSession.save(m);
         LOG.debug("Saved supplier map");

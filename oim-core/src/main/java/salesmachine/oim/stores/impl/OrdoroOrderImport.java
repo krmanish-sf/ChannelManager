@@ -112,16 +112,17 @@ public class OrdoroOrderImport extends ChannelBase implements IOrderImport {
     HashMap<Integer, String> mappedSupplierMap = getMappedSupplierIds();
     Calendar c = Calendar.getInstance();
     c.setTime(new Date());
-    c.add(Calendar.HOUR, -312);
+    c.add(Calendar.HOUR, -72);
     Date fetchOrdersAfter = c.getTime();
     log.info("Set to fetch Orders after {}", fetchOrdersAfter);
 
     String status = m_orderProcessingRule.getPullWithStatus();
     // String status = "in_process";
-    String requestUrl = orderEndPoint + "/?status=" + status;
+    String requestMainUrl = orderEndPoint + "/?status=" + status;
     try {
       SimpleDateFormat df = new SimpleDateFormat("YYYY-MM-dd HH:mm:ss zZ");
-      requestUrl += "&start_order_date=" + URLEncoder.encode(df.format(fetchOrdersAfter), "UTF-8");
+      requestMainUrl += "&start_order_date="
+          + URLEncoder.encode(df.format(fetchOrdersAfter), "UTF-8");
     } catch (UnsupportedEncodingException e1) {
       log.warn("Encoding type [UTF-8] is invalid");
     }
@@ -129,7 +130,7 @@ public class OrdoroOrderImport extends ChannelBase implements IOrderImport {
     boolean isNoMoreOrders = false;
     JSONParser parser = new JSONParser();
     do {
-      requestUrl += "&limit=" + limit + "&offset=" + offset;
+      String requestUrl = requestMainUrl + "&limit=" + limit + "&offset=" + offset;
       String response = sendRequestOAuth(null, requestUrl, GET_REQUEST_METHOD, null);
       JSONObject jsonObject;
       try {
@@ -156,9 +157,9 @@ public class OrdoroOrderImport extends ChannelBase implements IOrderImport {
         try {
           JSONObject orderObj = (JSONObject) orderArr.get(i);
           storeOrderId = orderObj.get("order_id").toString();
-          String shippability = (String)orderObj.get("shippability");
-          if("unshippable".equalsIgnoreCase(shippability)){
-            log.info("Store order id {} is unshippable.. ignoring it...",storeOrderId);
+          String shippability = (String) orderObj.get("shippability");
+          if ("unshippable".equalsIgnoreCase(shippability)) {
+            log.info("Store order id {} is unshippable.. ignoring it...", storeOrderId);
             continue;
           }
           if (orderAlreadyImported(storeOrderId)) {
@@ -294,13 +295,15 @@ public class OrdoroOrderImport extends ChannelBase implements IOrderImport {
             detail.setStoreOrderItemId(((long) item.get("order_line_id")) + "");
             detail.setSupplierOrderStatus(OimConstants.OIM_SUPPLER_ORDER_STATUS_SENT_TO_SUPPLIER);
             detail.setOimOrders(oimOrders);
-            detailSet.add(detail);
+            // detailSet.add(detail);
             detail = getShipmentAndSupplierForOrderDetail(detail, orderObj, mappedSupplierMap);
             if (detail.getSupplierOrderNumber() == null)
               continue;
+            if (detail.getOimSuppliers() == null)
+              continue;
             detailSet.add(detail);
           }
-          if (detailSet.size() == 0)
+          if (detailSet.size() == 0 || detailSet.contains(null) || detailSet.contains("null"))
             continue;
 
           for (Iterator<OimOrderDetails> dtl = detailSet.iterator(); dtl.hasNext();) {
@@ -345,9 +348,10 @@ public class OrdoroOrderImport extends ChannelBase implements IOrderImport {
           "from OimChannelSupplierMap s where  s.oimChannels.channelId=:channelId and s.deleteTm is null");
 
       query.setInteger("channelId", m_channel.getChannelId());
-      Iterator it = query.iterate();
-      if (it.hasNext()) {
-        OimChannelSupplierMap channelSupplierMap = (OimChannelSupplierMap) it.next();
+      List<OimChannelSupplierMap> channelSupplierMapList = query.list();
+      for (Iterator<OimChannelSupplierMap> itr = channelSupplierMapList.iterator(); itr
+          .hasNext();) {
+        OimChannelSupplierMap channelSupplierMap = (OimChannelSupplierMap) itr.next();
         if (channelSupplierMap != null && channelSupplierMap.getChannelSupplierId() != null)
           returnMap.put(channelSupplierMap.getMapId(), channelSupplierMap.getChannelSupplierId()
               + "~" + channelSupplierMap.getOimSuppliers().getSupplierId());
@@ -371,7 +375,9 @@ public class OrdoroOrderImport extends ChannelBase implements IOrderImport {
         continue;
       String shipmentId = (String) shipmentObj.get("shipment_id");
       JSONObject ship_from = (JSONObject) shipmentObj.get("ship_from");
-      String dropshipperId = String.valueOf((long) ship_from.get("dropshipper_id"));
+      String dropshipperId = null;
+      if (ship_from.get("dropshipper_id") != null)
+        dropshipperId = String.valueOf((long) ship_from.get("dropshipper_id"));
       if (dropshipperId == null)
         continue;
       for (Iterator<Integer> itr = mappedSupplierMap.keySet().iterator(); itr.hasNext();) {
@@ -506,7 +512,8 @@ public class OrdoroOrderImport extends ChannelBase implements IOrderImport {
     // https://api.ordoro.com/shipment/1-1007-1/tracking/
     String poNumber = oimOrderDetails.getSupplierOrderNumber();
     SimpleDateFormat df = new SimpleDateFormat("YYYY-MM-dd HH:mm:ss zZ");
-    String shipDate = df.format(orderStatus.getTrackingData().get(0).getShipDate().toGregorianCalendar().getTime());
+    String shipDate = df
+        .format(orderStatus.getTrackingData().get(0).getShipDate().toGregorianCalendar().getTime());
     String carrierName = !StringHandle
         .isNullOrEmpty(orderStatus.getTrackingData().get(0).getCarrierCode())
             ? orderStatus.getTrackingData().get(0).getCarrierCode()
@@ -551,7 +558,8 @@ public class OrdoroOrderImport extends ChannelBase implements IOrderImport {
   public static void main(String[] args) throws ChannelCommunicationException,
       ChannelOrderFormatException, ChannelConfigurationException {
     Session session = SessionManager.currentSession();
-    OimOrderDetails oimOrderDetails = (OimOrderDetails) session.get(OimOrderDetails.class, 10323821);
+    OimOrderDetails oimOrderDetails = (OimOrderDetails) session.get(OimOrderDetails.class,
+        10323821);
     OrderStatus orderStatus = new OrderStatus();
     TrackingData td = new TrackingData();
     td.setCarrierName("UPS");

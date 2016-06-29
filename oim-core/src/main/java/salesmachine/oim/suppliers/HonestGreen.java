@@ -707,7 +707,7 @@ public class HonestGreen extends Supplier implements HasTracking {
   private static String getFilePath(String template, String account, String unfiOrderNo) {
     return String.format(template, account, unfiOrderNo);
   }
-
+  
   @Override
   public OrderStatus getOrderStatus(OimVendorSuppliers ovs, final Object trackingMeta1,
       OimOrderDetails oimOrderDetails) throws SupplierOrderTrackingException {
@@ -935,11 +935,13 @@ public class HonestGreen extends Supplier implements HasTracking {
       String tempTrackingMeta, OrderStatus orderStatus)
           throws IOException, FTPException, ParseException {
     log.info("UNFI MAP Size: {}", PONUM_UNFI_MAP.size());
-    if (PONUM_UNFI_MAP.containsKey(tempTrackingMeta)) {
-      log.info("UNFI Order Id found in MAP {}", PONUM_UNFI_MAP.get(tempTrackingMeta));
-      orderStatus.setStatus(OimConstants.OIM_SUPPLER_ORDER_STATUS_IN_PROCESS);
-      return PONUM_UNFI_MAP.get(tempTrackingMeta);
-    }
+    //Below commented lines introduced bug. if any order has 2 items (and we know that both can have same PONumber) and both are sent to different warehouses,
+    //then PONUM_UNFI_MAP will be fetch the UNFI based on PO, and the second items PO will be different so it will never track its tracking.
+//    if (PONUM_UNFI_MAP.containsKey(tempTrackingMeta)) {
+//      log.info("UNFI Order Id found in MAP {}", PONUM_UNFI_MAP.get(tempTrackingMeta));
+//      orderStatus.setStatus(OimConstants.OIM_SUPPLER_ORDER_STATUS_IN_PROCESS);
+//      return PONUM_UNFI_MAP.get(tempTrackingMeta);
+//    }
     FTPFile[] ftpFiles = ftp.dirDetails("confirmations");
     Arrays.sort(ftpFiles, new Comparator<FTPFile>() {
       public int compare(FTPFile f1, FTPFile f2) {

@@ -45,6 +45,7 @@ import salesmachine.oim.suppliers.exception.SupplierOrderTrackingException;
 import salesmachine.oim.suppliers.modal.OrderStatus;
 import salesmachine.oim.suppliers.modal.TrackingData;
 import salesmachine.oim.suppliers.modal.ups.AccessRequest;
+import salesmachine.oim.suppliers.modal.ups.track.request.PickupDateRange;
 import salesmachine.oim.suppliers.modal.ups.track.request.ReferenceNumber;
 import salesmachine.oim.suppliers.modal.ups.track.request.Request;
 import salesmachine.oim.suppliers.modal.ups.track.request.TrackRequest;
@@ -56,10 +57,10 @@ import salesmachine.util.StringHandle;
 public class QuantumView extends Supplier implements HasTracking {
 
   private static final Logger log = LoggerFactory.getLogger(QuantumView.class);
-  private static final String LICENSE_NUMBER = "9D0D1B02DEE68988";
-  private static final String USER_NAME = "inventorysource";
-  private static final String PASSWORD = "Aut0Inventory!";
-  private static final String ENDPOINT_URL = "https://wwwcie.ups.com/ups.app/xml/Track"; // TODO :
+  private static final String LICENSE_NUMBER = "4D0E702F6563E428";
+  private static final String USER_NAME = "tatsakj";
+  private static final String PASSWORD = "dietcoke!";
+  private static final String ENDPOINT_URL = "https://wwwcie.ups.com/ups.app/xml/Track";// TODO :
                                                                                          // need to
                                                                                          // change
                                                                                          // this
@@ -73,7 +74,9 @@ public class QuantumView extends Supplier implements HasTracking {
   public static void main(String[] args) {
     QuantumView quantumView = new QuantumView();
     try {
-      quantumView.getOrderStatus(null, "M-37097-1", null);
+     Session session =  SessionManager.currentSession();
+     OimOrderDetails detail = (OimOrderDetails)session.get(OimOrderDetails.class, 10499321);
+     OrderStatus status  = quantumView.getOrderStatus(null, "1-4020-1", detail);
     } catch (SupplierOrderTrackingException e) {
       // TODO Auto-generated catch block
       e.printStackTrace();
@@ -116,7 +119,7 @@ public class QuantumView extends Supplier implements HasTracking {
       Marshaller trackRequestMarshaller = trackRequestJAXBC.createMarshaller();
       salesmachine.oim.suppliers.modal.ups.track.request.ObjectFactory requestObjectFactory = new salesmachine.oim.suppliers.modal.ups.track.request.ObjectFactory();
       TrackRequest trackRequest = requestObjectFactory.createTrackRequest();
-      populateTrackRequest(trackRequest, referenceNum);
+      populateTrackRequest(trackRequest, referenceNum,oimOrderDetails.getOimOrders().getOrderTm());
       accessRequestMarshaller.marshal(accessRequest, os);
       trackRequestMarshaller.marshal(trackRequest, os);
       String response = postRequest(ENDPOINT_URL, os.toString());
@@ -131,7 +134,7 @@ public class QuantumView extends Supplier implements HasTracking {
       if (statusCode == 1) {
         if (!StringHandle.isNullOrEmpty(
             trackResponse.getShipment().get(0).getPackage().get(0).getTrackingNumber())) {
-          String deliveryDate = trackResponse.getShipment().get(0).getPickupDate();
+          String deliveryDate = trackResponse.getShipment().get(0).getScheduledDeliveryDate();
           PackageType packageType = trackResponse.getShipment().get(0).getPackage().get(0);
           for (int j = 0; j < packageType.getActivity().size(); j++) {
             Activity activity = packageType.getActivity().get(0);
@@ -162,9 +165,10 @@ public class QuantumView extends Supplier implements HasTracking {
           status.addTrackingData(trackingData);
         }
       } else if (statusCode == 0) {
+        statusMsg = trackResponse.getResponse().getError().get(0).getErrorDescription();
         String subject = "Error in getting tracking from UPS (QuantumView) for vendor - "
             + ovs.getVendors().getVendorId();
-        String message = "Error Description - " + statusMsg;
+        String message = "Error Description - " + statusMsg+" for detailID - "+oimOrderDetails.getDetailId();
         EmailUtil.sendEmail("orders@inventorysource.com", "support@inventorysource.com", "",
             subject, message, "text/html");
         throw new SupplierOrderException("Error occured in getting tracking for store order id -  "
@@ -180,7 +184,7 @@ public class QuantumView extends Supplier implements HasTracking {
     return status;
   }
 
-  private static void populateTrackRequest(TrackRequest trackRequest, String shipmentID) {
+  private static void populateTrackRequest(TrackRequest trackRequest, String shipmentID, Date insetionTm) {
     Request request = new Request();
     ReferenceNumber referenceNumber = new ReferenceNumber();
     referenceNumber.setValue(shipmentID);
@@ -190,6 +194,13 @@ public class QuantumView extends Supplier implements HasTracking {
     request.setRequestAction("Track");
     trackRequest.setRequest(request);
     trackRequest.setReferenceNumber(referenceNumber);
+    PickupDateRange dateRange = new PickupDateRange();
+    SimpleDateFormat df = new SimpleDateFormat("yyyyMMdd");
+    String beginDate = df.format(insetionTm);
+    String endDate = df.format(new Date());
+    dateRange.setBeginDate(beginDate);
+    dateRange.setEndDate(endDate);
+    trackRequest.setPickupDateRange(dateRange);
   }
 
   private static void populateAccessRequest(AccessRequest accessRequest) {
